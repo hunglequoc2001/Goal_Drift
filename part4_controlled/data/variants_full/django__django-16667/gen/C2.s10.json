@@ -1,0 +1,61 @@
+{
+ "instance_id": "django__django-16667",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "f691ccecbc4c50a18c48e3f596a6b2e52088bf7a0a585a82ae0b13a218152da7",
+ "raw": "<summary>Overflow inputs to SelectDateWidget should be treated as missing values and return an empty string.</summary>\n<requirement>When the year, month, or day supplied to a SelectDateWidget is too large for Python\u2019s datetime (causing an OverflowError), the widget must not produce a placeholder date string. Instead, it should return an empty string (\"\"), which will be interpreted by the DateField as a missing value and result in the standard \u201cThis field is required.\u201d validation error. This requirement supersedes any previous expectation that a placeholder like \u201c0-0-0\u201d be returned.</requirement>\n\n<source_edit file=\"django/forms/widgets.py\"><search>return \"0-0-0\"</search><replace>return \"\"</replace></source_edit>\n\n<test_edit file=\"tests/forms_tests/field_tests/test_datefield.py\"><search>self.assertEqual(e.errors, {\"mydate\": [\"Enter a valid date.\"]})</search><replace>self.assertEqual(e.errors, {\"mydate\": [\"This field is required.\"]})</replace></test_edit>\n\n<test_edit file=\"tests/forms_tests/widget_tests/test_selectdatewidget.py\"><search>((str(sys.maxsize + 1), \"12\", \"1\"), \"0-0-0\")</search><replace>((str(sys.maxsize + 1), \"12\", \"1\"), \"\")</replace></test_edit>\n\n<test_edit file=\"tests/forms_tests/field_tests/test_datefield.py\"><search>with self.assertRaisesMessage(ValidationError, \"'Enter a valid date.'\"):</search><replace>with self.assertRaisesMessage(ValidationError, \"'This field is required.'\"):</replace></test_edit>\n<test_edit file=\"tests/forms_tests/field_tests/test_datefield.py\"><search>f.clean(\"0-0-0\")</search><replace>f.clean(\"\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1421,
+  "prompt_tokens": 1719,
+  "total_tokens": 3140,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1021,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Overflow inputs to SelectDateWidget should be treated as missing values and return an empty string.",
+ "requirement": "When the year, month, or day supplied to a SelectDateWidget is too large for Python\u2019s datetime (causing an OverflowError), the widget must not produce a placeholder date string. Instead, it should return an empty string (\"\"), which will be interpreted by the DateField as a missing value and result in the standard \u201cThis field is required.\u201d validation error. This requirement supersedes any previous expectation that a placeholder like \u201c0-0-0\u201d be returned.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/widgets.py",
+   "search": "return \"0-0-0\"",
+   "replace": "return \"\""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/field_tests/test_datefield.py",
+   "search": "self.assertEqual(e.errors, {\"mydate\": [\"Enter a valid date.\"]})",
+   "replace": "self.assertEqual(e.errors, {\"mydate\": [\"This field is required.\"]})"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/widget_tests/test_selectdatewidget.py",
+   "search": "((str(sys.maxsize + 1), \"12\", \"1\"), \"0-0-0\")",
+   "replace": "((str(sys.maxsize + 1), \"12\", \"1\"), \"\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/field_tests/test_datefield.py",
+   "search": "with self.assertRaisesMessage(ValidationError, \"'Enter a valid date.'\"):",
+   "replace": "with self.assertRaisesMessage(ValidationError, \"'This field is required.'\"):"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/field_tests/test_datefield.py",
+   "search": "f.clean(\"0-0-0\")",
+   "replace": "f.clean(\"\")"
+  }
+ ],
+ "status": "generated"
+}

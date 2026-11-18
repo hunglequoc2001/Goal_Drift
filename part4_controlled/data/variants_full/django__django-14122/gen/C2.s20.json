@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-14122",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "82203272f193aa00cb697fb373b3982bc7a5e91f4b1c124854c7e9a895b6f0b7",
+ "raw": "<summary>Default ordering fields are now included in GROUP BY clauses.</summary>\n<requirement>When a queryset uses\u202fvalues()\u202for\u202fannotate(), any ordering defined in a model\u2019s Meta\u202fordering attribute must be treated like any other ORDER BY expression and therefore be added to the GROUP BY clause. This supersedes the previous expectation that Meta.ordering fields are ignored for grouping.</requirement>\n<source_edit file=\"django/db/models/sql/compiler.py\"><search>if not self._meta_ordering:</search><replace>for expr, (sql, params, is_ref) in order_by:\n            # Skip References to the select clause, as all expressions in the\n            # select clause are already part of the group by.\n            if not is_ref:\n                expressions.extend(expr.get_group_by_cols())</replace></source_edit>\n<test_edit file=\"tests/ordering/tests.py\"><search>self.assertCountEqual(articles, [</search><replace>self.assertCountEqual(articles, [\n        {'author': self.author_1.pk, 'count': 1},\n        {'author': self.author_1.pk, 'count': 1},\n        {'author': self.author_1.pk, 'count': 1},\n        {'author': self.author_2.pk, 'count': 1},\n    ])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2579,
+  "prompt_tokens": 1259,
+  "total_tokens": 3838,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2292,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Default ordering fields are now included in GROUP BY clauses.",
+ "requirement": "When a queryset uses\u202fvalues()\u202for\u202fannotate(), any ordering defined in a model\u2019s Meta\u202fordering attribute must be treated like any other ORDER BY expression and therefore be added to the GROUP BY clause. This supersedes the previous expectation that Meta.ordering fields are ignored for grouping.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/compiler.py",
+   "search": "if not self._meta_ordering:",
+   "replace": "for expr, (sql, params, is_ref) in order_by:\n            # Skip References to the select clause, as all expressions in the\n            # select clause are already part of the group by.\n            if not is_ref:\n                expressions.extend(expr.get_group_by_cols())"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/ordering/tests.py",
+   "search": "self.assertCountEqual(articles, [",
+   "replace": "self.assertCountEqual(articles, [\n        {'author': self.author_1.pk, 'count': 1},\n        {'author': self.author_1.pk, 'count': 1},\n        {'author': self.author_1.pk, 'count': 1},\n        {'author': self.author_2.pk, 'count': 1},\n    ])"
+  }
+ ],
+ "status": "generated"
+}

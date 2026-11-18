@@ -1,0 +1,49 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-14053",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "8c7ae3d7ade059c00d05c08d4b6d289f6739073199cabf81846a04b50541f8b6",
+ "raw": "<summary>export_text should raise a ValueError when feature_names are supplied for a tree that contains undefined feature indices</summary>\n<requirement>When the `feature_names` argument is provided to `export_text`, the function must verify that the tree does not contain any nodes with the feature index `_tree.TREE_UNDEFINED`. If such undefined features are present, `export_text` should raise a `ValueError` with the message \u201cfeature_names cannot be used with trees containing undefined features\u201d. This requirement supersedes any previous behavior that silently ignored undefined features or substituted placeholder values.</requirement>\n<source_edit file=\"sklearn/tree/export.py\"><search>feature_names_ = [feature_names[i] if i != _tree.TREE_UNDEFINED</search><replace>if any(i == _tree.TREE_UNDEFINED for i in tree_.feature):\n    raise ValueError(\"feature_names cannot be used with trees containing undefined features\")\nfeature_names_ = feature_names</replace></source_edit>\n<test_edit file=\"sklearn/tree/tests/test_export.py\"><search>assert export_text(reg, decimals=1,</search><replace>with pytest.raises(ValueError, match=\"feature_names cannot be used with trees containing undefined features\"):\n    export_text(reg, decimals=1, feature_names=['first'])</replace></test_edit>\n<test_edit file=\"sklearn/tree/tests/test_export.py\"><search>assert export_text(reg, decimals=1, show_weights=True,</search><replace>with pytest.raises(ValueError, match=\"feature_names cannot be used with trees containing undefined features\"):\n    export_text(reg, decimals=1, show_weights=True, feature_names=['first'])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3108,
+  "prompt_tokens": 1812,
+  "total_tokens": 4920,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2741,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "export_text should raise a ValueError when feature_names are supplied for a tree that contains undefined feature indices",
+ "requirement": "When the `feature_names` argument is provided to `export_text`, the function must verify that the tree does not contain any nodes with the feature index `_tree.TREE_UNDEFINED`. If such undefined features are present, `export_text` should raise a `ValueError` with the message \u201cfeature_names cannot be used with trees containing undefined features\u201d. This requirement supersedes any previous behavior that silently ignored undefined features or substituted placeholder values.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/tree/export.py",
+   "search": "feature_names_ = [feature_names[i] if i != _tree.TREE_UNDEFINED",
+   "replace": "if any(i == _tree.TREE_UNDEFINED for i in tree_.feature):\n    raise ValueError(\"feature_names cannot be used with trees containing undefined features\")\nfeature_names_ = feature_names"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/tree/tests/test_export.py",
+   "search": "assert export_text(reg, decimals=1,",
+   "replace": "with pytest.raises(ValueError, match=\"feature_names cannot be used with trees containing undefined features\"):\n    export_text(reg, decimals=1, feature_names=['first'])"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sklearn/tree/tests/test_export.py",
+   "search": "assert export_text(reg, decimals=1, show_weights=True,",
+   "replace": "with pytest.raises(ValueError, match=\"feature_names cannot be used with trees containing undefined features\"):\n    export_text(reg, decimals=1, show_weights=True, feature_names=['first'])"
+  }
+ ],
+ "status": "generated"
+}

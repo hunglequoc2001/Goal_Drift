@@ -1,0 +1,43 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-26323",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "c92e50fa2fa8434edfecf93ae0f9e9c9ee7a0d6db9edc4e459697fd9a63ef47d",
+ "raw": "<summary>ColumnTransformer.set_output no longer forwards the transform setting to the remainder estimator.</summary>\n<requirement>The `set_output` method of `ColumnTransformer` should only apply the `transform` argument to the explicitly listed transformers. The `remainder` estimator must remain unchanged regardless of the `transform` value. This supersedes any previous expectation that the remainder would have its output set.</requirement>\n<source_edit file=\"sklearn/compose/_column_transformer.py\"><search>\n        if self.remainder not in {\"passthrough\", \"drop\"}:\n            _safe_set_output(self.remainder, transform=transform)\n</search><replace></replace></source_edit>\n<test_edit file=\"sklearn/compose/tests/test_column_transformer.py\"><search>\n    out = ct.fit_transform(df)\n    pd.testing.assert_frame_equal(out, df)\n\n    ct.set_output(transform=\"default\")\n    out = ct.fit_transform(df)\n    assert isinstance(out, np.ndarray)\n</search><replace>\n    out = ct.fit_transform(df)\n    assert isinstance(out, np.ndarray)\n\n    ct.set_output(transform=\"default\")\n    out = ct.fit_transform(df)\n    assert isinstance(out, np.ndarray)\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1249,
+  "prompt_tokens": 1939,
+  "total_tokens": 3188,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 989,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "ColumnTransformer.set_output no longer forwards the transform setting to the remainder estimator.",
+ "requirement": "The `set_output` method of `ColumnTransformer` should only apply the `transform` argument to the explicitly listed transformers. The `remainder` estimator must remain unchanged regardless of the `transform` value. This supersedes any previous expectation that the remainder would have its output set.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/compose/_column_transformer.py",
+   "search": "        if self.remainder not in {\"passthrough\", \"drop\"}:\n            _safe_set_output(self.remainder, transform=transform)",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/compose/tests/test_column_transformer.py",
+   "search": "    out = ct.fit_transform(df)\n    pd.testing.assert_frame_equal(out, df)\n\n    ct.set_output(transform=\"default\")\n    out = ct.fit_transform(df)\n    assert isinstance(out, np.ndarray)",
+   "replace": "    out = ct.fit_transform(df)\n    assert isinstance(out, np.ndarray)\n\n    ct.set_output(transform=\"default\")\n    out = ct.fit_transform(df)\n    assert isinstance(out, np.ndarray)"
+  }
+ ],
+ "status": "generated"
+}

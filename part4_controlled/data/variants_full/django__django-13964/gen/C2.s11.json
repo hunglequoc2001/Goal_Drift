@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-13964",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "39a39f501e3943efa68fb68ca29f3646835fbeb00fc023ab927d73fd6b0c08fa",
+ "raw": "<summary>ForeignKey fields are only auto\u2011filled from a saved related instance when they are exactly None, not when they hold other empty values such as an empty string.</summary>\n<requirement>When preparing related fields for save, the ORM should only replace the foreign\u2011key column value with the related object's primary key if the column currently contains None. If the column contains any other empty value (e.g., an empty string), it must be left unchanged. This supersedes any previous expectation that all empty values trigger the replacement.</requirement>\n<source_edit file=\"django/db/models/base.py\"><search>elif getattr(self, field.attname) in field.empty_values:</search><replace>elif getattr(self, field.attname) is None:</replace></source_edit>\n<test_edit file=\"tests/many_to_one/tests.py\"><search>self.assertEqual(child.parent, parent)</search><replace>self.assertEqual(child.parent_id, '')</replace></test_edit>\n<test_edit file=\"tests/many_to_one/tests.py\"><search>self.assertEqual(child.parent_id, parent.name)</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1460,
+  "prompt_tokens": 1654,
+  "total_tokens": 3114,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1218,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "ForeignKey fields are only auto\u2011filled from a saved related instance when they are exactly None, not when they hold other empty values such as an empty string.",
+ "requirement": "When preparing related fields for save, the ORM should only replace the foreign\u2011key column value with the related object's primary key if the column currently contains None. If the column contains any other empty value (e.g., an empty string), it must be left unchanged. This supersedes any previous expectation that all empty values trigger the replacement.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/base.py",
+   "search": "elif getattr(self, field.attname) in field.empty_values:",
+   "replace": "elif getattr(self, field.attname) is None:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/many_to_one/tests.py",
+   "search": "self.assertEqual(child.parent, parent)",
+   "replace": "self.assertEqual(child.parent_id, '')"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/many_to_one/tests.py",
+   "search": "self.assertEqual(child.parent_id, parent.name)",
+   "replace": ""
+  }
+ ],
+ "status": "generated"
+}

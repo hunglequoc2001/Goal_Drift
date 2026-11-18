@@ -1,0 +1,31 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-10908",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 22438,
+ "raw": "<summary>get_feature_names must not auto\u2011validate a custom vocabulary before fitting</summary>\n<requirement>When a CountVectorizer is instantiated with a custom vocabulary via the ``vocabulary`` parameter, calling ``get_feature_names`` must raise a ``ValueError`` because the vectorizer is considered unfitted; the provided vocabulary becomes fixed only after ``fit`` or ``fit_transform`` has been called. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sklearn/feature_extraction/text.py\"><search>        if not hasattr(self, 'vocabulary_'):\\n            self._validate_vocabulary()</search><replace></replace></source_edit>\n<test_edit file=\"sklearn/feature_extraction/tests/test_text.py\"><search>\n    # test for custom vocabulary\n    vocab = ['beer', 'burger', 'celeri', 'coke', 'pizza',\n             'salad', 'sparkling', 'tomato', 'water']\n\n    cv = CountVectorizer(vocabulary=vocab)\n    feature_names = cv.get_feature_names()\n    assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza', 'salad',\n                        'sparkling', 'tomato', 'water'], feature_names)\n    assert_true(cv.fixed_vocabulary_)\n\n    for idx, name in enumerate(feature_names):\n        assert_equal(idx, cv.vocabulary_.get(name))\n</search><replace>\n    # test for custom vocabulary\n    vocab = ['beer', 'burger', 'celeri', 'coke', 'pizza',\n             'salad', 'sparkling', 'tomato', 'water']\n\n    cv = CountVectorizer(vocabulary=vocab)\n    assert_raises(ValueError, cv.get_feature_names)\n    assert_false(cv.fixed_vocabulary_)\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "get_feature_names must not auto\u2011validate a custom vocabulary before fitting",
+ "requirement": "When a CountVectorizer is instantiated with a custom vocabulary via the ``vocabulary`` parameter, calling ``get_feature_names`` must raise a ``ValueError`` because the vectorizer is considered unfitted; the provided vocabulary becomes fixed only after ``fit`` or ``fit_transform`` has been called. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/feature_extraction/text.py",
+   "search": "        if not hasattr(self, 'vocabulary_'):\\n            self._validate_vocabulary()",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/feature_extraction/tests/test_text.py",
+   "search": "    # test for custom vocabulary\n    vocab = ['beer', 'burger', 'celeri', 'coke', 'pizza',\n             'salad', 'sparkling', 'tomato', 'water']\n\n    cv = CountVectorizer(vocabulary=vocab)\n    feature_names = cv.get_feature_names()\n    assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza', 'salad',\n                        'sparkling', 'tomato', 'water'], feature_names)\n    assert_true(cv.fixed_vocabulary_)\n\n    for idx, name in enumerate(feature_names):\n        assert_equal(idx, cv.vocabulary_.get(name))",
+   "replace": "    # test for custom vocabulary\n    vocab = ['beer', 'burger', 'celeri', 'coke', 'pizza',\n             'salad', 'sparkling', 'tomato', 'water']\n\n    cv = CountVectorizer(vocabulary=vocab)\n    assert_raises(ValueError, cv.get_feature_names)\n    assert_false(cv.fixed_vocabulary_)"
+  }
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "instance_id": "pylint-dev__pylint-4970",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "a77e796870be99ae4b3a5e32fb96d5fba554762e80ac7a5645d9ae50a4c6a4f0",
+ "raw": "<summary>Setting `min-similarity-lines` to `0` now behaves as if it were `1` rather than disabling the duplicate\u2011code check.</summary>\n<requirement>When the `--duplicates` (or `min-similarity-lines`) option is set to `0`, pylint should treat it as the smallest allowed positive value (i.e., `1`) and still perform duplicate\u2011code detection. This supersedes any previous expectation that `0` disables the check.</requirement>\n<source_edit file=\"pylint/checkers/similar.py\"><search>if self.min_lines == 0:\n            return</search><replace>if self.min_lines == 0:\n            self.min_lines = 1</replace></source_edit>\n<test_edit file=\"tests/checkers/unittest_similar.py\"><search>def test_set_duplicate_lines_to_zero() -> None:</search><replace>def test_set_duplicate_lines_to_zero() -> None:\n    output = StringIO()\n    with redirect_stdout(output), pytest.raises(SystemExit) as ex:\n        similar.Run([\"--duplicates=0\", SIMILAR1, SIMILAR2])\n    # Expect a non\u2011zero exit code indicating duplicates were found\n    assert ex.value.code != 0\n    # The output should contain the duplicate warning identifier R0801\n    assert \"R0801\" in output.getvalue()</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1264,
+  "prompt_tokens": 1046,
+  "total_tokens": 2310,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 963,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Setting `min-similarity-lines` to `0` now behaves as if it were `1` rather than disabling the duplicate\u2011code check.",
+ "requirement": "When the `--duplicates` (or `min-similarity-lines`) option is set to `0`, pylint should treat it as the smallest allowed positive value (i.e., `1`) and still perform duplicate\u2011code detection. This supersedes any previous expectation that `0` disables the check.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "pylint/checkers/similar.py",
+   "search": "if self.min_lines == 0:\n            return",
+   "replace": "if self.min_lines == 0:\n            self.min_lines = 1"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/checkers/unittest_similar.py",
+   "search": "def test_set_duplicate_lines_to_zero() -> None:",
+   "replace": "def test_set_duplicate_lines_to_zero() -> None:\n    output = StringIO()\n    with redirect_stdout(output), pytest.raises(SystemExit) as ex:\n        similar.Run([\"--duplicates=0\", SIMILAR1, SIMILAR2])\n    # Expect a non\u2011zero exit code indicating duplicates were found\n    assert ex.value.code != 0\n    # The output should contain the duplicate warning identifier R0801\n    assert \"R0801\" in output.getvalue()"
+  }
+ ],
+ "status": "generated"
+}

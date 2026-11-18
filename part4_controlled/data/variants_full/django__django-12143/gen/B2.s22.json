@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-12143",
+ "kind": "B2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "masked": "Possible data loss in admin changeform view when using regex special characters in formset prefix\nDescription\n\u27e6P1\u27e7\nWhile browsing the code in \u27e6P2\u27e7 [\u27e6P3\u27e7] (working on an unrelated ticket), I came across that line:\n\u27e6P4\u27e7 = \u27e6P5\u27e7(r\u27e6P6\u27e7.\u27e6P7\u27e7)\nGenerating a regex like this using string formatting can cause problems when the arguments contain special regex characters.\n\u27e6P8\u27e7 is probably safe (I'm not \u27e6P9\u27e7% sure about this) since it has to follow Python's syntax rules about identifiers.\nHowever prefix has no such restrictions [\u27e6P10\u27e7] and could contain any number of special regex characters.\nThe fix is quite straightforward (use \u27e6P11\u27e7) but it's hard to tell if there might be other occurrences of a similar pattern in Django's code.\nSome quick grepping (using git grep -E \u27e6P12\u27e7 -- \u27e6P13\u27e7) currently yields about \u27e6P14\u27e7 results. I had a superficial glance through the list and didn't spot other instances of the same usage pattern.\nEDIT I forgot to mention, but this bug is technically a regression (introduced in \u27e6P15\u27e7).\n[\u27e6P16\u27e7] \u200b\u27e6P17\u27e7\n[\u27e6P18\u27e7] \u200b\u27e6P19\u27e7\n",
+ "spans": [
+  "\t \n\t\t(last modified by Baptiste Mispelon)\n\t ",
+  "admin/options.py",
+  "1",
+  "pk_pattern",
+  "re.compile",
+  "'{}-\\d+-{}$'",
+  "format(prefix, self.model._meta.pk.name)",
+  "self.model._meta.pk.name",
+  "100",
+  "2",
+  "re.escape()",
+  "'(re_compile|re\\.(compile|search|match))'",
+  "'django/**.py'",
+  "200",
+  "b18650a2634890aa758abae2f33875daa13a9ba3",
+  "1",
+  "https://github.com/django/django/blob/ef93fd4683645635d3597e17c23f9ed862dd716b/django/contrib/admin/options.py#L1634",
+  "2",
+  "https://docs.djangoproject.com/en/dev/topics/forms/formsets/#customizing-a-formset-s-prefix"
+ ],
+ "prompt_sha256": "f39a81785eba79f96a10a1f3fa3b725b3e35fd853e0dfc22c8b04655f4434cba",
+ "raw": "<rewrite>\n**Possible data loss in admin changeform view when using regex special characters in formset prefix**\n\n**Description**  \n\u27e6P1\u27e7  \n\nWhile examining the file \u27e6P2\u27e7 (referenced in \u27e6P3\u27e7) for an unrelated ticket, I stumbled upon this line:\n\n\u27e6P4\u27e7 = \u27e6P5\u27e7(r\u27e6P6\u27e7.\u27e6P7\u27e7)\n\nHere a regular\u2011expression pattern is assembled via string formatting. If the inserted value contains characters that are special to regex, the resulting pattern can behave incorrectly. The identifier \u27e6P8\u27e7 is probably safe \u2013 I\u2019m not \u27e6P9\u27e7% certain \u2013 because Python enforces identifier syntax rules. The formset prefix, however, has no such restrictions [\u27e6P10\u27e7] and may contain any number of regex metacharacters.\n\n**Expected behaviour**  \nThe prefix should be treated as a literal when the regex is built, for instance by employing \u27e6P11\u27e7.\n\n**Observed behaviour**  \nSupplying a prefix with regex\u2011special characters leads to a malformed pattern, which can cause unintended matches and potential data loss in the admin changeform view.\n\n**Search for similar code**  \nRunning a git grep (git grep -E \u27e6P12\u27e7 -- \u27e6P13\u27e7) yields about \u27e6P14\u27e7 hits. A quick visual scan of those results did not uncover any further occurrences of this exact pattern.\n\n**Additional information**  \nThe problem is a regression that first appeared in \u27e6P15\u27e7.\n\n\u27e6P16\u27e7\u202f\u27e6P17\u27e7  \n\u27e6P18\u27e7\u202f\u27e6P19\u27e7\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1293,
+  "prompt_tokens": 630,
+  "total_tokens": 1923,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 882,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "**Possible data loss in admin changeform view when using regex special characters in formset prefix**\n\n**Description**  \n\u27e6P1\u27e7  \n\nWhile examining the file \u27e6P2\u27e7 (referenced in \u27e6P3\u27e7) for an unrelated ticket, I stumbled upon this line:\n\n\u27e6P4\u27e7 = \u27e6P5\u27e7(r\u27e6P6\u27e7.\u27e6P7\u27e7)\n\nHere a regular\u2011expression pattern is assembled via string formatting. If the inserted value contains characters that are special to regex, the resulting pattern can behave incorrectly. The identifier \u27e6P8\u27e7 is probably safe \u2013 I\u2019m not \u27e6P9\u27e7% certain \u2013 because Python enforces identifier syntax rules. The formset prefix, however, has no such restrictions [\u27e6P10\u27e7] and may contain any number of regex metacharacters.\n\n**Expected behaviour**  \nThe prefix should be treated as a literal when the regex is built, for instance by employing \u27e6P11\u27e7.\n\n**Observed behaviour**  \nSupplying a prefix with regex\u2011special characters leads to a malformed pattern, which can cause unintended matches and potential data loss in the admin changeform view.\n\n**Search for similar code**  \nRunning a git grep (git grep -E \u27e6P12\u27e7 -- \u27e6P13\u27e7) yields about \u27e6P14\u27e7 hits. A quick visual scan of those results did not uncover any further occurrences of this exact pattern.\n\n**Additional information**  \nThe problem is a regression that first appeared in \u27e6P15\u27e7.\n\n\u27e6P16\u27e7\u202f\u27e6P17\u27e7  \n\u27e6P18\u27e7\u202f\u27e6P19\u27e7",
+ "rewrite": "**Possible data loss in admin changeform view when using regex special characters in formset prefix**\n\n**Description**  \n\t \n\t\t(last modified by Baptiste Mispelon)\n\t   \n\nWhile examining the file admin/options.py (referenced in 1) for an unrelated ticket, I stumbled upon this line:\n\npk_pattern = re.compile(r'{}-\\d+-{}$'.format(prefix, self.model._meta.pk.name))\n\nHere a regular\u2011expression pattern is assembled via string formatting. If the inserted value contains characters that are special to regex, the resulting pattern can behave incorrectly. The identifier self.model._meta.pk.name is probably safe \u2013 I\u2019m not 100% certain \u2013 because Python enforces identifier syntax rules. The formset prefix, however, has no such restrictions [2] and may contain any number of regex metacharacters.\n\n**Expected behaviour**  \nThe prefix should be treated as a literal when the regex is built, for instance by employing re.escape().\n\n**Observed behaviour**  \nSupplying a prefix with regex\u2011special characters leads to a malformed pattern, which can cause unintended matches and potential data loss in the admin changeform view.\n\n**Search for similar code**  \nRunning a git grep (git grep -E '(re_compile|re\\.(compile|search|match))' -- 'django/**.py') yields about 200 hits. A quick visual scan of those results did not uncover any further occurrences of this exact pattern.\n\n**Additional information**  \nThe problem is a regression that first appeared in b18650a2634890aa758abae2f33875daa13a9ba3.\n\n1\u202fhttps://github.com/django/django/blob/ef93fd4683645635d3597e17c23f9ed862dd716b/django/contrib/admin/options.py#L1634  \n2\u202fhttps://docs.djangoproject.com/en/dev/topics/forms/formsets/#customizing-a-formset-s-prefix",
+ "status": "generated"
+}

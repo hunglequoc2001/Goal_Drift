@@ -1,0 +1,55 @@
+{
+ "instance_id": "matplotlib__matplotlib-25311",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "8c84349cc7e48bd9b1baae61adedb8afde81ce781174d940086db4d676e7d475",
+ "raw": "<summary>Require the offsetbox to store a None canvas attribute instead of a property.</summary>\n<requirement>The OffsetBox class must store a public attribute named\u202f`canvas` that is explicitly set to\u202f`None` during initialization (rather than referencing the figure\u2019s canvas). This attribute must remain\u202f`None` after pickling and unpickling, ensuring that no FigureCanvas object is serialized. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"lib/matplotlib/offsetbox.py\"><search>self.got_artist = False</search><replace>self.got_artist = False\n        self.canvas = None</replace></source_edit>\n<source_edit file=\"lib/matplotlib/offsetbox.py\"><search>self._use_blit = use_blit and self.canvas.supports_blit</search><replace>self._use_blit = use_blit and self.ref_artist.figure.canvas.supports_blit</replace></source_edit>\n<source_edit file=\"lib/matplotlib/offsetbox.py\"><search>    # A property, not an attribute, to maintain picklability.\n    canvas = property(lambda self: self.ref_artist.figure.canvas)</search><replace></replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_pickle.py\"><search>loaded.canvas.draw()</search><replace>loaded.canvas.draw()\n    # Verify that any AnnotationBbox objects have their canvas attribute set to None\n    from matplotlib.offsetbox import AnnotationBbox\n    for ab in loaded.findobj(AnnotationBbox):\n        assert ab.canvas is None</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1914,
+  "prompt_tokens": 1410,
+  "total_tokens": 3324,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1569,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Require the offsetbox to store a None canvas attribute instead of a property.",
+ "requirement": "The OffsetBox class must store a public attribute named\u202f`canvas` that is explicitly set to\u202f`None` during initialization (rather than referencing the figure\u2019s canvas). This attribute must remain\u202f`None` after pickling and unpickling, ensuring that no FigureCanvas object is serialized. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/offsetbox.py",
+   "search": "self.got_artist = False",
+   "replace": "self.got_artist = False\n        self.canvas = None"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/offsetbox.py",
+   "search": "self._use_blit = use_blit and self.canvas.supports_blit",
+   "replace": "self._use_blit = use_blit and self.ref_artist.figure.canvas.supports_blit"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/offsetbox.py",
+   "search": "    # A property, not an attribute, to maintain picklability.\n    canvas = property(lambda self: self.ref_artist.figure.canvas)",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_pickle.py",
+   "search": "loaded.canvas.draw()",
+   "replace": "loaded.canvas.draw()\n    # Verify that any AnnotationBbox objects have their canvas attribute set to None\n    from matplotlib.offsetbox import AnnotationBbox\n    for ab in loaded.findobj(AnnotationBbox):\n        assert ab.canvas is None"
+  }
+ ],
+ "status": "generated"
+}

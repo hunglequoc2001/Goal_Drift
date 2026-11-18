@@ -1,0 +1,31 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9230",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 24175,
+ "raw": "<summary>Param type parsing now splits on the first whitespace and discards any generic brackets, keeping only the base type name.</summary>\n<requirement>When processing ``:param`` fields, the parser must split the field argument on the first whitespace (not the last) to separate the type and name, and then keep only the part of the type before any ``[`` character (i.e., the base type name). This supersedes any previous expectation that the full generic type, including brackets and inner types, is preserved.</requirement>\n<source_edit file=\"sphinx/util/docfields.py\"><search>argtype, argname = fieldarg.rsplit(None, 1)</search><replace>argtype, argname = fieldarg.split(None, 1)\nargtype = argtype.split('[', 1)[0]</replace></source_edit>\n<test_edit file=\"tests/test_domain_py.py\"><search>assert_node(doctree[3][1][0][0][1][0][3][0],\n                ([addnodes.literal_strong, \"params\"],\n                 \" (\",\n                 [pending_xref, addnodes.literal_emphasis, \"Dict\"],\n                 [addnodes.literal_emphasis, \"[\"],\n                 [pending_xref, addnodes.literal_emphasis, \"str\"],\n                 [addnodes.literal_emphasis, \", \"],\n                 [pending_xref, addnodes.literal_emphasis, \"str\"],\n                 [addnodes.literal_emphasis, \"]\"],\n                 \")\",\n                 \" -- \",\n                 \"blah blah\"))\n    assert_node(doctree[3][1][0][0][1][0][3][0][2], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"Dict\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n    assert_node(doctree[3][1][0][0][1][0][3][0][4], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"str\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n    assert_node(doctree[3][1][0][0][1][0][3][0][6], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"str\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})</search><replace>assert_node(doctree[3][1][0][0][1][0][3][0],\n                ([addnodes.literal_strong, \"params\"],\n                 \" (\",\n                 [pending_xref, addnodes.literal_emphasis, \"Dict\"],\n                 \")\",\n                 \" -- \",\n                 \"blah blah\"))\n    # generic type arguments are omitted per the updated requirement</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Param type parsing now splits on the first whitespace and discards any generic brackets, keeping only the base type name.",
+ "requirement": "When processing ``:param`` fields, the parser must split the field argument on the first whitespace (not the last) to separate the type and name, and then keep only the part of the type before any ``[`` character (i.e., the base type name). This supersedes any previous expectation that the full generic type, including brackets and inner types, is preserved.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/util/docfields.py",
+   "search": "argtype, argname = fieldarg.rsplit(None, 1)",
+   "replace": "argtype, argname = fieldarg.split(None, 1)\nargtype = argtype.split('[', 1)[0]"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_domain_py.py",
+   "search": "assert_node(doctree[3][1][0][0][1][0][3][0],\n                ([addnodes.literal_strong, \"params\"],\n                 \" (\",\n                 [pending_xref, addnodes.literal_emphasis, \"Dict\"],\n                 [addnodes.literal_emphasis, \"[\"],\n                 [pending_xref, addnodes.literal_emphasis, \"str\"],\n                 [addnodes.literal_emphasis, \", \"],\n                 [pending_xref, addnodes.literal_emphasis, \"str\"],\n                 [addnodes.literal_emphasis, \"]\"],\n                 \")\",\n                 \" -- \",\n                 \"blah blah\"))\n    assert_node(doctree[3][1][0][0][1][0][3][0][2], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"Dict\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n    assert_node(doctree[3][1][0][0][1][0][3][0][4], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"str\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n    assert_node(doctree[3][1][0][0][1][0][3][0][6], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"str\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})",
+   "replace": "assert_node(doctree[3][1][0][0][1][0][3][0],\n                ([addnodes.literal_strong, \"params\"],\n                 \" (\",\n                 [pending_xref, addnodes.literal_emphasis, \"Dict\"],\n                 \")\",\n                 \" -- \",\n                 \"blah blah\"))\n    # generic type arguments are omitted per the updated requirement"
+  }
+ ]
+}

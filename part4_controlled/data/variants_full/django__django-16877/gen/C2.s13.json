@@ -1,0 +1,61 @@
+{
+ "instance_id": "django__django-16877",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "939435c10e9b68f7fcc6e290f439210cd77cd6aded5808956ff52d0128391954",
+ "raw": "<summary>escapeseq now escapes strings directly instead of iterating over their characters</summary>\n<requirement>The ``escapeseq`` filter must treat plain strings as a single value: if the input is a string, it should be escaped and the escaped string returned. Only non\u2011string iterables (e.g., lists, tuples, sets) should be processed element\u2011wise, returning a list of escaped elements. This supersedes any previous expectation that strings are iterated character\u2011by\u2011character.</requirement>\n<source_edit file=\"django/template/defaultfilters.py\"><search>def escapeseq(value):</search><replace>def escapeseq(value):\n    \"\"\"\n    An \"escape\" filter for sequences. If the value is a string, escape it and\n    return the escaped string. Otherwise, treat it as an iterable and escape\n    each element, returning a list with the results.\n    \"\"\"\n    if isinstance(value, str):\n        return conditional_escape(value)\n    return [conditional_escape(obj) for obj in value]</replace></source_edit>\n<test_edit file=\"tests/template_tests/filter_tests/test_escapeseq.py\"><search>\"escapeseq_basic\": (</search><replace>\"escapeseq_basic\": (\n                '{{ a|escapeseq }} -- {{ b|escapeseq }}'\n            ),</replace></test_edit>\n<test_edit file=\"tests/template_tests/filter_tests/test_escapeseq.py\"><search>\"escapeseq_autoescape_off\": (</search><replace>\"escapeseq_autoescape_off\": (\n                '{% autoescape off %}{{ a|escapeseq }} -- {{ b|escapeseq }}{% endautoescape %}'\n            ),</replace></test_edit>\n<test_edit file=\"tests/template_tests/filter_tests/test_escapeseq.py\"><search>self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&y, <p>\")</search><replace>self.assertEqual(output, \"x&amp;y&lt; -- x&y<\")</replace></test_edit>\n<test_edit file=\"tests/template_tests/filter_tests/test_escapeseq.py\"><search>self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&y, <p>\")</search><replace>self.assertEqual(output, \"x&amp;y&lt; -- x&y<\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2186,
+  "prompt_tokens": 1574,
+  "total_tokens": 3760,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1664,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "escapeseq now escapes strings directly instead of iterating over their characters",
+ "requirement": "The ``escapeseq`` filter must treat plain strings as a single value: if the input is a string, it should be escaped and the escaped string returned. Only non\u2011string iterables (e.g., lists, tuples, sets) should be processed element\u2011wise, returning a list of escaped elements. This supersedes any previous expectation that strings are iterated character\u2011by\u2011character.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/template/defaultfilters.py",
+   "search": "def escapeseq(value):",
+   "replace": "def escapeseq(value):\n    \"\"\"\n    An \"escape\" filter for sequences. If the value is a string, escape it and\n    return the escaped string. Otherwise, treat it as an iterable and escape\n    each element, returning a list with the results.\n    \"\"\"\n    if isinstance(value, str):\n        return conditional_escape(value)\n    return [conditional_escape(obj) for obj in value]"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_escapeseq.py",
+   "search": "\"escapeseq_basic\": (",
+   "replace": "\"escapeseq_basic\": (\n                '{{ a|escapeseq }} -- {{ b|escapeseq }}'\n            ),"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_escapeseq.py",
+   "search": "\"escapeseq_autoescape_off\": (",
+   "replace": "\"escapeseq_autoescape_off\": (\n                '{% autoescape off %}{{ a|escapeseq }} -- {{ b|escapeseq }}{% endautoescape %}'\n            ),"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_escapeseq.py",
+   "search": "self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&y, <p>\")",
+   "replace": "self.assertEqual(output, \"x&amp;y&lt; -- x&y<\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_escapeseq.py",
+   "search": "self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&y, <p>\")",
+   "replace": "self.assertEqual(output, \"x&amp;y&lt; -- x&y<\")"
+  }
+ ],
+ "status": "generated"
+}

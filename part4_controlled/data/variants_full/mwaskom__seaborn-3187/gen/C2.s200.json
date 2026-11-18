@@ -1,0 +1,43 @@
+{
+ "instance_id": "mwaskom__seaborn-3187",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 23070,
+ "raw": "<summary>Legends must display numeric values as plain integers without decimal points.</summary>\n<requirement>When generating legends for numeric scales, the legend labels should be formatted as integer strings (e.g., \u201c100000000\u201d) with no decimal point or scientific notation. This supersedes any previous expectation that legends may include offsets, scientific notation, or decimal fractions.</requirement>\n\n<source_edit file=\"seaborn/_core/scales.py\"><search>labels = axis.major.formatter.format_ticks(locs)</search><replace>labels = [str(int(float(l))) for l in axis.major.formatter.format_ticks(locs)]</replace></source_edit>\n\n<source_edit file=\"seaborn/utils.py\"><search>formatted_levels = [formatter(x) for x in raw_levels]</search><replace>formatted_levels = [str(int(float(formatter(x)))) for x in raw_levels]</replace></source_edit>\n\n<test_edit file=\"tests/_core/test_plot.py\"><search>assert float(text.get_text()) > 1e7</search><replace>assert int(text.get_text()) > 1e7</replace></test_edit>\n\n<test_edit file=\"tests/test_relational.py\"><search>assert float(text.get_text()) > 1e7</search><replace>assert int(text.get_text()) > 1e7</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Legends must display numeric values as plain integers without decimal points.",
+ "requirement": "When generating legends for numeric scales, the legend labels should be formatted as integer strings (e.g., \u201c100000000\u201d) with no decimal point or scientific notation. This supersedes any previous expectation that legends may include offsets, scientific notation, or decimal fractions.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "seaborn/_core/scales.py",
+   "search": "labels = axis.major.formatter.format_ticks(locs)",
+   "replace": "labels = [str(int(float(l))) for l in axis.major.formatter.format_ticks(locs)]"
+  },
+  {
+   "kind": "source_edit",
+   "file": "seaborn/utils.py",
+   "search": "formatted_levels = [formatter(x) for x in raw_levels]",
+   "replace": "formatted_levels = [str(int(float(formatter(x)))) for x in raw_levels]"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/_core/test_plot.py",
+   "search": "assert float(text.get_text()) > 1e7",
+   "replace": "assert int(text.get_text()) > 1e7"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_relational.py",
+   "search": "assert float(text.get_text()) > 1e7",
+   "replace": "assert int(text.get_text()) > 1e7"
+  }
+ ]
+}

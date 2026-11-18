@@ -1,0 +1,43 @@
+{
+ "instance_id": "matplotlib__matplotlib-25122",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "beaf3a33c0853de6a92dc4c29751e95349f7d1ef5119f4b448c6ffc95a329b3b",
+ "raw": "<summary>Require non\u2011negative windows for spectral calculations.</summary>\n<requirement>The _spectral_helper function must reject any window array that contains negative values. If a negative value is present, the function should raise a ValueError with the exact message \u201cWindow must be non\u2011negative\u201d. This requirement supersedes any previous expectation that the function would accept such windows.</requirement>\n<source_edit file=\"lib/matplotlib/mlab.py\"><search>result = np.abs(result) / window.sum()</search><replace>if np.any(window < 0):\n    raise ValueError(\"Window must be non-negative\")\nresult = np.abs(result) / window.sum()</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_mlab.py\"><search>def test_psd_window_flattop(self):</search><replace>def test_psd_window_flattop(self):\n        # flattop window should raise ValueError for containing negative values\n        a = [0.21557895, 0.41663158, 0.277263158, 0.083578947, 0.006947368]\n        fac = np.linspace(-np.pi, np.pi, self.NFFT_density_real)\n        win = np.zeros(self.NFFT_density_real)\n        for k in range(len(a)):\n            win += a[k] * np.cos(k * fac)\n        with pytest.raises(ValueError, match=\"Window must be non-negative\"):\n            mlab.psd(x=self.y,\n                     NFFT=self.NFFT_density,\n                     Fs=self.Fs,\n                     noverlap=0,\n                     sides=self.sides,\n                     window=win)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1708,
+  "prompt_tokens": 2238,
+  "total_tokens": 3946,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1352,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Require non\u2011negative windows for spectral calculations.",
+ "requirement": "The _spectral_helper function must reject any window array that contains negative values. If a negative value is present, the function should raise a ValueError with the exact message \u201cWindow must be non\u2011negative\u201d. This requirement supersedes any previous expectation that the function would accept such windows.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/mlab.py",
+   "search": "result = np.abs(result) / window.sum()",
+   "replace": "if np.any(window < 0):\n    raise ValueError(\"Window must be non-negative\")\nresult = np.abs(result) / window.sum()"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_mlab.py",
+   "search": "def test_psd_window_flattop(self):",
+   "replace": "def test_psd_window_flattop(self):\n        # flattop window should raise ValueError for containing negative values\n        a = [0.21557895, 0.41663158, 0.277263158, 0.083578947, 0.006947368]\n        fac = np.linspace(-np.pi, np.pi, self.NFFT_density_real)\n        win = np.zeros(self.NFFT_density_real)\n        for k in range(len(a)):\n            win += a[k] * np.cos(k * fac)\n        with pytest.raises(ValueError, match=\"Window must be non-negative\"):\n            mlab.psd(x=self.y,\n                     NFFT=self.NFFT_density,\n                     Fs=self.Fs,\n                     noverlap=0,\n                     sides=self.sides,\n                     window=win)"
+  }
+ ],
+ "status": "generated"
+}

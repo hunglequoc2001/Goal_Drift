@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-11555",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "963a29f9c3c634108c7c00161d1fff4d10d52800afc53e21e96d6d1c8c54d5d3",
+ "raw": "<summary>Meta.ordering OrderBy objects must preserve their descending flag</summary>\n<requirement>When processing a model\u2019s Meta.ordering, if an entry is an OrderBy instance the ordering direction must be taken from that instance (its .descending attribute). The find_ordering_name method should therefore return a tuple (order_by_obj, order_by_obj.descending) instead of always assuming ascending. This supersedes any previous expectation that all OrderBy objects are treated as ascending.</requirement>\n<source_edit file=\"django/db/models/sql/compiler.py\"><search>results.append((item, False))</search><replace>results.append((item, item.descending))</replace></source_edit>\n<test_edit file=\"tests/ordering/models.py\"><search>class ChildArticle(Article):\\n    pass</search><replace>class ChildArticle(Article):\\n    pass\\n\\nclass DescArticle(Article):\\n    class Meta:\\n        ordering = (models.F('author').desc(nulls_last=True), 'id')</replace></test_edit>\n<test_edit file=\"tests/ordering/tests.py\"><search>from .models import Article, Author, ChildArticle, OrderedByFArticle, Reference</search><replace>from .models import Article, Author, ChildArticle, DescArticle, OrderedByFArticle, Reference</replace></test_edit>\n<test_edit file=\"tests/ordering/tests.py\"><search>self.assertSequenceEqual(articles, [ca4, ca2, ca1, ca3])</search><replace>self.assertSequenceEqual(articles, [ca4, ca2, ca1, ca3])\\n\\n    def test_descending_ordering_expression_respected(self):\\n        # Create articles with a descending ordering on author (nulls last).\\n        da1 = DescArticle.objects.create(\\n            headline='h1',\\n            pub_date=datetime(2005, 7, 27),\\n            author=self.author_1,\\n        )\\n        da2 = DescArticle.objects.create(\\n            headline='h2',\\n            pub_date=datetime(2005, 7, 27),\\n            author=self.author_2,\\n        )\\n        da3 = DescArticle.objects.create(\\n            headline='h3',\\n            pub_date=datetime(2005, 7, 27),\\n        )\\n        articles = DescArticle.objects.all()\\n        # Expect descending author (author_2 first), nulls_last puts the article without an author last.\\n        self.assertSequenceEqual(articles, [da2, da1, da3])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3330,
+  "prompt_tokens": 1334,
+  "total_tokens": 4664,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2765,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Meta.ordering OrderBy objects must preserve their descending flag",
+ "requirement": "When processing a model\u2019s Meta.ordering, if an entry is an OrderBy instance the ordering direction must be taken from that instance (its .descending attribute). The find_ordering_name method should therefore return a tuple (order_by_obj, order_by_obj.descending) instead of always assuming ascending. This supersedes any previous expectation that all OrderBy objects are treated as ascending.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/compiler.py",
+   "search": "results.append((item, False))",
+   "replace": "results.append((item, item.descending))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/ordering/models.py",
+   "search": "class ChildArticle(Article):\\n    pass",
+   "replace": "class ChildArticle(Article):\\n    pass\\n\\nclass DescArticle(Article):\\n    class Meta:\\n        ordering = (models.F('author').desc(nulls_last=True), 'id')"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/ordering/tests.py",
+   "search": "from .models import Article, Author, ChildArticle, OrderedByFArticle, Reference",
+   "replace": "from .models import Article, Author, ChildArticle, DescArticle, OrderedByFArticle, Reference"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/ordering/tests.py",
+   "search": "self.assertSequenceEqual(articles, [ca4, ca2, ca1, ca3])",
+   "replace": "self.assertSequenceEqual(articles, [ca4, ca2, ca1, ca3])\\n\\n    def test_descending_ordering_expression_respected(self):\\n        # Create articles with a descending ordering on author (nulls last).\\n        da1 = DescArticle.objects.create(\\n            headline='h1',\\n            pub_date=datetime(2005, 7, 27),\\n            author=self.author_1,\\n        )\\n        da2 = DescArticle.objects.create(\\n            headline='h2',\\n            pub_date=datetime(2005, 7, 27),\\n            author=self.author_2,\\n        )\\n        da3 = DescArticle.objects.create(\\n            headline='h3',\\n            pub_date=datetime(2005, 7, 27),\\n        )\\n        articles = DescArticle.objects.all()\\n        # Expect descending author (author_2 first), nulls_last puts the article without an author last.\\n        self.assertSequenceEqual(articles, [da2, da1, da3])"
+  }
+ ],
+ "status": "generated"
+}

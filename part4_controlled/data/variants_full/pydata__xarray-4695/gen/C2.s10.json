@@ -1,0 +1,49 @@
+{
+ "instance_id": "pydata__xarray-4695",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "f399033fad85d571ed22eb91ae481b09057527b88184a33815099707788c29b6",
+ "raw": "<summary>Disallow using dimension names that collide with ``DataArray.sel`` keyword arguments.</summary>\n<requirement>When calling ``.loc`` on a DataArray, if any dimension name in the indexing dictionary matches a keyword argument accepted by ``DataArray.sel`` (e.g., ``method``), the operation must raise a ``ValueError`` with a clear message indicating the conflict. This requirement supersedes any previous expectation that such a call should succeed silently.</requirement>\n<source_edit file=\"xarray/core/dataarray.py\"><search>return self.data_array.sel(key)</search><replace>        # Raise an error if a dimension name collides with a ``sel`` argument\n        if \"method\" in key:\n            raise ValueError(\"Dimension name conflicts with sel argument 'method'\")\n        return self.data_array.sel(**key)</replace></source_edit>\n<test_edit file=\"xarray/tests/test_dataarray.py\"><search>import numpy as np</search><replace>import numpy as np\nimport pytest</replace></test_edit>\n<test_edit file=\"xarray/tests/test_dataarray.py\"><search>np.testing.assert_array_equal(\n            da.loc[dict(dim1=[\"x\", \"y\"], method=[\"a\"])], [[0], [1]]\n        )</search><replace>with pytest.raises(ValueError):\n            da.loc[dict(dim1=[\"x\", \"y\"], method=[\"a\"])]</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1678,
+  "prompt_tokens": 2236,
+  "total_tokens": 3914,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1372,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow using dimension names that collide with ``DataArray.sel`` keyword arguments.",
+ "requirement": "When calling ``.loc`` on a DataArray, if any dimension name in the indexing dictionary matches a keyword argument accepted by ``DataArray.sel`` (e.g., ``method``), the operation must raise a ``ValueError`` with a clear message indicating the conflict. This requirement supersedes any previous expectation that such a call should succeed silently.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/dataarray.py",
+   "search": "return self.data_array.sel(key)",
+   "replace": "        # Raise an error if a dimension name collides with a ``sel`` argument\n        if \"method\" in key:\n            raise ValueError(\"Dimension name conflicts with sel argument 'method'\")\n        return self.data_array.sel(**key)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_dataarray.py",
+   "search": "import numpy as np",
+   "replace": "import numpy as np\nimport pytest"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_dataarray.py",
+   "search": "np.testing.assert_array_equal(\n            da.loc[dict(dim1=[\"x\", \"y\"], method=[\"a\"])], [[0], [1]]\n        )",
+   "replace": "with pytest.raises(ValueError):\n            da.loc[dict(dim1=[\"x\", \"y\"], method=[\"a\"])]"
+  }
+ ],
+ "status": "generated"
+}

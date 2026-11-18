@@ -1,0 +1,43 @@
+{
+ "instance_id": "pytest-dev__pytest-7205",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "9f6c85a18cd8673db51e44aa0c8327d33987e36dd5eeaa806301fa939f5dede3",
+ "raw": "<summary>Display bytes fixture parameters as decoded text instead of their byte literal representation.</summary>\n<requirement>When showing fixture parameters (cached_param) in the `--setup-show` output, bytes objects must be decoded to UTF-8 (using replacement for decoding errors) and displayed as plain text without the leading ``b`` prefix. For all other types, the existing safe representation (`saferepr` with a max size of 42) should continue to be used. This supersedes any previous expectation that bytes would be shown using their literal representation.</requirement>\n<source_edit file=\"src/_pytest/setuponly.py\"><search>tw.write(\"[{}]\".format(saferepr(fixturedef.cached_param, maxsize=42)))</search><replace>if isinstance(fixturedef.cached_param, bytes):\n    # Decode bytes to a readable string for display.\n    _display = fixturedef.cached_param.decode(\"utf-8\", errors=\"replace\")\nelse:\n    _display = saferepr(fixturedef.cached_param, maxsize=42)\ntw.write(\"[{}]\".format(_display))</replace></source_edit>\n<test_edit file=\"testing/test_setuponly.py\"><search>def test_show_fixture_action_with_bytes(testdir):</search><replace>def test_show_fixture_action_with_bytes(testdir):\n    # Issue 7126, BytesWarning when using --setup-show with bytes parameter\n    test_file = testdir.makepyfile(\n        \"\"\"\n        import pytest\n\n        @pytest.mark.parametrize('data', [b'Hello World'])\n        def test_data(data):\n            pass\n        \"\"\"\n    )\n    result = testdir.run(\n        sys.executable, \"-bb\", \"-m\", \"pytest\", \"--setup-show\", str(test_file)\n    )\n    assert result.ret == 0\n    # The output should show the decoded bytes value without the ``b`` prefix.\n    result.stdout.fnmatch_lines([\"*SETUP*data*Hello World*\"])\n    assert \"b'Hello World'\" not in result.stdout.str()</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1493,
+  "prompt_tokens": 2632,
+  "total_tokens": 4125,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1057,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Display bytes fixture parameters as decoded text instead of their byte literal representation.",
+ "requirement": "When showing fixture parameters (cached_param) in the `--setup-show` output, bytes objects must be decoded to UTF-8 (using replacement for decoding errors) and displayed as plain text without the leading ``b`` prefix. For all other types, the existing safe representation (`saferepr` with a max size of 42) should continue to be used. This supersedes any previous expectation that bytes would be shown using their literal representation.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/setuponly.py",
+   "search": "tw.write(\"[{}]\".format(saferepr(fixturedef.cached_param, maxsize=42)))",
+   "replace": "if isinstance(fixturedef.cached_param, bytes):\n    # Decode bytes to a readable string for display.\n    _display = fixturedef.cached_param.decode(\"utf-8\", errors=\"replace\")\nelse:\n    _display = saferepr(fixturedef.cached_param, maxsize=42)\ntw.write(\"[{}]\".format(_display))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_setuponly.py",
+   "search": "def test_show_fixture_action_with_bytes(testdir):",
+   "replace": "def test_show_fixture_action_with_bytes(testdir):\n    # Issue 7126, BytesWarning when using --setup-show with bytes parameter\n    test_file = testdir.makepyfile(\n        \"\"\"\n        import pytest\n\n        @pytest.mark.parametrize('data', [b'Hello World'])\n        def test_data(data):\n            pass\n        \"\"\"\n    )\n    result = testdir.run(\n        sys.executable, \"-bb\", \"-m\", \"pytest\", \"--setup-show\", str(test_file)\n    )\n    assert result.ret == 0\n    # The output should show the decoded bytes value without the ``b`` prefix.\n    result.stdout.fnmatch_lines([\"*SETUP*data*Hello World*\"])\n    assert \"b'Hello World'\" not in result.stdout.str()"
+  }
+ ],
+ "status": "generated"
+}

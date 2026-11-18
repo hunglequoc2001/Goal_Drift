@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-17084",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 21792,
+ "raw": "<summary>Window annotations without ORDER BY no longer force subquery wrapping.</summary>\n<requirement>When an aggregation references a field that was defined using a Window expression **without** an ORDER BY clause, the ORM must not wrap the query in a subquery; the resulting SQL should contain exactly **1** SELECT statement. This supersedes any previous expectation that any Window reference forces subquery wrapping.</requirement>\n<source_edit file=\"django/db/models/sql/query.py\"><search>            refs_window |= any(\n                getattr(self.annotations[ref], \"contains_over_clause\", True)\n                for ref in aggregate.get_refs()\n            )</search><replace>            refs_window |= any(\n                getattr(self.annotations[ref], \"order_by\", None)\n                for ref in aggregate.get_refs()\n            )</replace></source_edit>\n<test_edit file=\"tests/aggregation/tests.py\"><search>self.assertEqual(sql.count(\"select\"), 2, \"Subquery wrapping required\")</search><replace>self.assertEqual(sql.count(\"select\"), 1, \"Subquery wrapping required\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Window annotations without ORDER BY no longer force subquery wrapping.",
+ "requirement": "When an aggregation references a field that was defined using a Window expression **without** an ORDER BY clause, the ORM must not wrap the query in a subquery; the resulting SQL should contain exactly **1** SELECT statement. This supersedes any previous expectation that any Window reference forces subquery wrapping.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/query.py",
+   "search": "            refs_window |= any(\n                getattr(self.annotations[ref], \"contains_over_clause\", True)\n                for ref in aggregate.get_refs()\n            )",
+   "replace": "            refs_window |= any(\n                getattr(self.annotations[ref], \"order_by\", None)\n                for ref in aggregate.get_refs()\n            )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/aggregation/tests.py",
+   "search": "self.assertEqual(sql.count(\"select\"), 2, \"Subquery wrapping required\")",
+   "replace": "self.assertEqual(sql.count(\"select\"), 1, \"Subquery wrapping required\")"
+  }
+ ]
+}

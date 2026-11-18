@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-21596",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 26034,
+ "raw": "<summary>Intersecting an ImageSet with Reals now returns a symbolic ConditionSet for the zero\u2011imaginary condition instead of enumerating linear solutions as a FiniteSet.</summary>\n<requirement>When an ImageSet is intersected with the set of real numbers, the result must be expressed as an ImageSet whose base set is a ConditionSet (or a Union of ConditionSets) that enforces the imaginary part of the defining expression to be zero. This supersedes any previous expectation that linear imaginary parts be solved to produce a FiniteSet of index values.</requirement>\n<source_edit file=\"sympy/sets/handlers/intersection.py\"><search>def _solution_union(exprs, sym):\n            # return a union of linear solutions to i in expr;\n            # if i cannot be solved, use a ConditionSet for solution\n            sols = []\n            for i in exprs:\n                x, xis = solve_linear(i, 0, [sym])\n                if x == sym:\n                    sols.append(FiniteSet(xis))\n                else:\n                    sols.append(ConditionSet(sym, Eq(i, 0)))\n            return Union(*sols)</search><replace>def _solution_union(exprs, sym):\n            # return a union of ConditionSets representing solutions to i = 0\n            return Union(*[ConditionSet(sym, Eq(i, 0)) for i in exprs])</replace></source_edit>\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>assert imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers).intersect(S.Reals) == FiniteSet(-1, 1)</search><replace>assert imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers).intersect(S.Reals) == ImageSet(Lambda(n, n), ConditionSet(n, Eq((n - 1)*(n + 1), 0), S.Integers))</replace></test_edit>\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>assert imageset(Lambda(n, n + im*I), S.Integers\n        ).intersect(S.Reals) == FiniteSet(1)</search><replace>assert imageset(Lambda(n, n + im*I), S.Integers\n        ).intersect(S.Reals) == ImageSet(Lambda(n, n), ConditionSet(n, Eq((n - 1)*(n + S.Half), 0), S.Integers))</replace></test_edit>\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>assert imageset(Lambda(n, n + im*(n + 1)*I), S.Naturals0\n        ).intersect(S.Reals) == FiniteSet(1)</search><replace>assert imageset(Lambda(n, n + im*(n + 1)*I), S.Naturals0\n        ).intersect(S.Reals) == ImageSet(Lambda(n, n), ConditionSet(n, Eq((n - 1)*(n + S.Half)*(n + 1), 0), S.Naturals0))</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Intersecting an ImageSet with Reals now returns a symbolic ConditionSet for the zero\u2011imaginary condition instead of enumerating linear solutions as a FiniteSet.",
+ "requirement": "When an ImageSet is intersected with the set of real numbers, the result must be expressed as an ImageSet whose base set is a ConditionSet (or a Union of ConditionSets) that enforces the imaginary part of the defining expression to be zero. This supersedes any previous expectation that linear imaginary parts be solved to produce a FiniteSet of index values.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/handlers/intersection.py",
+   "search": "def _solution_union(exprs, sym):\n            # return a union of linear solutions to i in expr;\n            # if i cannot be solved, use a ConditionSet for solution\n            sols = []\n            for i in exprs:\n                x, xis = solve_linear(i, 0, [sym])\n                if x == sym:\n                    sols.append(FiniteSet(xis))\n                else:\n                    sols.append(ConditionSet(sym, Eq(i, 0)))\n            return Union(*sols)",
+   "replace": "def _solution_union(exprs, sym):\n            # return a union of ConditionSets representing solutions to i = 0\n            return Union(*[ConditionSet(sym, Eq(i, 0)) for i in exprs])"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": "assert imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers).intersect(S.Reals) == FiniteSet(-1, 1)",
+   "replace": "assert imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers).intersect(S.Reals) == ImageSet(Lambda(n, n), ConditionSet(n, Eq((n - 1)*(n + 1), 0), S.Integers))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": "assert imageset(Lambda(n, n + im*I), S.Integers\n        ).intersect(S.Reals) == FiniteSet(1)",
+   "replace": "assert imageset(Lambda(n, n + im*I), S.Integers\n        ).intersect(S.Reals) == ImageSet(Lambda(n, n), ConditionSet(n, Eq((n - 1)*(n + S.Half), 0), S.Integers))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": "assert imageset(Lambda(n, n + im*(n + 1)*I), S.Naturals0\n        ).intersect(S.Reals) == FiniteSet(1)",
+   "replace": "assert imageset(Lambda(n, n + im*(n + 1)*I), S.Naturals0\n        ).intersect(S.Reals) == ImageSet(Lambda(n, n), ConditionSet(n, Eq((n - 1)*(n + S.Half)*(n + 1), 0), S.Naturals0))"
+  }
+ ]
+}

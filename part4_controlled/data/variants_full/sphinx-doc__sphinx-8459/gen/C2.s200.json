@@ -1,0 +1,43 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8459",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 14669,
+ "raw": "<summary>Ignore non\u2011fully\u2011qualified type\u2011alias targets when ``autodoc_typehints`` is set to ``\"description\"``.</summary>\n<requirement>When the configuration option ``autodoc_typehints`` is set to ``\"description\"``, any entry in ``autodoc_type_aliases`` whose replacement string does not contain a dot (i.e., is not a fully\u2011qualified name) must be ignored; the original annotation should be used instead. This supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"sphinx/ext/autodoc/typehints.py\"><search>sig = inspect.signature(obj, type_aliases=app.config.autodoc_type_aliases)</search><replace>if app.config.autodoc_typehints == 'description':\n    # In description mode, only apply aliases that resolve to a fully\u2011qualified name\n    type_aliases = {k: v for k, v in app.config.autodoc_type_aliases.items() if '.' in v}\nelse:\n    type_aliases = app.config.autodoc_type_aliases\nsig = inspect.signature(obj, type_aliases=type_aliases)</replace></source_edit>\n\n<test_edit file=\"tests/test_ext_autodoc_configs.py\"><search>      * **x** (*myint*) --</search><replace>      * **x** (*int*) --</replace></test_edit>\n<test_edit file=\"tests/test_ext_autodoc_configs.py\"><search>      * **y** (*myint*) --</search><replace>      * **y** (*int*) --</replace></test_edit>\n<test_edit file=\"tests/test_ext_autodoc_configs.py\"><search>      myint</search><replace>      int</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Ignore non\u2011fully\u2011qualified type\u2011alias targets when ``autodoc_typehints`` is set to ``\"description\"``.",
+ "requirement": "When the configuration option ``autodoc_typehints`` is set to ``\"description\"``, any entry in ``autodoc_type_aliases`` whose replacement string does not contain a dot (i.e., is not a fully\u2011qualified name) must be ignored; the original annotation should be used instead. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/typehints.py",
+   "search": "sig = inspect.signature(obj, type_aliases=app.config.autodoc_type_aliases)",
+   "replace": "if app.config.autodoc_typehints == 'description':\n    # In description mode, only apply aliases that resolve to a fully\u2011qualified name\n    type_aliases = {k: v for k, v in app.config.autodoc_type_aliases.items() if '.' in v}\nelse:\n    type_aliases = app.config.autodoc_type_aliases\nsig = inspect.signature(obj, type_aliases=type_aliases)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_configs.py",
+   "search": "      * **x** (*myint*) --",
+   "replace": "      * **x** (*int*) --"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_configs.py",
+   "search": "      * **y** (*myint*) --",
+   "replace": "      * **y** (*int*) --"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_configs.py",
+   "search": "      myint",
+   "replace": "      int"
+  }
+ ]
+}

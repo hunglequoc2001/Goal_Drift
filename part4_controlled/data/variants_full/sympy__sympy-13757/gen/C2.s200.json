@@ -1,0 +1,37 @@
+{
+ "instance_id": "sympy__sympy-13757",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 15346,
+ "raw": "<summary>Poly multiplication now evaluates only when the Poly is the left operand or when multiplied by a Number; otherwise the Mul remains unevaluated.</summary>\n<requirement>When a Poly object is multiplied, the expression should be automatically evaluated to a Poly only if the Poly appears as the left operand or if the left operand is a Number (e.g., Integer, Rational, or the symbolic imaginary unit I). If the left operand is any other commutative expression such as a Symbol, the multiplication must remain an unevaluated Mul. This rule supersedes any previous expectation that any right\u2011hand multiplication involving a Poly would be evaluated.</requirement>\n<source_edit file=\"sympy/polys/polytools.py\"><search>    _op_priority = 10.001</search><replace>    _op_priority = 10</replace></source_edit>\n<source_edit file=\"sympy/polys/polytools.py\"><search>        return cls._from_expr(rep, opt)</search><replace>        return cls._from_expr(rep, opt)\n\n    def __rmul__(self, other):\n        \"\"\"Right\u2011hand multiplication handling for Poly.\n\n        If the left operand is a Number, perform normal evaluation so that\n        the result is a Poly. For any other commutative left operand, keep\n        the multiplication unevaluated as a Mul.\n        \"\"\"\n        # Numbers (including Integer, Rational, I, etc.) should evaluate.\n        if getattr(other, 'is_Number', False):\n            return self * other\n        # For non\u2011Number left operands, return an unevaluated Mul.\n        from sympy import Mul\n        return Mul(other, self, evaluate=False)</replace></source_edit>\n<test_edit file=\"sympy/polys/tests/test_polytools.py\"><search>assert x*Poly(x) == Poly(x**2, x, domain='ZZ')</search><replace>assert (x*Poly(x)).func is Mul</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Poly multiplication now evaluates only when the Poly is the left operand or when multiplied by a Number; otherwise the Mul remains unevaluated.",
+ "requirement": "When a Poly object is multiplied, the expression should be automatically evaluated to a Poly only if the Poly appears as the left operand or if the left operand is a Number (e.g., Integer, Rational, or the symbolic imaginary unit I). If the left operand is any other commutative expression such as a Symbol, the multiplication must remain an unevaluated Mul. This rule supersedes any previous expectation that any right\u2011hand multiplication involving a Poly would be evaluated.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/polys/polytools.py",
+   "search": "    _op_priority = 10.001",
+   "replace": "    _op_priority = 10"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/polys/polytools.py",
+   "search": "        return cls._from_expr(rep, opt)",
+   "replace": "        return cls._from_expr(rep, opt)\n\n    def __rmul__(self, other):\n        \"\"\"Right\u2011hand multiplication handling for Poly.\n\n        If the left operand is a Number, perform normal evaluation so that\n        the result is a Poly. For any other commutative left operand, keep\n        the multiplication unevaluated as a Mul.\n        \"\"\"\n        # Numbers (including Integer, Rational, I, etc.) should evaluate.\n        if getattr(other, 'is_Number', False):\n            return self * other\n        # For non\u2011Number left operands, return an unevaluated Mul.\n        from sympy import Mul\n        return Mul(other, self, evaluate=False)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/polys/tests/test_polytools.py",
+   "search": "assert x*Poly(x) == Poly(x**2, x, domain='ZZ')",
+   "replace": "assert (x*Poly(x)).func is Mul"
+  }
+ ]
+}

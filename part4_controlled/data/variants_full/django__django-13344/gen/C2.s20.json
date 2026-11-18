@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-13344",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "a2aebe8f70ad9e6b6856837ec0afd900c063fda0ba7fc11084a14c6b9e0234d0",
+ "raw": "<summary>Middleware instances must never be coroutine functions, regardless of the type of get_response callable.</summary>\n<requirement>All middleware classes should remain regular (synchronous) callables. Even when the get_response argument passed to a middleware\u2019s constructor is an async coroutine function, the middleware instance itself must not be a coroutine function; the framework will handle awaiting the response internally. This requirement supersedes any prior expectation that middleware become coroutine functions when given an async get_response.</requirement>\n<source_edit file=\"django/middleware/security.py\"><search>self.redirect_host = settings.SECURE_SSL_HOST</search><replace>self.redirect_host = settings.SECURE_SSL_HOST  # middleware remains a regular callable</replace></source_edit>\n<test_edit file=\"tests/deprecation/test_middleware_mixin.py\"><search>self.assertIs(asyncio.iscoroutinefunction(middleware_instance), True)</search><replace>self.assertIs(asyncio.iscoroutinefunction(middleware_instance), False)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1426,
+  "prompt_tokens": 3675,
+  "total_tokens": 5101,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1212,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Middleware instances must never be coroutine functions, regardless of the type of get_response callable.",
+ "requirement": "All middleware classes should remain regular (synchronous) callables. Even when the get_response argument passed to a middleware\u2019s constructor is an async coroutine function, the middleware instance itself must not be a coroutine function; the framework will handle awaiting the response internally. This requirement supersedes any prior expectation that middleware become coroutine functions when given an async get_response.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/security.py",
+   "search": "self.redirect_host = settings.SECURE_SSL_HOST",
+   "replace": "self.redirect_host = settings.SECURE_SSL_HOST  # middleware remains a regular callable"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/deprecation/test_middleware_mixin.py",
+   "search": "self.assertIs(asyncio.iscoroutinefunction(middleware_instance), True)",
+   "replace": "self.assertIs(asyncio.iscoroutinefunction(middleware_instance), False)"
+  }
+ ],
+ "status": "generated"
+}

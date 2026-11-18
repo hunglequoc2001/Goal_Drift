@@ -1,0 +1,127 @@
+{
+ "instance_id": "astropy__astropy-13398",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "78b9adf2796f96125a4f4a06a5a7f672d9cbd9c28ae702f1cb6bceb8d236975d",
+ "raw": "<summary>Atmospheric refraction is no longer applied in ITRS\u202f\u2194\u202fObserved transforms.</summary>\n<requirement>ITRS\u202f\u2194\u202fObserved (AltAz/HADec) transforms must ignore atmospheric refraction. The pressure, temperature, relative humidity, and observation\u2011wavelength attributes of AltAz or HADec frames are to be ignored; no refraction correction should be applied, even when a non\u2011zero pressure is given. This supersedes any previous expectation that refraction would be applied in these transforms.</requirement>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>if isinstance(observed_frame, AltAz) or (observed_frame.pressure > 0.0):</search><replace>if isinstance(observed_frame, AltAz):</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>        crepr = itrs_coo.cartesian.transform(itrs_to_altaz_mat(lon, lat))\n        if observed_frame.pressure > 0.0:\n            crepr = add_refraction(crepr, observed_frame)\n            if isinstance(observed_frame, HADec):\n                crepr = crepr.transform(altaz_to_hadec_mat(lat))\n    else:</search><replace>        crepr = itrs_coo.cartesian.transform(itrs_to_altaz_mat(lon, lat))\n    else:</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>        if isinstance(observed_coo, AltAz) or (observed_coo.pressure > 0.0):</search><replace>        if isinstance(observed_coo, AltAz):</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>        crepr = observed_coo.cartesian\n        if observed_coo.pressure > 0.0:\n            if isinstance(observed_coo, HADec):\n                crepr = crepr.transform(matrix_transpose(altaz_to_hadec_mat(lat)))\n            crepr = remove_refraction(crepr, observed_coo)\n        crepr = crepr.transform(matrix_transpose(itrs_to_altaz_mat(lon, lat)))</search><replace>        crepr = observed_coo.cartesian\n        crepr = crepr.transform(matrix_transpose(itrs_to_altaz_mat(lon, lat)))</replace></source_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(altaz22.az - altaz2.az, 0*u.mas, atol=0.1*u.mas)</search><replace>assert_allclose(altaz22.az - altaz1.az, 0*u.mas, atol=0.1*u.mas)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(altaz22.alt - altaz2.alt, 0*u.mas, atol=0.1*u.mas)</search><replace>assert_allclose(altaz22.alt - altaz1.alt, 0*u.mas, atol=0.1*u.mas)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(altaz22.distance - altaz2.distance, 0*u.cm, atol=10.0*u.cm)</search><replace>assert_allclose(altaz22.distance - altaz1.distance, 0*u.cm, atol=10.0*u.cm)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(altaz33.az - altaz3.az, 0*u.mas, atol=0.1*u.mas)</search><replace>assert_allclose(altaz33.az - altaz1.az, 0*u.mas, atol=0.1*u.mas)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(altaz33.alt - altaz3.alt, 0*u.mas, atol=0.1*u.mas)</search><replace>assert_allclose(altaz33.alt - altaz1.alt, 0*u.mas, atol=0.1*u.mas)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(altaz33.distance - altaz3.distance, 0*u.cm, atol=10.0*u.cm)</search><replace>assert_allclose(altaz33.distance - altaz1.distance, 0*u.cm, atol=10.0*u.cm)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec22.ha - hadec2.ha, 0*u.mas, atol=0.1*u.mas)</search><replace>assert_allclose(hadec22.ha - hadec1.ha, 0*u.mas, atol=0.1*u.mas)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec22.dec - hadec2.dec, 0*u.mas, atol=0.1*u.mas)</search><replace>assert_allclose(hadec22.dec - hadec1.dec, 0*u.mas, atol=0.1*u.mas)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec22.distance - hadec2.distance, 0*u.cm, atol=10.0*u.cm)</search><replace>assert_allclose(hadec22.distance - hadec1.distance, 0*u.cm, atol=10.0*u.cm)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec33.ha - hadec3.ha, 0*u.mas, atol=0.1*u.mas)</search><replace>assert_allclose(hadec33.ha - hadec1.ha, 0*u.mas, atol=0.1*u.mas)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec33.dec - hadec3.dec, 0*u.mas, atol=0.1*u.mas)</search><replace>assert_allclose(hadec33.dec - hadec1.dec, 0*u.mas, atol=0.1*u.mas)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec33.distance - hadec3.distance, 0*u.cm, atol=10.0*u.cm)</search><replace>assert_allclose(hadec33.distance - hadec1.distance, 0*u.cm, atol=10.0*u.cm)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 4175,
+  "prompt_tokens": 8280,
+  "total_tokens": 12455,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2652,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Atmospheric refraction is no longer applied in ITRS\u202f\u2194\u202fObserved transforms.",
+ "requirement": "ITRS\u202f\u2194\u202fObserved (AltAz/HADec) transforms must ignore atmospheric refraction. The pressure, temperature, relative humidity, and observation\u2011wavelength attributes of AltAz or HADec frames are to be ignored; no refraction correction should be applied, even when a non\u2011zero pressure is given. This supersedes any previous expectation that refraction would be applied in these transforms.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "if isinstance(observed_frame, AltAz) or (observed_frame.pressure > 0.0):",
+   "replace": "if isinstance(observed_frame, AltAz):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "        crepr = itrs_coo.cartesian.transform(itrs_to_altaz_mat(lon, lat))\n        if observed_frame.pressure > 0.0:\n            crepr = add_refraction(crepr, observed_frame)\n            if isinstance(observed_frame, HADec):\n                crepr = crepr.transform(altaz_to_hadec_mat(lat))\n    else:",
+   "replace": "        crepr = itrs_coo.cartesian.transform(itrs_to_altaz_mat(lon, lat))\n    else:"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "        if isinstance(observed_coo, AltAz) or (observed_coo.pressure > 0.0):",
+   "replace": "        if isinstance(observed_coo, AltAz):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "        crepr = observed_coo.cartesian\n        if observed_coo.pressure > 0.0:\n            if isinstance(observed_coo, HADec):\n                crepr = crepr.transform(matrix_transpose(altaz_to_hadec_mat(lat)))\n            crepr = remove_refraction(crepr, observed_coo)\n        crepr = crepr.transform(matrix_transpose(itrs_to_altaz_mat(lon, lat)))",
+   "replace": "        crepr = observed_coo.cartesian\n        crepr = crepr.transform(matrix_transpose(itrs_to_altaz_mat(lon, lat)))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(altaz22.az - altaz2.az, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "assert_allclose(altaz22.az - altaz1.az, 0*u.mas, atol=0.1*u.mas)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(altaz22.alt - altaz2.alt, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "assert_allclose(altaz22.alt - altaz1.alt, 0*u.mas, atol=0.1*u.mas)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(altaz22.distance - altaz2.distance, 0*u.cm, atol=10.0*u.cm)",
+   "replace": "assert_allclose(altaz22.distance - altaz1.distance, 0*u.cm, atol=10.0*u.cm)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(altaz33.az - altaz3.az, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "assert_allclose(altaz33.az - altaz1.az, 0*u.mas, atol=0.1*u.mas)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(altaz33.alt - altaz3.alt, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "assert_allclose(altaz33.alt - altaz1.alt, 0*u.mas, atol=0.1*u.mas)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(altaz33.distance - altaz3.distance, 0*u.cm, atol=10.0*u.cm)",
+   "replace": "assert_allclose(altaz33.distance - altaz1.distance, 0*u.cm, atol=10.0*u.cm)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec22.ha - hadec2.ha, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "assert_allclose(hadec22.ha - hadec1.ha, 0*u.mas, atol=0.1*u.mas)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec22.dec - hadec2.dec, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "assert_allclose(hadec22.dec - hadec1.dec, 0*u.mas, atol=0.1*u.mas)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec22.distance - hadec2.distance, 0*u.cm, atol=10.0*u.cm)",
+   "replace": "assert_allclose(hadec22.distance - hadec1.distance, 0*u.cm, atol=10.0*u.cm)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec33.ha - hadec3.ha, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "assert_allclose(hadec33.ha - hadec1.ha, 0*u.mas, atol=0.1*u.mas)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec33.dec - hadec3.dec, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "assert_allclose(hadec33.dec - hadec1.dec, 0*u.mas, atol=0.1*u.mas)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec33.distance - hadec3.distance, 0*u.cm, atol=10.0*u.cm)",
+   "replace": "assert_allclose(hadec33.distance - hadec1.distance, 0*u.cm, atol=10.0*u.cm)"
+  }
+ ],
+ "status": "generated"
+}

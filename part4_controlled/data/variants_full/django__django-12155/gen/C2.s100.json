@@ -1,0 +1,48 @@
+{
+ "instance_id": "django__django-12155",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 13,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 25698,
+ "raw": "<summary>parse_docstring must dedent based on lines after the first line, not using inspect.cleandoc</summary>\n<requirement>When parsing a docstring, the implementation must compute the common indentation to remove using only the lines after the first one, strip that indentation from each subsequent line, and left\u2011strip the first line. This behavior supersedes any previous expectation that\u202finspect.cleandoc be used for docstring handling.</requirement>\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>from inspect import cleandoc</search><replace></replace></source_edit>\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>def parse_docstring(docstring):</search><replace>def trim_docstring(docstring):\n    \"\"\"\n    Uniformly trim leading/trailing whitespace from docstrings.\n    Based on PEP\u202f257 handling.\n    \"\"\"\n    if not docstring or not docstring.strip():\n        return ''\n    lines = docstring.expandtabs().splitlines()\n    # Compute indentation from all lines except the first.\n    indent = min((len(line) - len(line.lstrip()) for line in lines[1:] if line.lstrip()), default=0)\n    trimmed = [lines[0].lstrip()] + [line[indent:].rstrip() for line in lines[1:]]\n    return \"\\n\".join(trimmed).strip()\n\ndef parse_docstring(docstring):</replace></source_edit>\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>docstring = cleandoc(docstring)</search><replace>docstring = trim_docstring(docstring)</replace></source_edit>\n<source_edit file=\"django/contrib/admindocs/views.py\"><search>from inspect import cleandoc</search><replace></replace></source_edit>\n<source_edit file=\"django/contrib/admindocs/views.py\"><search>utils.parse_rst(cleandoc(verbose), 'model', _('model:') + opts.model_name)</search><replace>utils.parse_rst(utils.trim_docstring(verbose), 'model', _('model:') + opts.model_name)</replace></source_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "parse_docstring must dedent based on lines after the first line, not using inspect.cleandoc",
+ "requirement": "When parsing a docstring, the implementation must compute the common indentation to remove using only the lines after the first one, strip that indentation from each subsequent line, and left\u2011strip the first line. This behavior supersedes any previous expectation that\u202finspect.cleandoc be used for docstring handling.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "from inspect import cleandoc",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "def parse_docstring(docstring):",
+   "replace": "def trim_docstring(docstring):\n    \"\"\"\n    Uniformly trim leading/trailing whitespace from docstrings.\n    Based on PEP\u202f257 handling.\n    \"\"\"\n    if not docstring or not docstring.strip():\n        return ''\n    lines = docstring.expandtabs().splitlines()\n    # Compute indentation from all lines except the first.\n    indent = min((len(line) - len(line.lstrip()) for line in lines[1:] if line.lstrip()), default=0)\n    trimmed = [lines[0].lstrip()] + [line[indent:].rstrip() for line in lines[1:]]\n    return \"\\n\".join(trimmed).strip()\n\ndef parse_docstring(docstring):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "docstring = cleandoc(docstring)",
+   "replace": "docstring = trim_docstring(docstring)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/views.py",
+   "search": "from inspect import cleandoc",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/views.py",
+   "search": "utils.parse_rst(cleandoc(verbose), 'model', _('model:') + opts.model_name)",
+   "replace": "utils.parse_rst(utils.trim_docstring(verbose), 'model', _('model:') + opts.model_name)"
+  }
+ ],
+ "test_edits": []
+}

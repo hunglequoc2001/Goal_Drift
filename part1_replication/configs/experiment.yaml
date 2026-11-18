@@ -1,0 +1,76 @@
+# BCM-01 experiment configuration. All seeds and settings live here.
+upstream:
+  author_repo: https://github.com/pranilraichura/colm-agent-eval
+  author_sha: 61f98943803e4fd6820ec7df6eaa9fdb41c07b11
+  fork_repo: https://github.com/amribanerjee/tbf-eval
+  fork_sha: 61f98943803e4fd6820ec7df6eaa9fdb41c07b11
+datasets:
+  swe_smith:
+    repo_id: SWE-bench/SWE-smith-trajectories
+    revision: 08e109b4a59eaeebf80e4675cd125d42e7ac99a4
+    split: tool
+    pattern: data/tool-*.parquet
+    sample_n: 4000
+    sample_seed: 42
+  nebius:
+    repo_id: nebius/SWE-agent-trajectories
+    revision: 68195a1450865274106246d0d0296a1d6807b88e
+    split: train
+    pattern: data/train-*.parquet
+    min_count: 500
+    max_systems: 4
+    sample_n_per_system: 2000
+    sample_seed: 42
+  combined_shuffle_seed: 42
+paths:
+  raw: data/raw
+  interim: data/interim
+  manifests: data/manifests
+  tables: results/tables
+  arrays: results/arrays
+  figures: results/figures
+features:
+  - total_steps
+  - mean_action_length
+  - max_action_length
+  - file_search_count
+  - file_view_count
+  - file_edit_count
+  - test_execution_count
+  - action_entropy
+  - consecutive_repetition_max
+  - unique_action_ratio
+  - error_flag_count
+  - step_velocity
+baseline:
+  cv: {n_splits: 5, shuffle: true, random_state: 42}
+  lgbm: {n_estimators: 200, learning_rate: 0.05, max_depth: 6, num_leaves: 31, random_state: 42, verbose: -1}
+  n_jobs: 4
+bcm:
+  zero_norm_eps: 1.0e-9
+  within_task_min_n: 3
+  archival_bootstrap_iters: 1000
+  archival_bootstrap_seed: 42
+  cluster_bootstrap_iters: 2000
+  cluster_bootstrap_seed: 20261023
+experiments:
+  A_fold_seeds: [42, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  B_variants:
+    baseline: {}
+    shallow: {max_depth: 3, num_leaves: 7}
+    deep: {max_depth: -1, num_leaves: 63}
+    regularized: {max_depth: 4, num_leaves: 15, reg_lambda: 10}
+    subsample: {colsample_bytree: 0.8, subsample: 0.8, subsample_freq: 1}
+  B_subsample_seeds: [11, 23, 37, 53, 71]
+  B_auc_window: 0.03
+  C_within_system_perm_seeds: [101, 102, 103, 104, 105, 106, 107, 108, 109, 110]
+  C_global_perm_seeds: [101, 102, 103, 104, 105, 106, 107, 108, 109, 110]
+  D_group_cv: {n_splits: 5, shuffle: true, random_state: 42}
+  E_task_balanced_k: 3
+  E_stratified_resample_iters: 2000
+  F_manual_validation_per_source: 30
+  F_manual_validation_seed: 30
+  G_background_seeds: [211, 223, 227]
+  G_background_size: 128
+  G_pilot_rows_per_system: 300
+  G_pilot_seed: 300

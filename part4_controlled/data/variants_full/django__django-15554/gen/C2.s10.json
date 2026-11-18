@@ -1,0 +1,36 @@
+{
+ "instance_id": "django__django-15554",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "1aed4ac2753aeb51e36da96456739614995db133bb96edb7733ec3f47a8ff031",
+ "raw": "<summary>Multiple FilteredRelation on the same relation path must raise an error</summary>\n<requirement>When a query defines more than one FilteredRelation for the same relation path, Django must raise an ImproperlyConfigured exception with a clear message indicating that multiple filtered relations on the same relation are not supported. This requirement supersedes any previous expectation that such definitions would be silently merged or produce separate joins.</requirement>\n<source_edit file=\"tests/filtered_relation/tests.py\"><search>def test_multiple(self):\n        qs = (\n            Author.objects.annotate(\n                book_title_alice=FilteredRelation(\n                    \"book\", condition=Q(book__title__contains=\"Alice\")\n                ),\n                book_title_jane=FilteredRelation(\n                    \"book\", condition=Q(book__title__icontains=\"Jane\")\n                ),\n            )\n            .filter(name=\"Jane\")\n            .values(\"book_title_alice__title\", \"book_title_jane__title\")\n        )\n        empty = \"\" if connection.features.interprets_empty_strings_as_nulls else None\n        self.assertCountEqual(\n            qs,\n            [\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane A\",\n                },\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane B\",\n                },\n            ],\n        )</search><replace>def test_multiple(self):\n        with self.assertRaisesMessage(\n            ImproperlyConfigured,\n            \"Multiple FilteredRelation on the same relation path are not supported.\"\n        ):\n            Author.objects.annotate(\n                book_title_alice=FilteredRelation(\n                    \"book\", condition=Q(book__title__contains=\"Alice\")\n                ),\n                book_title_jane=FilteredRelation(\n                    \"book\", condition=Q(book__title__icontains=\"Jane\")\n                ),\n            ).filter(name=\"Jane\")</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2758,
+  "prompt_tokens": 2304,
+  "total_tokens": 5062,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2342,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Multiple FilteredRelation on the same relation path must raise an error",
+ "requirement": "When a query defines more than one FilteredRelation for the same relation path, Django must raise an ImproperlyConfigured exception with a clear message indicating that multiple filtered relations on the same relation are not supported. This requirement supersedes any previous expectation that such definitions would be silently merged or produce separate joins.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "tests/filtered_relation/tests.py",
+   "search": "def test_multiple(self):\n        qs = (\n            Author.objects.annotate(\n                book_title_alice=FilteredRelation(\n                    \"book\", condition=Q(book__title__contains=\"Alice\")\n                ),\n                book_title_jane=FilteredRelation(\n                    \"book\", condition=Q(book__title__icontains=\"Jane\")\n                ),\n            )\n            .filter(name=\"Jane\")\n            .values(\"book_title_alice__title\", \"book_title_jane__title\")\n        )\n        empty = \"\" if connection.features.interprets_empty_strings_as_nulls else None\n        self.assertCountEqual(\n            qs,\n            [\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane A\",\n                },\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane B\",\n                },\n            ],\n        )",
+   "replace": "def test_multiple(self):\n        with self.assertRaisesMessage(\n            ImproperlyConfigured,\n            \"Multiple FilteredRelation on the same relation path are not supported.\"\n        ):\n            Author.objects.annotate(\n                book_title_alice=FilteredRelation(\n                    \"book\", condition=Q(book__title__contains=\"Alice\")\n                ),\n                book_title_jane=FilteredRelation(\n                    \"book\", condition=Q(book__title__icontains=\"Jane\")\n                ),\n            ).filter(name=\"Jane\")"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

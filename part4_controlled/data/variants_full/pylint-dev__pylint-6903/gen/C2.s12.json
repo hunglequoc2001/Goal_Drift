@@ -1,0 +1,49 @@
+{
+ "instance_id": "pylint-dev__pylint-6903",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "7cf05bf56efa25e897284cc44d5405a92124cabf7b69f6dc3396889d4d0dbc41",
+ "raw": "<summary>Do not coerce a zero\u2011CPU calculation to 1; return 0 and let the caller raise a ValueError.</summary>\n<requirement>When the internal function `_query_cpu()` computes that the available CPU count is zero, it must return 0 unchanged. The caller should not substitute a default of 1; instead, attempting to create a multiprocessing pool with zero processes must raise a `ValueError` with the message \u201cNumber of processes must be at least 1\u201d. This requirement supersedes any earlier expectation that a zero value be coerced to one.</requirement>\n\n<source_edit file=\"pylint/lint/run.py\"><search># In K8s Pods also a fraction of a single core could be available\n# As multiprocessing is not able to run only a \"fraction\" of process\n# assume we have 1 CPU available\nif avail_cpu == 0:\n    avail_cpu = 1\n</search><replace></replace></source_edit>\n\n<test_edit file=\"tests/test_pylint_runners.py\"><search>with pytest.raises(SystemExit) as err:</search><replace>with pytest.raises(ValueError) as err:</replace></test_edit>\n\n<test_edit file=\"tests/test_pylint_runners.py\"><search>assert err.value.code == 0</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 890,
+  "prompt_tokens": 2144,
+  "total_tokens": 3034,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 603,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Do not coerce a zero\u2011CPU calculation to 1; return 0 and let the caller raise a ValueError.",
+ "requirement": "When the internal function `_query_cpu()` computes that the available CPU count is zero, it must return 0 unchanged. The caller should not substitute a default of 1; instead, attempting to create a multiprocessing pool with zero processes must raise a `ValueError` with the message \u201cNumber of processes must be at least 1\u201d. This requirement supersedes any earlier expectation that a zero value be coerced to one.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "pylint/lint/run.py",
+   "search": "# In K8s Pods also a fraction of a single core could be available\n# As multiprocessing is not able to run only a \"fraction\" of process\n# assume we have 1 CPU available\nif avail_cpu == 0:\n    avail_cpu = 1",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_pylint_runners.py",
+   "search": "with pytest.raises(SystemExit) as err:",
+   "replace": "with pytest.raises(ValueError) as err:"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_pylint_runners.py",
+   "search": "assert err.value.code == 0",
+   "replace": ""
+  }
+ ],
+ "status": "generated"
+}

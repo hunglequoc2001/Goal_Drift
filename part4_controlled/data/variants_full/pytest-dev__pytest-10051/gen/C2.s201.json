@@ -1,0 +1,37 @@
+{
+ "instance_id": "pytest-dev__pytest-10051",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 101,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "mentions_tests",
+ "prompt_chars": 19016,
+ "raw": "<summary>caplog.clear() now clears records for all test phases.</summary>\n<requirement>When `caplog.clear()` is called, it must discard all captured log records for every test phase (\"setup\", \"call\", and \"teardown\") and also clear the captured log text. This supersedes any previous expectation that records from earlier phases are retained after a clear.</requirement>\n<source_edit file=\"src/_pytest/logging.py\"><search>self.handler.clear()</search><replace>self.handler.clear()\n        self._item.stash[caplog_records_key].clear()</replace></source_edit>\n<test_edit file=\"testing/logging/test_fixture.py\"><search>assert caplog.get_records(\"call\") == []\\n        assert [x.message for x in caplog.get_records(\"setup\")] == [\"a_setup_log\"]</search><replace>assert caplog.get_records(\"call\") == []\\n        assert [x.message for x in caplog.get_records(\"setup\")] == []</replace></test_edit>\n<test_edit file=\"testing/logging/test_fixture.py\"><search>assert [x.message for x in caplog.get_records(\"call\")] == [\"a_call_log_after_clear\"]\\n        assert [x.message for x in caplog.get_records(\"setup\")] == [\"a_setup_log\"]</search><replace>assert [x.message for x in caplog.get_records(\"call\")] == [\"a_call_log_after_clear\"]\\n        assert [x.message for x in caplog.get_records(\"setup\")] == []</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "caplog.clear() now clears records for all test phases.",
+ "requirement": "When `caplog.clear()` is called, it must discard all captured log records for every test phase (\"setup\", \"call\", and \"teardown\") and also clear the captured log text. This supersedes any previous expectation that records from earlier phases are retained after a clear.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "self.handler.clear()",
+   "replace": "self.handler.clear()\n        self._item.stash[caplog_records_key].clear()"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/logging/test_fixture.py",
+   "search": "assert caplog.get_records(\"call\") == []\\n        assert [x.message for x in caplog.get_records(\"setup\")] == [\"a_setup_log\"]",
+   "replace": "assert caplog.get_records(\"call\") == []\\n        assert [x.message for x in caplog.get_records(\"setup\")] == []"
+  },
+  {
+   "kind": "test_edit",
+   "file": "testing/logging/test_fixture.py",
+   "search": "assert [x.message for x in caplog.get_records(\"call\")] == [\"a_call_log_after_clear\"]\\n        assert [x.message for x in caplog.get_records(\"setup\")] == [\"a_setup_log\"]",
+   "replace": "assert [x.message for x in caplog.get_records(\"call\")] == [\"a_call_log_after_clear\"]\\n        assert [x.message for x in caplog.get_records(\"setup\")] == []"
+  }
+ ]
+}

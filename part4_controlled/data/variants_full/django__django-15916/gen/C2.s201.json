@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-15916",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 24044,
+ "raw": "<summary>Meta\u2011defined formfield_callback must be a staticmethod; plain functions are ignored.</summary>\n<requirement>When a `formfield_callback` is specified inside a ModelForm\u2019s inner `Meta` class, it must be declared as a `staticmethod`. The form\u2011generation machinery will only use the callback if it is a `staticmethod`; any plain callable defined in `Meta` is ignored and treated as if no callback was provided. This supersedes any earlier expectation that any callable in `Meta.formfield_callback` would be honoured.</requirement>\n<source_edit file=\"django/forms/models.py\"><search>self.formfield_callback = getattr(options, \"formfield_callback\", None)</search><replace>        # Only honour a callback if it is declared as a staticmethod on Meta.\n        raw_cb = getattr(options, \"__dict__\", {}).get(\"formfield_callback\", None)\n        if isinstance(raw_cb, staticmethod):\n            self.formfield_callback = raw_cb.__func__\n        else:\n            self.formfield_callback = None</replace></source_edit>\n<test_edit file=\"tests/model_forms/tests.py\"><search>                formfield_callback = callback</search><replace>                formfield_callback = staticmethod(callback)</replace></test_edit>\n<test_edit file=\"tests/model_forms/tests.py\"><search>                formfield_callback = callback</search><replace>                formfield_callback = staticmethod(callback)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Meta\u2011defined formfield_callback must be a staticmethod; plain functions are ignored.",
+ "requirement": "When a `formfield_callback` is specified inside a ModelForm\u2019s inner `Meta` class, it must be declared as a `staticmethod`. The form\u2011generation machinery will only use the callback if it is a `staticmethod`; any plain callable defined in `Meta` is ignored and treated as if no callback was provided. This supersedes any earlier expectation that any callable in `Meta.formfield_callback` would be honoured.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/models.py",
+   "search": "self.formfield_callback = getattr(options, \"formfield_callback\", None)",
+   "replace": "        # Only honour a callback if it is declared as a staticmethod on Meta.\n        raw_cb = getattr(options, \"__dict__\", {}).get(\"formfield_callback\", None)\n        if isinstance(raw_cb, staticmethod):\n            self.formfield_callback = raw_cb.__func__\n        else:\n            self.formfield_callback = None"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/model_forms/tests.py",
+   "search": "                formfield_callback = callback",
+   "replace": "                formfield_callback = staticmethod(callback)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/model_forms/tests.py",
+   "search": "                formfield_callback = callback",
+   "replace": "                formfield_callback = staticmethod(callback)"
+  }
+ ]
+}

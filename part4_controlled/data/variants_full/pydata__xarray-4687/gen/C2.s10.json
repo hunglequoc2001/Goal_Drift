@@ -1,0 +1,43 @@
+{
+ "instance_id": "pydata__xarray-4687",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "1a2ca9bdfa457f4217386e0729d44d78fd0354deff16822630f72f18e5b5637c",
+ "raw": "<summary>xr.where now always propagates the condition\u2019s attributes, ignoring any keep_attrs flag.</summary>\n<requirement>The `xr.where` function now always propagates the attributes of the condition argument (`cond`) to the resulting DataArray, regardless of any `keep_attrs` argument. The `keep_attrs` keyword is retained for backward compatibility but is ignored; the result\u2019s `attrs` must be exactly `cond.attrs`. This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"xarray/core/computation.py\"><search>if keep_attrs is None:\n        keep_attrs = _get_keep_attrs(default=False)\n\n    if keep_attrs is True:\n        # keep the attributes of x, the second parameter, by default to\n        # be consistent with the `where` method of `DataArray` and `Dataset`\n        keep_attrs = lambda attrs, context: attrs[1]</search><replace># keep_attrs argument is ignored; result attributes come from cond\n    keep_attrs = lambda attrs, context: attrs[0]</replace></source_edit>\n<test_edit file=\"xarray/tests/test_computation.py\"><search>expected = xr.DataArray([1, 0], dims=\"x\", attrs={\"attr\": \"x\"})</search><replace>expected = xr.DataArray([1, 0], dims=\"x\", attrs={\"attr\": \"cond\"})</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1127,
+  "prompt_tokens": 2647,
+  "total_tokens": 3774,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 827,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "xr.where now always propagates the condition\u2019s attributes, ignoring any keep_attrs flag.",
+ "requirement": "The `xr.where` function now always propagates the attributes of the condition argument (`cond`) to the resulting DataArray, regardless of any `keep_attrs` argument. The `keep_attrs` keyword is retained for backward compatibility but is ignored; the result\u2019s `attrs` must be exactly `cond.attrs`. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/computation.py",
+   "search": "if keep_attrs is None:\n        keep_attrs = _get_keep_attrs(default=False)\n\n    if keep_attrs is True:\n        # keep the attributes of x, the second parameter, by default to\n        # be consistent with the `where` method of `DataArray` and `Dataset`\n        keep_attrs = lambda attrs, context: attrs[1]",
+   "replace": "# keep_attrs argument is ignored; result attributes come from cond\n    keep_attrs = lambda attrs, context: attrs[0]"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_computation.py",
+   "search": "expected = xr.DataArray([1, 0], dims=\"x\", attrs={\"attr\": \"x\"})",
+   "replace": "expected = xr.DataArray([1, 0], dims=\"x\", attrs={\"attr\": \"cond\"})"
+  }
+ ],
+ "status": "generated"
+}

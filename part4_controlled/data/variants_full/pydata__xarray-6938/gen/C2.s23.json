@@ -1,0 +1,43 @@
+{
+ "instance_id": "pydata__xarray-6938",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "60984ae0ef991d8e679985b87a260a39ea83753ee934fa6b99a074775e13ebcd",
+ "raw": "<summary>Make `IndexVariable.to_index_variable` return the original instance instead of a copy.</summary>\n<requirement>`.to_index_variable()` on an `IndexVariable` must now return the same object (i.e., `self`) rather than a copy. This supersedes any previous expectation that it returns a distinct copy.</requirement>\n<source_edit file=\"xarray/core/variable.py\"><search>return self.copy()</search><replace>return self</replace></source_edit>\n<test_edit file=\"xarray/tests/test_variable.py\"><search>def test_to_index_variable_copy(self) -> None:\n        # to_index_variable should return a copy\n        # https://github.com/pydata/xarray/issues/6931\n        a = IndexVariable(\"x\", [\"a\"])\n        b = a.to_index_variable()\n        assert a is not b\n        b.dims = (\"y\",)\n        assert a.dims == (\"x\",)</search><replace>def test_to_index_variable_returns_self(self) -> None:\n        # to_index_variable should return the same instance\n        # https://github.com/pydata/xarray/issues/6931\n        a = IndexVariable(\"x\", [\"a\"])\n        b = a.to_index_variable()\n        assert a is b\n        with pytest.raises(AttributeError):\n            b.dims = (\"y\",)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1006,
+  "prompt_tokens": 2481,
+  "total_tokens": 3487,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 710,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Make `IndexVariable.to_index_variable` return the original instance instead of a copy.",
+ "requirement": "`.to_index_variable()` on an `IndexVariable` must now return the same object (i.e., `self`) rather than a copy. This supersedes any previous expectation that it returns a distinct copy.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/variable.py",
+   "search": "return self.copy()",
+   "replace": "return self"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_variable.py",
+   "search": "def test_to_index_variable_copy(self) -> None:\n        # to_index_variable should return a copy\n        # https://github.com/pydata/xarray/issues/6931\n        a = IndexVariable(\"x\", [\"a\"])\n        b = a.to_index_variable()\n        assert a is not b\n        b.dims = (\"y\",)\n        assert a.dims == (\"x\",)",
+   "replace": "def test_to_index_variable_returns_self(self) -> None:\n        # to_index_variable should return the same instance\n        # https://github.com/pydata/xarray/issues/6931\n        a = IndexVariable(\"x\", [\"a\"])\n        b = a.to_index_variable()\n        assert a is b\n        with pytest.raises(AttributeError):\n            b.dims = (\"y\",)"
+  }
+ ],
+ "status": "generated"
+}

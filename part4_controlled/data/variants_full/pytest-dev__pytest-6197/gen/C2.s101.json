@@ -1,0 +1,37 @@
+{
+ "instance_id": "pytest-dev__pytest-6197",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "mentions_tests",
+ "prompt_chars": 26269,
+ "raw": "<summary>pytest now always imports package __init__.py files and automatically adds a top\u2011level\u202fsrc directory to\u202fsys.path during collection</summary>\n<requirement>When collecting tests, pytest must always import a package\u2019s\u202f__init__.py file as a test module, even if it does not match the\u202fpython_files\u202fpattern, and it must automatically prepend a top\u2011level\u202fsrc\u202fdirectory (if it exists in the project root) to\u202fsys.path before any test modules are imported. This supersedes any earlier expectation that\u202f__init__\u202ffiles are ignored or that\u202fsrc\u202fis not on the import path.</requirement>\n<source_edit file=\"src/_pytest/python.py\"><search>        if init_module.check(file=1) and path_matches_patterns(\n            init_module, self.config.getini(\"python_files\")\n        ):\n            yield Module(init_module, self)</search><replace>        # Ensure that a top\u2011level 'src' directory is on sys.path if it exists.\n        src_dir = self.session.fspath.join(\"src\")\n        if src_dir.isdir() and str(src_dir) not in sys.path:\n            sys.path.insert(0, str(src_dir))\n        if init_module.check(file=1):\n            yield Module(init_module, self)</replace></source_edit>\n<test_edit file=\"testing/test_collection.py\"><search>assert result.ret == ExitCode.OK</search><replace>assert result.ret == ExitCode.ERROR</replace></test_edit>\n<test_edit file=\"testing/test_collection.py\"><search>testdir.makepyfile(\n        \"import pytest\\n\"\n        \"def test():\\n\"\n        \"    with pytest.raises(ImportError):\\n\"\n        \"        import nope\\n\"\n    )</search><replace>testdir.makepyfile(\n        \"def test():\\n\"\n        \"    import nope\\n\"\n    )</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "pytest now always imports package __init__.py files and automatically adds a top\u2011level\u202fsrc directory to\u202fsys.path during collection",
+ "requirement": "When collecting tests, pytest must always import a package\u2019s\u202f__init__.py file as a test module, even if it does not match the\u202fpython_files\u202fpattern, and it must automatically prepend a top\u2011level\u202fsrc\u202fdirectory (if it exists in the project root) to\u202fsys.path before any test modules are imported. This supersedes any earlier expectation that\u202f__init__\u202ffiles are ignored or that\u202fsrc\u202fis not on the import path.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/python.py",
+   "search": "        if init_module.check(file=1) and path_matches_patterns(\n            init_module, self.config.getini(\"python_files\")\n        ):\n            yield Module(init_module, self)",
+   "replace": "        # Ensure that a top\u2011level 'src' directory is on sys.path if it exists.\n        src_dir = self.session.fspath.join(\"src\")\n        if src_dir.isdir() and str(src_dir) not in sys.path:\n            sys.path.insert(0, str(src_dir))\n        if init_module.check(file=1):\n            yield Module(init_module, self)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_collection.py",
+   "search": "assert result.ret == ExitCode.OK",
+   "replace": "assert result.ret == ExitCode.ERROR"
+  },
+  {
+   "kind": "test_edit",
+   "file": "testing/test_collection.py",
+   "search": "testdir.makepyfile(\n        \"import pytest\\n\"\n        \"def test():\\n\"\n        \"    with pytest.raises(ImportError):\\n\"\n        \"        import nope\\n\"\n    )",
+   "replace": "testdir.makepyfile(\n        \"def test():\\n\"\n        \"    import nope\\n\"\n    )"
+  }
+ ]
+}

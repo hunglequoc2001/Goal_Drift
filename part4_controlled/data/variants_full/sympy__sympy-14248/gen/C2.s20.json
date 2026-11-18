@@ -1,0 +1,67 @@
+{
+ "instance_id": "sympy__sympy-14248",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "c87df2c30b7c34b3eeafeafebf61a2c1ba9ec2a4f0924fd4b3f47f88f7fa0abe",
+ "raw": "<summary>Matrix multiplication should be printed without asterisks, using a space between factors.</summary>\n<requirement>When rendering products of MatrixSymbol objects, all printers must use implicit multiplication (a single space) instead of the \u2018*\u2019 character between the factors. For example, the expression\u202fA*B*C should be displayed as\u202f\u201cA B C\u201d (or \u201c-A B C\u201d when negated). This supersedes any previous expectation that an asterisk be used.</requirement>\n\n<source_edit file=\"sympy/printing/str.py\"><search>*'.join([self.parenthesize(arg, precedence(expr))</search><replace> ' '.join([self.parenthesize(arg, precedence(expr))</replace></source_edit>\n\n<source_edit file=\"sympy/printing/pretty/pretty.py\"><search>def _print_MatMul(self, expr):</search><replace>def _print_MatMul(self, expr):\n        # Use implicit multiplication (a space) between matrix factors\n        c, m = expr.as_coeff_mmul()\n        if c.is_number and c < 0:\n            expr = _keep_coeff(-c, m)\n            sign = \"-\"\n        else:\n            sign = \"\"\n        parts = [self.parenthesize(arg, precedence(expr)) for arg in expr.args]\n        return sign + ' '.join(parts)</replace></source_edit>\n\n<test_edit file=\"sympy/printing/pretty/tests/test_pretty.py\"><search>assert pretty(-A*B*C) == \"-A*B*C\"</search><replace>assert pretty(-A*B*C) == \"-A B C\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/pretty/tests/test_pretty.py\"><search>assert pretty(A*B*C - A*B - B*C) == \"-A*B -B*C + A*B*C\"</search><replace>assert pretty(A*B*C - A*B - B*C) == \"-A B -B C + A B C\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_str.py\"><search>assert str(A - A*B - B) == \"-B - A*B + A\"</search><replace>assert str(A - A*B - B) == \"-B - A B + A\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_str.py\"><search>assert str(A*B - (A+B)) == \"-(A + B) + A*B\"</search><replace>assert str(A*B - (A+B)) == \"-(A + B) + A B\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 4846,
+  "prompt_tokens": 3502,
+  "total_tokens": 8348,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 4279,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Matrix multiplication should be printed without asterisks, using a space between factors.",
+ "requirement": "When rendering products of MatrixSymbol objects, all printers must use implicit multiplication (a single space) instead of the \u2018*\u2019 character between the factors. For example, the expression\u202fA*B*C should be displayed as\u202f\u201cA B C\u201d (or \u201c-A B C\u201d when negated). This supersedes any previous expectation that an asterisk be used.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/str.py",
+   "search": "*'.join([self.parenthesize(arg, precedence(expr))",
+   "replace": " ' '.join([self.parenthesize(arg, precedence(expr))"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/pretty/pretty.py",
+   "search": "def _print_MatMul(self, expr):",
+   "replace": "def _print_MatMul(self, expr):\n        # Use implicit multiplication (a space) between matrix factors\n        c, m = expr.as_coeff_mmul()\n        if c.is_number and c < 0:\n            expr = _keep_coeff(-c, m)\n            sign = \"-\"\n        else:\n            sign = \"\"\n        parts = [self.parenthesize(arg, precedence(expr)) for arg in expr.args]\n        return sign + ' '.join(parts)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/pretty/tests/test_pretty.py",
+   "search": "assert pretty(-A*B*C) == \"-A*B*C\"",
+   "replace": "assert pretty(-A*B*C) == \"-A B C\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/pretty/tests/test_pretty.py",
+   "search": "assert pretty(A*B*C - A*B - B*C) == \"-A*B -B*C + A*B*C\"",
+   "replace": "assert pretty(A*B*C - A*B - B*C) == \"-A B -B C + A B C\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_str.py",
+   "search": "assert str(A - A*B - B) == \"-B - A*B + A\"",
+   "replace": "assert str(A - A*B - B) == \"-B - A B + A\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_str.py",
+   "search": "assert str(A*B - (A+B)) == \"-(A + B) + A*B\"",
+   "replace": "assert str(A*B - (A+B)) == \"-(A + B) + A B\""
+  }
+ ],
+ "status": "generated"
+}

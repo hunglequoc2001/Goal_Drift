@@ -1,0 +1,43 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-25232",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "44cc8150820c4f48fe03eadfa21cd2a8f0996806efccec4e98449e6a36c36ea6",
+ "raw": "<summary>fill_value must be numeric and non\u2011numeric values should raise ValueError</summary>\n<requirement>When `initial_strategy='constant'`, the `fill_value` parameter must be a numeric scalar (int or float). Supplying a non\u2011numeric value (e.g., a string) should raise a `ValueError`. This supersedes any previous expectation that any object type is accepted for `fill_value`.</requirement>\n<source_edit file=\"sklearn/impute/_iterative.py\"><search>\"fill_value\": \"no_validation\",  # any object is valid</search><replace>\"fill_value\": [Interval(Real, -np.inf, np.inf, closed='both')],  # must be numeric</replace></source_edit>\n<test_edit file=\"sklearn/impute/tests/test_impute.py\"><search>assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)</search><replace>assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)\n\ndef test_iterative_imputer_constant_fill_value_non_numeric():\n    \"\"\"Check that a non\u2011numeric fill_value raises ValueError.\"\"\"\n    X = np.array([[-1, 2], [4, -1]])\n    imputer = IterativeImputer(\n        missing_values=-1,\n        initial_strategy=\"constant\",\n        fill_value=\"not_a_number\",\n        max_iter=0,\n    )\n    with pytest.raises(ValueError):\n        imputer.fit_transform(X)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1862,
+  "prompt_tokens": 1735,
+  "total_tokens": 3597,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1548,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "fill_value must be numeric and non\u2011numeric values should raise ValueError",
+ "requirement": "When `initial_strategy='constant'`, the `fill_value` parameter must be a numeric scalar (int or float). Supplying a non\u2011numeric value (e.g., a string) should raise a `ValueError`. This supersedes any previous expectation that any object type is accepted for `fill_value`.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/impute/_iterative.py",
+   "search": "\"fill_value\": \"no_validation\",  # any object is valid",
+   "replace": "\"fill_value\": [Interval(Real, -np.inf, np.inf, closed='both')],  # must be numeric"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/impute/tests/test_impute.py",
+   "search": "assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)",
+   "replace": "assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)\n\ndef test_iterative_imputer_constant_fill_value_non_numeric():\n    \"\"\"Check that a non\u2011numeric fill_value raises ValueError.\"\"\"\n    X = np.array([[-1, 2], [4, -1]])\n    imputer = IterativeImputer(\n        missing_values=-1,\n        initial_strategy=\"constant\",\n        fill_value=\"not_a_number\",\n        max_iter=0,\n    )\n    with pytest.raises(ValueError):\n        imputer.fit_transform(X)"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,31 @@
+{
+ "instance_id": "sympy__sympy-19495",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 27160,
+ "raw": "<summary>Subs that make the condition true must return a ConditionSet with the substituted dummy symbol rather than collapsing to the base set.</summary>\n<requirement>When performing a substitution on a ConditionSet, if the substitution causes the condition to become literally true (i.e. `cond is S.true`), the resulting object must be a new ConditionSet whose dummy symbol is the substitution target, whose condition is `Contains(new, base)`, and whose base set is the substituted base set. This rule supersedes any earlier description of subs behavior for ConditionSet.</requirement>\n<source_edit file=\"sympy/sets/conditionset.py\"><search>else:\n            cond = self.condition.subs(old, new)\n            base = self.base_set.subs(old, new)\n            # The condition may have become true due to assumptions\n            # on 'sym'. In order for .subs() to be consistent with\n            # __new__ we *don't* check if 'sym' actually belongs to\n            # 'base'. In other words: assumptions are ignored.\n            return self.func(self.sym, cond, base)</search><replace>else:\n            cond = self.condition.subs(old, new)\n            base = self.base_set.subs(old, new)\n            if cond is S.true:\n                return self.func(new, Contains(new, base), base)\n            # The condition may have become true due to assumptions\n            # on 'sym'. In order for .subs() to be consistent with\n            # __new__ we *don't* check if 'sym' actually belongs to\n            # 'base'. In other words: assumptions are ignored.\n            return self.func(self.sym, cond, base)</replace></source_edit>\n<test_edit file=\"sympy/sets/tests/test_conditionset.py\"><search>assert ConditionSet(x, Contains(\n        y, Interval(-1,1)), img1).subs(y, S.One/3).dummy_eq(img2)</search><replace>assert ConditionSet(x, Contains(\n        y, Interval(-1,1)), img1).subs(y, S.One/3) == ConditionSet(S.One/3, Contains(S.One/3, img2), img2)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Subs that make the condition true must return a ConditionSet with the substituted dummy symbol rather than collapsing to the base set.",
+ "requirement": "When performing a substitution on a ConditionSet, if the substitution causes the condition to become literally true (i.e. `cond is S.true`), the resulting object must be a new ConditionSet whose dummy symbol is the substitution target, whose condition is `Contains(new, base)`, and whose base set is the substituted base set. This rule supersedes any earlier description of subs behavior for ConditionSet.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/conditionset.py",
+   "search": "else:\n            cond = self.condition.subs(old, new)\n            base = self.base_set.subs(old, new)\n            # The condition may have become true due to assumptions\n            # on 'sym'. In order for .subs() to be consistent with\n            # __new__ we *don't* check if 'sym' actually belongs to\n            # 'base'. In other words: assumptions are ignored.\n            return self.func(self.sym, cond, base)",
+   "replace": "else:\n            cond = self.condition.subs(old, new)\n            base = self.base_set.subs(old, new)\n            if cond is S.true:\n                return self.func(new, Contains(new, base), base)\n            # The condition may have become true due to assumptions\n            # on 'sym'. In order for .subs() to be consistent with\n            # __new__ we *don't* check if 'sym' actually belongs to\n            # 'base'. In other words: assumptions are ignored.\n            return self.func(self.sym, cond, base)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_conditionset.py",
+   "search": "assert ConditionSet(x, Contains(\n        y, Interval(-1,1)), img1).subs(y, S.One/3).dummy_eq(img2)",
+   "replace": "assert ConditionSet(x, Contains(\n        y, Interval(-1,1)), img1).subs(y, S.One/3) == ConditionSet(S.One/3, Contains(S.One/3, img2), img2)"
+  }
+ ]
+}

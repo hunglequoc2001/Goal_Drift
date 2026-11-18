@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-12276",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "5ff8518f1a9f9ec9d5ebda6e9fa1ce5e5978ce87cad264f894c7e98b3897faf4",
+ "raw": "<summary>FileInput should only omit the required attribute when the initial value is a string filename, not for file objects.</summary>\n<requirement>When determining whether to render the HTML \u201crequired\u201d attribute for a FileInput widget, the widget must omit the attribute only if the initial value is a string (indicating an existing filename). If the initial value is any other truthy object (e.g., an UploadedFile instance), the widget should still render the required attribute. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"django/forms/widgets.py\"><search>def use_required_attribute(self, initial):\n        return super().use_required_attribute(initial) and not initial</search><replace>def use_required_attribute(self, initial):\n        # Omit \u201crequired\u201d only when the initial value is a string (existing filename)\n        return super().use_required_attribute(initial) and not isinstance(initial, str)</replace></source_edit>\n<test_edit file=\"tests/forms_tests/widget_tests/test_fileinput.py\"><search>from django.forms.widgets import FileInput</search><replace>from django.forms.widgets import FileInput\nfrom django.core.files.uploadedfile import SimpleUploadedFile</replace></test_edit>\n<test_edit file=\"tests/forms_tests/widget_tests/test_fileinput.py\"><search>def test_use_required_attribute(self):\n        # False when initial data exists. The file input is left blank by the\n        # user to keep the existing, initial value.\n        self.assertIs(self.widget.use_required_attribute(None), True)\n        self.assertIs(self.widget.use_required_attribute('resume.txt'), False)</search><replace>def test_use_required_attribute(self):\n        # Required attribute is omitted only for string initial values.\n        self.assertIs(self.widget.use_required_attribute(None), True)\n        # String initial (existing filename) -> no required attribute.\n        self.assertIs(self.widget.use_required_attribute('resume.txt'), False)\n        # File object initial (e.g., SimpleUploadedFile) -> required attribute remains.\n        uploaded = SimpleUploadedFile('resume.txt', b'content')\n        self.assertIs(self.widget.use_required_attribute(uploaded), True)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1578,
+  "prompt_tokens": 1669,
+  "total_tokens": 3247,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1123,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "FileInput should only omit the required attribute when the initial value is a string filename, not for file objects.",
+ "requirement": "When determining whether to render the HTML \u201crequired\u201d attribute for a FileInput widget, the widget must omit the attribute only if the initial value is a string (indicating an existing filename). If the initial value is any other truthy object (e.g., an UploadedFile instance), the widget should still render the required attribute. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/widgets.py",
+   "search": "def use_required_attribute(self, initial):\n        return super().use_required_attribute(initial) and not initial",
+   "replace": "def use_required_attribute(self, initial):\n        # Omit \u201crequired\u201d only when the initial value is a string (existing filename)\n        return super().use_required_attribute(initial) and not isinstance(initial, str)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/widget_tests/test_fileinput.py",
+   "search": "from django.forms.widgets import FileInput",
+   "replace": "from django.forms.widgets import FileInput\nfrom django.core.files.uploadedfile import SimpleUploadedFile"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/widget_tests/test_fileinput.py",
+   "search": "def test_use_required_attribute(self):\n        # False when initial data exists. The file input is left blank by the\n        # user to keep the existing, initial value.\n        self.assertIs(self.widget.use_required_attribute(None), True)\n        self.assertIs(self.widget.use_required_attribute('resume.txt'), False)",
+   "replace": "def test_use_required_attribute(self):\n        # Required attribute is omitted only for string initial values.\n        self.assertIs(self.widget.use_required_attribute(None), True)\n        # String initial (existing filename) -> no required attribute.\n        self.assertIs(self.widget.use_required_attribute('resume.txt'), False)\n        # File object initial (e.g., SimpleUploadedFile) -> required attribute remains.\n        uploaded = SimpleUploadedFile('resume.txt', b'content')\n        self.assertIs(self.widget.use_required_attribute(uploaded), True)"
+  }
+ ],
+ "status": "generated"
+}

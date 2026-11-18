@@ -1,0 +1,37 @@
+{
+ "instance_id": "matplotlib__matplotlib-24026",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 12,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 18362,
+ "raw": "<summary>Disallow cycle\u2011reference strings in the ``colors`` argument and use ``set_prop_cycle`` instead of an internal iterator.</summary>\n<requirement>When calling ``Axes.stackplot``, the ``colors`` argument must be a sequence of explicit color specifications (e.g., ``\"red\"``, ``\"#1f77b4\"``, etc.). Supplying Matplotlib cycle\u2011reference strings such as ``\"C0\"``, ``\"C1\"``, \u2026 is not allowed and must raise a ``ValueError`` with the message *Cycle references not allowed in colors argument*. If a valid ``colors`` sequence is provided, the function should set the Axes property cycler to those colors via ``axes.set_prop_cycle(color=colors)`` before plotting, superseding any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"lib/matplotlib/stackplot.py\"><search>import itertools</search><replace></replace></source_edit>\n<source_edit file=\"lib/matplotlib/stackplot.py\"><search>    if colors is not None:\n        colors = itertools.cycle(colors)\n    else:\n        colors = (axes._get_lines.get_next_color() for _ in y)</search><replace>    if colors is not None:\n        # Validate that colors are not cycle reference strings like 'C0', 'C1', \u2026\n        for c in colors:\n            if isinstance(c, str) and c.startswith('C') and c[1:].isdigit():\n                raise ValueError(\"Cycle references not allowed in colors argument\")\n        # Apply the provided colors to the Axes cycler.\n        axes.set_prop_cycle(color=colors)\n        # After setting the cycler, obtain colors from the Axes line generator.\n        colors = (axes._get_lines.get_next_color() for _ in y)\n    else:\n        colors = (axes._get_lines.get_next_color() for _ in y)</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>\n    data = {\"x\": x, \"y1\": y1, \"y2\": y2, \"y3\": y3}\n    fig, ax = plt.subplots()\n    ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])\n    ax.set_xlim((0, 10))\n    ax.set_ylim((0, 70))\n</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Disallow cycle\u2011reference strings in the ``colors`` argument and use ``set_prop_cycle`` instead of an internal iterator.",
+ "requirement": "When calling ``Axes.stackplot``, the ``colors`` argument must be a sequence of explicit color specifications (e.g., ``\"red\"``, ``\"#1f77b4\"``, etc.). Supplying Matplotlib cycle\u2011reference strings such as ``\"C0\"``, ``\"C1\"``, \u2026 is not allowed and must raise a ``ValueError`` with the message *Cycle references not allowed in colors argument*. If a valid ``colors`` sequence is provided, the function should set the Axes property cycler to those colors via ``axes.set_prop_cycle(color=colors)`` before plotting, superseding any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/stackplot.py",
+   "search": "import itertools",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/stackplot.py",
+   "search": "    if colors is not None:\n        colors = itertools.cycle(colors)\n    else:\n        colors = (axes._get_lines.get_next_color() for _ in y)",
+   "replace": "    if colors is not None:\n        # Validate that colors are not cycle reference strings like 'C0', 'C1', \u2026\n        for c in colors:\n            if isinstance(c, str) and c.startswith('C') and c[1:].isdigit():\n                raise ValueError(\"Cycle references not allowed in colors argument\")\n        # Apply the provided colors to the Axes cycler.\n        axes.set_prop_cycle(color=colors)\n        # After setting the cycler, obtain colors from the Axes line generator.\n        colors = (axes._get_lines.get_next_color() for _ in y)\n    else:\n        colors = (axes._get_lines.get_next_color() for _ in y)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "    data = {\"x\": x, \"y1\": y1, \"y2\": y2, \"y3\": y3}\n    fig, ax = plt.subplots()\n    ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])\n    ax.set_xlim((0, 10))\n    ax.set_ylim((0, 70))",
+   "replace": ""
+  }
+ ]
+}

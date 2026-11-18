@@ -1,0 +1,49 @@
+{
+ "instance_id": "sympy__sympy-19637",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "b05c44ddb9f0377469d4215c6eb896a09582fd5c3fdaea61a899ab07c95ea5b4",
+ "raw": "<summary>kernS must raise a ValueError when its internal placeholder appears in the processed expression.</summary>\n<requirement>When the function `kernS` processes the input string, it generates a temporary placeholder name (e.g., `kern`). After any replacements, if that placeholder name is still present in the resulting string, `kernS` must raise a `ValueError` with the exact message `\"Placeholder 'kern' found in expression\"`. This requirement overrides any previous expectations about silently ignoring such cases.</requirement>\n<source_edit file=\"sympy/core/sympify.py\"><search>            hit = kern in s\n        else:\n            hit = False</search><replace>            hit = kern in s\n            if hit:\n                raise ValueError(\"Placeholder 'kern' found in expression\")</replace></source_edit>\n<test_edit file=\"sympy/core/tests/test_sympify.py\"><search>assert kernS(\"(2*x)/(x-1)\") == 2*x/(x-1)</search><replace>assert kernS(\"(2*x)/(x-1)\") == 2*x/(x-1)\nwith pytest.raises(ValueError):\n    kernS(\"kern+1\")</replace></test_edit>\n<test_edit file=\"sympy/core/tests/test_sympify.py\"><search>import sympy</search><replace>import sympy\nimport pytest</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2259,
+  "prompt_tokens": 906,
+  "total_tokens": 3165,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1959,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "kernS must raise a ValueError when its internal placeholder appears in the processed expression.",
+ "requirement": "When the function `kernS` processes the input string, it generates a temporary placeholder name (e.g., `kern`). After any replacements, if that placeholder name is still present in the resulting string, `kernS` must raise a `ValueError` with the exact message `\"Placeholder 'kern' found in expression\"`. This requirement overrides any previous expectations about silently ignoring such cases.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/core/sympify.py",
+   "search": "            hit = kern in s\n        else:\n            hit = False",
+   "replace": "            hit = kern in s\n            if hit:\n                raise ValueError(\"Placeholder 'kern' found in expression\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/core/tests/test_sympify.py",
+   "search": "assert kernS(\"(2*x)/(x-1)\") == 2*x/(x-1)",
+   "replace": "assert kernS(\"(2*x)/(x-1)\") == 2*x/(x-1)\nwith pytest.raises(ValueError):\n    kernS(\"kern+1\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/core/tests/test_sympify.py",
+   "search": "import sympy",
+   "replace": "import sympy\nimport pytest"
+  }
+ ],
+ "status": "generated"
+}

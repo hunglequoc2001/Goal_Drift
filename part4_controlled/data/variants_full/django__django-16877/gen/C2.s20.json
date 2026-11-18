@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-16877",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "939435c10e9b68f7fcc6e290f439210cd77cd6aded5808956ff52d0128391954",
+ "raw": "<summary>escapeseq now respects the current auto\u2011escape setting</summary>\n<requirement>When the template auto\u2011escaping is disabled, the new ``escapeseq`` filter must leave each element of the sequence unchanged (i.e., it must not escape them). When auto\u2011escaping is enabled, it should escape each element as before. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"django/template/defaultfilters.py\"><search>@register.filter(is_safe=True)\ndef escapeseq(value):\n</search><replace>@register.filter(is_safe=True, needs_autoescape=True)\ndef escapeseq(value, autoescape=True):\n</replace></source_edit>\n<source_edit file=\"django/template/defaultfilters.py\"><search>return [conditional_escape(obj) for obj in value]\n</search><replace>if autoescape:\n    return [conditional_escape(obj) for obj in value]\nelse:\n    return list(value)\n</replace></source_edit>\n<test_edit file=\"tests/template_tests/filter_tests/test_escapeseq.py\"><search>self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&y, <p>\")\n</search><replace>self.assertEqual(output, \"x&y, <p> -- x&y, <p>\")\n</replace></test_edit>\n<test_edit file=\"tests/template_tests/filter_tests/test_escapeseq.py\"><search>self.assertEqual(output, \"x&amp;y<br/>&lt;p&gt;\")\n</search><replace>self.assertEqual(output, \"x&y<br/><p>\")\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1486,
+  "prompt_tokens": 1574,
+  "total_tokens": 3060,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1138,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "escapeseq now respects the current auto\u2011escape setting",
+ "requirement": "When the template auto\u2011escaping is disabled, the new ``escapeseq`` filter must leave each element of the sequence unchanged (i.e., it must not escape them). When auto\u2011escaping is enabled, it should escape each element as before. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/template/defaultfilters.py",
+   "search": "@register.filter(is_safe=True)\ndef escapeseq(value):",
+   "replace": "@register.filter(is_safe=True, needs_autoescape=True)\ndef escapeseq(value, autoescape=True):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/template/defaultfilters.py",
+   "search": "return [conditional_escape(obj) for obj in value]",
+   "replace": "if autoescape:\n    return [conditional_escape(obj) for obj in value]\nelse:\n    return list(value)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_escapeseq.py",
+   "search": "self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&y, <p>\")",
+   "replace": "self.assertEqual(output, \"x&y, <p> -- x&y, <p>\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_escapeseq.py",
+   "search": "self.assertEqual(output, \"x&amp;y<br/>&lt;p&gt;\")",
+   "replace": "self.assertEqual(output, \"x&y<br/><p>\")"
+  }
+ ],
+ "status": "generated"
+}

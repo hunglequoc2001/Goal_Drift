@@ -1,0 +1,61 @@
+{
+ "instance_id": "pytest-dev__pytest-7571",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "6a62ac51aea81bd8dc717a3a6f076e201b3f11f368a81a024e3bd3d998b33a42",
+ "raw": "<summary>caplog.set_level must no longer change or restore the handler\u2019s log level</summary>\n<requirement>The caplog fixture should no longer modify or restore the handler\u2019s log level. Calls to ``caplog.set_level`` must affect only the specified logger\u2019s level (or the root logger when ``logger`` is omitted). The handler\u2019s level must remain at its initial value throughout the test session and must not be restored after a test. This requirement supersedes any previous expectation that the handler level is restored.</requirement>\n\n<source_edit file=\"src/_pytest/logging.py\"><search>self._initial_handler_level = None  # type: Optional[int]</search><replace></replace></source_edit>\n\n<source_edit file=\"src/_pytest/logging.py\"><search>if self._initial_handler_level is not None:\n            self.handler.setLevel(self._initial_handler_level)</search><replace></replace></source_edit>\n\n<source_edit file=\"src/_pytest/logging.py\"><search>self._initial_handler_level = self.handler.level\n         self.handler.setLevel(level)</search><replace>self._initial_logger_levels.setdefault(logger, logger_obj.level)\n         logger_obj.setLevel(level)</replace></source_edit>\n\n<test_edit file=\"testing/logging/test_fixture.py\"><search>assert caplog.handler.level == 41</search><replace>assert caplog.handler.level == 0</replace></test_edit>\n\n<test_edit file=\"testing/logging/test_fixture.py\"><search>assert caplog.handler.level == 43</search><replace>assert caplog.handler.level == 0</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1410,
+  "prompt_tokens": 1474,
+  "total_tokens": 2884,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1069,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "caplog.set_level must no longer change or restore the handler\u2019s log level",
+ "requirement": "The caplog fixture should no longer modify or restore the handler\u2019s log level. Calls to ``caplog.set_level`` must affect only the specified logger\u2019s level (or the root logger when ``logger`` is omitted). The handler\u2019s level must remain at its initial value throughout the test session and must not be restored after a test. This requirement supersedes any previous expectation that the handler level is restored.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "self._initial_handler_level = None  # type: Optional[int]",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "if self._initial_handler_level is not None:\n            self.handler.setLevel(self._initial_handler_level)",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "self._initial_handler_level = self.handler.level\n         self.handler.setLevel(level)",
+   "replace": "self._initial_logger_levels.setdefault(logger, logger_obj.level)\n         logger_obj.setLevel(level)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/logging/test_fixture.py",
+   "search": "assert caplog.handler.level == 41",
+   "replace": "assert caplog.handler.level == 0"
+  },
+  {
+   "kind": "test_edit",
+   "file": "testing/logging/test_fixture.py",
+   "search": "assert caplog.handler.level == 43",
+   "replace": "assert caplog.handler.level == 0"
+  }
+ ],
+ "status": "generated"
+}

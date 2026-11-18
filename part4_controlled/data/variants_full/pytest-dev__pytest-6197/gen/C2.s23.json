@@ -1,0 +1,43 @@
+{
+ "instance_id": "pytest-dev__pytest-6197",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "91b723aea44757e8f794514e2c735d818333929199fc1af8eb3cd879820be7d7",
+ "raw": "<summary>pytest must add a top\u2011level \u201csrc\u201d directory to\u202fsys.path during collection</summary>\n<requirement>When collecting tests, pytest should automatically prepend any directory named\u202f`src` that exists directly under the session\u2019s root directory to\u202f`sys.path`. This behavior supersedes any previous expectation that such directories are ignored for imports.</requirement>\n\n<source_edit file=\"src/_pytest/python.py\"><search>def _getobj(self):\n        return self._importtestmodule()</search><replace>def _getobj(self):\n        # Ensure a top\u2011level \u201csrc\u201d directory is on sys.path if it exists.\n        src_dir = self.config.rootdir.join(\"src\")\n        if src_dir.isdir():\n            import sys\n            src_path = str(src_dir)\n            if src_path not in sys.path:\n                sys.path.insert(0, src_path)\n        return self._importtestmodule()</replace></source_edit>\n\n<test_edit file=\"testing/test_collection.py\"><search>        with pytest.raises(ImportError):\n            import nope</search><replace>        import nope</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1877,
+  "prompt_tokens": 2378,
+  "total_tokens": 4255,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1637,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "pytest must add a top\u2011level \u201csrc\u201d directory to\u202fsys.path during collection",
+ "requirement": "When collecting tests, pytest should automatically prepend any directory named\u202f`src` that exists directly under the session\u2019s root directory to\u202f`sys.path`. This behavior supersedes any previous expectation that such directories are ignored for imports.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/python.py",
+   "search": "def _getobj(self):\n        return self._importtestmodule()",
+   "replace": "def _getobj(self):\n        # Ensure a top\u2011level \u201csrc\u201d directory is on sys.path if it exists.\n        src_dir = self.config.rootdir.join(\"src\")\n        if src_dir.isdir():\n            import sys\n            src_path = str(src_dir)\n            if src_path not in sys.path:\n                sys.path.insert(0, src_path)\n        return self._importtestmodule()"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_collection.py",
+   "search": "        with pytest.raises(ImportError):\n            import nope",
+   "replace": "        import nope"
+  }
+ ],
+ "status": "generated"
+}

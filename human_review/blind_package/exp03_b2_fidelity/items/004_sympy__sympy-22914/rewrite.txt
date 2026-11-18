@@ -1,0 +1,27 @@
+The component PythonCodePrinter currently lacks any handling for the Sympy functions Min and Max, which means it is unable to emit corresponding Python code.
+
+As an illustration, invoking:
+```
+from sympy import symbols, Min, pycode
+a, b = symbols("a b")
+c = Min(a,b)
+print(pycode(c))
+```
+yields the following result:
+```
+  # Not supported in Python:
+  # Min
+Min(a, b)
+```
+
+This situation is analogous to the problem described in issue #16669. The remedy would be to introduce the methods listed below into PythonCodePrinter:
+
+```
+def _print_Min(self, expr):
+    return "min({})".format(", ".join(self._print(arg) for arg in expr.args))
+
+
+def _print_Max(self, expr):
+    return "max({})".format(", ".join(self._print(arg) for arg in expr.args))
+
+```

@@ -1,0 +1,24 @@
+{
+ "instance_id": "django__django-11490",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 18768,
+ "raw": "<summary>Values/values_list on a composed query become immutable after the first call.</summary>\n<requirement>When a queryset is combined using union, intersect, or difference, applying\u202fvalues()\u202for\u202fvalues_list() fixes the selected columns for that combined query. Any subsequent attempt to call\u202fvalues()\u202for\u202fvalues_list()\u202fwith a different set of fields on the same combined queryset must raise a\u202fRuntimeError\u202fwith the exact message\u202f\"Cannot modify values on a composed query\". This supersedes any earlier expectation that the column list could be altered.</requirement>\n<test_edit file=\"tests/queries/test_qs_combinators.py\"><search>reserved_name = qs1.union(qs1).values_list('order').get()\n        self.assertEqual(reserved_name, (2,))</search><replace>with self.assertRaisesMessage(RuntimeError, \"Cannot modify values on a composed query\"):\n            qs1.union(qs1).values_list('order').get()</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Values/values_list on a composed query become immutable after the first call.",
+ "requirement": "When a queryset is combined using union, intersect, or difference, applying\u202fvalues()\u202for\u202fvalues_list() fixes the selected columns for that combined query. Any subsequent attempt to call\u202fvalues()\u202for\u202fvalues_list()\u202fwith a different set of fields on the same combined queryset must raise a\u202fRuntimeError\u202fwith the exact message\u202f\"Cannot modify values on a composed query\". This supersedes any earlier expectation that the column list could be altered.",
+ "source_edits": [],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_qs_combinators.py",
+   "search": "reserved_name = qs1.union(qs1).values_list('order').get()\n        self.assertEqual(reserved_name, (2,))",
+   "replace": "with self.assertRaisesMessage(RuntimeError, \"Cannot modify values on a composed query\"):\n            qs1.union(qs1).values_list('order').get()"
+  }
+ ]
+}

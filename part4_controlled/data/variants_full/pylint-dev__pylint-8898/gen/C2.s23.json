@@ -1,0 +1,49 @@
+{
+ "instance_id": "pylint-dev__pylint-8898",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "dc34eee0b68fe6bd4103da28511dc3788a8c195909fa407b5c50cd61b2d18b2e",
+ "raw": "<summary>Commas are always treated as separators in the bad\u2011names\u2011rgxs option, even inside regex quantifier braces.</summary>\n<requirement>Update the behavior of the **bad\u2011names\u2011rgxs** configuration option so that commas are always interpreted as list separators, regardless of whether they appear inside `{}` quantifier syntax. This supersedes any previous expectation that commas inside braces should be ignored when parsing the comma\u2011separated regular\u2011expression list.</requirement>\n\n<source_edit file=\"pylint/utils/utils.py\"><search>def _check_regexp_csv(value: list[str] | tuple[str] | str) -> Iterable[str]:</search><replace>def _check_regexp_csv(value: list[str] | tuple[str] | str) -> Iterable[str]:\n    \"\"\"Split a comma\u2011separated list of regular expressions, treating every comma as a separator.\"\"\"\n    if isinstance(value, (list, tuple)):\n        yield from value\n    else:\n        for part in _splitstrip(value):\n            yield part</replace></source_edit>\n\n<test_edit file=\"tests/config/test_config.py\"><search>    (\"foo, bar{1,3}\", [\"foo\", \"bar{1,3}\"]),</search><replace>    (\"foo, bar{1,3}\", [\"foo\", \"bar{1\", \"3}\"]),</replace></test_edit>\n\n<test_edit file=\"tests/config/test_config.py\"><search>        r\"Error in provided regular expression: (foo{1,} beginning at index 0: missing ), unterminated subpattern\"</search><replace>        \"Error in provided regular expression:\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1667,
+  "prompt_tokens": 2823,
+  "total_tokens": 4490,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1313,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Commas are always treated as separators in the bad\u2011names\u2011rgxs option, even inside regex quantifier braces.",
+ "requirement": "Update the behavior of the **bad\u2011names\u2011rgxs** configuration option so that commas are always interpreted as list separators, regardless of whether they appear inside `{}` quantifier syntax. This supersedes any previous expectation that commas inside braces should be ignored when parsing the comma\u2011separated regular\u2011expression list.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "pylint/utils/utils.py",
+   "search": "def _check_regexp_csv(value: list[str] | tuple[str] | str) -> Iterable[str]:",
+   "replace": "def _check_regexp_csv(value: list[str] | tuple[str] | str) -> Iterable[str]:\n    \"\"\"Split a comma\u2011separated list of regular expressions, treating every comma as a separator.\"\"\"\n    if isinstance(value, (list, tuple)):\n        yield from value\n    else:\n        for part in _splitstrip(value):\n            yield part"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/config/test_config.py",
+   "search": "    (\"foo, bar{1,3}\", [\"foo\", \"bar{1,3}\"]),",
+   "replace": "    (\"foo, bar{1,3}\", [\"foo\", \"bar{1\", \"3}\"]),"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/config/test_config.py",
+   "search": "        r\"Error in provided regular expression: (foo{1,} beginning at index 0: missing ), unterminated subpattern\"",
+   "replace": "        \"Error in provided regular expression:\""
+  }
+ ],
+ "status": "generated"
+}

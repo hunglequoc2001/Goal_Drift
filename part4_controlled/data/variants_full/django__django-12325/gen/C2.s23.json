@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-12325",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "8b08203ff0ee5af458a71247b601180bda3aed8af5f762ca84d65ee30b34c386",
+ "raw": "<summary>Parent link fields should automatically suppress reverse accessor name clashes.</summary>\n<requirement>When a OneToOneField is declared with\u202fparent_link=True (including the implicit parent link created for model inheritance), Django must set its\u202frelated_name\u202fto '+' so that it does not generate a reverse accessor. This prevents reverse accessor clashes involving the automatic parent link field. This rule supersedes any previous expectation that such clashes are reported as errors.</requirement>\n<source_edit file=\"django/db/models/options.py\"><search>self.setup_pk(field)</search><replace>self.setup_pk(field)\n                if field.remote_field.parent_link:\n                    field.remote_field.related_name = '+'</replace></source_edit>\n<test_edit file=\"tests/invalid_models_tests/test_relative_fields.py\"><search>errors = [\n    ('fields.E304', 'accessor', 'parent_ptr', 'other_parent'),\n    ('fields.E305', 'query name', 'parent_ptr', 'other_parent'),\n    ('fields.E304', 'accessor', 'other_parent', 'parent_ptr'),\n    ('fields.E305', 'query name', 'other_parent', 'parent_ptr'),\n]\nself.assertEqual(Child.check(), [\n    Error(\n        \"Reverse %s for 'Child.%s' clashes with reverse %s for \"\n        \"'Child.%s'.\" % (attr, field_name, attr, clash_name),\n        hint=(\n            \"Add or change a related_name argument to the definition \"\n            \"for 'Child.%s' or 'Child.%s'.\" % (field_name, clash_name)\n        ),\n        obj=Child._meta.get_field(field_name),\n        id=error_id,\n    )\n    for error_id, attr, field_name, clash_name in errors\n])</search><replace>self.assertEqual(Child.check(), [])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3242,
+  "prompt_tokens": 1988,
+  "total_tokens": 5230,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2852,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Parent link fields should automatically suppress reverse accessor name clashes.",
+ "requirement": "When a OneToOneField is declared with\u202fparent_link=True (including the implicit parent link created for model inheritance), Django must set its\u202frelated_name\u202fto '+' so that it does not generate a reverse accessor. This prevents reverse accessor clashes involving the automatic parent link field. This rule supersedes any previous expectation that such clashes are reported as errors.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/options.py",
+   "search": "self.setup_pk(field)",
+   "replace": "self.setup_pk(field)\n                if field.remote_field.parent_link:\n                    field.remote_field.related_name = '+'"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/invalid_models_tests/test_relative_fields.py",
+   "search": "errors = [\n    ('fields.E304', 'accessor', 'parent_ptr', 'other_parent'),\n    ('fields.E305', 'query name', 'parent_ptr', 'other_parent'),\n    ('fields.E304', 'accessor', 'other_parent', 'parent_ptr'),\n    ('fields.E305', 'query name', 'other_parent', 'parent_ptr'),\n]\nself.assertEqual(Child.check(), [\n    Error(\n        \"Reverse %s for 'Child.%s' clashes with reverse %s for \"\n        \"'Child.%s'.\" % (attr, field_name, attr, clash_name),\n        hint=(\n            \"Add or change a related_name argument to the definition \"\n            \"for 'Child.%s' or 'Child.%s'.\" % (field_name, clash_name)\n        ),\n        obj=Child._meta.get_field(field_name),\n        id=error_id,\n    )\n    for error_id, attr, field_name, clash_name in errors\n])",
+   "replace": "self.assertEqual(Child.check(), [])"
+  }
+ ],
+ "status": "generated"
+}

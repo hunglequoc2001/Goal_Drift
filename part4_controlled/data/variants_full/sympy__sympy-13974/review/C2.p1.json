@@ -1,0 +1,22 @@
+{
+ "instance_id": "sympy__sympy-13974",
+ "kind": "C2",
+ "pass_": 1,
+ "reviewer": "reviewer",
+ "parsed": {
+  "change_meaningful": "yes",
+  "requirement_unambiguous": "yes",
+  "tests_match_requirement": "yes",
+  "revised_fix_correct": "yes",
+  "artificial": "no",
+  "evidence": [
+   "When simplifying expressions, the `tensor_product_simp` function must only distribute a power over a `TensorProduct` if the exponent is an integer. For non\u2011integer exponents (including symbolic ones) the original `Pow` should be left unchanged.",
+   "assert tensor_product_simp(TP(A, B)**x) == TP(A, B)**x",
+   "assert tensor_product_simp(TP(A, B)**x) == TP(A**x, B**x)",
+   "if isinstance(e.base, TensorProduct) and e.exp.is_Integer:"
+  ],
+  "reasoning": "The maintainer's update introduces a clear and meaningful restriction: tensor products should only distribute powers when the exponent is an integer. This makes sense from a mathematical perspective since non-integer powers of operators may not be well-defined or may require special handling. The revised fix correctly implements this by adding a check for `e.exp.is_Integer` in the `tensor_product_simp_Pow` function. The tests now properly verify that symbolic exponents like `x` are left unchanged while integer exponents like `2` are distributed. The original fix was incorrect because it distributed powers regardless of exponent type, which contradicted the updated requirement. The revised tests match the new requirement exactly, checking both the preservation of symbolic powers and correct behavior for integer powers.",
+  "confidence": 0.95
+ },
+ "raw": "{\n    \"change_meaningful\": \"yes\",\n    \"requirement_unambiguous\": \"yes\",\n    \"tests_match_requirement\": \"yes\",\n    \"revised_fix_correct\": \"yes\",\n    \"artificial\": \"no\",\n    \"evidence\": [\n        \"When simplifying expressions, the `tensor_product_simp` function must only distribute a power over a `TensorProduct` if the exponent is an integer. For non\u2011integer exponents (including symbolic ones) the original `Pow` should be left unchanged.\",\n        \"assert tensor_product_simp(TP(A, B)**x) == TP(A, B)**x\",\n        \"assert tensor_product_simp(TP(A, B)**x) == TP(A**x, B**x)\",\n        \"if isinstance(e.base, TensorProduct) and e.exp.is_Integer:\"\n    ],\n    \"reasoning\": \"The maintainer's update introduces a clear and meaningful restriction: tensor products should only distribute powers when the exponent is an integer. This makes sense from a mathematical perspective since non-integer powers of operators may not be well-defined or may require special handling. The revised fix correctly implements this by adding a check for `e.exp.is_Integer` in the `tensor_product_simp_Pow` function. The tests now properly verify that symbolic exponents like `x` are left unchanged while integer exponents like `2` are distributed. The original fix was incorrect because it distributed powers regardless of exponent type, which contradicted the updated requirement. The revised tests match the new requirement exactly, checking both the preservation of symbolic powers and correct behavior for integer powers.\",\n    \"confidence\": 0.95\n}"
+}

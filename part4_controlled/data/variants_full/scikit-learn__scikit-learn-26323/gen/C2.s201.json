@@ -1,0 +1,31 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-26323",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 12,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 19732,
+ "raw": "<summary>ColumnTransformer.set_output must never modify the output format of a remainder estimator.</summary>\n<requirement>When `set_output` is called on a `ColumnTransformer`, the estimator provided via the `remainder` argument must **always** keep its default output format (NumPy array) regardless of the `transform` parameter. This supersedes any previous expectation that the remainder's output could be set to pandas or other formats.</requirement>\n<source_edit file=\"sklearn/compose/_column_transformer.py\"><search>        if self.remainder not in {\"passthrough\", \"drop\"}:\n            _safe_set_output(self.remainder, transform=transform)</search><replace></replace></source_edit>\n<test_edit file=\"sklearn/compose/tests/test_column_transformer.py\"><search>    pd.testing.assert_frame_equal(out, df)</search><replace>    assert isinstance(out, np.ndarray)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "ColumnTransformer.set_output must never modify the output format of a remainder estimator.",
+ "requirement": "When `set_output` is called on a `ColumnTransformer`, the estimator provided via the `remainder` argument must **always** keep its default output format (NumPy array) regardless of the `transform` parameter. This supersedes any previous expectation that the remainder's output could be set to pandas or other formats.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/compose/_column_transformer.py",
+   "search": "        if self.remainder not in {\"passthrough\", \"drop\"}:\n            _safe_set_output(self.remainder, transform=transform)",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/compose/tests/test_column_transformer.py",
+   "search": "    pd.testing.assert_frame_equal(out, df)",
+   "replace": "    assert isinstance(out, np.ndarray)"
+  }
+ ]
+}

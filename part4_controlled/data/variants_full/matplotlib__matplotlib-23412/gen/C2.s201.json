@@ -1,0 +1,37 @@
+{
+ "instance_id": "matplotlib__matplotlib-23412",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 18356,
+ "raw": "<summary>Patch objects must ignore dash offset in linestyles.</summary>\n<requirement>When a linestyle is specified for a patch object using a dash tuple, the dash offset component must be ignored (treated as zero) both when drawing and when queried via ``get_linestyle()``. This supersedes any earlier expectation that the offset would be respected for patches.</requirement>\n<source_edit file=\"lib/matplotlib/patches.py\"><search>with cbook._setattr_cm(self, _dash_pattern=(self._dash_pattern)), \\</search><replace>with cbook._setattr_cm(self, _dash_pattern=(0, self._dash_pattern[1])), \\</replace></source_edit>\n<source_edit file=\"lib/matplotlib/patches.py\"><search>def get_path(self):</search><replace>    def get_linestyle(self):\n        \"\"\"Return the linestyle for patches. The dash offset is always ignored and reported as 0.\"\"\"\n        # _dash_pattern is stored as (offset, dash_sequence)\n        if isinstance(self._dash_pattern, tuple) and len(self._dash_pattern) == 2:\n            return (0, self._dash_pattern[1])\n        return self._linestyle\n\n    def get_path(self):</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_patches.py\"><search>assert rect_test2.get_linestyle() == (6, [6, 6])</search><replace>assert rect_test2.get_linestyle() == (0, [6, 6])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Patch objects must ignore dash offset in linestyles.",
+ "requirement": "When a linestyle is specified for a patch object using a dash tuple, the dash offset component must be ignored (treated as zero) both when drawing and when queried via ``get_linestyle()``. This supersedes any earlier expectation that the offset would be respected for patches.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/patches.py",
+   "search": "with cbook._setattr_cm(self, _dash_pattern=(self._dash_pattern)), \\",
+   "replace": "with cbook._setattr_cm(self, _dash_pattern=(0, self._dash_pattern[1])), \\"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/patches.py",
+   "search": "def get_path(self):",
+   "replace": "    def get_linestyle(self):\n        \"\"\"Return the linestyle for patches. The dash offset is always ignored and reported as 0.\"\"\"\n        # _dash_pattern is stored as (offset, dash_sequence)\n        if isinstance(self._dash_pattern, tuple) and len(self._dash_pattern) == 2:\n            return (0, self._dash_pattern[1])\n        return self._linestyle\n\n    def get_path(self):"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_patches.py",
+   "search": "assert rect_test2.get_linestyle() == (6, [6, 6])",
+   "replace": "assert rect_test2.get_linestyle() == (0, [6, 6])"
+  }
+ ]
+}

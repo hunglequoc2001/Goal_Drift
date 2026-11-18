@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-15741",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "818502a3096b79bad9b16e7acdd3076bccd202b4cb0be8a9b77e3b8f5c77fd0f",
+ "raw": "<summary>get_format must reject lazy format strings instead of coercing them</summary>\n<requirement>The get_format function should raise a TypeError when the format_type argument is not a plain string (e.g., a lazy translation object). This supersedes any previous expectation that lazy values would be accepted.</requirement>\n<source_edit file=\"django/utils/formats.py\"><search>format_type = str(format_type)  # format_type may be lazy.</search><replace>if not isinstance(format_type, str):\n    raise TypeError(\"format_type must be a string\")</replace></source_edit>\n\n<test_edit file=\"tests/i18n/tests.py\"><search>self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")</search><replace>with self.assertRaises(TypeError):\n        get_format(gettext_lazy(\"DATE_FORMAT\"))</replace></test_edit>\n\n<test_edit file=\"tests/template_tests/filter_tests/test_date.py\"><search>output = self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})</search><replace>with self.assertRaises(TypeError):\n            self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})</replace></test_edit>\n\n<test_edit file=\"tests/template_tests/filter_tests/test_date.py\"><search>self.assertEqual(output, \"00:00\")</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1612,
+  "prompt_tokens": 1115,
+  "total_tokens": 2727,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1304,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "get_format must reject lazy format strings instead of coercing them",
+ "requirement": "The get_format function should raise a TypeError when the format_type argument is not a plain string (e.g., a lazy translation object). This supersedes any previous expectation that lazy values would be accepted.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "format_type = str(format_type)  # format_type may be lazy.",
+   "replace": "if not isinstance(format_type, str):\n    raise TypeError(\"format_type must be a string\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/i18n/tests.py",
+   "search": "self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")",
+   "replace": "with self.assertRaises(TypeError):\n        get_format(gettext_lazy(\"DATE_FORMAT\"))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_date.py",
+   "search": "output = self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})",
+   "replace": "with self.assertRaises(TypeError):\n            self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_date.py",
+   "search": "self.assertEqual(output, \"00:00\")",
+   "replace": ""
+  }
+ ],
+ "status": "generated"
+}

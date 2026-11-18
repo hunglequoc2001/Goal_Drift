@@ -1,0 +1,44 @@
+{
+ "instance_id": "django__django-15741",
+ "kind": "C2",
+ "sample": 4,
+ "generator": "glm-4-32b-0414",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 4,
+ "prompt_sha256": "818502a3096b79bad9b16e7acdd3076bccd202b4cb0be8a9b77e3b8f5c77fd0f",
+ "raw": "\n<summary>Modify the lazy parameter handling in get_format to preserve the original value for cache keys.</summary>\n<requirement>This update supersedes any conflicting expectation in the issue. The get_format function should still accept lazy strings for the format_type parameter but must use the original lazy object's value when creating cache keys instead of converting it to a string. This ensures that cached formats are properly associated with the original lazy string value.</requirement>\n<source_edit file=\"django/utils/formats.py\"><search>format_type = str(format_type)  # format_type may be lazy.</search><replace>cache_key = (getattr(format_type, '__class__', format_type), lang)</replace></source_edit>\n<test_edit file=\"tests/i18n/tests.py\"><search>self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")</search><replace>self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), gettext_lazy(\"N j, Y\"))</replace></test_edit>\n<test_edit file=\"tests/template_tests/filter_tests/test_date.py\"><search>self.assertEqual(output, \"00:00\")</search><replace>self.assertEqual(output, gettext_lazy(\"H:i\"))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 251,
+  "prompt_tokens": 1047,
+  "total_tokens": 1298,
+  "completion_tokens_details": null,
+  "prompt_tokens_details": null
+ },
+ "summary": "Modify the lazy parameter handling in get_format to preserve the original value for cache keys.",
+ "requirement": "This update supersedes any conflicting expectation in the issue. The get_format function should still accept lazy strings for the format_type parameter but must use the original lazy object's value when creating cache keys instead of converting it to a string. This ensures that cached formats are properly associated with the original lazy string value.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "format_type = str(format_type)  # format_type may be lazy.",
+   "replace": "cache_key = (getattr(format_type, '__class__', format_type), lang)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/i18n/tests.py",
+   "search": "self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")",
+   "replace": "self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), gettext_lazy(\"N j, Y\"))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_date.py",
+   "search": "self.assertEqual(output, \"00:00\")",
+   "replace": "self.assertEqual(output, gettext_lazy(\"H:i\"))"
+  }
+ ],
+ "status": "generated"
+}

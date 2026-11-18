@@ -1,0 +1,40 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-12585",
+ "kind": "B2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "masked": "clone fails for parameters that are estimator types\n#### Description\n\n\u27e6P1\u27e7 fails when one or more instance parameters are estimator types (\u27e6P2\u27e7. not instances, but classes). \n\nI know this is a somewhat unusual use case, but I'm working on a project that provides wrappers for sklearn estimators (\u27e6P3\u27e7 and I'd like to store the wrapped estimators as their classes - not their instances - as a parameter inside of a wrapper that behaves like an estimator itself. \n\n#### \u27e6P4\u27e7 to Reproduce\n\n\u27e6P5\u27e7\n\n#### Expected Results\n\nNo error.\n\n#### Actual Results\n\u27e6P6\u27e7\n\n#### Possible fix\n\nChange \u27e6P7\u27e7, line \u27e6P8\u27e7 to: \n\n\u27e6P9\u27e7\n\nI'm not sure whether this might break stuff in other places, however. I'd happily submit a PR if this change is desired.\n\n#### Versions\n\n\u27e6P10\u27e7\n\n\n",
+ "spans": [
+  "`clone`",
+  "i.e",
+  "https://github.com/phausamann/sklearn-xarray)",
+  "Steps/Code",
+  "    from sklearn.preprocessing import StandardScaler\n    from sklearn.base import clone\n    clone(StandardScaler(with_mean=StandardScaler))",
+  "```\nTraceback (most recent call last):\n...\n  File \"...\\lib\\site-packages\\sklearn\\base.py\", line 62, in clone\n    new_object_params[name] = clone(param, safe=False)\n  File \"...\\lib\\site-packages\\sklearn\\base.py\", line 60, in clone\n    new_object_params = estimator.get_params(deep=False)\nTypeError: get_params() missing 1 required positional argument: 'self'\n```",
+  "`base.py`",
+  "51",
+  "    elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):",
+  "    sklearn: 0.20.0"
+ ],
+ "prompt_sha256": "ab78fd13778240aab6edb08e9585eea875b0156890c9b5e99949fce01cc1af20",
+ "raw": "<rewrite>\n**Title:** Cloning operation crashes when a parameter is an estimator class\n\n**Description**\n\nThe function \u27e6P1\u27e7 throws an exception whenever one or more of its instance parameters are supplied as estimator types (i.e., the classes themselves \u2013 \u27e6P2\u27e7 \u2013 rather than instantiated objects).  \n\nAlthough this scenario is not common, my current work involves building wrappers around scikit\u2011learn estimators (see \u27e6P3\u27e7). I would like those wrappers to keep references to the estimator classes, not to concrete instances, and still behave like an estimator.\n\n**Steps to Reproduce** (\u27e6P4\u27e7)\n\n1. Execute \u27e6P5\u27e7\n\n**Expected behaviour**\n\nThe call should complete without raising any exception.\n\n**Observed behaviour**\n\nAn error is produced: \u27e6P6\u27e7\n\n**Suggested modification**\n\nAlter the code at \u27e6P7\u27e7, line \u27e6P8\u27e7 so that it reads:\n\n```\n\u27e6P9\u27e7\n```\n\nI cannot guarantee that this change will not affect other parts of the codebase, but I am willing to open a pull request if the modification is acceptable.\n\n**Environment**\n\n\u27e6P10\u27e7\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 873,
+  "prompt_tokens": 508,
+  "total_tokens": 1381,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 588,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "**Title:** Cloning operation crashes when a parameter is an estimator class\n\n**Description**\n\nThe function \u27e6P1\u27e7 throws an exception whenever one or more of its instance parameters are supplied as estimator types (i.e., the classes themselves \u2013 \u27e6P2\u27e7 \u2013 rather than instantiated objects).  \n\nAlthough this scenario is not common, my current work involves building wrappers around scikit\u2011learn estimators (see \u27e6P3\u27e7). I would like those wrappers to keep references to the estimator classes, not to concrete instances, and still behave like an estimator.\n\n**Steps to Reproduce** (\u27e6P4\u27e7)\n\n1. Execute \u27e6P5\u27e7\n\n**Expected behaviour**\n\nThe call should complete without raising any exception.\n\n**Observed behaviour**\n\nAn error is produced: \u27e6P6\u27e7\n\n**Suggested modification**\n\nAlter the code at \u27e6P7\u27e7, line \u27e6P8\u27e7 so that it reads:\n\n```\n\u27e6P9\u27e7\n```\n\nI cannot guarantee that this change will not affect other parts of the codebase, but I am willing to open a pull request if the modification is acceptable.\n\n**Environment**\n\n\u27e6P10\u27e7",
+ "rewrite": "**Title:** Cloning operation crashes when a parameter is an estimator class\n\n**Description**\n\nThe function `clone` throws an exception whenever one or more of its instance parameters are supplied as estimator types (i.e., the classes themselves \u2013 i.e \u2013 rather than instantiated objects).  \n\nAlthough this scenario is not common, my current work involves building wrappers around scikit\u2011learn estimators (see https://github.com/phausamann/sklearn-xarray)). I would like those wrappers to keep references to the estimator classes, not to concrete instances, and still behave like an estimator.\n\n**Steps to Reproduce** (Steps/Code)\n\n1. Execute     from sklearn.preprocessing import StandardScaler\n    from sklearn.base import clone\n    clone(StandardScaler(with_mean=StandardScaler))\n\n**Expected behaviour**\n\nThe call should complete without raising any exception.\n\n**Observed behaviour**\n\nAn error is produced: ```\nTraceback (most recent call last):\n...\n  File \"...\\lib\\site-packages\\sklearn\\base.py\", line 62, in clone\n    new_object_params[name] = clone(param, safe=False)\n  File \"...\\lib\\site-packages\\sklearn\\base.py\", line 60, in clone\n    new_object_params = estimator.get_params(deep=False)\nTypeError: get_params() missing 1 required positional argument: 'self'\n```\n\n**Suggested modification**\n\nAlter the code at `base.py`, line 51 so that it reads:\n\n```\n    elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):\n```\n\nI cannot guarantee that this change will not affect other parts of the codebase, but I am willing to open a pull request if the modification is acceptable.\n\n**Environment**\n\n    sklearn: 0.20.0",
+ "status": "generated"
+}

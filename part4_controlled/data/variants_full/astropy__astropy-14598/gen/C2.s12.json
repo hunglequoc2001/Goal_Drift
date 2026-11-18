@@ -1,0 +1,43 @@
+{
+ "instance_id": "astropy__astropy-14598",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "ad7a3c11bed099726c641d5a7d6a957bfcde3d276e09fa7c74ad006c40de4e77",
+ "raw": "<summary>Double single quotes should be collapsed to a single quote when parsing FITS card string values.</summary>\n<requirement>When reading a FITS Card from a string, any occurrence of two consecutive single\u2011quote characters (`''`) in the value must be interpreted as a single quote (`'`). This replacement should be applied to the entire value, including at the end of the string. This rule supersedes any previous expectation that double single quotes be preserved unchanged.</requirement>\n<source_edit file=\"astropy/io/fits/card.py\"><search>value = value.rstrip()</search><replace>value = value.rstrip().replace(\"''\", \"'\")</replace></source_edit>\n<test_edit file=\"astropy/io/fits/tests/test_header.py\"><search>\n        testval = \"x\" * 100 + \"''\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval\n\n        testval = \"x\" * 100 + \"''xxx\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval\n\n        testval = \"x\" * 100 + \"'' xxx\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval\n</search><replace>\n        testval = \"x\" * 100 + \"''\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval.replace(\"''\", \"'\")\n\n        testval = \"x\" * 100 + \"''xxx\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval.replace(\"''\", \"'\")\n\n        testval = \"x\" * 100 + \"'' xxx\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval.replace(\"''\", \"'\")\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1935,
+  "prompt_tokens": 1899,
+  "total_tokens": 3834,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1481,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Double single quotes should be collapsed to a single quote when parsing FITS card string values.",
+ "requirement": "When reading a FITS Card from a string, any occurrence of two consecutive single\u2011quote characters (`''`) in the value must be interpreted as a single quote (`'`). This replacement should be applied to the entire value, including at the end of the string. This rule supersedes any previous expectation that double single quotes be preserved unchanged.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/io/fits/card.py",
+   "search": "value = value.rstrip()",
+   "replace": "value = value.rstrip().replace(\"''\", \"'\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/io/fits/tests/test_header.py",
+   "search": "        testval = \"x\" * 100 + \"''\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval\n\n        testval = \"x\" * 100 + \"''xxx\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval\n\n        testval = \"x\" * 100 + \"'' xxx\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval",
+   "replace": "        testval = \"x\" * 100 + \"''\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval.replace(\"''\", \"'\")\n\n        testval = \"x\" * 100 + \"''xxx\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval.replace(\"''\", \"'\")\n\n        testval = \"x\" * 100 + \"'' xxx\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval.replace(\"''\", \"'\")"
+  }
+ ],
+ "status": "generated"
+}

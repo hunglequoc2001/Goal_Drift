@@ -1,0 +1,61 @@
+{
+ "instance_id": "sympy__sympy-21596",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "4728ebc9c6513731def2f8cdeb21595b2661d0696dde792c7169ecabfc24280f",
+ "raw": "<summary>Intersecting an ImageSet with Reals now returns an ImageSet of the real part (or the identity) instead of a FiniteSet when the real part is the index variable.</summary>\n<requirement>When an ImageSet is intersected with the set of real numbers, the result must be expressed as an ImageSet over the original index set that maps each index to its real part. If the real part of the ImageSet\u2019s defining expression is exactly the index variable (i.e., the expression is of the form\u202fn\u202f+\u202f\u2026\u202fI), the intersection should be returned as an ImageSet of the identity mapping (\u03bb\u202fn.\u202fn) restricted by a ConditionSet that enforces the imaginary part to be zero. This supersedes any previous expectation that such intersections be simplified to a FiniteSet.</requirement>\n<source_edit file=\"sympy/sets/handlers/intersection.py\"><search>return imageset(lam, base_set)</search><replace>real_part = self.lamda.expr.as_real_imag()[0]\nif real_part == n and self.lamda.expr.has(I):\n    return imageset(Lambda(n, n), base_set)\nreturn imageset(lam, base_set)</replace></source_edit>\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>assert imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers).intersect(S.Reals) == FiniteSet(-1, 1)</search><replace>assert imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers).intersect(S.Reals) == ImageSet(Lambda(x, x), ConditionSet(n, Eq((n - 1)*(n + 1), 0), S.Integers))</replace></test_edit>\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>assert imageset(Lambda(n, n + im*I), S.Integers</search><replace>assert imageset(Lambda(n, n + im*I), S.Integers</replace></test_edit>\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>) .intersect(S.Reals) == FiniteSet(1)</search><replace>) .intersect(S.Reals) == ImageSet(Lambda(x, x), ConditionSet(n, Eq((n - 1)*(n + S.Half), 0), S.Integers))</replace></test_edit>\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>) .intersect(S.Reals) == FiniteSet(1)</search><replace>) .intersect(S.Reals) == ImageSet(Lambda(x, x), ConditionSet(n, Eq((n - 1)*(n + S.Half), 0), S.Naturals0))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 7962,
+  "prompt_tokens": 2239,
+  "total_tokens": 10201,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 7325,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Intersecting an ImageSet with Reals now returns an ImageSet of the real part (or the identity) instead of a FiniteSet when the real part is the index variable.",
+ "requirement": "When an ImageSet is intersected with the set of real numbers, the result must be expressed as an ImageSet over the original index set that maps each index to its real part. If the real part of the ImageSet\u2019s defining expression is exactly the index variable (i.e., the expression is of the form\u202fn\u202f+\u202f\u2026\u202fI), the intersection should be returned as an ImageSet of the identity mapping (\u03bb\u202fn.\u202fn) restricted by a ConditionSet that enforces the imaginary part to be zero. This supersedes any previous expectation that such intersections be simplified to a FiniteSet.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/handlers/intersection.py",
+   "search": "return imageset(lam, base_set)",
+   "replace": "real_part = self.lamda.expr.as_real_imag()[0]\nif real_part == n and self.lamda.expr.has(I):\n    return imageset(Lambda(n, n), base_set)\nreturn imageset(lam, base_set)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": "assert imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers).intersect(S.Reals) == FiniteSet(-1, 1)",
+   "replace": "assert imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers).intersect(S.Reals) == ImageSet(Lambda(x, x), ConditionSet(n, Eq((n - 1)*(n + 1), 0), S.Integers))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": "assert imageset(Lambda(n, n + im*I), S.Integers",
+   "replace": "assert imageset(Lambda(n, n + im*I), S.Integers"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": ") .intersect(S.Reals) == FiniteSet(1)",
+   "replace": ") .intersect(S.Reals) == ImageSet(Lambda(x, x), ConditionSet(n, Eq((n - 1)*(n + S.Half), 0), S.Integers))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": ") .intersect(S.Reals) == FiniteSet(1)",
+   "replace": ") .intersect(S.Reals) == ImageSet(Lambda(x, x), ConditionSet(n, Eq((n - 1)*(n + S.Half), 0), S.Naturals0))"
+  }
+ ],
+ "status": "generated"
+}

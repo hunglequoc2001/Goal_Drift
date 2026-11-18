@@ -1,0 +1,43 @@
+{
+ "instance_id": "matplotlib__matplotlib-24970",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "57c1f7001a19c466f662b61f12b06ccb251785d8da5f49bcafe67775283e61c2",
+ "raw": "<summary>Colormap indexing now rejects integer inputs and raises a TypeError.</summary>\n<requirement>All colormap objects must reject non\u2011floating scalar inputs. When a user calls a colormap with a NumPy integer type (e.g., uint8, int32) or a Python int, the call should raise a TypeError with a clear message indicating that only floating\u2011point inputs are supported. This requirement supersedes any previous expectation that integer inputs would be silently accepted or coerced.</requirement>\n<source_edit file=\"lib/matplotlib/colors.py\"><search>if xa.dtype.kind == \"f\":</search><replace>if not np.issubdtype(xa.dtype, np.floating):\n            raise TypeError(\"colormap indexing only supports float inputs\")\n        if xa.dtype.kind == \"f\":</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_colors.py\"><search>def test_index_dtype(dtype):</search><replace>def test_index_dtype(dtype):\n    cm = mpl.colormaps[\"viridis\"]\n    if np.issubdtype(dtype, np.integer):\n        with pytest.raises(TypeError):\n            cm(dtype(0))\n    else:\n        assert_array_equal(cm(dtype(0)), cm(0))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1135,
+  "prompt_tokens": 1588,
+  "total_tokens": 2723,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 860,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Colormap indexing now rejects integer inputs and raises a TypeError.",
+ "requirement": "All colormap objects must reject non\u2011floating scalar inputs. When a user calls a colormap with a NumPy integer type (e.g., uint8, int32) or a Python int, the call should raise a TypeError with a clear message indicating that only floating\u2011point inputs are supported. This requirement supersedes any previous expectation that integer inputs would be silently accepted or coerced.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/colors.py",
+   "search": "if xa.dtype.kind == \"f\":",
+   "replace": "if not np.issubdtype(xa.dtype, np.floating):\n            raise TypeError(\"colormap indexing only supports float inputs\")\n        if xa.dtype.kind == \"f\":"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_colors.py",
+   "search": "def test_index_dtype(dtype):",
+   "replace": "def test_index_dtype(dtype):\n    cm = mpl.colormaps[\"viridis\"]\n    if np.issubdtype(dtype, np.integer):\n        with pytest.raises(TypeError):\n            cm(dtype(0))\n    else:\n        assert_array_equal(cm(dtype(0)), cm(0))"
+  }
+ ],
+ "status": "generated"
+}

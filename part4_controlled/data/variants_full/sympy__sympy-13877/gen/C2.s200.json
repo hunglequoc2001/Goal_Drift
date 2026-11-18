@@ -1,0 +1,36 @@
+{
+ "instance_id": "sympy__sympy-13877",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 27353,
+ "raw": "<summary>random_complex_number now requires a non\u2011negative tolerance and defaults to\u202f1e\u20116</summary>\n<requirement>When calling ``random_complex_number`` the ``tolerance`` argument must be a non\u2011negative numeric value; if it is omitted the function shall use a default tolerance of\u202f1e\u20116. The argument is only used when ``rational=True``; in that case the returned real and imaginary parts must be rational approximations produced by ``nsimplify`` with the given tolerance. Supplying ``None`` for ``tolerance`` is an error. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sympy/utilities/randtest.py\"><search>def random_complex_number(a=2, b=-1, c=3, d=1, rational=False, tolerance=None):</search><replace>def random_complex_number(a=2, b=-1, c=3, d=1, rational=False, tolerance=1e-6):</replace></source_edit>\n<source_edit file=\"sympy/utilities/randtest.py\"><search>    if not rational:</search><replace>    if not rational:\n        # ``tolerance`` is ignored when ``rational`` is False\n        pass\n</replace></source_edit>\n<source_edit file=\"sympy/utilities/randtest.py\"><search>    return (nsimplify(A, rational=True, tolerance=tolerance) +</search><replace>    if tolerance is None:\n        raise ValueError(\"tolerance must be a non\u2011negative number\")\n    return (nsimplify(A, rational=True, tolerance=tolerance) +\n</replace></source_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "random_complex_number now requires a non\u2011negative tolerance and defaults to\u202f1e\u20116",
+ "requirement": "When calling ``random_complex_number`` the ``tolerance`` argument must be a non\u2011negative numeric value; if it is omitted the function shall use a default tolerance of\u202f1e\u20116. The argument is only used when ``rational=True``; in that case the returned real and imaginary parts must be rational approximations produced by ``nsimplify`` with the given tolerance. Supplying ``None`` for ``tolerance`` is an error. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/randtest.py",
+   "search": "def random_complex_number(a=2, b=-1, c=3, d=1, rational=False, tolerance=None):",
+   "replace": "def random_complex_number(a=2, b=-1, c=3, d=1, rational=False, tolerance=1e-6):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/randtest.py",
+   "search": "    if not rational:",
+   "replace": "    if not rational:\n        # ``tolerance`` is ignored when ``rational`` is False\n        pass"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/randtest.py",
+   "search": "    return (nsimplify(A, rational=True, tolerance=tolerance) +",
+   "replace": "    if tolerance is None:\n        raise ValueError(\"tolerance must be a non\u2011negative number\")\n    return (nsimplify(A, rational=True, tolerance=tolerance) +"
+  }
+ ],
+ "test_edits": []
+}

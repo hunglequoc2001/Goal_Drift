@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-15554",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "1aed4ac2753aeb51e36da96456739614995db133bb96edb7733ec3f47a8ff031",
+ "raw": "<summary>Disallow multiple FilteredRelation objects on the same base relation in a single query.</summary>\n<requirement>When annotating a queryset, defining more than one FilteredRelation that targets the same base relation path is prohibited. Django must raise a\u202fValueError with a clear message indicating that multiple FilteredRelation instances on the same relation are not allowed. This rule supersedes any earlier expectation that such usage would be permitted.</requirement>\n<source_edit file=\"django/db/models/sql/query.py\"><search>def add_annotation(self, name, annotation, is_summary=False):</search><replace>def add_annotation(self, name, annotation, is_summary=False):\n        # Prevent multiple FilteredRelation objects on the same base relation.\n        if isinstance(annotation, FilteredRelation):\n            for existing in self.annotations.values():\n                if isinstance(existing, FilteredRelation) and existing.relation == annotation.relation:\n                    raise ValueError(\n                        \"Multiple FilteredRelation instances on the same relation are not allowed.\"\n                    )\n</replace></source_edit>\n<test_edit file=\"tests/filtered_relation/tests.py\"><search>def test_multiple(self):</search><replace>def test_multiple(self):\n        with self.assertRaisesMessage(\n            ValueError,\n            \"Multiple FilteredRelation instances on the same relation are not allowed.\"\n        ):\n            Author.objects.annotate(\n                book_title_alice=FilteredRelation(\n                    \"book\", condition=Q(book__title__contains=\"Alice\")\n                ),\n                book_title_jane=FilteredRelation(\n                    \"book\", condition=Q(book__title__icontains=\"Jane\")\n                ),\n            )\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2039,
+  "prompt_tokens": 2304,
+  "total_tokens": 4343,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1691,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow multiple FilteredRelation objects on the same base relation in a single query.",
+ "requirement": "When annotating a queryset, defining more than one FilteredRelation that targets the same base relation path is prohibited. Django must raise a\u202fValueError with a clear message indicating that multiple FilteredRelation instances on the same relation are not allowed. This rule supersedes any earlier expectation that such usage would be permitted.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/query.py",
+   "search": "def add_annotation(self, name, annotation, is_summary=False):",
+   "replace": "def add_annotation(self, name, annotation, is_summary=False):\n        # Prevent multiple FilteredRelation objects on the same base relation.\n        if isinstance(annotation, FilteredRelation):\n            for existing in self.annotations.values():\n                if isinstance(existing, FilteredRelation) and existing.relation == annotation.relation:\n                    raise ValueError(\n                        \"Multiple FilteredRelation instances on the same relation are not allowed.\"\n                    )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/filtered_relation/tests.py",
+   "search": "def test_multiple(self):",
+   "replace": "def test_multiple(self):\n        with self.assertRaisesMessage(\n            ValueError,\n            \"Multiple FilteredRelation instances on the same relation are not allowed.\"\n        ):\n            Author.objects.annotate(\n                book_title_alice=FilteredRelation(\n                    \"book\", condition=Q(book__title__contains=\"Alice\")\n                ),\n                book_title_jane=FilteredRelation(\n                    \"book\", condition=Q(book__title__icontains=\"Jane\")\n                ),\n            )"
+  }
+ ],
+ "status": "generated"
+}

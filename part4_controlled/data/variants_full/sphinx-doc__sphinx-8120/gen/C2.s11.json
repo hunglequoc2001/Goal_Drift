@@ -1,0 +1,61 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8120",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "c22ef2fd1852c97f3a5c83927503606300ce5e2c161b5db48433a41f380fb55c",
+ "raw": "<summary>Built\u2011in Sphinx translations must take precedence over any custom locale directories.</summary>\n<requirement>All locale look\u2011ups must prioritize the Sphinx package\u2019s own translation catalog before any user\u2011provided locales (including the project\u2019s ``locale`` directory). The search order is: ``None``, the Sphinx package ``locale`` directory, then the directories listed in ``locale_dirs``. This supersedes any earlier statement that custom locales should override the built\u2011in ones.</requirement>\n\n<source_edit file=\"sphinx/application.py\"><search>from typing import Any, Callable, Dict, IO, List, Optional, Tuple, Union</search><replace>from typing import Any, Callable, Dict, IO, List, Tuple, Union</replace></source_edit>\n\n<source_edit file=\"sphinx/application.py\"><search>            locale_dirs = [None]  # type: List[Optional[str]]\n            locale_dirs += list(repo.locale_dirs)\n            locale_dirs += [path.join(package_dir, 'locale')]</search><replace>            locale_dirs = [None, path.join(package_dir, 'locale')] + list(repo.locale_dirs)</replace></source_edit>\n\n<source_edit file=\"sphinx/locale/__init__.py\"><search>def init(locale_dirs: List[Optional[str]], language: str,</search><replace>def init(locale_dirs: List[str], language: str,</replace></source_edit>\n\n<test_edit file=\"tests/test_intl.py\"><search>        assert app.translator.gettext('Quick search') == 'QUICK SEARCH'</search><replace>        assert app.translator.gettext('Quick search') != 'QUICK SEARCH'</replace></test_edit>\n\n<test_edit file=\"tests/test_intl.py\"><search>        assert 'QUICK SEARCH' in content</search><replace>        assert 'QUICK SEARCH' not in content</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1500,
+  "prompt_tokens": 1914,
+  "total_tokens": 3414,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1097,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Built\u2011in Sphinx translations must take precedence over any custom locale directories.",
+ "requirement": "All locale look\u2011ups must prioritize the Sphinx package\u2019s own translation catalog before any user\u2011provided locales (including the project\u2019s ``locale`` directory). The search order is: ``None``, the Sphinx package ``locale`` directory, then the directories listed in ``locale_dirs``. This supersedes any earlier statement that custom locales should override the built\u2011in ones.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/application.py",
+   "search": "from typing import Any, Callable, Dict, IO, List, Optional, Tuple, Union",
+   "replace": "from typing import Any, Callable, Dict, IO, List, Tuple, Union"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/application.py",
+   "search": "            locale_dirs = [None]  # type: List[Optional[str]]\n            locale_dirs += list(repo.locale_dirs)\n            locale_dirs += [path.join(package_dir, 'locale')]",
+   "replace": "            locale_dirs = [None, path.join(package_dir, 'locale')] + list(repo.locale_dirs)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/locale/__init__.py",
+   "search": "def init(locale_dirs: List[Optional[str]], language: str,",
+   "replace": "def init(locale_dirs: List[str], language: str,"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_intl.py",
+   "search": "        assert app.translator.gettext('Quick search') == 'QUICK SEARCH'",
+   "replace": "        assert app.translator.gettext('Quick search') != 'QUICK SEARCH'"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_intl.py",
+   "search": "        assert 'QUICK SEARCH' in content",
+   "replace": "        assert 'QUICK SEARCH' not in content"
+  }
+ ],
+ "status": "generated"
+}

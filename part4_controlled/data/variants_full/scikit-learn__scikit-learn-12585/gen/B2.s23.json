@@ -1,0 +1,40 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-12585",
+ "kind": "B2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "masked": "clone fails for parameters that are estimator types\n#### Description\n\n\u27e6P1\u27e7 fails when one or more instance parameters are estimator types (\u27e6P2\u27e7. not instances, but classes). \n\nI know this is a somewhat unusual use case, but I'm working on a project that provides wrappers for sklearn estimators (\u27e6P3\u27e7 and I'd like to store the wrapped estimators as their classes - not their instances - as a parameter inside of a wrapper that behaves like an estimator itself. \n\n#### \u27e6P4\u27e7 to Reproduce\n\n\u27e6P5\u27e7\n\n#### Expected Results\n\nNo error.\n\n#### Actual Results\n\u27e6P6\u27e7\n\n#### Possible fix\n\nChange \u27e6P7\u27e7, line \u27e6P8\u27e7 to: \n\n\u27e6P9\u27e7\n\nI'm not sure whether this might break stuff in other places, however. I'd happily submit a PR if this change is desired.\n\n#### Versions\n\n\u27e6P10\u27e7\n\n\n",
+ "spans": [
+  "`clone`",
+  "i.e",
+  "https://github.com/phausamann/sklearn-xarray)",
+  "Steps/Code",
+  "    from sklearn.preprocessing import StandardScaler\n    from sklearn.base import clone\n    clone(StandardScaler(with_mean=StandardScaler))",
+  "```\nTraceback (most recent call last):\n...\n  File \"...\\lib\\site-packages\\sklearn\\base.py\", line 62, in clone\n    new_object_params[name] = clone(param, safe=False)\n  File \"...\\lib\\site-packages\\sklearn\\base.py\", line 60, in clone\n    new_object_params = estimator.get_params(deep=False)\nTypeError: get_params() missing 1 required positional argument: 'self'\n```",
+  "`base.py`",
+  "51",
+  "    elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):",
+  "    sklearn: 0.20.0"
+ ],
+ "prompt_sha256": "ab78fd13778240aab6edb08e9585eea875b0156890c9b5e99949fce01cc1af20",
+ "raw": "<rewrite>\n**Title:** Cloning fails when parameters are estimator classes  \n\n**Description**  \nInvoking \u27e6P1\u27e7 triggers an exception whenever one or more of the supplied instance parameters are actually estimator types (\u27e6P2\u27e7 \u2013 classes, not instantiated objects).  \n\nThis scenario is a bit uncommon, but in my current work I am building wrappers around scikit\u2011learn estimators (\u27e6P3\u27e7). I need to keep the wrapped estimators as their class objects\u2014not as instantiated objects\u2014inside a wrapper that itself behaves like an estimator.\n\n**Steps to Reproduce**  \n\u27e6P5\u27e7  \n\n**Expected behavior**  \nThe call should succeed without raising any error.\n\n**Observed behavior**  \n\u27e6P6\u27e7  \n\n**Potential fix**  \nAlter \u27e6P7\u27e7 on line \u27e6P8\u27e7 to the following:\n\n\u27e6P9\u27e7  \n\nI cannot say for certain whether this change would have side\u2011effects elsewhere, but I am prepared to submit a pull request if the modification is acceptable.\n\n**Versions**  \n\u27e6P10\u27e7\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 687,
+  "prompt_tokens": 508,
+  "total_tokens": 1195,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 428,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "**Title:** Cloning fails when parameters are estimator classes  \n\n**Description**  \nInvoking \u27e6P1\u27e7 triggers an exception whenever one or more of the supplied instance parameters are actually estimator types (\u27e6P2\u27e7 \u2013 classes, not instantiated objects).  \n\nThis scenario is a bit uncommon, but in my current work I am building wrappers around scikit\u2011learn estimators (\u27e6P3\u27e7). I need to keep the wrapped estimators as their class objects\u2014not as instantiated objects\u2014inside a wrapper that itself behaves like an estimator.\n\n**Steps to Reproduce**  \n\u27e6P5\u27e7  \n\n**Expected behavior**  \nThe call should succeed without raising any error.\n\n**Observed behavior**  \n\u27e6P6\u27e7  \n\n**Potential fix**  \nAlter \u27e6P7\u27e7 on line \u27e6P8\u27e7 to the following:\n\n\u27e6P9\u27e7  \n\nI cannot say for certain whether this change would have side\u2011effects elsewhere, but I am prepared to submit a pull request if the modification is acceptable.\n\n**Versions**  \n\u27e6P10\u27e7",
+ "rewrite": "**Title:** Cloning fails when parameters are estimator classes  \n\n**Description**  \nInvoking `clone` triggers an exception whenever one or more of the supplied instance parameters are actually estimator types (i.e \u2013 classes, not instantiated objects).  \n\nThis scenario is a bit uncommon, but in my current work I am building wrappers around scikit\u2011learn estimators (https://github.com/phausamann/sklearn-xarray)). I need to keep the wrapped estimators as their class objects\u2014not as instantiated objects\u2014inside a wrapper that itself behaves like an estimator.\n\n**Steps to Reproduce**  \n    from sklearn.preprocessing import StandardScaler\n    from sklearn.base import clone\n    clone(StandardScaler(with_mean=StandardScaler))  \n\n**Expected behavior**  \nThe call should succeed without raising any error.\n\n**Observed behavior**  \n```\nTraceback (most recent call last):\n...\n  File \"...\\lib\\site-packages\\sklearn\\base.py\", line 62, in clone\n    new_object_params[name] = clone(param, safe=False)\n  File \"...\\lib\\site-packages\\sklearn\\base.py\", line 60, in clone\n    new_object_params = estimator.get_params(deep=False)\nTypeError: get_params() missing 1 required positional argument: 'self'\n```  \n\n**Potential fix**  \nAlter `base.py` on line 51 to the following:\n\n    elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):  \n\nI cannot say for certain whether this change would have side\u2011effects elsewhere, but I am prepared to submit a pull request if the modification is acceptable.\n\n**Versions**  \n    sklearn: 0.20.0",
+ "status": "generated"
+}

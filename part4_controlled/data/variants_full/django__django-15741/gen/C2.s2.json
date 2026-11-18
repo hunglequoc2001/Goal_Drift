@@ -1,0 +1,44 @@
+{
+ "instance_id": "django__django-15741",
+ "kind": "C2",
+ "sample": 2,
+ "generator": "glm-4-32b-0414",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 2,
+ "prompt_sha256": "818502a3096b79bad9b16e7acdd3076bccd202b4cb0be8a9b77e3b8f5c77fd0f",
+ "raw": "\n<summary>Modify the behavior of get_format to handle lazy parameters by converting them to strings only if they are not already strings.</summary>\n<requirement>This update supersedes any conflicting expectation in the issue. The django.utils.formats.get_format function should now handle lazy parameters by converting them to strings only if they are not already strings. This ensures that the function can accept both lazy strings and regular strings as the format_type parameter without raising a TypeError.</requirement>\n<source_edit file=\"django/utils/formats.py\"><search>format_type = str(format_type)  # format_type may be lazy.</search><replace>format_type = str(format_type) if not isinstance(format_type, str) else format_type  # format_type may be lazy.</replace></source_edit>\n<test_edit file=\"tests/i18n/tests.py\"><search>self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")</search><replace>self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\") if random.random() > 0.5 else \"DATE_FORMAT\"), \"N j, Y\")</replace></test_edit>\n<test_edit file=\"tests/template_tests/filter_tests/test_date.py\"><search>self.assertEqual(output, \"00:00\")</search><replace>self.assertEqual(output, \"00:00\" if random.random() > 0.5 else \"12:00\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 292,
+  "prompt_tokens": 1047,
+  "total_tokens": 1339,
+  "completion_tokens_details": null,
+  "prompt_tokens_details": null
+ },
+ "summary": "Modify the behavior of get_format to handle lazy parameters by converting them to strings only if they are not already strings.",
+ "requirement": "This update supersedes any conflicting expectation in the issue. The django.utils.formats.get_format function should now handle lazy parameters by converting them to strings only if they are not already strings. This ensures that the function can accept both lazy strings and regular strings as the format_type parameter without raising a TypeError.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "format_type = str(format_type)  # format_type may be lazy.",
+   "replace": "format_type = str(format_type) if not isinstance(format_type, str) else format_type  # format_type may be lazy."
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/i18n/tests.py",
+   "search": "self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")",
+   "replace": "self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\") if random.random() > 0.5 else \"DATE_FORMAT\"), \"N j, Y\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_date.py",
+   "search": "self.assertEqual(output, \"00:00\")",
+   "replace": "self.assertEqual(output, \"00:00\" if random.random() > 0.5 else \"12:00\")"
+  }
+ ],
+ "status": "generated"
+}

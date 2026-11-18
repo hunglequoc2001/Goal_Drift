@@ -1,0 +1,18 @@
+diff --git a/django/utils/formats.py b/django/utils/formats.py
+index b0a66e4e25..3cfda43c99 100644
+--- a/django/utils/formats.py
++++ b/django/utils/formats.py
+@@ -113,7 +113,12 @@ def get_format(format_type, lang=None, use_l10n=None):
+             use_l10n = settings.USE_L10N
+     if use_l10n and lang is None:
+         lang = get_language()
+-    format_type = str(format_type)  # format_type may be lazy.
++    # Handle lazy objects
++    from django.utils.functional import Promise
++    if isinstance(format_type, Promise):
++        format_type = str(format_type)  # Force evaluation of lazy object
++    else:
++        format_type = str(format_type)  # Convert to string if not lazy
+     cache_key = (format_type, lang)
+     try:
+         return _format_cache[cache_key]

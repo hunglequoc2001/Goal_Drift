@@ -1,0 +1,31 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8548",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 13,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 23181,
+ "raw": "<summary>Inherited instance attributes are no longer documented when ``inherited-members`` is enabled.</summary>\n<requirement>When the ``inherited-members`` option is set, autodoc must document only instance attributes that are defined directly on the class being documented; any instance attributes inherited from base classes must be omitted. This requirement supersedes any previous expectation that inherited instance attributes would be included.</requirement>\n<source_edit file=\"sphinx/ext/autodoc/importer.py\"><search>    try:\n        for cls in getmro(subject):\n            # annotation only member (ex. attr: int)\n            try:\n                for name in getannotations(cls):\n                    name = unmangle(cls, name)\n                    if name and name not in members:\n                        members[name] = ClassAttribute(cls, name, INSTANCEATTR)\n            except AttributeError:\n                pass\n\n            # append instance attributes (cf. self.attr1) if analyzer knows\n            try:\n                modname = safe_getattr(cls, '__module__')\n                qualname = safe_getattr(cls, '__qualname__')\n                analyzer = ModuleAnalyzer.for_module(modname)\n                analyzer.analyze()\n                for (ns, name), docstring in analyzer.attr_docs.items():\n                    if ns == qualname and name not in members:\n                        members[name] = ClassAttribute(cls, name, INSTANCEATTR,\n                                                       '\\n'.join(docstring))\n            except (AttributeError, PycodeError):\n                pass\n    except AttributeError:\n        pass</search><replace>    # annotation only members (ex. attr: int)\n    for cls in getmro(subject):\n        try:\n            for name in getannotations(cls):\n                name = unmangle(cls, name)\n                if name and name not in members:\n                    members[name] = ClassAttribute(cls, name, INSTANCEATTR)\n        except AttributeError:\n            pass\n\n    # append instance attributes (cf. self.attr1) if analyzer knows,\n    # but only for the class being documented (do not include inherited ones)\n    try:\n        modname = safe_getattr(subject, '__module__')\n        qualname = safe_getattr(subject, '__qualname__')\n        analyzer = ModuleAnalyzer.for_module(modname)\n        analyzer.analyze()\n        for (ns, name), docstring in analyzer.attr_docs.items():\n            if ns == qualname and name not in members:\n                members[name] = ClassAttribute(subject, name, INSTANCEATTR,\n                                               '\\n'.join(docstring))\n    except (AttributeError, PycodeError):\n        pass</replace></source_edit>\n<test_edit file=\"tests/test_ext_autodoc_autoclass.py\"><search>\n        '   .. py:attribute:: Bar.attr1',\n        '      :module: target.instance_variable',\n        '',\n        '      docstring foo',\n        '',\n        '',\n</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Inherited instance attributes are no longer documented when ``inherited-members`` is enabled.",
+ "requirement": "When the ``inherited-members`` option is set, autodoc must document only instance attributes that are defined directly on the class being documented; any instance attributes inherited from base classes must be omitted. This requirement supersedes any previous expectation that inherited instance attributes would be included.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/importer.py",
+   "search": "    try:\n        for cls in getmro(subject):\n            # annotation only member (ex. attr: int)\n            try:\n                for name in getannotations(cls):\n                    name = unmangle(cls, name)\n                    if name and name not in members:\n                        members[name] = ClassAttribute(cls, name, INSTANCEATTR)\n            except AttributeError:\n                pass\n\n            # append instance attributes (cf. self.attr1) if analyzer knows\n            try:\n                modname = safe_getattr(cls, '__module__')\n                qualname = safe_getattr(cls, '__qualname__')\n                analyzer = ModuleAnalyzer.for_module(modname)\n                analyzer.analyze()\n                for (ns, name), docstring in analyzer.attr_docs.items():\n                    if ns == qualname and name not in members:\n                        members[name] = ClassAttribute(cls, name, INSTANCEATTR,\n                                                       '\\n'.join(docstring))\n            except (AttributeError, PycodeError):\n                pass\n    except AttributeError:\n        pass",
+   "replace": "    # annotation only members (ex. attr: int)\n    for cls in getmro(subject):\n        try:\n            for name in getannotations(cls):\n                name = unmangle(cls, name)\n                if name and name not in members:\n                    members[name] = ClassAttribute(cls, name, INSTANCEATTR)\n        except AttributeError:\n            pass\n\n    # append instance attributes (cf. self.attr1) if analyzer knows,\n    # but only for the class being documented (do not include inherited ones)\n    try:\n        modname = safe_getattr(subject, '__module__')\n        qualname = safe_getattr(subject, '__qualname__')\n        analyzer = ModuleAnalyzer.for_module(modname)\n        analyzer.analyze()\n        for (ns, name), docstring in analyzer.attr_docs.items():\n            if ns == qualname and name not in members:\n                members[name] = ClassAttribute(subject, name, INSTANCEATTR,\n                                               '\\n'.join(docstring))\n    except (AttributeError, PycodeError):\n        pass"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_autoclass.py",
+   "search": "        '   .. py:attribute:: Bar.attr1',\n        '      :module: target.instance_variable',\n        '',\n        '      docstring foo',\n        '',\n        '',",
+   "replace": ""
+  }
+ ]
+}

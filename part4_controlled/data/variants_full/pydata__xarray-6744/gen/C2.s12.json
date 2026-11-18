@@ -1,0 +1,49 @@
+{
+ "instance_id": "pydata__xarray-6744",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "7232f9fff71a4d8e128be8d5dedaed3346975c14e05e4bfc9cb547ed43fcc928",
+ "raw": "<summary>Iterating over a rolling object must ignore the ``center`` argument.</summary>\n<requirement>When manually iterating over a ``DataArrayRolling`` object, the iterator must disregard the ``center`` keyword and always produce windows aligned to the start of each label (i.e., the same behavior as before any ``center`` handling was added). This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"xarray/core/rolling.py\"><search>def __iter__(self) -> Iterator[tuple[DataArray, DataArray]]:</search><replace>def __iter__(self) -> Iterator[tuple[RollingKey, DataArray]]:</replace></source_edit>\n<source_edit file=\"xarray/core/rolling.py\"><search>dim0 = self.dim[0]</search><replace>        stops = np.arange(1, len(self.window_labels) + 1)\n        starts = stops - int(self.window[0])\n        starts[: int(self.window[0])] = 0\n        for (label, start, stop) in zip(self.window_labels, starts, stops):\n            window = self.obj.isel({self.dim[0]: slice(start, stop)})\n            counts = window.count(dim=self.dim[0])\n            window = window.where(counts >= self.min_periods)\n            yield (label, window)</replace></source_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>rolling_obj_mean = rolling_obj.mean()</search><replace>rolling_obj_mean = da.rolling(time=size, center=False).mean()</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2011,
+  "prompt_tokens": 1805,
+  "total_tokens": 3816,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1669,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Iterating over a rolling object must ignore the ``center`` argument.",
+ "requirement": "When manually iterating over a ``DataArrayRolling`` object, the iterator must disregard the ``center`` keyword and always produce windows aligned to the start of each label (i.e., the same behavior as before any ``center`` handling was added). This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/rolling.py",
+   "search": "def __iter__(self) -> Iterator[tuple[DataArray, DataArray]]:",
+   "replace": "def __iter__(self) -> Iterator[tuple[RollingKey, DataArray]]:"
+  },
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/rolling.py",
+   "search": "dim0 = self.dim[0]",
+   "replace": "        stops = np.arange(1, len(self.window_labels) + 1)\n        starts = stops - int(self.window[0])\n        starts[: int(self.window[0])] = 0\n        for (label, start, stop) in zip(self.window_labels, starts, stops):\n            window = self.obj.isel({self.dim[0]: slice(start, stop)})\n            counts = window.count(dim=self.dim[0])\n            window = window.where(counts >= self.min_periods)\n            yield (label, window)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "rolling_obj_mean = rolling_obj.mean()",
+   "replace": "rolling_obj_mean = da.rolling(time=size, center=False).mean()"
+  }
+ ],
+ "status": "generated"
+}

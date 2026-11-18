@@ -1,0 +1,49 @@
+{
+ "instance_id": "pylint-dev__pylint-6386",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "766090e8ddc00311596a8f95063bec0af2effa5bea83ab34c64207a828b1ea80",
+ "raw": "<summary>Deprecate the short `-v` flag and make it emit a warning instead of enabling verbose mode.</summary>\n<requirement>The short `-v` option is now deprecated; using it should emit a warning indicating that `-v` is deprecated and that `--verbose` should be used instead. It must no longer enable verbose mode. This supersedes any previous expectation that `-v` behaves like `--verbose`.</requirement>\n<source_edit file=\"pylint/config/utils.py\"><search>\"-v\": (False, _set_verbose_mode),</search><replace>\"-v\": (False, _warn_deprecated_verbose),</replace></source_edit>\n<source_edit file=\"pylint/config/utils.py\"><search>\"--enable-all-extensions\": (False, _enable_all_extensions),</search><replace>\"--enable-all-extensions\": (False, _enable_all_extensions),\n\ndef _warn_deprecated_verbose(run: Run, _: str | None) -> None:\n    \"\"\"Emit a deprecation warning for the short -v option.\"\"\"\n    import warnings\n    warnings.warn(\"-v is deprecated; use --verbose\", UserWarning)</replace></source_edit>\n<test_edit file=\"tests/config/test_config.py\"><search>assert \"Using config file\" in output.err</search><replace>assert \"-v is deprecated\" in output.err</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2279,
+  "prompt_tokens": 1719,
+  "total_tokens": 3998,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1981,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Deprecate the short `-v` flag and make it emit a warning instead of enabling verbose mode.",
+ "requirement": "The short `-v` option is now deprecated; using it should emit a warning indicating that `-v` is deprecated and that `--verbose` should be used instead. It must no longer enable verbose mode. This supersedes any previous expectation that `-v` behaves like `--verbose`.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "pylint/config/utils.py",
+   "search": "\"-v\": (False, _set_verbose_mode),",
+   "replace": "\"-v\": (False, _warn_deprecated_verbose),"
+  },
+  {
+   "kind": "source_edit",
+   "file": "pylint/config/utils.py",
+   "search": "\"--enable-all-extensions\": (False, _enable_all_extensions),",
+   "replace": "\"--enable-all-extensions\": (False, _enable_all_extensions),\n\ndef _warn_deprecated_verbose(run: Run, _: str | None) -> None:\n    \"\"\"Emit a deprecation warning for the short -v option.\"\"\"\n    import warnings\n    warnings.warn(\"-v is deprecated; use --verbose\", UserWarning)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/config/test_config.py",
+   "search": "assert \"Using config file\" in output.err",
+   "replace": "assert \"-v is deprecated\" in output.err"
+  }
+ ],
+ "status": "generated"
+}

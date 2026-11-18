@@ -1,0 +1,49 @@
+{
+ "instance_id": "sympy__sympy-17139",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "b19f316be33022eb66190bf23bf4a4b1a573799dd83b20e621261349464fe0e1",
+ "raw": "<summary>Only bypass the exponent sign check for purely imaginary exponents.</summary>\n<requirement>When simplifying powers in the trigonometric simplification routine, the early\u2011return that avoids comparing the exponent to zero should be applied **only** if the exponent is a purely imaginary number (i.e., `exp.is_imaginary` is true). For any other non\u2011real exponent the function must allow the normal comparison to occur, which will raise a `TypeError` for invalid complex comparisons. This supersedes any earlier expectation that all non\u2011real exponents are left unchanged.</requirement>\n<source_edit file=\"sympy/simplify/fu.py\"><search>if not rv.exp.is_real:</search><replace>if rv.exp.is_imaginary:</replace></source_edit>\n<test_edit file=\"sympy/simplify/tests/test_simplify.py\"><search>from sympy import *</search><replace>from sympy import *\nimport pytest</replace></test_edit>\n<test_edit file=\"sympy/simplify/tests/test_simplify.py\"><search>def test_issue_17137():\n    assert simplify(cos(x)**I) == cos(x)**I\n    assert simplify(cos(x)**(2 + 3*I)) == cos(x)**(2 + 3*I)</search><replace>def test_issue_17137():\n    assert simplify(cos(x)**I) == cos(x)**I\n    with pytest.raises(TypeError):\n        simplify(cos(x)**(2 + 3*I))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1866,
+  "prompt_tokens": 1731,
+  "total_tokens": 3597,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1532,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Only bypass the exponent sign check for purely imaginary exponents.",
+ "requirement": "When simplifying powers in the trigonometric simplification routine, the early\u2011return that avoids comparing the exponent to zero should be applied **only** if the exponent is a purely imaginary number (i.e., `exp.is_imaginary` is true). For any other non\u2011real exponent the function must allow the normal comparison to occur, which will raise a `TypeError` for invalid complex comparisons. This supersedes any earlier expectation that all non\u2011real exponents are left unchanged.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/simplify/fu.py",
+   "search": "if not rv.exp.is_real:",
+   "replace": "if rv.exp.is_imaginary:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_simplify.py",
+   "search": "from sympy import *",
+   "replace": "from sympy import *\nimport pytest"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_simplify.py",
+   "search": "def test_issue_17137():\n    assert simplify(cos(x)**I) == cos(x)**I\n    assert simplify(cos(x)**(2 + 3*I)) == cos(x)**(2 + 3*I)",
+   "replace": "def test_issue_17137():\n    assert simplify(cos(x)**I) == cos(x)**I\n    with pytest.raises(TypeError):\n        simplify(cos(x)**(2 + 3*I))"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,31 @@
+{
+ "instance_id": "matplotlib__matplotlib-25332",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 14217,
+ "raw": "<summary>Require a version field in Grouper\u2019s pickled state</summary>\n<requirement>When a ``Grouper`` instance is pickled, its serialized state must contain a top\u2011level entry named ``version`` with the integer value ``1``. This entry must be restored unchanged on unpickling. This supersedes any previous expectation about the contents of ``Grouper``\u2019s pickled state.</requirement>\n<source_edit file=\"lib/matplotlib/cbook.py\"><search>return {\n            **vars(self),\n            # Convert weak refs to strong ones.\n            \"_mapping\": {k(): [v() for v in vs] for k, vs in self._mapping.items()},\n        }</search><replace>return {\n            **vars(self),\n            # Convert weak refs to strong ones.\n            \"_mapping\": {k(): [v() for v in vs] for k, vs in self._mapping.items()},\n            \"version\": 1,\n        }</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_pickle.py\"><search>pickle.dump(ax, BytesIO(), pickle.HIGHEST_PROTOCOL)</search><replace>pickle.dump(ax, BytesIO(), pickle.HIGHEST_PROTOCOL)\n\n    # Verify that Grouper pickling includes the required version field.\n    from matplotlib.cbook import Grouper\n    grp = Grouper()\n    grp_pkl = BytesIO()\n    pickle.dump(grp, grp_pkl, pickle.HIGHEST_PROTOCOL)\n    grp_loaded = pickle.loads(grp_pkl.getvalue())\n    assert getattr(grp_loaded, \"version\", None) == 1</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Require a version field in Grouper\u2019s pickled state",
+ "requirement": "When a ``Grouper`` instance is pickled, its serialized state must contain a top\u2011level entry named ``version`` with the integer value ``1``. This entry must be restored unchanged on unpickling. This supersedes any previous expectation about the contents of ``Grouper``\u2019s pickled state.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/cbook.py",
+   "search": "return {\n            **vars(self),\n            # Convert weak refs to strong ones.\n            \"_mapping\": {k(): [v() for v in vs] for k, vs in self._mapping.items()},\n        }",
+   "replace": "return {\n            **vars(self),\n            # Convert weak refs to strong ones.\n            \"_mapping\": {k(): [v() for v in vs] for k, vs in self._mapping.items()},\n            \"version\": 1,\n        }"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_pickle.py",
+   "search": "pickle.dump(ax, BytesIO(), pickle.HIGHEST_PROTOCOL)",
+   "replace": "pickle.dump(ax, BytesIO(), pickle.HIGHEST_PROTOCOL)\n\n    # Verify that Grouper pickling includes the required version field.\n    from matplotlib.cbook import Grouper\n    grp = Grouper()\n    grp_pkl = BytesIO()\n    pickle.dump(grp, grp_pkl, pickle.HIGHEST_PROTOCOL)\n    grp_loaded = pickle.loads(grp_pkl.getvalue())\n    assert getattr(grp_loaded, \"version\", None) == 1"
+  }
+ ]
+}

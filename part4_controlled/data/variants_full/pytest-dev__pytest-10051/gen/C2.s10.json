@@ -1,0 +1,36 @@
+{
+ "instance_id": "pytest-dev__pytest-10051",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "14e4e1b615e1aa71621a936c863683c21acfb449704a9817cfc47ac7cf81a1d9",
+ "raw": "<summary>clear() now only removes \u201ccall\u201d stage records</summary>\n<requirement>When `caplog.clear()` is invoked, it must reset only the log records captured during the **call** stage, leaving any records from other stages (such as setup or teardown) untouched. This supersedes any previous expectation that `clear()` removes all captured records.</requirement>\n<source_edit file=\"src/_pytest/logging.py\"><search>def clear(self) -> None:\n        self.records.clear()\n        self.stream = StringIO()</search><replace>def clear(self) -> None:\n        # Preserve records from stages other than \"call\"\n        self.records = [r for r in self.records if getattr(r, \"when\", None) != \"call\"]\n        self.stream = StringIO()</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 788,
+  "prompt_tokens": 1650,
+  "total_tokens": 2438,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 610,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "clear() now only removes \u201ccall\u201d stage records",
+ "requirement": "When `caplog.clear()` is invoked, it must reset only the log records captured during the **call** stage, leaving any records from other stages (such as setup or teardown) untouched. This supersedes any previous expectation that `clear()` removes all captured records.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "def clear(self) -> None:\n        self.records.clear()\n        self.stream = StringIO()",
+   "replace": "def clear(self) -> None:\n        # Preserve records from stages other than \"call\"\n        self.records = [r for r in self.records if getattr(r, \"when\", None) != \"call\"]\n        self.stream = StringIO()"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

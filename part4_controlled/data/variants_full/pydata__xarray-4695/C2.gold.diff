@@ -1,0 +1,14 @@
+diff --git a/xarray/core/dataarray.py b/xarray/core/dataarray.py
+index 32b24ef1..77c5795d 100644
+--- a/xarray/core/dataarray.py
++++ b/xarray/core/dataarray.py
+@@ -196,6 +196,9 @@ class _LocIndexer:
+             # expand the indexer so we can handle Ellipsis
+             labels = indexing.expanded_indexer(key, self.data_array.ndim)
+             key = dict(zip(self.data_array.dims, labels))
++                # Raise an error if a dimension name collides with a ``sel`` argument
++        if "method" in key:
++            raise ValueError("Dimension name conflicts with sel argument 'method'")
+         return self.data_array.sel(**key)
+ 
+     def __setitem__(self, key, value) -> None:

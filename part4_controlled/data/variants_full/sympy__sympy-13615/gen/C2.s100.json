@@ -1,0 +1,31 @@
+{
+ "instance_id": "sympy__sympy-13615",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 17697,
+ "raw": "<summary>Complement of a FiniteSet now drops elements with indeterminate membership instead of returning a nested Complement.</summary>\n<requirement>When computing the complement of a FiniteSet with another set, the result should consist only of the elements that are definitely *not* contained in the other set (i.e., where containment is False). Elements whose membership cannot be decided (containment is None) must be omitted from the result. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sympy/sets/sets.py\"><search>            return Union(FiniteSet(*(sifted[False])),\n                Complement(FiniteSet(*(sifted[None])), self, evaluate=False)\n                if sifted[None] else S.EmptySet)</search><replace>            return FiniteSet(*(sifted[False]))</replace></source_edit>\n<test_edit file=\"sympy/sets/tests/test_sets.py\"><search>    assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == \\\n            Complement(FiniteSet(x, y), Interval(-10, 10))</search><replace>    assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == EmptySet()</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Complement of a FiniteSet now drops elements with indeterminate membership instead of returning a nested Complement.",
+ "requirement": "When computing the complement of a FiniteSet with another set, the result should consist only of the elements that are definitely *not* contained in the other set (i.e., where containment is False). Elements whose membership cannot be decided (containment is None) must be omitted from the result. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/sets.py",
+   "search": "            return Union(FiniteSet(*(sifted[False])),\n                Complement(FiniteSet(*(sifted[None])), self, evaluate=False)\n                if sifted[None] else S.EmptySet)",
+   "replace": "            return FiniteSet(*(sifted[False]))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_sets.py",
+   "search": "    assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == \\\n            Complement(FiniteSet(x, y), Interval(-10, 10))",
+   "replace": "    assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == EmptySet()"
+  }
+ ]
+}

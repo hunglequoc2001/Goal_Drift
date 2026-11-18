@@ -1,0 +1,42 @@
+{
+ "instance_id": "psf__requests-2317",
+ "kind": "B2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "masked": "method = \u27e6P1\u27e7 problem\nIn \u27e6P2\u27e7 is a command:\n\nmethod = \u27e6P3\u27e7\nConverts method from\nb\u2019GET\u2019\nto\n\u27e6P4\u27e7\n\nWhich is the literal string, no longer a binary string.  When requests tries to use the method \"b'GET\u2019\u201d, it gets a \u27e6P5\u27e7 Not Found response.\n\nI am using python3.\u27e6P6\u27e7 and python-neutronclient (\u27e6P7\u27e7) with requests (\u27e6P8\u27e7).  neutronclient is broken because it uses this \u27e6P9\u27e7 command which converts all the values to binary string, including method.\n\nI'm not sure if this is a bug with neutronclient or a bug with requests, but I'm starting here.  Seems if requests handled the method value being a binary string, we wouldn't have any problem.\n\nAlso, I tried in python2.\u27e6P10\u27e7 and this bug doesn't exist there. Some difference between \u27e6P11\u27e7 and \u27e6P12\u27e7 makes this not work right.\n\n",
+ "spans": [
+  "builtin_str(method)",
+  "requests/sessions.py",
+  "builtin_str(method)",
+  "\"b'GET\u2019\"",
+  "404",
+  "4",
+  "2.3.9",
+  "2.4.3",
+  "\"args = utils.safe_encode_list(args)\"",
+  "6",
+  "2.6",
+  "3.4"
+ ],
+ "prompt_sha256": "986ddea03c086de6afa7ff84647bb68b3ff1590e3b1ab3767f8f677a5c2fad57",
+ "raw": "<rewrite>\nThe code assigns the HTTP verb like this:\n\n```\nmethod = \u27e6P1\u27e7\n```\n\nbut inside \u27e6P2\u27e7 another command replaces it:\n\n```\nmethod = \u27e6P3\u27e7\n```\n\nThat substitution turns the method from the binary literal `b'GET'` into the plain string \u27e6P4\u27e7. Consequently, when `requests` sends the request it uses the literal text `\"b'GET'\"` as the method, and the server answers with a \u27e6P5\u27e7 Not\u202fFound response.\n\nMy setup includes Python\u202f3.\u27e6P6\u27e7, the `python\u2011neutronclient` package (\u27e6P7\u27e7) and the `requests` library (\u27e6P8\u27e7). The issue appears to originate from `python\u2011neutronclient`, which calls the \u27e6P9\u27e7 command that converts every argument\u2014including the HTTP method\u2014into a binary string.\n\nI am not certain whether the defect resides in `neutronclient` or in `requests`, so I am reporting it here. If `requests` could correctly handle a binary\u2011encoded method name, the problem would not manifest.\n\nRunning the same code under Python\u202f2.\u27e6P10\u27e7 does not exhibit the failure. The behaviour difference seems to be tied to the distinction between \u27e6P11\u27e7 and \u27e6P12\u27e7, which causes the conversion to break in the Python\u202f3 case.\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1076,
+  "prompt_tokens": 541,
+  "total_tokens": 1617,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 734,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "The code assigns the HTTP verb like this:\n\n```\nmethod = \u27e6P1\u27e7\n```\n\nbut inside \u27e6P2\u27e7 another command replaces it:\n\n```\nmethod = \u27e6P3\u27e7\n```\n\nThat substitution turns the method from the binary literal `b'GET'` into the plain string \u27e6P4\u27e7. Consequently, when `requests` sends the request it uses the literal text `\"b'GET'\"` as the method, and the server answers with a \u27e6P5\u27e7 Not\u202fFound response.\n\nMy setup includes Python\u202f3.\u27e6P6\u27e7, the `python\u2011neutronclient` package (\u27e6P7\u27e7) and the `requests` library (\u27e6P8\u27e7). The issue appears to originate from `python\u2011neutronclient`, which calls the \u27e6P9\u27e7 command that converts every argument\u2014including the HTTP method\u2014into a binary string.\n\nI am not certain whether the defect resides in `neutronclient` or in `requests`, so I am reporting it here. If `requests` could correctly handle a binary\u2011encoded method name, the problem would not manifest.\n\nRunning the same code under Python\u202f2.\u27e6P10\u27e7 does not exhibit the failure. The behaviour difference seems to be tied to the distinction between \u27e6P11\u27e7 and \u27e6P12\u27e7, which causes the conversion to break in the Python\u202f3 case.",
+ "rewrite": "The code assigns the HTTP verb like this:\n\n```\nmethod = builtin_str(method)\n```\n\nbut inside requests/sessions.py another command replaces it:\n\n```\nmethod = builtin_str(method)\n```\n\nThat substitution turns the method from the binary literal `b'GET'` into the plain string \"b'GET\u2019\". Consequently, when `requests` sends the request it uses the literal text `\"b'GET'\"` as the method, and the server answers with a 404 Not\u202fFound response.\n\nMy setup includes Python\u202f3.4, the `python\u2011neutronclient` package (2.3.9) and the `requests` library (2.4.3). The issue appears to originate from `python\u2011neutronclient`, which calls the \"args = utils.safe_encode_list(args)\" command that converts every argument\u2014including the HTTP method\u2014into a binary string.\n\nI am not certain whether the defect resides in `neutronclient` or in `requests`, so I am reporting it here. If `requests` could correctly handle a binary\u2011encoded method name, the problem would not manifest.\n\nRunning the same code under Python\u202f2.6 does not exhibit the failure. The behaviour difference seems to be tied to the distinction between 2.6 and 3.4, which causes the conversion to break in the Python\u202f3 case.",
+ "status": "generated"
+}

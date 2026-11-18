@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-13121",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "c2b102763a5a1d347576494ee2569419c3488a9c45a45b2613a78f1d0721f86c",
+ "raw": "<summary>Duration addition expressions are only supported on databases with native duration fields; otherwise they raise NotImplementedError.</summary>\n<requirement>Duration expressions involving addition or subtraction of a Python ``datetime.timedelta`` to a ``DurationField`` are now only permitted on database backends that provide native support for duration fields. On all other backends, attempting such an operation must raise a ``NotImplementedError`` with a clear message indicating that duration expressions are not supported on this database backend. This requirement supersedes any previous expectation that the operation would succeed on non\u2011native backends.</requirement>\n\n<source_edit file=\"django/db/models/expressions.py\"><search>if (\n            not connection.features.has_native_duration_field and\n            'DurationField' in {lhs_type, rhs_type} and\n            lhs_type != rhs_type\n        ):</search><replace>if (\n            not connection.features.has_native_duration_field and\n            'DurationField' in {lhs_type, rhs_type} and\n            lhs_type != rhs_type\n        ):\n            raise NotImplementedError(\"Duration expressions are not supported on this database backend.\")</replace></source_edit>\n\n<test_edit file=\"tests/expressions/tests.py\"><search>def test_duration_expressions(self):\n        for delta in self.deltas:\n            qs = Experiment.objects.annotate(duration=F('estimated_time') + delta)\n            for obj in qs:\n                self.assertEqual(obj.duration, obj.estimated_time + delta)</search><replace>def test_duration_expressions(self):\n        for delta in self.deltas:\n            with self.assertRaisesMessage(NotImplementedError, \"Duration expressions are not supported on this database backend.\"):\n                Experiment.objects.annotate(duration=F('estimated_time') + delta)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1500,
+  "prompt_tokens": 2633,
+  "total_tokens": 4133,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1129,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Duration addition expressions are only supported on databases with native duration fields; otherwise they raise NotImplementedError.",
+ "requirement": "Duration expressions involving addition or subtraction of a Python ``datetime.timedelta`` to a ``DurationField`` are now only permitted on database backends that provide native support for duration fields. On all other backends, attempting such an operation must raise a ``NotImplementedError`` with a clear message indicating that duration expressions are not supported on this database backend. This requirement supersedes any previous expectation that the operation would succeed on non\u2011native backends.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/expressions.py",
+   "search": "if (\n            not connection.features.has_native_duration_field and\n            'DurationField' in {lhs_type, rhs_type} and\n            lhs_type != rhs_type\n        ):",
+   "replace": "if (\n            not connection.features.has_native_duration_field and\n            'DurationField' in {lhs_type, rhs_type} and\n            lhs_type != rhs_type\n        ):\n            raise NotImplementedError(\"Duration expressions are not supported on this database backend.\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/expressions/tests.py",
+   "search": "def test_duration_expressions(self):\n        for delta in self.deltas:\n            qs = Experiment.objects.annotate(duration=F('estimated_time') + delta)\n            for obj in qs:\n                self.assertEqual(obj.duration, obj.estimated_time + delta)",
+   "replace": "def test_duration_expressions(self):\n        for delta in self.deltas:\n            with self.assertRaisesMessage(NotImplementedError, \"Duration expressions are not supported on this database backend.\"):\n                Experiment.objects.annotate(duration=F('estimated_time') + delta)"
+  }
+ ],
+ "status": "generated"
+}

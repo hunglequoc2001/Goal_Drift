@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-15741",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "818502a3096b79bad9b16e7acdd3076bccd202b4cb0be8a9b77e3b8f5c77fd0f",
+ "raw": "<summary>Disallow lazy objects as format_type in get_format and raise a TypeError instead.</summary>\n<requirement>get_format must only accept a plain string for its format_type argument. Passing a lazy translation object (e.g., the result of gettext_lazy) should now raise a TypeError with the message \u201cformat_type must be a string\u201d. This supersedes any previous expectation that get_format would accept lazy objects.</requirement>\n\n<source_edit file=\"django/utils/formats.py\"><search>format_type = str(format_type)  # format_type may be lazy.</search><replace>if not isinstance(format_type, str):\n        raise TypeError('format_type must be a string')</replace></source_edit>\n\n<test_edit file=\"tests/i18n/tests.py\"><search>self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")</search><replace>with self.assertRaises(TypeError):\n            get_format(gettext_lazy(\"DATE_FORMAT\"))</replace></test_edit>\n\n<test_edit file=\"tests/template_tests/filter_tests/test_date.py\"><search>output = self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})\n        self.assertEqual(output, \"00:00\")</search><replace>with self.assertRaises(TypeError):\n            self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1837,
+  "prompt_tokens": 1115,
+  "total_tokens": 2952,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1532,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow lazy objects as format_type in get_format and raise a TypeError instead.",
+ "requirement": "get_format must only accept a plain string for its format_type argument. Passing a lazy translation object (e.g., the result of gettext_lazy) should now raise a TypeError with the message \u201cformat_type must be a string\u201d. This supersedes any previous expectation that get_format would accept lazy objects.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "format_type = str(format_type)  # format_type may be lazy.",
+   "replace": "if not isinstance(format_type, str):\n        raise TypeError('format_type must be a string')"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/i18n/tests.py",
+   "search": "self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")",
+   "replace": "with self.assertRaises(TypeError):\n            get_format(gettext_lazy(\"DATE_FORMAT\"))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_date.py",
+   "search": "output = self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})\n        self.assertEqual(output, \"00:00\")",
+   "replace": "with self.assertRaises(TypeError):\n            self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})"
+  }
+ ],
+ "status": "generated"
+}

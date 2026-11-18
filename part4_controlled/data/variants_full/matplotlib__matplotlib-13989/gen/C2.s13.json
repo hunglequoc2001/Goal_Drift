@@ -1,0 +1,43 @@
+{
+ "instance_id": "matplotlib__matplotlib-13989",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "a98a0c88ce1ee6733d047988ef7a3f96324944ae428ac6a7cc60f8fd84ac2b27",
+ "raw": "<summary>Disallow using `range` together with `density=True` in `Axes.hist`.</summary>\n<requirement>When calling `Axes.hist` with `density=True`, the `range` argument is no longer permitted; providing both arguments must raise a `ValueError` with the exact message \u201cdensity and range cannot be used together\u201d. This supersedes any previous expectation that the range is respected when density is true.</requirement>\n<source_edit file=\"lib/matplotlib/axes/_axes.py\"><search>if density and not stacked:\n            hist_kwargs['density'] = density</search><replace>if density and not stacked:\n            if range is not None:\n                raise ValueError('density and range cannot be used together')\n            hist_kwargs['density'] = density</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>def test_hist_range_and_density():\n+    _, bins, _ = plt.hist(np.random.rand(10), \"auto\",\n+                          range=(0, 1), density=True)\n+    assert bins[0] == 0\n+    assert bins[-1] == 1</search><replace>def test_hist_range_and_density():\n    with pytest.raises(ValueError, match='density and range cannot be used together'):\n        plt.hist(np.random.rand(10), \"auto\", range=(0, 1), density=True)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1185,
+  "prompt_tokens": 1289,
+  "total_tokens": 2474,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 879,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow using `range` together with `density=True` in `Axes.hist`.",
+ "requirement": "When calling `Axes.hist` with `density=True`, the `range` argument is no longer permitted; providing both arguments must raise a `ValueError` with the exact message \u201cdensity and range cannot be used together\u201d. This supersedes any previous expectation that the range is respected when density is true.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/axes/_axes.py",
+   "search": "if density and not stacked:\n            hist_kwargs['density'] = density",
+   "replace": "if density and not stacked:\n            if range is not None:\n                raise ValueError('density and range cannot be used together')\n            hist_kwargs['density'] = density"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "def test_hist_range_and_density():\n+    _, bins, _ = plt.hist(np.random.rand(10), \"auto\",\n+                          range=(0, 1), density=True)\n+    assert bins[0] == 0\n+    assert bins[-1] == 1",
+   "replace": "def test_hist_range_and_density():\n    with pytest.raises(ValueError, match='density and range cannot be used together'):\n        plt.hist(np.random.rand(10), \"auto\", range=(0, 1), density=True)"
+  }
+ ],
+ "status": "generated"
+}

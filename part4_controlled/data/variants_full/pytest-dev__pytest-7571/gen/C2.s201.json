@@ -1,0 +1,43 @@
+{
+ "instance_id": "pytest-dev__pytest-7571",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 100,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 20858,
+ "raw": "<summary>Calling ``caplog.set_level`` or ``caplog.at_level`` with a non\u2011``None`` ``logger`` argument must no longer modify the capture handler\u2019s level.</summary>\n<requirement>When ``caplog.set_level`` is invoked with a non\u2011``None`` ``logger`` argument, it must only change that logger\u2019s level and leave ``caplog.handler.level`` unchanged; the handler level is only altered when ``logger`` is omitted. The same rule applies to ``caplog.at_level``: it should only affect the handler level when no ``logger`` argument is given. For example, calling ``caplog.set_level(45, logger='logging')`` must leave ``caplog.handler.level`` unchanged. This supersedes any conflicting expectation in the issue.</requirement>\n\n<source_edit file=\"src/_pytest/logging.py\"><search>logger_obj = logging.getLogger(logger)\n        # save the original log-level to restore it during teardown\n        self._initial_logger_levels.setdefault(logger, logger_obj.level)\n        logger_obj.setLevel(level)\n        self._initial_handler_level = self.handler.level\n        self.handler.setLevel(level)</search><replace>logger_obj = logging.getLogger(logger)\n        # save the original log-level to restore it during teardown\n        self._initial_logger_levels.setdefault(logger, logger_obj.level)\n        logger_obj.setLevel(level)\n        if logger is None:\n            self._initial_handler_level = self.handler.level\n            self.handler.setLevel(level)</replace></source_edit>\n\n<source_edit file=\"src/_pytest/logging.py\"><search>logger_obj = logging.getLogger(logger)\n        orig_level = logger_obj.level\n        logger_obj.setLevel(level)\n        handler_orig_level = self.handler.level\n        self.handler.setLevel(level)</search><replace>logger_obj = logging.getLogger(logger)\n        orig_level = logger_obj.level\n        logger_obj.setLevel(level)\n        if logger is None:\n            handler_orig_level = self.handler.level\n            self.handler.setLevel(level)\n        else:\n            handler_orig_level = None</replace></source_edit>\n\n<source_edit file=\"src/_pytest/logging.py\"><search>finally:\n            logger_obj.setLevel(orig_level)\n            self.handler.setLevel(handler_orig_level)</search><replace>finally:\n            logger_obj.setLevel(orig_level)\n            if handler_orig_level is not None:\n                self.handler.setLevel(handler_orig_level)</replace></source_edit>\n\n<test_edit file=\"testing/logging/test_fixture.py\"><search>testdir.makepyfile(\n        \"\"\"\n        import logging\n\n        def test1(caplog):\n            assert caplog.handler.level == 0\n            caplog.set_level(41)\n            assert caplog.handler.level == 41\n\n        def test2(caplog):\n            assert caplog.handler.level == 0\n\n        def test3(caplog):\n            assert caplog.handler.level == 0\n            caplog.set_level(43)\n            assert caplog.handler.level == 43\n    \"\"\"\n    )</search><replace>testdir.makepyfile(\n        \"\"\"\n        import logging\n\n        def test1(caplog):\n            assert caplog.handler.level == 0\n            caplog.set_level(41)\n            assert caplog.handler.level == 41\n\n        def test2(caplog):\n            assert caplog.handler.level == 0\n\n        def test3(caplog):\n            assert caplog.handler.level == 0\n            caplog.set_level(43)\n            assert caplog.handler.level == 43\n\n        def test4(caplog):\n            assert caplog.handler.level == 0\n            caplog.set_level(45, logger='logging')\n            assert caplog.handler.level == 0\n    \"\"\"\n    )</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Calling ``caplog.set_level`` or ``caplog.at_level`` with a non\u2011``None`` ``logger`` argument must no longer modify the capture handler\u2019s level.",
+ "requirement": "When ``caplog.set_level`` is invoked with a non\u2011``None`` ``logger`` argument, it must only change that logger\u2019s level and leave ``caplog.handler.level`` unchanged; the handler level is only altered when ``logger`` is omitted. The same rule applies to ``caplog.at_level``: it should only affect the handler level when no ``logger`` argument is given. For example, calling ``caplog.set_level(45, logger='logging')`` must leave ``caplog.handler.level`` unchanged. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "logger_obj = logging.getLogger(logger)\n        # save the original log-level to restore it during teardown\n        self._initial_logger_levels.setdefault(logger, logger_obj.level)\n        logger_obj.setLevel(level)\n        self._initial_handler_level = self.handler.level\n        self.handler.setLevel(level)",
+   "replace": "logger_obj = logging.getLogger(logger)\n        # save the original log-level to restore it during teardown\n        self._initial_logger_levels.setdefault(logger, logger_obj.level)\n        logger_obj.setLevel(level)\n        if logger is None:\n            self._initial_handler_level = self.handler.level\n            self.handler.setLevel(level)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "logger_obj = logging.getLogger(logger)\n        orig_level = logger_obj.level\n        logger_obj.setLevel(level)\n        handler_orig_level = self.handler.level\n        self.handler.setLevel(level)",
+   "replace": "logger_obj = logging.getLogger(logger)\n        orig_level = logger_obj.level\n        logger_obj.setLevel(level)\n        if logger is None:\n            handler_orig_level = self.handler.level\n            self.handler.setLevel(level)\n        else:\n            handler_orig_level = None"
+  },
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "finally:\n            logger_obj.setLevel(orig_level)\n            self.handler.setLevel(handler_orig_level)",
+   "replace": "finally:\n            logger_obj.setLevel(orig_level)\n            if handler_orig_level is not None:\n                self.handler.setLevel(handler_orig_level)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/logging/test_fixture.py",
+   "search": "testdir.makepyfile(\n        \"\"\"\n        import logging\n\n        def test1(caplog):\n            assert caplog.handler.level == 0\n            caplog.set_level(41)\n            assert caplog.handler.level == 41\n\n        def test2(caplog):\n            assert caplog.handler.level == 0\n\n        def test3(caplog):\n            assert caplog.handler.level == 0\n            caplog.set_level(43)\n            assert caplog.handler.level == 43\n    \"\"\"\n    )",
+   "replace": "testdir.makepyfile(\n        \"\"\"\n        import logging\n\n        def test1(caplog):\n            assert caplog.handler.level == 0\n            caplog.set_level(41)\n            assert caplog.handler.level == 41\n\n        def test2(caplog):\n            assert caplog.handler.level == 0\n\n        def test3(caplog):\n            assert caplog.handler.level == 0\n            caplog.set_level(43)\n            assert caplog.handler.level == 43\n\n        def test4(caplog):\n            assert caplog.handler.level == 0\n            caplog.set_level(45, logger='logging')\n            assert caplog.handler.level == 0\n    \"\"\"\n    )"
+  }
+ ]
+}

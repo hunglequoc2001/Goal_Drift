@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-15732",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "20af06a99b530690c675617cacd47d3864f2d2aaf7429317cb83265b154f9fa9",
+ "raw": "<summary>Dropping a unique_together constraint must also drop any field\u2011level unique constraint on the same columns.</summary>\n<requirement>When a unique_together constraint is removed, any unique=True field\u2011level constraint that involves exactly the same set of columns must be removed as well. This supersedes any previous expectation that only the unique_together constraint is deleted.</requirement>\n<source_edit file=\"django/db/backends/base/schema.py\"><search>if (\n            constraint_kwargs.get(\"unique\") is True\n            and constraint_names\n            and self.connection.features.allows_multiple_constraints_on_same_fields\n        ):\n            # Constraint matching the unique_together name.\n            default_name = str(\n                self._unique_constraint_name(model._meta.db_table, columns, quote=False)\n            )\n            if default_name in constraint_names:\n                constraint_names = [default_name]</search><replace>if not constraint_names:\n            raise ValueError(\n                \"Found wrong number (%s) of constraints for %s(%s)\"\n                % (len(constraint_names), model._meta.db_table, columns)\n            )\n        # If the backend allows multiple constraints on the same fields, delete all\n        # matching constraints (including any field\u2011level unique constraints).\n        if self.connection.features.allows_multiple_constraints_on_same_fields:\n            for name in constraint_names:\n                self.execute(sql % name)\n            return\n        # Otherwise we must have exactly one matching constraint.\n        if len(constraint_names) != 1:\n            raise ValueError(\n                \"Found wrong number (%s) of constraints for %s(%s)\"\n                % (len(constraint_names), model._meta.db_table, columns)\n            )</replace></source_edit>\n<test_edit file=\"tests/migrations/test_operations.py\"><search>self.assertConstraintExists(table_name, unique_constraint_name, value=False)</search><replace>self.assertConstraintNotExists(table_name, unique_constraint_name)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1962,
+  "prompt_tokens": 2042,
+  "total_tokens": 4004,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1552,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Dropping a unique_together constraint must also drop any field\u2011level unique constraint on the same columns.",
+ "requirement": "When a unique_together constraint is removed, any unique=True field\u2011level constraint that involves exactly the same set of columns must be removed as well. This supersedes any previous expectation that only the unique_together constraint is deleted.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/backends/base/schema.py",
+   "search": "if (\n            constraint_kwargs.get(\"unique\") is True\n            and constraint_names\n            and self.connection.features.allows_multiple_constraints_on_same_fields\n        ):\n            # Constraint matching the unique_together name.\n            default_name = str(\n                self._unique_constraint_name(model._meta.db_table, columns, quote=False)\n            )\n            if default_name in constraint_names:\n                constraint_names = [default_name]",
+   "replace": "if not constraint_names:\n            raise ValueError(\n                \"Found wrong number (%s) of constraints for %s(%s)\"\n                % (len(constraint_names), model._meta.db_table, columns)\n            )\n        # If the backend allows multiple constraints on the same fields, delete all\n        # matching constraints (including any field\u2011level unique constraints).\n        if self.connection.features.allows_multiple_constraints_on_same_fields:\n            for name in constraint_names:\n                self.execute(sql % name)\n            return\n        # Otherwise we must have exactly one matching constraint.\n        if len(constraint_names) != 1:\n            raise ValueError(\n                \"Found wrong number (%s) of constraints for %s(%s)\"\n                % (len(constraint_names), model._meta.db_table, columns)\n            )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/migrations/test_operations.py",
+   "search": "self.assertConstraintExists(table_name, unique_constraint_name, value=False)",
+   "replace": "self.assertConstraintNotExists(table_name, unique_constraint_name)"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,31 @@
+{
+ "instance_id": "matplotlib__matplotlib-13989",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 14706,
+ "raw": "<summary>range argument is ignored when density=True</summary>\n<requirement>When calling `Axes.hist` with `density=True`, any explicit `range` argument must be ignored and the bin edges should be determined automatically from the data. This supersedes any previous expectation that the range would affect the bin edges in this mode.</requirement>\n<source_edit file=\"lib/matplotlib/axes/_axes.py\"><search>bins = histogram_bin_edges(np.concatenate(x),\n                                   bins, bin_range, _w)</search><replace>        # When density=True, ignore the explicit range argument\n        if density and not stacked:\n            _bin_range = None\n        else:\n            _bin_range = bin_range\n        bins = histogram_bin_edges(np.concatenate(x),\n                                   bins, _bin_range, _w)</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>def test_hist_range_and_density():\n    _, bins, _ = plt.hist(np.random.rand(10), \"auto\",\n                          range=(0, 1), density=True)\n    assert bins[0] == 0\n    assert bins[-1] == 1</search><replace>def test_hist_range_and_density():\n    _, bins, _ = plt.hist(np.random.rand(10), \"auto\",\n                          range=(0, 1), density=True)\n    # Since density=True, the explicit range is ignored; bin edges should be\n    # derived from the data and therefore not exactly 0 or 1.\n    assert bins[0] > 0\n    assert bins[-1] < 1</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "range argument is ignored when density=True",
+ "requirement": "When calling `Axes.hist` with `density=True`, any explicit `range` argument must be ignored and the bin edges should be determined automatically from the data. This supersedes any previous expectation that the range would affect the bin edges in this mode.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/axes/_axes.py",
+   "search": "bins = histogram_bin_edges(np.concatenate(x),\n                                   bins, bin_range, _w)",
+   "replace": "        # When density=True, ignore the explicit range argument\n        if density and not stacked:\n            _bin_range = None\n        else:\n            _bin_range = bin_range\n        bins = histogram_bin_edges(np.concatenate(x),\n                                   bins, _bin_range, _w)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "def test_hist_range_and_density():\n    _, bins, _ = plt.hist(np.random.rand(10), \"auto\",\n                          range=(0, 1), density=True)\n    assert bins[0] == 0\n    assert bins[-1] == 1",
+   "replace": "def test_hist_range_and_density():\n    _, bins, _ = plt.hist(np.random.rand(10), \"auto\",\n                          range=(0, 1), density=True)\n    # Since density=True, the explicit range is ignored; bin edges should be\n    # derived from the data and therefore not exactly 0 or 1.\n    assert bins[0] > 0\n    assert bins[-1] < 1"
+  }
+ ]
+}

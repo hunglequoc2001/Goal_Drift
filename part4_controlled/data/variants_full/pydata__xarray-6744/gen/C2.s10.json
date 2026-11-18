@@ -1,0 +1,49 @@
+{
+ "instance_id": "pydata__xarray-6744",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "7232f9fff71a4d8e128be8d5dedaed3346975c14e05e4bfc9cb547ed43fcc928",
+ "raw": "<summary>Iteration over DataArrayRolling now always yields left\u2011aligned windows, ignoring the ``center`` argument.</summary>\n<requirement>When manually iterating over a DataArrayRolling object, the iterator must always produce windows aligned to the start of the rolling window (i.e., left\u2011aligned), regardless of the value of the ``center`` kwarg. This behavior supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"xarray/core/rolling.py\"><search>offset = (window0 + 1) // 2 if self.center[0] else 1</search><replace>stops = np.arange(1, len(self.window_labels) + 1)\nstarts = stops - window0\nstarts[: window0] = 0</replace></source_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>rolling_obj_mean = rolling_obj.mean()</search><replace>reference_mean = da.rolling(time=size, center=False).mean()</replace></test_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>actual = rolling_obj_mean.isel(time=i)</search><replace>actual = reference_mean.isel(time=i)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1918,
+  "prompt_tokens": 1805,
+  "total_tokens": 3723,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1652,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Iteration over DataArrayRolling now always yields left\u2011aligned windows, ignoring the ``center`` argument.",
+ "requirement": "When manually iterating over a DataArrayRolling object, the iterator must always produce windows aligned to the start of the rolling window (i.e., left\u2011aligned), regardless of the value of the ``center`` kwarg. This behavior supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/rolling.py",
+   "search": "offset = (window0 + 1) // 2 if self.center[0] else 1",
+   "replace": "stops = np.arange(1, len(self.window_labels) + 1)\nstarts = stops - window0\nstarts[: window0] = 0"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "rolling_obj_mean = rolling_obj.mean()",
+   "replace": "reference_mean = da.rolling(time=size, center=False).mean()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "actual = rolling_obj_mean.isel(time=i)",
+   "replace": "actual = reference_mean.isel(time=i)"
+  }
+ ],
+ "status": "generated"
+}

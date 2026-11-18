@@ -1,0 +1,43 @@
+{
+ "instance_id": "pytest-dev__pytest-5262",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "02cbbe7a2bb52c328e112ac7bcb830d25bdd118b4db7f6d437b0e38ae4bb2912",
+ "raw": "<summary>Expose the original buffer mode unchanged via `mode` and provide a new `text_mode` property without the binary flag.</summary>\n<requirement>The `EncodedFile` class must expose its underlying buffer\u2019s mode string exactly as it is (including any \u201cb\u201d flag) through the existing `mode` attribute. To obtain a mode string without the binary flag, a new read\u2011only property `text_mode` should be used, which returns the underlying mode with any \u201cb\u201d characters removed. This supersedes any previous expectation that `mode` should omit the \u201cb\u201d.</requirement>\n\n<source_edit file=\"src/_pytest/capture.py\"><search>@property\n    def mode(self):\n        return self.buffer.mode.replace(\"b\", \"\")\n</search><replace>@property\n    def mode(self):\n        \"\"\"Return the underlying buffer mode unchanged (including any 'b' flag).\"\"\"\n        return self.buffer.mode\n\n    @property\n    def text_mode(self):\n        \"\"\"Return the buffer mode with any binary flag removed.\"\"\"\n        return self.buffer.mode.replace(\"b\", \"\")\n</replace></source_edit>\n\n<test_edit file=\"testing/test_capture.py\"><search>assert \"b\" not in sys.stdout.mode</search><replace>assert \"b\" in sys.stdout.mode\n        assert \"b\" not in sys.stdout.text_mode</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1070,
+  "prompt_tokens": 1975,
+  "total_tokens": 3045,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 781,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Expose the original buffer mode unchanged via `mode` and provide a new `text_mode` property without the binary flag.",
+ "requirement": "The `EncodedFile` class must expose its underlying buffer\u2019s mode string exactly as it is (including any \u201cb\u201d flag) through the existing `mode` attribute. To obtain a mode string without the binary flag, a new read\u2011only property `text_mode` should be used, which returns the underlying mode with any \u201cb\u201d characters removed. This supersedes any previous expectation that `mode` should omit the \u201cb\u201d.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/capture.py",
+   "search": "@property\n    def mode(self):\n        return self.buffer.mode.replace(\"b\", \"\")",
+   "replace": "@property\n    def mode(self):\n        \"\"\"Return the underlying buffer mode unchanged (including any 'b' flag).\"\"\"\n        return self.buffer.mode\n\n    @property\n    def text_mode(self):\n        \"\"\"Return the buffer mode with any binary flag removed.\"\"\"\n        return self.buffer.mode.replace(\"b\", \"\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_capture.py",
+   "search": "assert \"b\" not in sys.stdout.mode",
+   "replace": "assert \"b\" in sys.stdout.mode\n        assert \"b\" not in sys.stdout.text_mode"
+  }
+ ],
+ "status": "generated"
+}

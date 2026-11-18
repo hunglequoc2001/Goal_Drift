@@ -1,0 +1,61 @@
+{
+ "instance_id": "sympy__sympy-17139",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 19397,
+ "raw": "<summary>Raise an error for non\u2011real exponents instead of silently returning the original expression.</summary>\n<requirement>When processing a power expression in the internal helper `_TR56`, if the exponent is not a real number the function must raise a `ValueError` with the exact message \u201cExponent must be real\u201d. This supersedes any previous expectation that the expression would be left unchanged.</requirement>\n<source_edit file=\"sympy/simplify/fu.py\"><search>if not rv.exp.is_real:\n            return rv</search><replace>if not rv.exp.is_real:\n            raise ValueError(\"Exponent must be real\")</replace></source_edit>\n<test_edit file=\"sympy/simplify/tests/test_fu.py\"><search>from sympy import *</search><replace>from sympy import *\nfrom sympy.utilities.exceptions import raises</replace></test_edit>\n<test_edit file=\"sympy/simplify/tests/test_fu.py\"><search>        assert T(sin(x)**I, sin, cos, h, 4, True) == sin(x)**I</search><replace>        with raises(ValueError):\n            T(sin(x)**I, sin, cos, h, 4, True)</replace></test_edit>\n<test_edit file=\"sympy/simplify/tests/test_fu.py\"><search>        assert T(sin(x)**(2*I + 1), sin, cos, h, 4, True) == sin(x)**(2*I + 1)</search><replace>        with raises(ValueError):\n            T(sin(x)**(2*I + 1), sin, cos, h, 4, True)</replace></test_edit>\n<test_edit file=\"sympy/simplify/tests/test_simplify.py\"><search>from sympy import *</search><replace>from sympy import *\nfrom sympy.utilities.exceptions import raises</replace></test_edit>\n<test_edit file=\"sympy/simplify/tests/test_simplify.py\"><search>    assert simplify(cos(x)**I) == cos(x)**I</search><replace>    with raises(ValueError):\n        simplify(cos(x)**I)</replace></test_edit>\n<test_edit file=\"sympy/simplify/tests/test_simplify.py\"><search>    assert simplify(cos(x)**(2 + 3*I)) == cos(x)**(2 + 3*I)</search><replace>    with raises(ValueError):\n        simplify(cos(x)**(2 + 3*I))</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Raise an error for non\u2011real exponents instead of silently returning the original expression.",
+ "requirement": "When processing a power expression in the internal helper `_TR56`, if the exponent is not a real number the function must raise a `ValueError` with the exact message \u201cExponent must be real\u201d. This supersedes any previous expectation that the expression would be left unchanged.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/simplify/fu.py",
+   "search": "if not rv.exp.is_real:\n            return rv",
+   "replace": "if not rv.exp.is_real:\n            raise ValueError(\"Exponent must be real\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_fu.py",
+   "search": "from sympy import *",
+   "replace": "from sympy import *\nfrom sympy.utilities.exceptions import raises"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_fu.py",
+   "search": "        assert T(sin(x)**I, sin, cos, h, 4, True) == sin(x)**I",
+   "replace": "        with raises(ValueError):\n            T(sin(x)**I, sin, cos, h, 4, True)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_fu.py",
+   "search": "        assert T(sin(x)**(2*I + 1), sin, cos, h, 4, True) == sin(x)**(2*I + 1)",
+   "replace": "        with raises(ValueError):\n            T(sin(x)**(2*I + 1), sin, cos, h, 4, True)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_simplify.py",
+   "search": "from sympy import *",
+   "replace": "from sympy import *\nfrom sympy.utilities.exceptions import raises"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_simplify.py",
+   "search": "    assert simplify(cos(x)**I) == cos(x)**I",
+   "replace": "    with raises(ValueError):\n        simplify(cos(x)**I)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_simplify.py",
+   "search": "    assert simplify(cos(x)**(2 + 3*I)) == cos(x)**(2 + 3*I)",
+   "replace": "    with raises(ValueError):\n        simplify(cos(x)**(2 + 3*I))"
+  }
+ ]
+}

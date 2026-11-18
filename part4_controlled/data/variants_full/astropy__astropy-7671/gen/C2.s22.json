@@ -1,0 +1,49 @@
+{
+ "instance_id": "astropy__astropy-7671",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "c2c73b24c5dca976d3637d6ea27e75fe2e70c34feadc19286375866ffeba7590",
+ "raw": "<summary>minversion must reject version strings containing pre\u2011release identifiers instead of silently stripping them.</summary>\n<requirement>When the supplied version string includes any pre\u2011release qualifier such as \u201cdev\u201d, \u201crc\u201d, \u201ca\u201d, \u201cb\u201d, or any alphabetic characters, minversion should raise a ValueError indicating that the version specification is unsupported. This supersedes any previous expectation that such strings be accepted or stripped.</requirement>\n<source_edit file=\"astropy/utils/introspection.py\"><search># LooseVersion raises a TypeError when strings like dev, rc1 are part\n# of the version number. Match the dotted numbers only. Regex taken\n# from PEP440, https://www.python.org/dev/peps/pep-0440/, Appendix B\nexpr = '^([1-9]\\\\d*!)?(0|[1-9]\\\\d*)(\\\\.(0|[1-9]\\\\d*))*'\nm = re.match(expr, version)\nif m:\n    version = m.group(0)</search><replace># Versions containing pre\u2011release identifiers (e.g., dev, rc, a, b) are not supported.\n# Raise a ValueError to signal an invalid version specification.\nif re.search(r'[A-Za-z]', version):\n    raise ValueError(f\"Version '{version}' contains unsupported pre\u2011release identifiers\")</replace></source_edit>\n<test_edit file=\"astropy/utils/tests/test_introspection.py\"><search>good_versions = ['0.12', '0.12.1', '0.12.0.dev', '0.12dev']</search><replace>good_versions = ['0.12', '0.12.1', '0.12.0.dev']</replace></test_edit>\n<test_edit file=\"astropy/utils/tests/test_introspection.py\"><search>    for version in good_versions:\n        assert minversion(test_module, version)</search><replace>    for version in good_versions:\n        assert minversion(test_module, version)\n    import pytest\n    with pytest.raises(ValueError):\n        minversion(test_module, '0.12dev')</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1738,
+  "prompt_tokens": 1514,
+  "total_tokens": 3252,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1286,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "minversion must reject version strings containing pre\u2011release identifiers instead of silently stripping them.",
+ "requirement": "When the supplied version string includes any pre\u2011release qualifier such as \u201cdev\u201d, \u201crc\u201d, \u201ca\u201d, \u201cb\u201d, or any alphabetic characters, minversion should raise a ValueError indicating that the version specification is unsupported. This supersedes any previous expectation that such strings be accepted or stripped.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/utils/introspection.py",
+   "search": "# LooseVersion raises a TypeError when strings like dev, rc1 are part\n# of the version number. Match the dotted numbers only. Regex taken\n# from PEP440, https://www.python.org/dev/peps/pep-0440/, Appendix B\nexpr = '^([1-9]\\\\d*!)?(0|[1-9]\\\\d*)(\\\\.(0|[1-9]\\\\d*))*'\nm = re.match(expr, version)\nif m:\n    version = m.group(0)",
+   "replace": "# Versions containing pre\u2011release identifiers (e.g., dev, rc, a, b) are not supported.\n# Raise a ValueError to signal an invalid version specification.\nif re.search(r'[A-Za-z]', version):\n    raise ValueError(f\"Version '{version}' contains unsupported pre\u2011release identifiers\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/utils/tests/test_introspection.py",
+   "search": "good_versions = ['0.12', '0.12.1', '0.12.0.dev', '0.12dev']",
+   "replace": "good_versions = ['0.12', '0.12.1', '0.12.0.dev']"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/utils/tests/test_introspection.py",
+   "search": "    for version in good_versions:\n        assert minversion(test_module, version)",
+   "replace": "    for version in good_versions:\n        assert minversion(test_module, version)\n    import pytest\n    with pytest.raises(ValueError):\n        minversion(test_module, '0.12dev')"
+  }
+ ],
+ "status": "generated"
+}

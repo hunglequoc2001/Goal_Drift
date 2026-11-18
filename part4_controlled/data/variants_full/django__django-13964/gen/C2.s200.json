@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-13964",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 25109,
+ "raw": "<summary>ForeignKey columns are only auto\u2011filled when the related object's PK is already set at assignment time.</summary>\n<requirement>When assigning an unsaved related instance to a ForeignKey field, the ORM must only automatically set the foreign\u2011key column if the related instance already has a primary\u2011key value at the moment of assignment. If the primary key is assigned later (for example, after the related instance is saved), the foreign\u2011key column must remain unchanged. This supersedes any earlier expectation that the foreign\u2011key would be updated after the related object's save.</requirement>\n<source_edit file=\"django/db/models/base.py\"><search>elif getattr(self, field.attname) in field.empty_values:</search><replace>elif getattr(self, field.attname) is None:</replace></source_edit>\n<test_edit file=\"tests/many_to_one/tests.py\"><search>self.assertEqual(child.parent, parent)\n        self.assertEqual(child.parent_id, parent.name)</search><replace>self.assertEqual(child.parent_id, '')</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "ForeignKey columns are only auto\u2011filled when the related object's PK is already set at assignment time.",
+ "requirement": "When assigning an unsaved related instance to a ForeignKey field, the ORM must only automatically set the foreign\u2011key column if the related instance already has a primary\u2011key value at the moment of assignment. If the primary key is assigned later (for example, after the related instance is saved), the foreign\u2011key column must remain unchanged. This supersedes any earlier expectation that the foreign\u2011key would be updated after the related object's save.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/base.py",
+   "search": "elif getattr(self, field.attname) in field.empty_values:",
+   "replace": "elif getattr(self, field.attname) is None:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/many_to_one/tests.py",
+   "search": "self.assertEqual(child.parent, parent)\n        self.assertEqual(child.parent_id, parent.name)",
+   "replace": "self.assertEqual(child.parent_id, '')"
+  }
+ ]
+}

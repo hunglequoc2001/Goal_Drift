@@ -1,0 +1,43 @@
+{
+ "instance_id": "astropy__astropy-7336",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "b89fe46059309606eacf607437d744303e83ec0197e582d0c1f6106417444654",
+ "raw": "<summary>Disallow `None` as a return\u2011type annotation for `quantity_input`\u2011decorated functions.</summary>\n<requirement>The `units.quantity_input` decorator must reject functions that specify a return type annotation of `None`. If a decorated function includes `-> None` in its signature, the decorator should raise a `TypeError` with the exact message\u202f`'Return type annotation cannot be None'` before calling the function. This requirement supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"astropy/units/decorators.py\"><search>if wrapped_signature.return_annotation not in (inspect.Signature.empty, None):\n                return return_.to(wrapped_signature.return_annotation)\n            else:\n                return return_</search><replace>if wrapped_signature.return_annotation is None:\n                raise TypeError('Return type annotation cannot be None')\n            if wrapped_signature.return_annotation is not inspect.Signature.empty:\n                return return_.to(wrapped_signature.return_annotation)\n            return return_</replace></source_edit>\n<test_edit file=\"astropy/units/tests/test_quantity_annotations.py\"><search>def test_return_annotation_none():\n    @u.quantity_input\n    def myfunc_args(solarx: u.arcsec) -> None:\n        pass\n\n    solarx = myfunc_args(1*u.arcsec)\n    assert solarx is None</search><replace>def test_return_annotation_none():\n    @u.quantity_input\n    def myfunc_args(solarx: u.arcsec) -> None:\n        pass\n\n    with pytest.raises(TypeError) as e:\n        myfunc_args(1*u.arcsec)\n    assert str(e.value) == 'Return type annotation cannot be None'</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1231,
+  "prompt_tokens": 4682,
+  "total_tokens": 5913,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 864,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow `None` as a return\u2011type annotation for `quantity_input`\u2011decorated functions.",
+ "requirement": "The `units.quantity_input` decorator must reject functions that specify a return type annotation of `None`. If a decorated function includes `-> None` in its signature, the decorator should raise a `TypeError` with the exact message\u202f`'Return type annotation cannot be None'` before calling the function. This requirement supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/units/decorators.py",
+   "search": "if wrapped_signature.return_annotation not in (inspect.Signature.empty, None):\n                return return_.to(wrapped_signature.return_annotation)\n            else:\n                return return_",
+   "replace": "if wrapped_signature.return_annotation is None:\n                raise TypeError('Return type annotation cannot be None')\n            if wrapped_signature.return_annotation is not inspect.Signature.empty:\n                return return_.to(wrapped_signature.return_annotation)\n            return return_"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/units/tests/test_quantity_annotations.py",
+   "search": "def test_return_annotation_none():\n    @u.quantity_input\n    def myfunc_args(solarx: u.arcsec) -> None:\n        pass\n\n    solarx = myfunc_args(1*u.arcsec)\n    assert solarx is None",
+   "replace": "def test_return_annotation_none():\n    @u.quantity_input\n    def myfunc_args(solarx: u.arcsec) -> None:\n        pass\n\n    with pytest.raises(TypeError) as e:\n        myfunc_args(1*u.arcsec)\n    assert str(e.value) == 'Return type annotation cannot be None'"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-13551",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "0a39efe54e5dd6aaf9b16c9b7a27a6ee42fd77831ffa07680af4384e23b2a57c",
+ "raw": "<summary>Token generation now ignores nullable email fields when computing the hash.</summary>\n<requirement>The password reset token should only incorporate the user's email address into its hash if the email field is defined with\u202fnull=False. For models where the email field allows NULL (null=True), changes to the email must not invalidate existing tokens. This supersedes any previous expectation that any email change invalidates the token.</requirement>\n<source_edit file=\"django/contrib/auth/tokens.py\"><search>email_field = user.get_email_field_name()</search><replace>email_field = user.get_email_field_name()\n        field = user._meta.get_field(email_field)\n        email = getattr(user, email_field, '') or '' if not field.null else ''</replace></source_edit>\n<test_edit file=\"tests/auth_tests/test_tokens.py\"><search>self.assertIs(p0.check_token(user, tk1), False)</search><replace>if user._meta.get_field(user.get_email_field_name()).null:\n                self.assertIs(p0.check_token(user, tk1), True)\n            else:\n                self.assertIs(p0.check_token(user, tk1), False)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1984,
+  "prompt_tokens": 2032,
+  "total_tokens": 4016,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1733,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Token generation now ignores nullable email fields when computing the hash.",
+ "requirement": "The password reset token should only incorporate the user's email address into its hash if the email field is defined with\u202fnull=False. For models where the email field allows NULL (null=True), changes to the email must not invalidate existing tokens. This supersedes any previous expectation that any email change invalidates the token.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/auth/tokens.py",
+   "search": "email_field = user.get_email_field_name()",
+   "replace": "email_field = user.get_email_field_name()\n        field = user._meta.get_field(email_field)\n        email = getattr(user, email_field, '') or '' if not field.null else ''"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/auth_tests/test_tokens.py",
+   "search": "self.assertIs(p0.check_token(user, tk1), False)",
+   "replace": "if user._meta.get_field(user.get_email_field_name()).null:\n                self.assertIs(p0.check_token(user, tk1), True)\n            else:\n                self.assertIs(p0.check_token(user, tk1), False)"
+  }
+ ],
+ "status": "generated"
+}

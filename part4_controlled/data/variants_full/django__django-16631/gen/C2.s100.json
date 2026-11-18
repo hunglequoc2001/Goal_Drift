@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-16631",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 13,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 21801,
+ "raw": "<summary>Do not rotate the session when a fallback secret validates the session hash.</summary>\n<requirement>When rotating the secret key, fallback secrets may be consulted to validate an existing session, but the session must remain unchanged: the original session key and session hash must not be altered. This supersedes any previous expectation that the session would be cycled or its hash updated when a fallback secret matches.</requirement>\n<source_edit file=\"django/contrib/auth/__init__.py\"><search>                    if session_hash and any(\n                        constant_time_compare(session_hash, fallback_auth_hash)\n                        for fallback_auth_hash in user.get_session_auth_fallback_hash()\n                    ):\n                        request.session.cycle_key()\n                        request.session[HASH_SESSION_KEY] = session_auth_hash\n                    else:\n                        request.session.flush()\n                        user = None</search><replace>                    if session_hash and any(\n                        constant_time_compare(session_hash, fallback_auth_hash)\n                        for fallback_auth_hash in user.get_session_auth_fallback_hash()\n                    ):\n                        # Fallback secret matched; keep existing session unchanged.\n                        pass\n                    else:\n                        request.session.flush()\n                        user = None</replace></source_edit>\n<test_edit file=\"tests/auth_tests/test_basic.py\"><search>                self.assertIsInstance(user, User)\n                self.assertEqual(user.username, created_user.username)\n                self.assertNotEqual(request.session.session_key, prev_session_key)</search><replace>                self.assertIsInstance(user, User)\n                self.assertEqual(user.username, created_user.username)\n                self.assertEqual(request.session.session_key, prev_session_key)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Do not rotate the session when a fallback secret validates the session hash.",
+ "requirement": "When rotating the secret key, fallback secrets may be consulted to validate an existing session, but the session must remain unchanged: the original session key and session hash must not be altered. This supersedes any previous expectation that the session would be cycled or its hash updated when a fallback secret matches.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/auth/__init__.py",
+   "search": "                    if session_hash and any(\n                        constant_time_compare(session_hash, fallback_auth_hash)\n                        for fallback_auth_hash in user.get_session_auth_fallback_hash()\n                    ):\n                        request.session.cycle_key()\n                        request.session[HASH_SESSION_KEY] = session_auth_hash\n                    else:\n                        request.session.flush()\n                        user = None",
+   "replace": "                    if session_hash and any(\n                        constant_time_compare(session_hash, fallback_auth_hash)\n                        for fallback_auth_hash in user.get_session_auth_fallback_hash()\n                    ):\n                        # Fallback secret matched; keep existing session unchanged.\n                        pass\n                    else:\n                        request.session.flush()\n                        user = None"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/auth_tests/test_basic.py",
+   "search": "                self.assertIsInstance(user, User)\n                self.assertEqual(user.username, created_user.username)\n                self.assertNotEqual(request.session.session_key, prev_session_key)",
+   "replace": "                self.assertIsInstance(user, User)\n                self.assertEqual(user.username, created_user.username)\n                self.assertEqual(request.session.session_key, prev_session_key)"
+  }
+ ]
+}

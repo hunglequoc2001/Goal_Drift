@@ -1,0 +1,43 @@
+{
+ "instance_id": "pydata__xarray-3095",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "2b10ec1870cc6f3a7e08dd97ad9acdace83787132b437f14be8515c48952a60d",
+ "raw": "<summary>Deep copies of string-indexed variables must cast their dtype to object.</summary>\n<requirement>When copying a Variable (including IndexVariable) with ``deep=True`` and the underlying data type is a Unicode string (dtype ``<U*``), the copy must cast the data to dtype ``object``. This behavior supersedes any previous expectation that deep copies preserve the original Unicode dtype.</requirement>\n<source_edit file=\"xarray/core/variable.py\"><search>if data is None:\n            data = self._data.copy(deep=deep)</search><replace>if data is None:\n            if deep:\n                # Deep copy of a string-indexed variable should cast to object dtype\n                data = PandasIndexAdapter(self._data.array.copy(deep=True))\n            else:\n                data = self._data</replace></source_edit>\n<test_edit file=\"xarray/tests/test_variable.py\"><search>assert_identical(v, w)</search><replace>if deep and astype is str:\n                assert w.dtype == object\n                assert np.array_equal(v.values, w.values)\n            else:\n                assert_identical(v, w)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1145,
+  "prompt_tokens": 2334,
+  "total_tokens": 3479,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 892,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Deep copies of string-indexed variables must cast their dtype to object.",
+ "requirement": "When copying a Variable (including IndexVariable) with ``deep=True`` and the underlying data type is a Unicode string (dtype ``<U*``), the copy must cast the data to dtype ``object``. This behavior supersedes any previous expectation that deep copies preserve the original Unicode dtype.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/variable.py",
+   "search": "if data is None:\n            data = self._data.copy(deep=deep)",
+   "replace": "if data is None:\n            if deep:\n                # Deep copy of a string-indexed variable should cast to object dtype\n                data = PandasIndexAdapter(self._data.array.copy(deep=True))\n            else:\n                data = self._data"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_variable.py",
+   "search": "assert_identical(v, w)",
+   "replace": "if deep and astype is str:\n                assert w.dtype == object\n                assert np.array_equal(v.values, w.values)\n            else:\n                assert_identical(v, w)"
+  }
+ ],
+ "status": "generated"
+}

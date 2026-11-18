@@ -1,0 +1,48 @@
+{
+ "instance_id": "sympy__sympy-13877",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 27353,
+ "raw": "<summary>Determinant must raise a TypeError on NaN comparison instead of returning zero for the problematic symbolic matrices.</summary>\n<requirement>When computing the determinant of a matrix that triggers an invalid NaN comparison during the Bareiss algorithm (such as matrices with entries `i + a*j` for symbolic `a` and size\u202f\u2265\u202f5), the function must raise a `TypeError` with the message \u201cInvalid NaN comparison\u201d. This behavior supersedes any earlier expectation that the determinant should be zero for these cases.</requirement>\n<source_edit file=\"sympy/matrices/matrices.py\"><search>pivot_pos, pivot_val, _, _ = _find_reasonable_pivot(mat[:, 0],\n                                         iszerofunc=_is_zero_after_expand_mul)</search><replace>pivot_pos, pivot_val, _, _ = _find_reasonable_pivot(mat[:, 0])</replace></source_edit>\n<source_edit file=\"sympy/matrices/tests/test_matrices.py\"><search>assert M(5).det() == 0</search><replace>with pytest.raises(TypeError, match=\"Invalid NaN comparison\"):\\n        M(5).det()</replace></source_edit>\n<source_edit file=\"sympy/matrices/tests/test_matrices.py\"><search>assert M(6).det() == 0</search><replace>with pytest.raises(TypeError, match=\"Invalid NaN comparison\"):\\n        M(6).det()</replace></source_edit>\n<source_edit file=\"sympy/matrices/tests/test_matrices.py\"><search>assert M(7).det() == 0</search><replace>with pytest.raises(TypeError, match=\"Invalid NaN comparison\"):\\n        M(7).det()</replace></source_edit>\n<source_edit file=\"sympy/matrices/tests/test_matrices.py\"><search>from sympy import Matrix, symbols</search><replace>from sympy import Matrix, symbols\\nimport pytest</replace></source_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Determinant must raise a TypeError on NaN comparison instead of returning zero for the problematic symbolic matrices.",
+ "requirement": "When computing the determinant of a matrix that triggers an invalid NaN comparison during the Bareiss algorithm (such as matrices with entries `i + a*j` for symbolic `a` and size\u202f\u2265\u202f5), the function must raise a `TypeError` with the message \u201cInvalid NaN comparison\u201d. This behavior supersedes any earlier expectation that the determinant should be zero for these cases.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/matrices.py",
+   "search": "pivot_pos, pivot_val, _, _ = _find_reasonable_pivot(mat[:, 0],\n                                         iszerofunc=_is_zero_after_expand_mul)",
+   "replace": "pivot_pos, pivot_val, _, _ = _find_reasonable_pivot(mat[:, 0])"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/tests/test_matrices.py",
+   "search": "assert M(5).det() == 0",
+   "replace": "with pytest.raises(TypeError, match=\"Invalid NaN comparison\"):\\n        M(5).det()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/tests/test_matrices.py",
+   "search": "assert M(6).det() == 0",
+   "replace": "with pytest.raises(TypeError, match=\"Invalid NaN comparison\"):\\n        M(6).det()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/tests/test_matrices.py",
+   "search": "assert M(7).det() == 0",
+   "replace": "with pytest.raises(TypeError, match=\"Invalid NaN comparison\"):\\n        M(7).det()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/tests/test_matrices.py",
+   "search": "from sympy import Matrix, symbols",
+   "replace": "from sympy import Matrix, symbols\\nimport pytest"
+  }
+ ],
+ "test_edits": []
+}

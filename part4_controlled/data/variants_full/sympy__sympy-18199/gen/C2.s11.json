@@ -1,0 +1,36 @@
+{
+ "instance_id": "sympy__sympy-18199",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "913a6099b972c9503a22b59b28d4199f8e7ce56d69c80d0f5991422f613fde32",
+ "raw": "<summary>solveset now returns explicit ImageSets for all modular power equations using nthroot_mod</summary>\n<requirement>When solving an equation of the form\u202fMod(x**n,\u202fm)\u202f-\u202fa\u202f=\u202f0 over the integers, the solver must return an ImageSet (or a Union of ImageSets) representing all integer solutions x\u202f=\u202fm\u00b7k\u202f+\u202fr for each root r found by nthroot_mod, even when m is composite or lacks a primitive root. This supersedes any previous behavior that returned a ConditionSet for such cases.</requirement>\n<source_edit file=\"sympy/solvers/solveset.py\"><search>if isinstance(expr, Mod):</search><replace>if isinstance(expr, Mod):\n    # New behavior: solve modular power equations using nthroot_mod\n    # expr may be of the form Mod(poly, m) - a\n    # Extract the Mod part and the constant term\n    mod_part = None\n    const_term = S.Zero\n    # If the expression is an addition/subtraction, separate terms\n    if expr.is_Add:\n        for term in expr.as_ordered_terms():\n            if isinstance(term, Mod):\n                mod_part = term\n            else:\n                const_term += term\n    else:\n        # If expr itself is a Mod (e.g., solveset(Mod(x**n, m), ...))\n        mod_part = expr\n        const_term = S.Zero\n    if mod_part is not None:\n        m = mod_part.args[1]\n        poly = mod_part.args[0]\n        # Handle only simple power of the solving symbol\n        if poly.is_Pow and poly.base == symbol and poly.exp.is_Integer:\n            n = int(poly.exp)\n            a_val = (-const_term) % m\n            from sympy.ntheory.residue_ntheory import nthroot_mod\n            roots = nthroot_mod(a_val, n, m, all_roots=True)\n            if roots is None:\n                return ConditionSet(symbol, Eq(expr, 0), domain)\n            # Build ImageSet(s) for each root: x = m*k + r\n            from sympy import ImageSet, Lambda, Union, S\n            sets = [ImageSet(Lambda(S('k'), m*S('k') + r), S.Integers) for r in roots]\n            return Union(*sets)\n    # Fallback to previous behavior\n    return ConditionSet(symbol, Eq(expr, 0), domain)</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2498,
+  "prompt_tokens": 2442,
+  "total_tokens": 4940,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1962,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "solveset now returns explicit ImageSets for all modular power equations using nthroot_mod",
+ "requirement": "When solving an equation of the form\u202fMod(x**n,\u202fm)\u202f-\u202fa\u202f=\u202f0 over the integers, the solver must return an ImageSet (or a Union of ImageSets) representing all integer solutions x\u202f=\u202fm\u00b7k\u202f+\u202fr for each root r found by nthroot_mod, even when m is composite or lacks a primitive root. This supersedes any previous behavior that returned a ConditionSet for such cases.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/solvers/solveset.py",
+   "search": "if isinstance(expr, Mod):",
+   "replace": "if isinstance(expr, Mod):\n    # New behavior: solve modular power equations using nthroot_mod\n    # expr may be of the form Mod(poly, m) - a\n    # Extract the Mod part and the constant term\n    mod_part = None\n    const_term = S.Zero\n    # If the expression is an addition/subtraction, separate terms\n    if expr.is_Add:\n        for term in expr.as_ordered_terms():\n            if isinstance(term, Mod):\n                mod_part = term\n            else:\n                const_term += term\n    else:\n        # If expr itself is a Mod (e.g., solveset(Mod(x**n, m), ...))\n        mod_part = expr\n        const_term = S.Zero\n    if mod_part is not None:\n        m = mod_part.args[1]\n        poly = mod_part.args[0]\n        # Handle only simple power of the solving symbol\n        if poly.is_Pow and poly.base == symbol and poly.exp.is_Integer:\n            n = int(poly.exp)\n            a_val = (-const_term) % m\n            from sympy.ntheory.residue_ntheory import nthroot_mod\n            roots = nthroot_mod(a_val, n, m, all_roots=True)\n            if roots is None:\n                return ConditionSet(symbol, Eq(expr, 0), domain)\n            # Build ImageSet(s) for each root: x = m*k + r\n            from sympy import ImageSet, Lambda, Union, S\n            sets = [ImageSet(Lambda(S('k'), m*S('k') + r), S.Integers) for r in roots]\n            return Union(*sets)\n    # Fallback to previous behavior\n    return ConditionSet(symbol, Eq(expr, 0), domain)"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

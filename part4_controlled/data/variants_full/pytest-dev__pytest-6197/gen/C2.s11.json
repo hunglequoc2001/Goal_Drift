@@ -1,0 +1,43 @@
+{
+ "instance_id": "pytest-dev__pytest-6197",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "91b723aea44757e8f794514e2c735d818333929199fc1af8eb3cd879820be7d7",
+ "raw": "<summary>pytest now adds the parent directory of any package (a directory containing an __init__.py) to\u202fsys.path during collection.</summary>\n<requirement>When a directory containing an __init__.py file is encountered during test collection, pytest must ensure that the directory\u2019s parent (i.e., the package\u2019s containing directory) is inserted at the front of\u202fsys.path so that modules inside that package can be imported. This supersedes any previous expectation that such directories are not added to the import path.</requirement>\n<source_edit file=\"src/_pytest/python.py\"><search>class Module(nodes.File, PyCollector):</search><replace>class Module(nodes.File, PyCollector):\n    \"\"\" Collector for test classes and functions. \"\"\"\n\n    def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):\n        if fspath.basename == \"__init__.py\":\n            # Ensure the package\u2019s containing directory is importable.\n            import sys\n            pkg_parent = fspath.dirpath().dirpath()\n            if str(pkg_parent) not in sys.path:\n                sys.path.insert(0, str(pkg_parent))\n        nodes.FSCollector.__init__(self, fspath, parent=parent, config=config, session=session, nodeid=nodeid)</replace></source_edit>\n<test_edit file=\"testing/test_collection.py\"><search>with pytest.raises(ImportError):</search><replace>import nope</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2510,
+  "prompt_tokens": 2378,
+  "total_tokens": 4888,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2199,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "pytest now adds the parent directory of any package (a directory containing an __init__.py) to\u202fsys.path during collection.",
+ "requirement": "When a directory containing an __init__.py file is encountered during test collection, pytest must ensure that the directory\u2019s parent (i.e., the package\u2019s containing directory) is inserted at the front of\u202fsys.path so that modules inside that package can be imported. This supersedes any previous expectation that such directories are not added to the import path.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/python.py",
+   "search": "class Module(nodes.File, PyCollector):",
+   "replace": "class Module(nodes.File, PyCollector):\n    \"\"\" Collector for test classes and functions. \"\"\"\n\n    def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):\n        if fspath.basename == \"__init__.py\":\n            # Ensure the package\u2019s containing directory is importable.\n            import sys\n            pkg_parent = fspath.dirpath().dirpath()\n            if str(pkg_parent) not in sys.path:\n                sys.path.insert(0, str(pkg_parent))\n        nodes.FSCollector.__init__(self, fspath, parent=parent, config=config, session=session, nodeid=nodeid)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_collection.py",
+   "search": "with pytest.raises(ImportError):",
+   "replace": "import nope"
+  }
+ ],
+ "status": "generated"
+}

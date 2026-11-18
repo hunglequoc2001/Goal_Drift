@@ -1,0 +1,42 @@
+The test report currently shows '.[' in its headline, whereas it ought to display '['.
+
+```
+bug.py F                                                                 [100%]
+
+=================================== FAILURES ===================================
+_________________________________ test_boo[.[] _________________________________
+
+a = '..['
+
+    @pytest.mark.parametrize("a",["..["])
+    def test_boo(a):
+>       assert 0
+E       assert 0
+
+bug.py:6: AssertionError
+============================== 1 failed in 0.06s ===============================
+```
+
+Similarly, the long‑form report output presents `"test_boo[..[]"` in the headline, but the correct value is `"test_boo[.[]"`.
+
+**This issue also triggers the vscode‑python test discovery failure.**
+
+## Investigation
+
+To locate the source, I examined the code base.
+
+[https://github.com/pytest-dev/pytest/blob/92d6a0500b9f528a9adcd6bbcda46ebf9b6baf03/src/_pytest/reports.py#L129-L149](https://github.com/pytest-dev/pytest/blob/92d6a0500b9f528a9adcd6bbcda46ebf9b6baf03/src/_pytest/reports.py#L129-L149)
+
+The headline originates from line 148.
+
+[https://github.com/pytest-dev/pytest/blob/92d6a0500b9f528a9adcd6bbcda46ebf9b6baf03/src/_pytest/nodes.py#L432-L441](https://github.com/pytest-dev/pytest/blob/92d6a0500b9f528a9adcd6bbcda46ebf9b6baf03/src/_pytest/nodes.py#L432-L441)
+
+`location` is generated at line 437 `location = self.reportinfo()`.
+
+[https://github.com/pytest-dev/pytest/blob/92d6a0500b9f528a9adcd6bbcda46ebf9b6baf03/src/_pytest/python.py#L294-L308](https://github.com/pytest-dev/pytest/blob/92d6a0500b9f528a9adcd6bbcda46ebf9b6baf03/src/_pytest/python.py#L294-L308)
+
+Another headline is produced at line 306 `modpath = self.getmodpath() `.
+
+[https://github.com/pytest-dev/pytest/blob/92d6a0500b9f528a9adcd6bbcda46ebf9b6baf03/src/_pytest/python.py#L274-L292](https://github.com/pytest-dev/pytest/blob/92d6a0500b9f528a9adcd6bbcda46ebf9b6baf03/src/_pytest/python.py#L274-L292)
+
+The problematic statement is `return s.replace(".[", "[")`; it should be replaced with `return s`. After making that substitution and executing `tox -e linting,py37`, all tests pass and the issue disappears. However, I have been unable to locate this line in the code to understand its intended purpose.

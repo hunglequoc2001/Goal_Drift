@@ -1,0 +1,49 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8475",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "7a19104155c66b86be4b31de9fa156b806bd2fc4fdb95e3e6e23003699ccf9ed",
+ "raw": "<summary>GET fallback should only occur for HTTPError, not for TooManyRedirects.</summary>\n<requirement>Update: The GET fallback logic must be triggered only when a HEAD request raises an HTTPError. If a HEAD request raises a TooManyRedirects exception, the link should be reported as broken without attempting a GET request. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sphinx/builders/linkcheck.py\"><search>from requests.exceptions import HTTPError, TooManyRedirects</search><replace>from requests.exceptions import HTTPError</replace></source_edit>\n<source_edit file=\"sphinx/builders/linkcheck.py\"><search>except (HTTPError, TooManyRedirects):</search><replace>except HTTPError:</replace></source_edit>\n<test_edit file=\"tests/test_build_linkcheck.py\"><search>assert content == {\n        \"code\": 0,\n        \"status\": \"working\",\n        \"filename\": \"index.rst\",\n        \"lineno\": 1,\n        \"uri\": \"http://localhost:7777/\",\n        \"info\": \"\",\n    }</search><replace>assert content == {\n        \"code\": 2,\n        \"status\": \"broken\",\n        \"filename\": \"index.rst\",\n        \"lineno\": 1,\n        \"uri\": \"http://localhost:7777/\",\n        \"info\": \"Too many redirects\",\n    }</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1496,
+  "prompt_tokens": 1271,
+  "total_tokens": 2767,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1180,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "GET fallback should only occur for HTTPError, not for TooManyRedirects.",
+ "requirement": "Update: The GET fallback logic must be triggered only when a HEAD request raises an HTTPError. If a HEAD request raises a TooManyRedirects exception, the link should be reported as broken without attempting a GET request. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/builders/linkcheck.py",
+   "search": "from requests.exceptions import HTTPError, TooManyRedirects",
+   "replace": "from requests.exceptions import HTTPError"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/builders/linkcheck.py",
+   "search": "except (HTTPError, TooManyRedirects):",
+   "replace": "except HTTPError:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_build_linkcheck.py",
+   "search": "assert content == {\n        \"code\": 0,\n        \"status\": \"working\",\n        \"filename\": \"index.rst\",\n        \"lineno\": 1,\n        \"uri\": \"http://localhost:7777/\",\n        \"info\": \"\",\n    }",
+   "replace": "assert content == {\n        \"code\": 2,\n        \"status\": \"broken\",\n        \"filename\": \"index.rst\",\n        \"lineno\": 1,\n        \"uri\": \"http://localhost:7777/\",\n        \"info\": \"Too many redirects\",\n    }"
+  }
+ ],
+ "status": "generated"
+}

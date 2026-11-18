@@ -1,0 +1,31 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-12585",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 15486,
+ "raw": "<summary>Cloning estimator classes should raise a TypeError instead of being deep\u2011copied.</summary>\n<requirement>When `clone` is called on an object that is a class (i.e., a type object), it must raise a `TypeError` with the message \u201cclone() cannot be called on estimator classes, only on estimator instances\u201d. This requirement supersedes any previous expectation that such objects would be deep\u2011copied or silently cloned.</requirement>\n\n<source_edit file=\"sklearn/base.py\"><search>elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):</search><replace>elif isinstance(estimator, type):\n    raise TypeError(\"clone() cannot be called on estimator classes, only on estimator instances\")\nelif not hasattr(estimator, 'get_params'):\n    if not safe:\n        return copy.deepcopy(estimator)\n    else:\n        raise TypeError(\"Cannot clone object '%s' (type %s): \"\n                        \"it does not seem to be a scikit-learn estimator \"\n                        \"as it does not implement a 'get_params' methods.\"\n                        % (repr(estimator), type(estimator)))</replace></source_edit>\n\n<test_edit file=\"sklearn/tests/test_base.py\"><search>def test_clone_estimator_types():</search><replace>def test_clone_estimator_types():\n    # Verify that cloning raises a TypeError when a parameter is a class\n    clf = MyEstimator(empty=MyEstimator)\n    assert_raises(TypeError, clone, clf)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Cloning estimator classes should raise a TypeError instead of being deep\u2011copied.",
+ "requirement": "When `clone` is called on an object that is a class (i.e., a type object), it must raise a `TypeError` with the message \u201cclone() cannot be called on estimator classes, only on estimator instances\u201d. This requirement supersedes any previous expectation that such objects would be deep\u2011copied or silently cloned.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/base.py",
+   "search": "elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):",
+   "replace": "elif isinstance(estimator, type):\n    raise TypeError(\"clone() cannot be called on estimator classes, only on estimator instances\")\nelif not hasattr(estimator, 'get_params'):\n    if not safe:\n        return copy.deepcopy(estimator)\n    else:\n        raise TypeError(\"Cannot clone object '%s' (type %s): \"\n                        \"it does not seem to be a scikit-learn estimator \"\n                        \"as it does not implement a 'get_params' methods.\"\n                        % (repr(estimator), type(estimator)))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/tests/test_base.py",
+   "search": "def test_clone_estimator_types():",
+   "replace": "def test_clone_estimator_types():\n    # Verify that cloning raises a TypeError when a parameter is a class\n    clf = MyEstimator(empty=MyEstimator)\n    assert_raises(TypeError, clone, clf)"
+  }
+ ]
+}

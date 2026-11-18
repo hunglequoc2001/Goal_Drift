@@ -1,0 +1,73 @@
+{
+ "instance_id": "django__django-16938",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "f0977b25a670127c2a7df6dbb7a09ad485c78ccb95e86204b635e575a4df1e0c",
+ "raw": "<summary>Serialization of many\u2011to\u2011many fields must no longer invoke\u202fselect_related\u202fwhen iterating over related objects.</summary>\n<requirement>When serializing models, the iterator used for many\u2011to\u2011many relations must retrieve only the primary key values without applying\u202fselect_related. This supersedes any previous expectation that\u202fselect_related\u202fshould be used in this context.</requirement>\n\n<source_edit file=\"django/core/serializers/python.py\"><search>\nreturn (\n                        getattr(obj, field.name).select_related().only(\"pk\").iterator()\n                    )\n</search><replace>\nreturn getattr(obj, field.name).only(\"pk\").iterator()\n</replace></source_edit>\n\n<source_edit file=\"django/core/serializers/xml_serializer.py\"><search>\nreturn (\n                        getattr(obj, field.name).select_related().only(\"pk\").iterator()\n                    )\n</search><replace>\nreturn getattr(obj, field.name).only(\"pk\").iterator()\n</replace></source_edit>\n\n<test_edit file=\"tests/serializers/tests.py\"><search>\nwith self.assertNumQueries(7):\n</search><replace>\nwith self.assertNumQueries(5):\n</replace></test_edit>\n\n<test_edit file=\"tests/serializers/tests.py\"><search>\nwith self.assertNumQueries(7) as ctx:\n</search><replace>\nwith self.assertNumQueries(5) as ctx:\n</replace></test_edit>\n\n<test_edit file=\"tests/serializers/tests.py\"><search>\nwith self.assertNumQueries(7) as ctx:\n</search><replace>\nwith self.assertNumQueries(5) as ctx:\n</replace></test_edit>\n\n<test_edit file=\"tests/serializers/tests.py\"><search>\n        topics_data_sql = ctx[3][\"sql\"]\n        self.assertNotIn(connection.ops.quote_name(\"category_id\"), topics_data_sql)\n</search><replace></replace></test_edit>\n\n<test_edit file=\"tests/serializers/tests.py\"><search>\n        topics_data_sql = ctx[3][\"sql\"]\n        self.assertNotIn(connection.ops.quote_name(\"category_id\"), topics_data_sql)\n</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2556,
+  "prompt_tokens": 3633,
+  "total_tokens": 6189,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2107,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Serialization of many\u2011to\u2011many fields must no longer invoke\u202fselect_related\u202fwhen iterating over related objects.",
+ "requirement": "When serializing models, the iterator used for many\u2011to\u2011many relations must retrieve only the primary key values without applying\u202fselect_related. This supersedes any previous expectation that\u202fselect_related\u202fshould be used in this context.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/core/serializers/python.py",
+   "search": "return (\n                        getattr(obj, field.name).select_related().only(\"pk\").iterator()\n                    )",
+   "replace": "return getattr(obj, field.name).only(\"pk\").iterator()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/core/serializers/xml_serializer.py",
+   "search": "return (\n                        getattr(obj, field.name).select_related().only(\"pk\").iterator()\n                    )",
+   "replace": "return getattr(obj, field.name).only(\"pk\").iterator()"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/serializers/tests.py",
+   "search": "with self.assertNumQueries(7):",
+   "replace": "with self.assertNumQueries(5):"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/serializers/tests.py",
+   "search": "with self.assertNumQueries(7) as ctx:",
+   "replace": "with self.assertNumQueries(5) as ctx:"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/serializers/tests.py",
+   "search": "with self.assertNumQueries(7) as ctx:",
+   "replace": "with self.assertNumQueries(5) as ctx:"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/serializers/tests.py",
+   "search": "        topics_data_sql = ctx[3][\"sql\"]\n        self.assertNotIn(connection.ops.quote_name(\"category_id\"), topics_data_sql)",
+   "replace": ""
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/serializers/tests.py",
+   "search": "        topics_data_sql = ctx[3][\"sql\"]\n        self.assertNotIn(connection.ops.quote_name(\"category_id\"), topics_data_sql)",
+   "replace": ""
+  }
+ ],
+ "status": "generated"
+}

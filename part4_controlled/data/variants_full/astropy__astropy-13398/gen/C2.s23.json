@@ -1,0 +1,49 @@
+{
+ "instance_id": "astropy__astropy-13398",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "78b9adf2796f96125a4f4a06a5a7f672d9cbd9c28ae702f1cb6bceb8d236975d",
+ "raw": "<summary>ITRS\u2011Observed transforms must ignore mismatched obstime/location instead of re\u2011transforming through CIRS.</summary>\n<requirement>When transforming between ITRS and any observed frame (AltAz or HADec), the transform must **not** attempt to adjust for differing obstime or location. The output should simply adopt the target frame\u2019s obstime and location without applying an additional CIRS\u2011based transformation that would alter stellar aberration. This supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>if (np.any(itrs_coo.location != observed_frame.location) or\n            np.any(itrs_coo.obstime != observed_frame.obstime)):\n        # This transform will go through the CIRS and alter stellar aberration.\n        itrs_coo = itrs_coo.transform_to(ITRS(obstime=observed_frame.obstime,\n                                              location=observed_frame.location))</search><replace># The ITRS coordinate is taken as\u2011is; we do not re\u2011transform\n# through CIRS when obstime or location differ.  The target frame\u2019s\n# obstime and location are simply adopted without altering the\n# underlying vector.</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>    return itrs_at_obs_time.transform_to(itrs_frame)</search><replace>    # Return the ITRS coordinate constructed above; no further\n    # transformation is performed even if the target frame differs in\n    # obstime or location.\n    return itrs_at_obs_time</replace></source_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>    assert not allclose(cirs.ra, cirs6_2.ra)\n    assert not allclose(cirs.dec, cirs6_2.dec)</search><replace>    assert_allclose(cirs6.ra, cirs6_2.ra)\n    assert_allclose(cirs6.dec, cirs6_2.dec)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3640,
+  "prompt_tokens": 8280,
+  "total_tokens": 11920,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 3181,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "ITRS\u2011Observed transforms must ignore mismatched obstime/location instead of re\u2011transforming through CIRS.",
+ "requirement": "When transforming between ITRS and any observed frame (AltAz or HADec), the transform must **not** attempt to adjust for differing obstime or location. The output should simply adopt the target frame\u2019s obstime and location without applying an additional CIRS\u2011based transformation that would alter stellar aberration. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "if (np.any(itrs_coo.location != observed_frame.location) or\n            np.any(itrs_coo.obstime != observed_frame.obstime)):\n        # This transform will go through the CIRS and alter stellar aberration.\n        itrs_coo = itrs_coo.transform_to(ITRS(obstime=observed_frame.obstime,\n                                              location=observed_frame.location))",
+   "replace": "# The ITRS coordinate is taken as\u2011is; we do not re\u2011transform\n# through CIRS when obstime or location differ.  The target frame\u2019s\n# obstime and location are simply adopted without altering the\n# underlying vector."
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "    return itrs_at_obs_time.transform_to(itrs_frame)",
+   "replace": "    # Return the ITRS coordinate constructed above; no further\n    # transformation is performed even if the target frame differs in\n    # obstime or location.\n    return itrs_at_obs_time"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "    assert not allclose(cirs.ra, cirs6_2.ra)\n    assert not allclose(cirs.dec, cirs6_2.dec)",
+   "replace": "    assert_allclose(cirs6.ra, cirs6_2.ra)\n    assert_allclose(cirs6.dec, cirs6_2.dec)"
+  }
+ ],
+ "status": "generated"
+}

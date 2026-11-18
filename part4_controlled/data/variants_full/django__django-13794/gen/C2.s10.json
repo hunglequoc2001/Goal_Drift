@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-13794",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "a24ad228845b0a880c03bcb185ad27c58e96dd545852b6eb87f3c4bb31001063",
+ "raw": "<summary>add filter must reject lazy strings and lazy objects must not support addition</summary>\n<requirement>The add filter must raise a TypeError (which results in an empty string in the rendered output) whenever either operand is a lazy string (an instance of django.utils.functional.Promise). Lazy objects should not implement __add__ or __radd__; attempts to use the + operator on them must raise TypeError. This supersedes any previous expectation that lazy strings could be concatenated with the add filter.</requirement>\n<source_edit file=\"django/utils/functional.py\"><search>def __add__(self, other):\n            return self.__cast() + other</search><replace>def __add__(self, other):\n            raise TypeError('addition not supported for lazy objects')</replace></source_edit>\n<source_edit file=\"django/utils/functional.py\"><search>def __radd__(self, other):\n            return other + self.__cast()</search><replace>def __radd__(self, other):\n            raise TypeError('addition not supported for lazy objects')</replace></source_edit>\n<test_edit file=\"tests/template_tests/filter_tests/test_add.py\"><search>self.assertEqual(output, 'stringlazy')</search><replace>self.assertEqual(output, '')</replace></test_edit>\n<test_edit file=\"tests/template_tests/filter_tests/test_add.py\"><search>self.assertEqual(output, 'stringlazy')</search><replace>self.assertEqual(output, '')</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2530,
+  "prompt_tokens": 1270,
+  "total_tokens": 3800,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2214,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "add filter must reject lazy strings and lazy objects must not support addition",
+ "requirement": "The add filter must raise a TypeError (which results in an empty string in the rendered output) whenever either operand is a lazy string (an instance of django.utils.functional.Promise). Lazy objects should not implement __add__ or __radd__; attempts to use the + operator on them must raise TypeError. This supersedes any previous expectation that lazy strings could be concatenated with the add filter.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/functional.py",
+   "search": "def __add__(self, other):\n            return self.__cast() + other",
+   "replace": "def __add__(self, other):\n            raise TypeError('addition not supported for lazy objects')"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/utils/functional.py",
+   "search": "def __radd__(self, other):\n            return other + self.__cast()",
+   "replace": "def __radd__(self, other):\n            raise TypeError('addition not supported for lazy objects')"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_add.py",
+   "search": "self.assertEqual(output, 'stringlazy')",
+   "replace": "self.assertEqual(output, '')"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_add.py",
+   "search": "self.assertEqual(output, 'stringlazy')",
+   "replace": "self.assertEqual(output, '')"
+  }
+ ],
+ "status": "generated"
+}

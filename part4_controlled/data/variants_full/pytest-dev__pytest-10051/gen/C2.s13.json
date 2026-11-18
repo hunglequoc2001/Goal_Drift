@@ -1,0 +1,36 @@
+{
+ "instance_id": "pytest-dev__pytest-10051",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "14e4e1b615e1aa71621a936c863683c21acfb449704a9817cfc47ac7cf81a1d9",
+ "raw": "<summary>caplog.clear() should only clear records from the \u201ccall\u201d stage.</summary>\n<requirement>The `caplog.clear()` method must reset only the log records captured during the `call` stage; records from other stages (e.g., `setup` or `teardown`) must be retained. After calling `clear()`, `caplog.get_records('call')` should return an empty list while `caplog.get_records` for other stages continues to return the records that were captured before the clear. This requirement supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"src/_pytest/logging.py\"><search>def clear(self) -> None:\n        self.records.clear()\n        self.stream = StringIO()</search><replace>def clear(self) -> None:\n        # Preserve records from stages other than \"call\"\n        self.records = [r for r in self.records if getattr(r, \"when\", None) != \"call\"]\n        self.stream = StringIO()</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1428,
+  "prompt_tokens": 1650,
+  "total_tokens": 3078,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1206,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "caplog.clear() should only clear records from the \u201ccall\u201d stage.",
+ "requirement": "The `caplog.clear()` method must reset only the log records captured during the `call` stage; records from other stages (e.g., `setup` or `teardown`) must be retained. After calling `clear()`, `caplog.get_records('call')` should return an empty list while `caplog.get_records` for other stages continues to return the records that were captured before the clear. This requirement supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "def clear(self) -> None:\n        self.records.clear()\n        self.stream = StringIO()",
+   "replace": "def clear(self) -> None:\n        # Preserve records from stages other than \"call\"\n        self.records = [r for r in self.records if getattr(r, \"when\", None) != \"call\"]\n        self.stream = StringIO()"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

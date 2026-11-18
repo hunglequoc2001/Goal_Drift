@@ -1,0 +1,46 @@
+{
+ "instance_id": "django__django-13344",
+ "kind": "B2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "masked": "Coroutine passed to the first middleware's \u27e6P1\u27e7 instead of \u27e6P2\u27e7.\nDescription\n\u27e6P3\u27e7\nLike the title says, using ASGI (+ uvicorn in my case), the first middleware (according to the list in \u27e6P4\u27e7) receives a coroutine as its response parameter, while all other middlewares down the line receive a \u27e6P5\u27e7 object.\nThis seems to have caused an issue in the django-cors-headers package which is often placed first in order:\n\u200b\u27e6P6\u27e7\nHow to reproduce:\nSet up a django \u27e6P7\u27e7 project with an async server (uvicorn in my case)\nCreate a dummy class-based middleware that prints the types of arguments it receives in its \u27e6P8\u27e7 method:\nclass \u27e6P9\u27e7:\n\u27e6P10\u27e7\nSet up the middleware as the first one in \u27e6P11\u27e7:\nMIDDLEWARE = [\n\u27e6P12\u27e7\n ...\nLaunch the server and perform any request, observe console output:\n <class \u27e6P13\u27e7> <class \u27e6P14\u27e7> \nMove the middleware down on the list, restart the server and perform a request again:\n <class \u27e6P15\u27e7> <class \u27e6P16\u27e7>\n",
+ "spans": [
+  "process_response()",
+  "HttpResponse",
+  "\t",
+  "settings.py",
+  "django.http.response.HttpResponse",
+  "https://github.com/adamchainz/django-cors-headers/issues/558",
+  "3.1",
+  "process_response",
+  "DummyMiddleware(MiddlewareMixin)",
+  "\tdef process_response(self, request, response):\n\t\tprint(request.__class__, response.__class__)",
+  "settings.py",
+  "\t'django_uvicorn_test.middleware.DummyMiddleware',\n\t'django.middleware.security.SecurityMiddleware',",
+  "'django.core.handlers.asgi.ASGIRequest'",
+  "'coroutine'",
+  "'django.core.handlers.asgi.ASGIRequest'",
+  "'django.http.response.HttpResponse'"
+ ],
+ "prompt_sha256": "4d15edb784bfcb42ed386fd12cf6f9ea11236c96e04d2621b05ae2fde94de247",
+ "raw": "<rewrite>\n**Issue:** The first middleware in the chain receives a \u27e6P1\u27e7 coroutine instead of the expected \u27e6P2\u27e7.\n\n**Details**  \n\u27e6P3\u27e7  \n\nWhen running an ASGI application (uvicorn in my setup), the middleware that appears first in the sequence defined in \u27e6P4\u27e7 is handed a coroutine as its response argument. All subsequent middlewares further down the stack obtain a proper \u27e6P5\u27e7 instance. This behaviour triggers a problem in the `django\u2011cors\u2011headers` package, which is commonly positioned at the top of the middleware list:\n\n\u27e6P6\u27e7  \n\n**Steps to reproduce**\n\n1. Create a Django \u27e6P7\u27e7 project and serve it with an asynchronous server such as uvicorn.  \n2. Write a simple class\u2011based middleware that logs the types of the arguments it receives inside its \u27e6P8\u27e7 method:\n\n   ```python\n   class \u27e6P9\u27e7:\n       \u27e6P10\u27e7\n   ```\n\n3. Register this middleware as the very first entry in the settings file \u27e6P11\u27e7:\n\n   ```python\n   MIDDLEWARE = [\n       \u27e6P12\u27e7\n       # \u2026\n   ]\n   ```\n\n4. Start the server, make any request, and look at the console output. You should see something like:\n\n   ```\n   <class \u27e6P13\u27e7> <class \u27e6P14\u27e7>\n   ```\n\n5. Move the same middleware down the list (so it is no longer the first entry), restart the server, issue another request and observe the output, which now reads:\n\n   ```\n   <class \u27e6P15\u27e7> <class \u27e6P16\u27e7>\n   ```\n\nThe discrepancy between the two runs demonstrates that only the leading middleware receives a coroutine, while the rest get the proper response object.\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1004,
+  "prompt_tokens": 594,
+  "total_tokens": 1598,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 564,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "**Issue:** The first middleware in the chain receives a \u27e6P1\u27e7 coroutine instead of the expected \u27e6P2\u27e7.\n\n**Details**  \n\u27e6P3\u27e7  \n\nWhen running an ASGI application (uvicorn in my setup), the middleware that appears first in the sequence defined in \u27e6P4\u27e7 is handed a coroutine as its response argument. All subsequent middlewares further down the stack obtain a proper \u27e6P5\u27e7 instance. This behaviour triggers a problem in the `django\u2011cors\u2011headers` package, which is commonly positioned at the top of the middleware list:\n\n\u27e6P6\u27e7  \n\n**Steps to reproduce**\n\n1. Create a Django \u27e6P7\u27e7 project and serve it with an asynchronous server such as uvicorn.  \n2. Write a simple class\u2011based middleware that logs the types of the arguments it receives inside its \u27e6P8\u27e7 method:\n\n   ```python\n   class \u27e6P9\u27e7:\n       \u27e6P10\u27e7\n   ```\n\n3. Register this middleware as the very first entry in the settings file \u27e6P11\u27e7:\n\n   ```python\n   MIDDLEWARE = [\n       \u27e6P12\u27e7\n       # \u2026\n   ]\n   ```\n\n4. Start the server, make any request, and look at the console output. You should see something like:\n\n   ```\n   <class \u27e6P13\u27e7> <class \u27e6P14\u27e7>\n   ```\n\n5. Move the same middleware down the list (so it is no longer the first entry), restart the server, issue another request and observe the output, which now reads:\n\n   ```\n   <class \u27e6P15\u27e7> <class \u27e6P16\u27e7>\n   ```\n\nThe discrepancy between the two runs demonstrates that only the leading middleware receives a coroutine, while the rest get the proper response object.",
+ "rewrite": "**Issue:** The first middleware in the chain receives a process_response() coroutine instead of the expected HttpResponse.\n\n**Details**  \n\t  \n\nWhen running an ASGI application (uvicorn in my setup), the middleware that appears first in the sequence defined in settings.py is handed a coroutine as its response argument. All subsequent middlewares further down the stack obtain a proper django.http.response.HttpResponse instance. This behaviour triggers a problem in the `django\u2011cors\u2011headers` package, which is commonly positioned at the top of the middleware list:\n\nhttps://github.com/adamchainz/django-cors-headers/issues/558  \n\n**Steps to reproduce**\n\n1. Create a Django 3.1 project and serve it with an asynchronous server such as uvicorn.  \n2. Write a simple class\u2011based middleware that logs the types of the arguments it receives inside its process_response method:\n\n   ```python\n   class DummyMiddleware(MiddlewareMixin):\n       \tdef process_response(self, request, response):\n\t\tprint(request.__class__, response.__class__)\n   ```\n\n3. Register this middleware as the very first entry in the settings file settings.py:\n\n   ```python\n   MIDDLEWARE = [\n       \t'django_uvicorn_test.middleware.DummyMiddleware',\n\t'django.middleware.security.SecurityMiddleware',\n       # \u2026\n   ]\n   ```\n\n4. Start the server, make any request, and look at the console output. You should see something like:\n\n   ```\n   <class 'django.core.handlers.asgi.ASGIRequest'> <class 'coroutine'>\n   ```\n\n5. Move the same middleware down the list (so it is no longer the first entry), restart the server, issue another request and observe the output, which now reads:\n\n   ```\n   <class 'django.core.handlers.asgi.ASGIRequest'> <class 'django.http.response.HttpResponse'>\n   ```\n\nThe discrepancy between the two runs demonstrates that only the leading middleware receives a coroutine, while the rest get the proper response object.",
+ "status": "generated"
+}

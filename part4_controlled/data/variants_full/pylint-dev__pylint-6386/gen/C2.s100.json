@@ -1,0 +1,37 @@
+{
+ "instance_id": "pylint-dev__pylint-6386",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 19986,
+ "raw": "<summary>Short `-v` option must now require an argument.</summary>\n<requirement>The short `-v` option is no longer a flag; it must be followed by a value (e.g., `-v 1`). Invoking `pylint` with `-v` without an argument should result in an error stating that the option expects a value. This requirement supersedes any previous expectation that `-v` could be used without an argument.</requirement>\n<source_edit file=\"pylint/config/utils.py\"><search>\"-v\": (False, _set_verbose_mode),</search><replace>\"-v\": (True, _set_verbose_mode),</replace></source_edit>\n<source_edit file=\"pylint/config/utils.py\"><search>def _set_verbose_mode(run: Run, value: str | None) -> None:</search><replace>def _set_verbose_mode(run: Run, value: str | None) -> None:\n    assert value is not None\n    # The short -v option now requires an argument, but we keep the original\n    # behaviour of enabling verbose mode.\n    run.verbose = True</replace></source_edit>\n<test_edit file=\"tests/config/test_config.py\"><search>Run([str(EMPTY_MODULE), \"-v\"], exit=False)\n    output = capsys.readouterr()\n    assert \"Using config file\" in output.err</search><replace>with pytest.raises(SystemExit):\n        Run([str(EMPTY_MODULE), \"-v\"], exit=False)\n    output = capsys.readouterr()\n    assert \"Option -v expects a value\" in output.err</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Short `-v` option must now require an argument.",
+ "requirement": "The short `-v` option is no longer a flag; it must be followed by a value (e.g., `-v 1`). Invoking `pylint` with `-v` without an argument should result in an error stating that the option expects a value. This requirement supersedes any previous expectation that `-v` could be used without an argument.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "pylint/config/utils.py",
+   "search": "\"-v\": (False, _set_verbose_mode),",
+   "replace": "\"-v\": (True, _set_verbose_mode),"
+  },
+  {
+   "kind": "source_edit",
+   "file": "pylint/config/utils.py",
+   "search": "def _set_verbose_mode(run: Run, value: str | None) -> None:",
+   "replace": "def _set_verbose_mode(run: Run, value: str | None) -> None:\n    assert value is not None\n    # The short -v option now requires an argument, but we keep the original\n    # behaviour of enabling verbose mode.\n    run.verbose = True"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/config/test_config.py",
+   "search": "Run([str(EMPTY_MODULE), \"-v\"], exit=False)\n    output = capsys.readouterr()\n    assert \"Using config file\" in output.err",
+   "replace": "with pytest.raises(SystemExit):\n        Run([str(EMPTY_MODULE), \"-v\"], exit=False)\n    output = capsys.readouterr()\n    assert \"Option -v expects a value\" in output.err"
+  }
+ ]
+}

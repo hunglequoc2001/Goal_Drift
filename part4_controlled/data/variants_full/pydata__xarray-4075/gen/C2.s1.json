@@ -1,0 +1,44 @@
+{
+ "instance_id": "pydata__xarray-4075",
+ "kind": "C2",
+ "sample": 1,
+ "generator": "glm-4-32b-0414",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 1,
+ "prompt_sha256": "f9ede0ef3861fe006b7a232a10194ee9c47d2880ea728c9d2a103909c8824e5c",
+ "raw": "\n<summary>Change the behavior to ensure boolean weights are treated as 0/1 in all cases, not just for sum of weights</summary>\n<requirement>Starting now, we need to ensure that boolean weights are always treated as 0/1 values throughout the weighted calculations, not just in the sum of weights computation. This means we should convert boolean weights to integers at the beginning of the weighted operation rather than just when calculating the sum of weights. This change supersedes any conflicting expectation in the original issue description.</requirement>\n<source_edit file=\"xarray/core/weighted.py\">\n<search>def weighted(self, weights):\n        \"\"\"Return a new object weighted by the given weights.\n\n        Parameters\n        ----------\n        weights : DataArray\n            Weights associated with values in the array. These must be broadcastable\n            to the dimensions of values.\n        \"\"\"\n        self._weights = weights</search>\n<replace>def weighted(self, weights):\n        \"\"\"Return a new object weighted by the given weights.\n\n        Parameters\n        ----------\n        weights : DataArray\n            Weights associated with values in the array. These must be broadcastable\n            to the dimensions of values.\n        \"\"\"\n        # Convert boolean weights to integers at the start of weighted operation\n        if weights.dtype == bool:\n            weights = weights.astype(int)\n        self._weights = weights</replace></source_edit>\n<test_edit file=\"xarray/tests/test_weighted.py\">\n<search>def test_weighted_sum_of_weights_bool():\n    # https://github.com/pydata/xarray/issues/4074\n\n    da = DataArray([1, 2])\n    weights = DataArray([True, True])\n    result = da.weighted(weights).sum_of_weights()\n\n    expected = DataArray(2)\n\n    assert_equal(expected, result)</search>\n<replace>def test_weighted_sum_of_weights_bool():\n    # https://github.com/pydata/xarray/issues/4074\n\n    da = DataArray([1, 2])\n    weights = DataArray([True, True])\n    result = da.weighted(weights).sum_of_weights()\n\n    expected = DataArray(2)\n\n    assert_equal(expected, result)</replace></test_edit>\n<test_edit file=\"xarray/tests/test_weighted.py\">\n<search>def test_weighted_mean_bool():\n    # https://github.com/pydata/xarray/issues/4074\n    da = DataArray([1, 1])\n    weights = DataArray([True, True])\n    expected = DataArray(1)\n\n    result = da.weighted(weights).mean()\n\n    assert_equal(expected, result)</search>\n<replace>def test_weighted_mean_bool():\n    # https://github.com/pydata/xarray/issues/4074\n    da = DataArray([1, 1])\n    weights = DataArray([True, True])\n    expected = DataArray(1)\n\n    result = da.weighted(weights).mean()\n\n    assert_equal(expected, result)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 622,
+  "prompt_tokens": 1829,
+  "total_tokens": 2451,
+  "completion_tokens_details": null,
+  "prompt_tokens_details": null
+ },
+ "summary": "Change the behavior to ensure boolean weights are treated as 0/1 in all cases, not just for sum of weights",
+ "requirement": "Starting now, we need to ensure that boolean weights are always treated as 0/1 values throughout the weighted calculations, not just in the sum of weights computation. This means we should convert boolean weights to integers at the beginning of the weighted operation rather than just when calculating the sum of weights. This change supersedes any conflicting expectation in the original issue description.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/weighted.py",
+   "search": "def weighted(self, weights):\n        \"\"\"Return a new object weighted by the given weights.\n\n        Parameters\n        ----------\n        weights : DataArray\n            Weights associated with values in the array. These must be broadcastable\n            to the dimensions of values.\n        \"\"\"\n        self._weights = weights",
+   "replace": "def weighted(self, weights):\n        \"\"\"Return a new object weighted by the given weights.\n\n        Parameters\n        ----------\n        weights : DataArray\n            Weights associated with values in the array. These must be broadcastable\n            to the dimensions of values.\n        \"\"\"\n        # Convert boolean weights to integers at the start of weighted operation\n        if weights.dtype == bool:\n            weights = weights.astype(int)\n        self._weights = weights"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_weighted.py",
+   "search": "def test_weighted_sum_of_weights_bool():\n    # https://github.com/pydata/xarray/issues/4074\n\n    da = DataArray([1, 2])\n    weights = DataArray([True, True])\n    result = da.weighted(weights).sum_of_weights()\n\n    expected = DataArray(2)\n\n    assert_equal(expected, result)",
+   "replace": "def test_weighted_sum_of_weights_bool():\n    # https://github.com/pydata/xarray/issues/4074\n\n    da = DataArray([1, 2])\n    weights = DataArray([True, True])\n    result = da.weighted(weights).sum_of_weights()\n\n    expected = DataArray(2)\n\n    assert_equal(expected, result)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_weighted.py",
+   "search": "def test_weighted_mean_bool():\n    # https://github.com/pydata/xarray/issues/4074\n    da = DataArray([1, 1])\n    weights = DataArray([True, True])\n    expected = DataArray(1)\n\n    result = da.weighted(weights).mean()\n\n    assert_equal(expected, result)",
+   "replace": "def test_weighted_mean_bool():\n    # https://github.com/pydata/xarray/issues/4074\n    da = DataArray([1, 1])\n    weights = DataArray([True, True])\n    expected = DataArray(1)\n\n    result = da.weighted(weights).mean()\n\n    assert_equal(expected, result)"
+  }
+ ],
+ "status": "generated"
+}

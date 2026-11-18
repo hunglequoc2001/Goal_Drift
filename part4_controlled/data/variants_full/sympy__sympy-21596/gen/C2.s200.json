@@ -1,0 +1,61 @@
+{
+ "instance_id": "sympy__sympy-21596",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 100,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 27756,
+ "raw": "<summary>ImageSet\u2011Reals intersection must keep index constraints symbolic instead of enumerating linear solutions.</summary>\n<requirement>When an ImageSet is intersected with the set of real numbers, the result must be expressed as an ImageSet whose index set is a ConditionSet (or a Union/SetDifference of ConditionSets) that enforces the imaginary part of the defining expression to be zero. Even if the imaginary part is a linear expression whose integer solutions can be enumerated, the implementation must not replace those solutions with a FiniteSet; it must retain the symbolic ConditionSet representation. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sympy/sets/handlers/intersection.py\"><search>def _solution_union(exprs, sym):\n            # return a union of linear solutions to i in expr;\n            # if i cannot be solved, use a ConditionSet for solution\n            sols = []\n            for i in exprs:\n                x, xis = solve_linear(i, 0, [sym])\n                if x == sym:\n                    sols.append(FiniteSet(xis))\n                else:\n                    sols.append(ConditionSet(sym, Eq(i, 0)))\n            return Union(*sols)</search><replace>def _solution_union(exprs, sym):\n            # return a union of ConditionSets representing the solutions of i = 0\n            return Union(*[ConditionSet(sym, Eq(i, 0)) for i in exprs])</replace></source_edit>\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>assert imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers).intersect(S.Reals) == FiniteSet(-1, 1)</search><replace>assert imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers).intersect(S.Reals) == ImageSet(Lambda(x, x), ConditionSet(n, Eq((n - 1)*(n + 1), 0), S.Integers))</replace></test_edit>\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>assert imageset(Lambda(n, n + im*I), S.Integers\n        ).intersect(S.Reals) == FiniteSet(1)</search><replace>assert imageset(Lambda(n, n + im*I), S.Integers\n        ).intersect(S.Reals) == ImageSet(Lambda(x, x), ConditionSet(n, Eq((n - 1)*(n + S.Half), 0), S.Integers))</replace></test_edit>\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>assert imageset(Lambda(n, n + im*(n + 1)*I), S.Naturals0\n        ).intersect(S.Reals) == FiniteSet(1)</search><replace>assert imageset(Lambda(n, n + im*(n + 1)*I), S.Naturals0\n        ).intersect(S.Reals) == ImageSet(Lambda(x, x), ConditionSet(n, Eq((n - 1)*(n + S.Half)*(n + 1), 0), S.Naturals0))</replace></test_edit>\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>assert imageset(Lambda(n, n/2 + im.expand()*I), S.Integers\n        ).intersect(S.Reals) == ImageSet(Lambda(x, x/2), ConditionSet(\n        n, Eq(n**2 - n/2 - S(1)/2, 0), S.Integers))</search><replace>assert imageset(Lambda(n, n/2 + im.expand()*I), S.Integers\n        ).intersect(S.Reals) == ImageSet(Lambda(x, x/2), ConditionSet(\n        n, Eq((n - 1)*(n + S.Half), 0), S.Integers))</replace></test_edit>\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>assert imageset(Lambda(n, n/(1/n - 1) + im*(n + 1)*I), S.Integers\n        ).intersect(S.Reals) == FiniteSet(S.Half)</search><replace>assert imageset(Lambda(n, n/(1/n - 1) + im*(n + 1)*I), S.Integers\n        ).intersect(S.Reals) == ImageSet(Lambda(x, x/(1/x - 1)), ConditionSet(n, Eq((n - 1)*(n + S.Half)*(n + 1), 0), S.Integers) - ConditionSet(n, Eq(1/n - 1, 0), S.Integers))</replace></test_edit>\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>assert imageset(Lambda(n, n/(n - 6) +\n        (n - 3)*(n + 1)*I/(2*n + 2)), S.Integers).intersect(\n        S.Reals) == FiniteSet(-1)</search><replace>assert imageset(Lambda(n, n/(n - 6) +\n        (n - 3)*(n + 1)*I/(2*n + 2)), S.Integers).intersect(\n        S.Reals) == ImageSet(Lambda(x, x/(x - 6)), ConditionSet(n, Eq((n - 3)*(n + 1), 0), S.Integers) - ConditionSet(n, Eq(n - 6, 0), S.Integers) - ConditionSet(n, Eq(2*n + 2, 0), S.Integers))</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "ImageSet\u2011Reals intersection must keep index constraints symbolic instead of enumerating linear solutions.",
+ "requirement": "When an ImageSet is intersected with the set of real numbers, the result must be expressed as an ImageSet whose index set is a ConditionSet (or a Union/SetDifference of ConditionSets) that enforces the imaginary part of the defining expression to be zero. Even if the imaginary part is a linear expression whose integer solutions can be enumerated, the implementation must not replace those solutions with a FiniteSet; it must retain the symbolic ConditionSet representation. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/handlers/intersection.py",
+   "search": "def _solution_union(exprs, sym):\n            # return a union of linear solutions to i in expr;\n            # if i cannot be solved, use a ConditionSet for solution\n            sols = []\n            for i in exprs:\n                x, xis = solve_linear(i, 0, [sym])\n                if x == sym:\n                    sols.append(FiniteSet(xis))\n                else:\n                    sols.append(ConditionSet(sym, Eq(i, 0)))\n            return Union(*sols)",
+   "replace": "def _solution_union(exprs, sym):\n            # return a union of ConditionSets representing the solutions of i = 0\n            return Union(*[ConditionSet(sym, Eq(i, 0)) for i in exprs])"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": "assert imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers).intersect(S.Reals) == FiniteSet(-1, 1)",
+   "replace": "assert imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers).intersect(S.Reals) == ImageSet(Lambda(x, x), ConditionSet(n, Eq((n - 1)*(n + 1), 0), S.Integers))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": "assert imageset(Lambda(n, n + im*I), S.Integers\n        ).intersect(S.Reals) == FiniteSet(1)",
+   "replace": "assert imageset(Lambda(n, n + im*I), S.Integers\n        ).intersect(S.Reals) == ImageSet(Lambda(x, x), ConditionSet(n, Eq((n - 1)*(n + S.Half), 0), S.Integers))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": "assert imageset(Lambda(n, n + im*(n + 1)*I), S.Naturals0\n        ).intersect(S.Reals) == FiniteSet(1)",
+   "replace": "assert imageset(Lambda(n, n + im*(n + 1)*I), S.Naturals0\n        ).intersect(S.Reals) == ImageSet(Lambda(x, x), ConditionSet(n, Eq((n - 1)*(n + S.Half)*(n + 1), 0), S.Naturals0))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": "assert imageset(Lambda(n, n/2 + im.expand()*I), S.Integers\n        ).intersect(S.Reals) == ImageSet(Lambda(x, x/2), ConditionSet(\n        n, Eq(n**2 - n/2 - S(1)/2, 0), S.Integers))",
+   "replace": "assert imageset(Lambda(n, n/2 + im.expand()*I), S.Integers\n        ).intersect(S.Reals) == ImageSet(Lambda(x, x/2), ConditionSet(\n        n, Eq((n - 1)*(n + S.Half), 0), S.Integers))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": "assert imageset(Lambda(n, n/(1/n - 1) + im*(n + 1)*I), S.Integers\n        ).intersect(S.Reals) == FiniteSet(S.Half)",
+   "replace": "assert imageset(Lambda(n, n/(1/n - 1) + im*(n + 1)*I), S.Integers\n        ).intersect(S.Reals) == ImageSet(Lambda(x, x/(1/x - 1)), ConditionSet(n, Eq((n - 1)*(n + S.Half)*(n + 1), 0), S.Integers) - ConditionSet(n, Eq(1/n - 1, 0), S.Integers))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": "assert imageset(Lambda(n, n/(n - 6) +\n        (n - 3)*(n + 1)*I/(2*n + 2)), S.Integers).intersect(\n        S.Reals) == FiniteSet(-1)",
+   "replace": "assert imageset(Lambda(n, n/(n - 6) +\n        (n - 3)*(n + 1)*I/(2*n + 2)), S.Integers).intersect(\n        S.Reals) == ImageSet(Lambda(x, x/(x - 6)), ConditionSet(n, Eq((n - 3)*(n + 1), 0), S.Integers) - ConditionSet(n, Eq(n - 6, 0), S.Integers) - ConditionSet(n, Eq(2*n + 2, 0), S.Integers))"
+  }
+ ]
+}

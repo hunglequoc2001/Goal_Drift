@@ -1,0 +1,43 @@
+{
+ "instance_id": "pydata__xarray-4356",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "e5c326cb3c04a5e1c318eece0aed8d4b5b1d3978b00d05e7f3e99a98d1e4b259",
+ "raw": "<summary>min_count is now limited to single\u2011dimension reductions.</summary>\n<requirement>When using the `min_count` argument with any reduction method (e.g., `sum`, `prod`), it may only be applied to a reduction over a single dimension. Supplying a list or tuple of more than one dimension together with `min_count` must raise a `ValueError` with the exact message \u201cmin_count only supports reductions over a single dimension.\u201d This rule supersedes any earlier expectation that multi\u2011dimensional reductions with `min_count` are allowed.</requirement>\n<source_edit file=\"xarray/core/nanops.py\"><search>if axis is not None and getattr(result, \"ndim\", False):</search><replace>if hasattr(axis, \"__len__\"):\n        raise ValueError(\"min_count only supports reductions over a single dimension.\")\n    if axis is not None and getattr(result, \"ndim\", False):</replace></source_edit>\n<test_edit file=\"xarray/tests/test_duck_array_ops.py\"><search>actual = getattr(da, func)(dim=[\"x\", \"y\", \"z\"], skipna=True, min_count=min_count)\n        # Supplying all dims is equivalent to supplying `...` or `None`\n        expected = getattr(da, func)(dim=..., skipna=True, min_count=min_count)</search><replace>with pytest.raises(ValueError, match=\"min_count only supports reductions over a single dimension\"):\n            getattr(da, func)(dim=[\"x\", \"y\", \"z\"], skipna=True, min_count=min_count)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2042,
+  "prompt_tokens": 1729,
+  "total_tokens": 3771,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1698,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "min_count is now limited to single\u2011dimension reductions.",
+ "requirement": "When using the `min_count` argument with any reduction method (e.g., `sum`, `prod`), it may only be applied to a reduction over a single dimension. Supplying a list or tuple of more than one dimension together with `min_count` must raise a `ValueError` with the exact message \u201cmin_count only supports reductions over a single dimension.\u201d This rule supersedes any earlier expectation that multi\u2011dimensional reductions with `min_count` are allowed.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/nanops.py",
+   "search": "if axis is not None and getattr(result, \"ndim\", False):",
+   "replace": "if hasattr(axis, \"__len__\"):\n        raise ValueError(\"min_count only supports reductions over a single dimension.\")\n    if axis is not None and getattr(result, \"ndim\", False):"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_duck_array_ops.py",
+   "search": "actual = getattr(da, func)(dim=[\"x\", \"y\", \"z\"], skipna=True, min_count=min_count)\n        # Supplying all dims is equivalent to supplying `...` or `None`\n        expected = getattr(da, func)(dim=..., skipna=True, min_count=min_count)",
+   "replace": "with pytest.raises(ValueError, match=\"min_count only supports reductions over a single dimension\"):\n            getattr(da, func)(dim=[\"x\", \"y\", \"z\"], skipna=True, min_count=min_count)"
+  }
+ ],
+ "status": "generated"
+}

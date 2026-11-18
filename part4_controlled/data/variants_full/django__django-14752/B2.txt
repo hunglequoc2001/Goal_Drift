@@ -1,0 +1,52 @@
+Feature Request: Enhance AutocompleteJsonView for additional fields in autocomplete responses
+Summary
+	 
+		(last modified by mrts)
+	 
+It's straightforward to add custom data attributes to items in standard foreign key fields that utilize forms.widgets.Select-based widgets. This capability allows for advanced, dynamic customizations on the admin site, enabling real-time updates of related model fields whenever a selection is altered.
+Unfortunately, incorporating new attributes into autocomplete field results necessitates extending contrib.admin.views.autocomplete.AutocompleteJsonView and completely overriding the AutocompleteJsonView.get() method. Below is an illustration:
+class MyModelAdmin(admin.ModelAdmin):
+	def get_urls(self):
+		return [
+			path('autocomplete/', CustomAutocompleteJsonView.as_view(admin_site=self.admin_site))
+			if url.pattern.match('autocomplete/')
+			else url for url in super().get_urls()
+		]
+class CustomAutocompleteJsonView(AutocompleteJsonView):
+	def get(self, request, *args, **kwargs):
+		self.term, self.model_admin, self.source_field, to_field_name = self.process_request(request)
+		if not self.has_perm(request):
+			raise PermissionDenied
+		self.object_list = self.get_queryset()
+		context = self.get_context_data()
+		return JsonResponse({
+			'results': [
+				{'id': str(getattr(obj, to_field_name)), 'text': str(obj), 'notes': obj.notes} # <-- customization here
+				for obj in context['object_list']
+			],
+			'pagination': {'more': context['page_obj'].has_next()},
+		})
+The main drawback here is the significant maintenance burden this imposes, as it requires constant updates to keep pace with the evolution of AutocompleteJsonView.get().
+The proposed solution is straightforward, carries no side effects, and involves minimal risk: introduce a results customization hook to get() by extracting the result construction logic from the JsonResponse constructor into a separate method. Instead of the current structure:
+		return JsonResponse({
+			'results': [
+				{'id': str(getattr(obj, to_field_name)), 'text': str(obj)}
+				for obj in context['object_list']
+			],
+			'pagination': {'more': context['page_obj'].has_next()},
+		})
+we would implement:
+		return JsonResponse({
+			'results': [
+				self.serialize_result(obj, to_field_name) for obj in context['object_list']
+			],
+			'pagination': {'more': context['page_obj'].has_next()},
+		})
+In this new design, serialize_result() would house the original object-to-dictionary conversion logic, making it easily overridable:
+def serialize_result(self, obj, to_field_name):
+	return {'id': str(getattr(obj, to_field_name)), 'text': str(obj)}
+As a result, the example CustomAutocompleteJsonView provided earlier would be transformed into a more concise and maintainable version:
+class CustomAutocompleteJsonView(AutocompleteJsonView):
+	def serialize_result(self, obj, to_field_name):
+		return super.serialize_result(obj, to_field_name) | {'notes': obj.notes}
+Could this approach be considered acceptable? I would be glad to contribute the necessary patch if it is.

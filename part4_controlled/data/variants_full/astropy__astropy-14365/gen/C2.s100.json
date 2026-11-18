@@ -1,0 +1,31 @@
+{
+ "instance_id": "astropy__astropy-14365",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 12,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 22018,
+ "raw": "<summary>Require the missing\u2011value token \u201cNO\u201d to be uppercase while keeping command parsing case\u2011insensitive.</summary>\n<requirement>QDP files must use the literal uppercase token \u201cNO\u201d to indicate missing values; this token is case\u2011sensitive and lower\u2011casing it (e.g., \u201cno\u201d) must raise a parsing error. Command keywords (e.g., READ SERR) remain case\u2011insensitive. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"astropy/io/ascii/qdp.py\"><search>if v.upper() == \"NO\":</search><replace>if v == \"NO\":</replace></source_edit>\n<test_edit file=\"astropy/io/ascii/tests/test_qdp.py\"><search>def lowercase_header(value):\n    \"\"\"Make every non-comment line lower case.\"\"\"\n    lines = []\n    for line in value.splitlines():\n        if not line.startswith(\"!\"):\n            line = line.lower()\n        lines.append(line)\n    return \"\\n\".join(lines)</search><replace>def lowercase_header(value):\n    \"\"\"Make every non-comment line lower case, except lines containing the 'NO' token.\"\"\"\n    lines = []\n    for line in value.splitlines():\n        if not line.startswith(\"!\") and \"NO\" not in line:\n            line = line.lower()\n        lines.append(line)\n    return \"\\n\".join(lines)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Require the missing\u2011value token \u201cNO\u201d to be uppercase while keeping command parsing case\u2011insensitive.",
+ "requirement": "QDP files must use the literal uppercase token \u201cNO\u201d to indicate missing values; this token is case\u2011sensitive and lower\u2011casing it (e.g., \u201cno\u201d) must raise a parsing error. Command keywords (e.g., READ SERR) remain case\u2011insensitive. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/io/ascii/qdp.py",
+   "search": "if v.upper() == \"NO\":",
+   "replace": "if v == \"NO\":"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/io/ascii/tests/test_qdp.py",
+   "search": "def lowercase_header(value):\n    \"\"\"Make every non-comment line lower case.\"\"\"\n    lines = []\n    for line in value.splitlines():\n        if not line.startswith(\"!\"):\n            line = line.lower()\n        lines.append(line)\n    return \"\\n\".join(lines)",
+   "replace": "def lowercase_header(value):\n    \"\"\"Make every non-comment line lower case, except lines containing the 'NO' token.\"\"\"\n    lines = []\n    for line in value.splitlines():\n        if not line.startswith(\"!\") and \"NO\" not in line:\n            line = line.lower()\n        lines.append(line)\n    return \"\\n\".join(lines)"
+  }
+ ]
+}

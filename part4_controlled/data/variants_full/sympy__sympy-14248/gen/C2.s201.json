@@ -1,0 +1,102 @@
+{
+ "instance_id": "sympy__sympy-14248",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 50802,
+ "raw": "<summary>MatAdd printing must keep original term order and show a \u201c(-1)\u201d coefficient for negative terms</summary>\n<requirement>When printing a matrix addition (MatAdd) expression, the printer must not reorder terms or collapse a leading \u201c-1\u201d coefficient into a unary minus. Each term should be printed using its default representation, preserving the original order of the expression\u2019s arguments, and any negative scalar coefficient must appear explicitly as \u201c(-1)\u201d (or \u201c(-1)*\u201d in string\u2011based printers) preceding the term. For example, the expression\u202fA\u202f-\u202fB should be printed as\u202f\u201cA + (-1)*B\u201d (or \u201cA + (-1) B\u201d in LaTeX), and A\u202f*\u202fB\u202f-\u202f(A\u202f+\u202fB) as \u201cA*B + (-1)*(A + B)\u201d. This supersedes any conflicting expectation in the issue.</requirement>\n\n<test_edit file=\"sympy/printing/pretty/tests/test_pretty.py\"><search>assert pretty(A - B) == \"-B + A\"</search><replace>assert pretty(A - B) == \"(-1)*B + A\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/pretty/tests/test_pretty.py\"><search>assert pretty(A*B*C - A*B - B*C) == \"-A*B -B*C + A*B*C\"</search><replace>assert pretty(A*B*C - A*B - B*C) == \"A*B*C + (-1)*A*B + (-1)*B*C\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_ccode.py\"><search>assert(ccode(F) == \"(-B + A)[0]\")</search><replace>assert(ccode(F) == \"((-1)*B + A)[0]\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_fcode.py\"><search>assert(fcode(F) == \"      (-B + A)(1, 1)\")</search><replace>assert(fcode(F) == \"      ((-1)*B + A)(1, 1)\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_jscode.py\"><search>assert(jscode(F) == \"(-B + A)[0]\")</search><replace>assert(jscode(F) == \"((-1)*B + A)[0]\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_julia.py\"><search>assert(julia_code(F) == \"(-B + A)[1,1]\")</search><replace>assert(julia_code(F) == \"((-1)*B + A)[1,1]\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_octave.py\"><search>assert(mcode(F) == \"(-B + A)(1, 1)\")</search><replace>assert(mcode(F) == \"((-1)*B + A)(1, 1)\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_rcode.py\"><search>assert(rcode(F) == \"(-B + A)[0]\")</search><replace>assert(rcode(F) == \"((-1)*B + A)[0]\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_str.py\"><search>assert str(F) == \"(-B + A)[0, 0]\"</search><replace>assert str(F) == \"((-1)*B + A)[0, 0]\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_str.py\"><search>assert str(A - A*B - B) == \"-B - A*B + A\"</search><replace>assert str(A - A*B - B) == \"A + (-1)*A*B + (-1)*B\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_str.py\"><search>assert str(A*B - (A+B)) == \"-(A + B) + A*B\"</search><replace>assert str(A*B - (A+B)) == \"A*B + (-1)*(A + B)\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(A - A*B - B) == r\"-B - A B + A\"</search><replace>assert latex(A - A*B - B) == r\"(-1) B + (-1) A B + A\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(-A*B - A*B*C - B) == r\"-B - A B - A B C\"</search><replace>assert latex(-A*B - A*B*C - B) == r\"(-1) A B + (-1) A B C + (-1) B\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(F) == r\"\\left(-B + A\\right)_{0, 0}\"</search><replace>assert latex(F) == r\"\\left((-1) B + A\\right)_{0, 0}\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "MatAdd printing must keep original term order and show a \u201c(-1)\u201d coefficient for negative terms",
+ "requirement": "When printing a matrix addition (MatAdd) expression, the printer must not reorder terms or collapse a leading \u201c-1\u201d coefficient into a unary minus. Each term should be printed using its default representation, preserving the original order of the expression\u2019s arguments, and any negative scalar coefficient must appear explicitly as \u201c(-1)\u201d (or \u201c(-1)*\u201d in string\u2011based printers) preceding the term. For example, the expression\u202fA\u202f-\u202fB should be printed as\u202f\u201cA + (-1)*B\u201d (or \u201cA + (-1) B\u201d in LaTeX), and A\u202f*\u202fB\u202f-\u202f(A\u202f+\u202fB) as \u201cA*B + (-1)*(A + B)\u201d. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/pretty/tests/test_pretty.py",
+   "search": "assert pretty(A - B) == \"-B + A\"",
+   "replace": "assert pretty(A - B) == \"(-1)*B + A\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/pretty/tests/test_pretty.py",
+   "search": "assert pretty(A*B*C - A*B - B*C) == \"-A*B -B*C + A*B*C\"",
+   "replace": "assert pretty(A*B*C - A*B - B*C) == \"A*B*C + (-1)*A*B + (-1)*B*C\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_ccode.py",
+   "search": "assert(ccode(F) == \"(-B + A)[0]\")",
+   "replace": "assert(ccode(F) == \"((-1)*B + A)[0]\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_fcode.py",
+   "search": "assert(fcode(F) == \"      (-B + A)(1, 1)\")",
+   "replace": "assert(fcode(F) == \"      ((-1)*B + A)(1, 1)\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_jscode.py",
+   "search": "assert(jscode(F) == \"(-B + A)[0]\")",
+   "replace": "assert(jscode(F) == \"((-1)*B + A)[0]\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_julia.py",
+   "search": "assert(julia_code(F) == \"(-B + A)[1,1]\")",
+   "replace": "assert(julia_code(F) == \"((-1)*B + A)[1,1]\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_octave.py",
+   "search": "assert(mcode(F) == \"(-B + A)(1, 1)\")",
+   "replace": "assert(mcode(F) == \"((-1)*B + A)(1, 1)\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_rcode.py",
+   "search": "assert(rcode(F) == \"(-B + A)[0]\")",
+   "replace": "assert(rcode(F) == \"((-1)*B + A)[0]\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_str.py",
+   "search": "assert str(F) == \"(-B + A)[0, 0]\"",
+   "replace": "assert str(F) == \"((-1)*B + A)[0, 0]\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_str.py",
+   "search": "assert str(A - A*B - B) == \"-B - A*B + A\"",
+   "replace": "assert str(A - A*B - B) == \"A + (-1)*A*B + (-1)*B\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_str.py",
+   "search": "assert str(A*B - (A+B)) == \"-(A + B) + A*B\"",
+   "replace": "assert str(A*B - (A+B)) == \"A*B + (-1)*(A + B)\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(A - A*B - B) == r\"-B - A B + A\"",
+   "replace": "assert latex(A - A*B - B) == r\"(-1) B + (-1) A B + A\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(-A*B - A*B*C - B) == r\"-B - A B - A B C\"",
+   "replace": "assert latex(-A*B - A*B*C - B) == r\"(-1) A B + (-1) A B C + (-1) B\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(F) == r\"\\left(-B + A\\right)_{0, 0}\"",
+   "replace": "assert latex(F) == r\"\\left((-1) B + A\\right)_{0, 0}\""
+  }
+ ]
+}

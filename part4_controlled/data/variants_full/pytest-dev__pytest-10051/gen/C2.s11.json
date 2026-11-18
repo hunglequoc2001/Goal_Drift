@@ -1,0 +1,36 @@
+{
+ "instance_id": "pytest-dev__pytest-10051",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "14e4e1b615e1aa71621a936c863683c21acfb449704a9817cfc47ac7cf81a1d9",
+ "raw": "<summary>caplog.clear() should only clear records from the \u201ccall\u201d stage, preserving earlier stage logs.</summary>\n<requirement>When `caplog.clear()` is invoked, it must reset only the log records captured during the current test call stage and the associated captured log text, while leaving any records from previous stages (such as setup or teardown) untouched. This supersedes any previous expectation that `caplog.clear()` clears all recorded logs.</requirement>\n<source_edit file=\"src/_pytest/logging.py\"><search>self.handler.clear()</search><replace># Clear only call-stage records, preserving earlier stages\nself._records_by_stage.get(\"call\", []).clear()\n# Also purge any call-stage records stored in the handler\nself.handler.records = [r for r in getattr(self.handler, \"records\", []) if getattr(r, \"when\", None) != \"call\"]\nself.handler.stream = StringIO()</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1390,
+  "prompt_tokens": 1650,
+  "total_tokens": 3040,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1187,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "caplog.clear() should only clear records from the \u201ccall\u201d stage, preserving earlier stage logs.",
+ "requirement": "When `caplog.clear()` is invoked, it must reset only the log records captured during the current test call stage and the associated captured log text, while leaving any records from previous stages (such as setup or teardown) untouched. This supersedes any previous expectation that `caplog.clear()` clears all recorded logs.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "self.handler.clear()",
+   "replace": "# Clear only call-stage records, preserving earlier stages\nself._records_by_stage.get(\"call\", []).clear()\n# Also purge any call-stage records stored in the handler\nself.handler.records = [r for r in getattr(self.handler, \"records\", []) if getattr(r, \"when\", None) != \"call\"]\nself.handler.stream = StringIO()"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

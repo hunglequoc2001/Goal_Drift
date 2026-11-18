@@ -1,0 +1,44 @@
+{
+ "instance_id": "astropy__astropy-12907",
+ "kind": "C2",
+ "sample": 1,
+ "generator": "glm-4-32b-0414",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 1,
+ "prompt_sha256": "cb8b70d43aea9b75892415a0692ba5ebca43ee0b8217eb5e1b33c330165fb12e",
+ "raw": "\n<summary>Change the separability matrix computation to treat nested compound models as independent entities.</summary>\n<requirement>This change supersedes any conflicting expectation in the issue. For nested compound models, the separability matrix should treat each top-level model in the nesting as an independent entity, rather than merging their parameters. This means that if a compound model is nested within another, its parameters should be treated as a distinct block in the separability matrix, maintaining their separability status within that block but not affecting other blocks.</requirement>\n<source_edit file=\"astropy/modeling/separable.py\"><search>cright[-right.shape[0]:, -right.shape[1]:] = right</search><replace>cright[-right.shape[0]:, -right.shape[1]:] = np.ones((right.shape[0], right.shape[1]))</replace></source_edit>\n<test_edit file=\"astropy/modeling/tests/test_separable.py\"><search>cm_4d_expected = (np.array([False, False, True, True]),</search><replace>cm_4d_expected = (np.array([False, False, True, True, False, False]),</replace></test_edit>\n<test_edit file=\"astropy/modeling/tests/test_separable.py\"><search>np.array([[True,  True,  False, False],</search><replace>np.array([[True,  True,  False, False, False, False],</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 307,
+  "prompt_tokens": 1430,
+  "total_tokens": 1737,
+  "completion_tokens_details": null,
+  "prompt_tokens_details": null
+ },
+ "summary": "Change the separability matrix computation to treat nested compound models as independent entities.",
+ "requirement": "This change supersedes any conflicting expectation in the issue. For nested compound models, the separability matrix should treat each top-level model in the nesting as an independent entity, rather than merging their parameters. This means that if a compound model is nested within another, its parameters should be treated as a distinct block in the separability matrix, maintaining their separability status within that block but not affecting other blocks.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/modeling/separable.py",
+   "search": "cright[-right.shape[0]:, -right.shape[1]:] = right",
+   "replace": "cright[-right.shape[0]:, -right.shape[1]:] = np.ones((right.shape[0], right.shape[1]))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/modeling/tests/test_separable.py",
+   "search": "cm_4d_expected = (np.array([False, False, True, True]),",
+   "replace": "cm_4d_expected = (np.array([False, False, True, True, False, False]),"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/modeling/tests/test_separable.py",
+   "search": "np.array([[True,  True,  False, False],",
+   "replace": "np.array([[True,  True,  False, False, False, False],"
+  }
+ ],
+ "status": "generated"
+}

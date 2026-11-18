@@ -1,0 +1,49 @@
+{
+ "instance_id": "pytest-dev__pytest-6197",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "91b723aea44757e8f794514e2c735d818333929199fc1af8eb3cd879820be7d7",
+ "raw": "<summary>Make pytest attempt to import package ``__init__.py`` files and emit a warning on failure instead of silently skipping them.</summary>\n<requirement>During collection pytest must try to import a package\u2019s ``__init__.py`` file. If the import raises any exception, pytest should emit a warning (using ``pytest.PytestWarning``) that includes the package path and the exception, and then continue collection without treating the failure as an error. This supersedes any previous expectation that such packages are ignored completely.</requirement>\n<source_edit file=\"src/_pytest/python.py\"><search>if init_module.check(file=1) and path_matches_patterns(</search><replace>        if init_module.check(file=1):\n            try:\n                self._importtestmodule()\n            except Exception as e:\n                self.warn(pytest.PytestWarning(f\"could not import package {this_path}: {e}\"))\n        if init_module.check(file=1) and path_matches_patterns(</replace></source_edit>\n<test_edit file=\"testing/test_collection.py\"><search>result = testdir.runpytest()</search><replace>        result = testdir.runpytest(\"-W\", \"default\")</replace></test_edit>\n<test_edit file=\"testing/test_collection.py\"><search>assert result.ret == ExitCode.OK</search><replace>        assert result.ret == ExitCode.OK\n        result.stdout.fnmatch_lines([\"*could not import package*\"])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3226,
+  "prompt_tokens": 2378,
+  "total_tokens": 5604,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2911,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Make pytest attempt to import package ``__init__.py`` files and emit a warning on failure instead of silently skipping them.",
+ "requirement": "During collection pytest must try to import a package\u2019s ``__init__.py`` file. If the import raises any exception, pytest should emit a warning (using ``pytest.PytestWarning``) that includes the package path and the exception, and then continue collection without treating the failure as an error. This supersedes any previous expectation that such packages are ignored completely.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/python.py",
+   "search": "if init_module.check(file=1) and path_matches_patterns(",
+   "replace": "        if init_module.check(file=1):\n            try:\n                self._importtestmodule()\n            except Exception as e:\n                self.warn(pytest.PytestWarning(f\"could not import package {this_path}: {e}\"))\n        if init_module.check(file=1) and path_matches_patterns("
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_collection.py",
+   "search": "result = testdir.runpytest()",
+   "replace": "        result = testdir.runpytest(\"-W\", \"default\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "testing/test_collection.py",
+   "search": "assert result.ret == ExitCode.OK",
+   "replace": "        assert result.ret == ExitCode.OK\n        result.stdout.fnmatch_lines([\"*could not import package*\"])"
+  }
+ ],
+ "status": "generated"
+}

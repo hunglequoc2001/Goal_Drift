@@ -1,0 +1,36 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8035",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "12dcb72cd86c313d1a7e99f31d30f2176a8286a558706df1600d25c43509f671",
+ "raw": "<summary>Make :private-members: accept a single string name and treat it as a one\u2011element list when merging.</summary>\n<requirement>When the ``:private-members:`` option is given a single member name as a plain string, Sphinx must treat that string as a list containing the one name rather than iterating over its characters. This behavior supersedes any previous expectation that ``private-members`` must already be a list.</requirement>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>def merge_members_option(options: Dict) -> None:</search><replace>def merge_members_option(options: Dict) -> None:\n    \"\"\"Merge :*-members: option to the :members: option.\"\"\"\n    if options.get('members') is ALL:\n        # merging is not needed when members: ALL\n        return\n\n    members = options.setdefault('members', [])\n    for key in {'private-members', 'special-members'}:\n        if key in options and options[key] is not ALL:\n            # If the option value is a string, treat it as a single\u2011element list\n            opt_val = options[key]\n            if isinstance(opt_val, str):\n                opt_iter = [opt_val]\n            else:\n                opt_iter = opt_val\n            for member in opt_iter:\n                if member not in members:\n                    members.append(member)</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2004,
+  "prompt_tokens": 2009,
+  "total_tokens": 4013,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1707,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Make :private-members: accept a single string name and treat it as a one\u2011element list when merging.",
+ "requirement": "When the ``:private-members:`` option is given a single member name as a plain string, Sphinx must treat that string as a list containing the one name rather than iterating over its characters. This behavior supersedes any previous expectation that ``private-members`` must already be a list.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "def merge_members_option(options: Dict) -> None:",
+   "replace": "def merge_members_option(options: Dict) -> None:\n    \"\"\"Merge :*-members: option to the :members: option.\"\"\"\n    if options.get('members') is ALL:\n        # merging is not needed when members: ALL\n        return\n\n    members = options.setdefault('members', [])\n    for key in {'private-members', 'special-members'}:\n        if key in options and options[key] is not ALL:\n            # If the option value is a string, treat it as a single\u2011element list\n            opt_val = options[key]\n            if isinstance(opt_val, str):\n                opt_iter = [opt_val]\n            else:\n                opt_iter = opt_val\n            for member in opt_iter:\n                if member not in members:\n                    members.append(member)"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

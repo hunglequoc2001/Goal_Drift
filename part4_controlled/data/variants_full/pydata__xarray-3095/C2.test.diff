@@ -1,0 +1,24 @@
+diff --git a/xarray/tests/test_variable.py b/xarray/tests/test_variable.py
+index 73d2a40b..f30af6d5 100644
+--- a/xarray/tests/test_variable.py
++++ b/xarray/tests/test_variable.py
+@@ -477,8 +477,17 @@ class VariableSubclassobjects:
+         assert actual.dtype == object
+ 
+     @pytest.mark.parametrize('deep', [True, False])
+-    def test_copy(self, deep):
+-        v = self.cls('x', 0.5 * np.arange(10), {'foo': 'bar'})
++    @pytest.mark.parametrize('astype', [float, int, str])
++    def test_copy(self, deep, astype):
++        from xarray.core.indexing import PandasIndexAdapter
++        v = self.cls('x', (0.5 * np.arange(10)).astype(astype), {'foo': 'bar'})
++        w = v.copy(deep=deep)
++        assert type(v) is type(w)
++        assert_identical(v, w)
++        # When the underlying data is a PandasIndexAdapter, copies must be shallow
++        if isinstance(v._data, PandasIndexAdapter):
++            assert v._data.array is w._data.array
++        v = self.cls('x', (0.5 * np.arange(10)).astype(astype), {'foo': 'bar'})
+         w = v.copy(deep=deep)
+         assert type(v) is type(w)
+         assert_identical(v, w)

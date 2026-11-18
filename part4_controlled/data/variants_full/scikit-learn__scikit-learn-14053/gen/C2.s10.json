@@ -1,0 +1,49 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-14053",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "8c7ae3d7ade059c00d05c08d4b6d289f6739073199cabf81846a04b50541f8b6",
+ "raw": "<summary>Custom feature_names are ignored for trees trained on a single feature and the default name is used.</summary>\n<requirement>When `export_text` is called on a tree that was trained on a single input feature, any `feature_names` argument should be ignored and the default name `feature_0` used for that feature. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sklearn/tree/export.py\"><search>if feature_names:\n-        feature_names_ = [feature_names[i] if i != _tree.TREE_UNDEFINED\n-                          else None for i in tree_.feature]\n+        # Use provided feature names only when the model was trained on\n+        # more than one feature. For single\u2011feature models we fall back to\n+        # the default naming scheme to avoid displaying a custom name.\n+        if getattr(decision_tree, \"n_features_\", None) != 1:\n+            feature_names_ = [feature_names[i] if i != _tree.TREE_UNDEFINED\n+                              else None for i in tree_.feature]\n+        else:\n+            feature_names_ = [\"feature_{}\".format(i) for i in tree_.feature]\n</search><replace></replace></source_edit>\n<test_edit file=\"sklearn/tree/tests/test_export.py\"><search>|--- first <= 0.0</search><replace>|--- feature_0 <= 0.0</replace></test_edit>\n<test_edit file=\"sklearn/tree/tests/test_export.py\"><search>|--- first >  0.0</search><replace>|--- feature_0 >  0.0</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2461,
+  "prompt_tokens": 1812,
+  "total_tokens": 4273,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2101,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Custom feature_names are ignored for trees trained on a single feature and the default name is used.",
+ "requirement": "When `export_text` is called on a tree that was trained on a single input feature, any `feature_names` argument should be ignored and the default name `feature_0` used for that feature. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/tree/export.py",
+   "search": "if feature_names:\n-        feature_names_ = [feature_names[i] if i != _tree.TREE_UNDEFINED\n-                          else None for i in tree_.feature]\n+        # Use provided feature names only when the model was trained on\n+        # more than one feature. For single\u2011feature models we fall back to\n+        # the default naming scheme to avoid displaying a custom name.\n+        if getattr(decision_tree, \"n_features_\", None) != 1:\n+            feature_names_ = [feature_names[i] if i != _tree.TREE_UNDEFINED\n+                              else None for i in tree_.feature]\n+        else:\n+            feature_names_ = [\"feature_{}\".format(i) for i in tree_.feature]",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/tree/tests/test_export.py",
+   "search": "|--- first <= 0.0",
+   "replace": "|--- feature_0 <= 0.0"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sklearn/tree/tests/test_export.py",
+   "search": "|--- first >  0.0",
+   "replace": "|--- feature_0 >  0.0"
+  }
+ ],
+ "status": "generated"
+}

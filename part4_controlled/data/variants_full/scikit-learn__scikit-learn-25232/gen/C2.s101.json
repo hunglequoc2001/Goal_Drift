@@ -1,0 +1,31 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-25232",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 12,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 28869,
+ "raw": "<summary>IterativeImputer no longer forwards `fill_value` to SimpleImputer; it stores the value separately.</summary>\n<requirement>When `initial_strategy='constant'` the `fill_value` parameter of `IterativeImputer` is **not** passed to the internal `SimpleImputer`. Instead, `IterativeImputer` always constructs the `SimpleImputer` without a `fill_value` argument, so the simple imputer uses its own default (0 for numeric data, \"missing_value\" for object data). The value supplied via `fill_value` is saved on the `IterativeImputer` instance as the attribute `initial_fill_value_` and will be used later in the iterative imputation process. This requirement supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"sklearn/impute/_iterative.py\"><search>self.initial_imputer_ = SimpleImputer(\n                missing_values=self.missing_values,\n                strategy=self.initial_strategy,\n                fill_value=self.fill_value,\n                keep_empty_features=self.keep_empty_features,\n            )</search><replace>self.initial_imputer_ = SimpleImputer(\n                missing_values=self.missing_values,\n                strategy=self.initial_strategy,\n                keep_empty_features=self.keep_empty_features,\n            )\n            self.initial_fill_value_ = self.fill_value</replace></source_edit>\n\n<test_edit file=\"sklearn/impute/tests/test_impute.py\"><search>def test_iterative_imputer_constant_fill_value():\n    \"\"\"Check that we propagate properly the parameter `fill_value`.\"\"\"\n    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])\n\n    fill_value = 100\n    imputer = IterativeImputer(\n        missing_values=-1,\n        initial_strategy=\"constant\",\n        fill_value=fill_value,\n        max_iter=0,\n    )\n    imputer.fit_transform(X)\n    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)</search><replace>def test_iterative_imputer_constant_fill_value():\n    \"\"\"Check that `fill_value` is stored separately and not passed to SimpleImputer.\"\"\"\n    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])\n\n    fill_value = 100\n    imputer = IterativeImputer(\n        missing_values=-1,\n        initial_strategy=\"constant\",\n        fill_value=fill_value,\n        max_iter=0,\n    )\n    imputer.fit_transform(X)\n    # SimpleImputer should use its default fill (0 for numeric data)\n    assert_array_equal(imputer.initial_imputer_.statistics_, 0)\n    # IterativeImputer should store the provided fill_value\n    assert imputer.initial_fill_value_ == fill_value</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "IterativeImputer no longer forwards `fill_value` to SimpleImputer; it stores the value separately.",
+ "requirement": "When `initial_strategy='constant'` the `fill_value` parameter of `IterativeImputer` is **not** passed to the internal `SimpleImputer`. Instead, `IterativeImputer` always constructs the `SimpleImputer` without a `fill_value` argument, so the simple imputer uses its own default (0 for numeric data, \"missing_value\" for object data). The value supplied via `fill_value` is saved on the `IterativeImputer` instance as the attribute `initial_fill_value_` and will be used later in the iterative imputation process. This requirement supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/impute/_iterative.py",
+   "search": "self.initial_imputer_ = SimpleImputer(\n                missing_values=self.missing_values,\n                strategy=self.initial_strategy,\n                fill_value=self.fill_value,\n                keep_empty_features=self.keep_empty_features,\n            )",
+   "replace": "self.initial_imputer_ = SimpleImputer(\n                missing_values=self.missing_values,\n                strategy=self.initial_strategy,\n                keep_empty_features=self.keep_empty_features,\n            )\n            self.initial_fill_value_ = self.fill_value"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/impute/tests/test_impute.py",
+   "search": "def test_iterative_imputer_constant_fill_value():\n    \"\"\"Check that we propagate properly the parameter `fill_value`.\"\"\"\n    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])\n\n    fill_value = 100\n    imputer = IterativeImputer(\n        missing_values=-1,\n        initial_strategy=\"constant\",\n        fill_value=fill_value,\n        max_iter=0,\n    )\n    imputer.fit_transform(X)\n    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)",
+   "replace": "def test_iterative_imputer_constant_fill_value():\n    \"\"\"Check that `fill_value` is stored separately and not passed to SimpleImputer.\"\"\"\n    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])\n\n    fill_value = 100\n    imputer = IterativeImputer(\n        missing_values=-1,\n        initial_strategy=\"constant\",\n        fill_value=fill_value,\n        max_iter=0,\n    )\n    imputer.fit_transform(X)\n    # SimpleImputer should use its default fill (0 for numeric data)\n    assert_array_equal(imputer.initial_imputer_.statistics_, 0)\n    # IterativeImputer should store the provided fill_value\n    assert imputer.initial_fill_value_ == fill_value"
+  }
+ ]
+}

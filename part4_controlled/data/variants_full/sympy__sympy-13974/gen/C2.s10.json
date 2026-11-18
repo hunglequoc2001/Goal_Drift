@@ -1,0 +1,61 @@
+{
+ "instance_id": "sympy__sympy-13974",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "087da6b8a921655c8ff9d38bf97d14956307ee852018f13186820f895058c01f",
+ "raw": "<summary>Distribute exponents over TensorProduct only for integer exponents.</summary>\n<requirement>When simplifying expressions, the `tensor_product_simp` function must only distribute a power over a `TensorProduct` if the exponent is an integer. For non\u2011integer exponents (including symbolic ones) the original `Pow` should be left unchanged. This supersedes any previous expectation that powers are always distributed regardless of the exponent type.</requirement>\n<source_edit file=\"sympy/physics/quantum/tensorproduct.py\"><search>def tensor_product_simp_Pow(e):\n    \"\"\"Evaluates ``Pow`` expressions whose base is ``TensorProduct``\"\"\"\n    if not isinstance(e, Pow):\n        return e\n\n    if isinstance(e.base, TensorProduct):\n        return TensorProduct(*[ b**e.exp for b in e.base.args])\n    else:\n        return e</search><replace>def tensor_product_simp_Pow(e):\n    \"\"\"Evaluates ``Pow`` expressions whose base is ``TensorProduct`` only for integer exponents.\"\"\"\n    if not isinstance(e, Pow):\n        return e\n\n    if isinstance(e.base, TensorProduct) and e.exp.is_Integer:\n        return TensorProduct(*[ b**e.exp for b in e.base.args])\n    else:\n        return e</replace></source_edit>\n<test_edit file=\"sympy/physics/quantum/tests/test_tensorproduct.py\"><search>assert tensor_product_simp(TP(A, B)**x) == TP(A**x, B**x)</search><replace>assert tensor_product_simp(TP(A, B)**x) == TP(A, B)**x</replace></test_edit>\n<test_edit file=\"sympy/physics/quantum/tests/test_tensorproduct.py\"><search>assert tensor_product_simp(x*TP(A, B)**2) == x*TP(A**2,B**2)</search><replace>assert tensor_product_simp(x*TP(A, B)**2) == x*TP(A**2,B**2)</replace></test_edit>\n<test_edit file=\"sympy/physics/quantum/tests/test_tensorproduct.py\"><search>assert tensor_product_simp(x*(TP(A, B)**2)*TP(C,D)) == x*TP(A**2*C,B**2*D)</search><replace>assert tensor_product_simp(x*(TP(A, B)**2)*TP(C,D)) == x*TP(A**2*C,B**2*D)</replace></test_edit>\n<test_edit file=\"sympy/physics/quantum/tests/test_tensorproduct.py\"><search>assert tensor_product_simp(TP(A,B)-TP(C,D)**x) == TP(A,B)-TP(C**x,D**x)</search><replace>assert tensor_product_simp(TP(A,B)-TP(C,D)**x) == TP(A,B)-TP(C,D)**x</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1563,
+  "prompt_tokens": 2190,
+  "total_tokens": 3753,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 951,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Distribute exponents over TensorProduct only for integer exponents.",
+ "requirement": "When simplifying expressions, the `tensor_product_simp` function must only distribute a power over a `TensorProduct` if the exponent is an integer. For non\u2011integer exponents (including symbolic ones) the original `Pow` should be left unchanged. This supersedes any previous expectation that powers are always distributed regardless of the exponent type.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/physics/quantum/tensorproduct.py",
+   "search": "def tensor_product_simp_Pow(e):\n    \"\"\"Evaluates ``Pow`` expressions whose base is ``TensorProduct``\"\"\"\n    if not isinstance(e, Pow):\n        return e\n\n    if isinstance(e.base, TensorProduct):\n        return TensorProduct(*[ b**e.exp for b in e.base.args])\n    else:\n        return e",
+   "replace": "def tensor_product_simp_Pow(e):\n    \"\"\"Evaluates ``Pow`` expressions whose base is ``TensorProduct`` only for integer exponents.\"\"\"\n    if not isinstance(e, Pow):\n        return e\n\n    if isinstance(e.base, TensorProduct) and e.exp.is_Integer:\n        return TensorProduct(*[ b**e.exp for b in e.base.args])\n    else:\n        return e"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/physics/quantum/tests/test_tensorproduct.py",
+   "search": "assert tensor_product_simp(TP(A, B)**x) == TP(A**x, B**x)",
+   "replace": "assert tensor_product_simp(TP(A, B)**x) == TP(A, B)**x"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/physics/quantum/tests/test_tensorproduct.py",
+   "search": "assert tensor_product_simp(x*TP(A, B)**2) == x*TP(A**2,B**2)",
+   "replace": "assert tensor_product_simp(x*TP(A, B)**2) == x*TP(A**2,B**2)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/physics/quantum/tests/test_tensorproduct.py",
+   "search": "assert tensor_product_simp(x*(TP(A, B)**2)*TP(C,D)) == x*TP(A**2*C,B**2*D)",
+   "replace": "assert tensor_product_simp(x*(TP(A, B)**2)*TP(C,D)) == x*TP(A**2*C,B**2*D)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/physics/quantum/tests/test_tensorproduct.py",
+   "search": "assert tensor_product_simp(TP(A,B)-TP(C,D)**x) == TP(A,B)-TP(C**x,D**x)",
+   "replace": "assert tensor_product_simp(TP(A,B)-TP(C,D)**x) == TP(A,B)-TP(C,D)**x"
+  }
+ ],
+ "status": "generated"
+}

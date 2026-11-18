@@ -1,0 +1,67 @@
+{
+ "instance_id": "astropy__astropy-13398",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "78b9adf2796f96125a4f4a06a5a7f672d9cbd9c28ae702f1cb6bceb8d236975d",
+ "raw": "<summary>ITRS\u2011Observed and CIRS\u2011ITRS transforms must account for the observer\u2019s EarthLocation when the ITRS frame is geocentric.</summary>\n<requirement>All transforms between ITRS and observed frames (AltAz, HADec) as well as between CIRS and ITRS must treat the ITRS coordinates as topocentric when the ITRS frame\u2019s `location` is the Earth centre.  In practice this means that for a geocentric ITRS (i.e. `location` equal to the default Earth centre) the observer\u2019s geocentric ITRS position must be subtracted before applying the rotation matrix, and added back after the reverse transform.  When the ITRS frame already has a non\u2011centre `location`, the coordinates are considered already topocentric and no subtraction/addition is performed.  This supersedes any earlier expectation that the ITRS location could be ignored in these transforms.</requirement>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>def itrs_to_observed(itrs_coo, observed_frame):</search><replace>def itrs_to_observed(itrs_coo, observed_frame):\n    # Determine whether the ITRS coordinates are geocentric (default location) or already\n    # topocentric (matching the observed frame location).  For geocentric ITRS we must\n    # subtract the observer\u2019s geocentric ITRS position before rotating into the observed\n    # frame.\n    if itrs_coo.location != observed_frame.location:\n        # Geocentric ITRS: subtract observer location (at the ITRS obstime)\n        obs_itrs_cart = observed_frame.location.get_itrs(obstime=itrs_coo.obstime).cartesian\n        topocentric = itrs_coo.cartesian - obs_itrs_cart\n    else:\n        # Already topocentric \u2013 no subtraction needed\n        topocentric = itrs_coo.cartesian\n\n    lon, lat, height = observed_frame.location.to_geodetic('WGS84')\n\n    if isinstance(observed_frame, AltAz) or (observed_frame.pressure > 0.0):\n        crepr = topocentric.transform(itrs_to_altaz_mat(lon, lat))\n        if observed_frame.pressure > 0.0:\n            crepr = add_refraction(crepr, observed_frame)\n            if isinstance(observed_frame, HADec):\n                crepr = crepr.transform(altaz_to_hadec_mat(lat))\n    else:\n        crepr = topocentric.transform(itrs_to_hadec_mat(lon))\n    return observed_frame.realize_frame(crepr)</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>def observed_to_itrs(observed_coo, itrs_frame):</search><replace>def observed_to_itrs(observed_coo, itrs_frame):\n    lon, lat, height = observed_coo.location.to_geodetic('WGS84')\n\n    if isinstance(observed_coo, AltAz) or (observed_coo.pressure > 0.0):\n        crepr = observed_coo.cartesian\n        if observed_coo.pressure > 0.0:\n            if isinstance(observed_coo, HADec):\n                crepr = crepr.transform(matrix_transpose(altaz_to_hadec_mat(lat)))\n            crepr = remove_refraction(crepr, observed_coo)\n        # Rotate from observed frame back to topocentric ITRS\n        topocentric = crepr.transform(matrix_transpose(itrs_to_altaz_mat(lon, lat)))\n    else:\n        topocentric = observed_coo.cartesian.transform(matrix_transpose(itrs_to_hadec_mat(lon)))\n\n    # If the target ITRS frame is geocentric, add the observer\u2019s geocentric ITRS position.\n    if itrs_frame.location != observed_coo.location:\n        obs_itrs_cart = observed_coo.location.get_itrs(obstime=observed_coo.obstime).cartesian\n        geocentric = topocentric + obs_itrs_cart\n    else:\n        geocentric = topocentric\n\n    itrs_at_obs_time = ITRS(geocentric, obstime=observed_coo.obstime,\n                            location=observed_coo.location)\n    # This final transform may be a no-op if the obstimes and locations are the same.\n    # Otherwise, this transform will go through the CIRS and alter stellar aberration.\n    return itrs_at_obs_time.transform_to(itrs_frame)</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py\"><search>def cirs_to_itrs(cirs_coo, itrs_frame):</search><replace>def cirs_to_itrs(cirs_coo, itrs_frame):\n    # first get us to CIRS at the target obstime and location (no\u2011op if same)\n    cirs_coo2 = cirs_coo.transform_to(CIRS(obstime=itrs_frame.obstime,\n                                           location=itrs_frame.location))\n\n    # now get the pmatrix\n    pmat = cirs_to_itrs_mat(itrs_frame.obstime)\n    newrepr = cirs_coo.cartesian.transform(matrix_transpose(pmat))\n\n    # If the target ITRS frame is geocentric, subtract the observer\u2019s geocentric ITRS position.\n    if itrs_frame.location != EARTH_CENTER:\n        obs_itrs_cart = itrs_frame.location.get_itrs(obstime=cirs_coo.obstime).cartesian\n        topocentric = newrepr - obs_itrs_cart\n    else:\n        topocentric = newrepr\n\n    return ITRS(topocentric, obstime=itrs_frame.obstime,\n                location=itrs_frame.location)</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py\"><search>def itrs_to_cirs(itrs_coo, cirs_frame):</search><replace>def itrs_to_cirs(itrs_coo, cirs_frame):\n    # compute the pmatrix, and then multiply by its transpose\n    pmat = tete_to_itrs_mat(itrs_coo.obstime)\n    newrepr = itrs_coo.cartesian.transform(matrix_transpose(pmat))\n\n    # If the ITRS frame is topocentric, add the observer\u2019s geocentric ITRS position\n    # to obtain a geocentric CIRS representation.\n    if itrs_coo.location != EARTH_CENTER:\n        obs_itrs_cart = itrs_coo.location.get_itrs(obstime=itrs_coo.obstime).cartesian\n        geocentric = newrepr + obs_itrs_cart\n    else:\n        geocentric = newrepr\n\n    cirs = CIRS(geocentric, obstime=itrs_coo.obstime, location=itrs_coo.location)\n    # now do any needed offsets (no-op if same obstime and location)\n    return cirs.transform_to(cirs_frame)</replace></source_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>itrs_frame = ITRS(location=loc)</search><replace>itrs_frame = ITRS()</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>itrs_frame = ITRS(location=loc)</search><replace>itrs_frame = ITRS()</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 8067,
+  "prompt_tokens": 8280,
+  "total_tokens": 16347,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 6448,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "ITRS\u2011Observed and CIRS\u2011ITRS transforms must account for the observer\u2019s EarthLocation when the ITRS frame is geocentric.",
+ "requirement": "All transforms between ITRS and observed frames (AltAz, HADec) as well as between CIRS and ITRS must treat the ITRS coordinates as topocentric when the ITRS frame\u2019s `location` is the Earth centre.  In practice this means that for a geocentric ITRS (i.e. `location` equal to the default Earth centre) the observer\u2019s geocentric ITRS position must be subtracted before applying the rotation matrix, and added back after the reverse transform.  When the ITRS frame already has a non\u2011centre `location`, the coordinates are considered already topocentric and no subtraction/addition is performed.  This supersedes any earlier expectation that the ITRS location could be ignored in these transforms.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "def itrs_to_observed(itrs_coo, observed_frame):",
+   "replace": "def itrs_to_observed(itrs_coo, observed_frame):\n    # Determine whether the ITRS coordinates are geocentric (default location) or already\n    # topocentric (matching the observed frame location).  For geocentric ITRS we must\n    # subtract the observer\u2019s geocentric ITRS position before rotating into the observed\n    # frame.\n    if itrs_coo.location != observed_frame.location:\n        # Geocentric ITRS: subtract observer location (at the ITRS obstime)\n        obs_itrs_cart = observed_frame.location.get_itrs(obstime=itrs_coo.obstime).cartesian\n        topocentric = itrs_coo.cartesian - obs_itrs_cart\n    else:\n        # Already topocentric \u2013 no subtraction needed\n        topocentric = itrs_coo.cartesian\n\n    lon, lat, height = observed_frame.location.to_geodetic('WGS84')\n\n    if isinstance(observed_frame, AltAz) or (observed_frame.pressure > 0.0):\n        crepr = topocentric.transform(itrs_to_altaz_mat(lon, lat))\n        if observed_frame.pressure > 0.0:\n            crepr = add_refraction(crepr, observed_frame)\n            if isinstance(observed_frame, HADec):\n                crepr = crepr.transform(altaz_to_hadec_mat(lat))\n    else:\n        crepr = topocentric.transform(itrs_to_hadec_mat(lon))\n    return observed_frame.realize_frame(crepr)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "def observed_to_itrs(observed_coo, itrs_frame):",
+   "replace": "def observed_to_itrs(observed_coo, itrs_frame):\n    lon, lat, height = observed_coo.location.to_geodetic('WGS84')\n\n    if isinstance(observed_coo, AltAz) or (observed_coo.pressure > 0.0):\n        crepr = observed_coo.cartesian\n        if observed_coo.pressure > 0.0:\n            if isinstance(observed_coo, HADec):\n                crepr = crepr.transform(matrix_transpose(altaz_to_hadec_mat(lat)))\n            crepr = remove_refraction(crepr, observed_coo)\n        # Rotate from observed frame back to topocentric ITRS\n        topocentric = crepr.transform(matrix_transpose(itrs_to_altaz_mat(lon, lat)))\n    else:\n        topocentric = observed_coo.cartesian.transform(matrix_transpose(itrs_to_hadec_mat(lon)))\n\n    # If the target ITRS frame is geocentric, add the observer\u2019s geocentric ITRS position.\n    if itrs_frame.location != observed_coo.location:\n        obs_itrs_cart = observed_coo.location.get_itrs(obstime=observed_coo.obstime).cartesian\n        geocentric = topocentric + obs_itrs_cart\n    else:\n        geocentric = topocentric\n\n    itrs_at_obs_time = ITRS(geocentric, obstime=observed_coo.obstime,\n                            location=observed_coo.location)\n    # This final transform may be a no-op if the obstimes and locations are the same.\n    # Otherwise, this transform will go through the CIRS and alter stellar aberration.\n    return itrs_at_obs_time.transform_to(itrs_frame)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py",
+   "search": "def cirs_to_itrs(cirs_coo, itrs_frame):",
+   "replace": "def cirs_to_itrs(cirs_coo, itrs_frame):\n    # first get us to CIRS at the target obstime and location (no\u2011op if same)\n    cirs_coo2 = cirs_coo.transform_to(CIRS(obstime=itrs_frame.obstime,\n                                           location=itrs_frame.location))\n\n    # now get the pmatrix\n    pmat = cirs_to_itrs_mat(itrs_frame.obstime)\n    newrepr = cirs_coo.cartesian.transform(matrix_transpose(pmat))\n\n    # If the target ITRS frame is geocentric, subtract the observer\u2019s geocentric ITRS position.\n    if itrs_frame.location != EARTH_CENTER:\n        obs_itrs_cart = itrs_frame.location.get_itrs(obstime=cirs_coo.obstime).cartesian\n        topocentric = newrepr - obs_itrs_cart\n    else:\n        topocentric = newrepr\n\n    return ITRS(topocentric, obstime=itrs_frame.obstime,\n                location=itrs_frame.location)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py",
+   "search": "def itrs_to_cirs(itrs_coo, cirs_frame):",
+   "replace": "def itrs_to_cirs(itrs_coo, cirs_frame):\n    # compute the pmatrix, and then multiply by its transpose\n    pmat = tete_to_itrs_mat(itrs_coo.obstime)\n    newrepr = itrs_coo.cartesian.transform(matrix_transpose(pmat))\n\n    # If the ITRS frame is topocentric, add the observer\u2019s geocentric ITRS position\n    # to obtain a geocentric CIRS representation.\n    if itrs_coo.location != EARTH_CENTER:\n        obs_itrs_cart = itrs_coo.location.get_itrs(obstime=itrs_coo.obstime).cartesian\n        geocentric = newrepr + obs_itrs_cart\n    else:\n        geocentric = newrepr\n\n    cirs = CIRS(geocentric, obstime=itrs_coo.obstime, location=itrs_coo.location)\n    # now do any needed offsets (no-op if same obstime and location)\n    return cirs.transform_to(cirs_frame)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "itrs_frame = ITRS(location=loc)",
+   "replace": "itrs_frame = ITRS()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "itrs_frame = ITRS(location=loc)",
+   "replace": "itrs_frame = ITRS()"
+  }
+ ],
+ "status": "generated"
+}

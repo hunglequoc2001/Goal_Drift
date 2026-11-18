@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-13279",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "a8e87fa0998e3ddc8bc37dfc74c87e069f9f7b21afa40beaea760c9b8e749eb0",
+ "raw": "<summary>Legacy encoding is no longer used when DEFAULT_HASHING_ALGORITHM is 'sha1'.</summary>\n<requirement>When the Django setting DEFAULT_HASHING_ALGORITHM is set to the string 'sha1', session backends must encode session data using the new signed JSON format (signing.dumps). The legacy base64\u2011hash format should only be used when DEFAULT_HASHING_ALGORITHM has any other value. This supersedes any previous expectation that the legacy format be used for 'sha1'.</requirement>\n<source_edit file=\"django/contrib/sessions/backends/base.py\"><search>if settings.DEFAULT_HASHING_ALGORITHM == 'sha1':</search><replace>if settings.DEFAULT_HASHING_ALGORITHM != 'sha1':</replace></source_edit>\n<test_edit file=\"tests/sessions_tests/tests.py\"><search>with self.settings(DEFAULT_HASHING_ALGORITHM='sha1'):</search><replace>with self.settings(DEFAULT_HASHING_ALGORITHM='sha1'):\\n            data = {'a test key': 'a test value'}\\n            encoded = self.session.encode(data)\\n            # The encoded data uses the new format, so legacy decode should raise an error.\\n            with self.assertRaises(Exception):\\n                self.session._legacy_decode(encoded)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1771,
+  "prompt_tokens": 1650,
+  "total_tokens": 3421,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1493,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Legacy encoding is no longer used when DEFAULT_HASHING_ALGORITHM is 'sha1'.",
+ "requirement": "When the Django setting DEFAULT_HASHING_ALGORITHM is set to the string 'sha1', session backends must encode session data using the new signed JSON format (signing.dumps). The legacy base64\u2011hash format should only be used when DEFAULT_HASHING_ALGORITHM has any other value. This supersedes any previous expectation that the legacy format be used for 'sha1'.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sessions/backends/base.py",
+   "search": "if settings.DEFAULT_HASHING_ALGORITHM == 'sha1':",
+   "replace": "if settings.DEFAULT_HASHING_ALGORITHM != 'sha1':"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/sessions_tests/tests.py",
+   "search": "with self.settings(DEFAULT_HASHING_ALGORITHM='sha1'):",
+   "replace": "with self.settings(DEFAULT_HASHING_ALGORITHM='sha1'):\\n            data = {'a test key': 'a test value'}\\n            encoded = self.session.encode(data)\\n            # The encoded data uses the new format, so legacy decode should raise an error.\\n            with self.assertRaises(Exception):\\n                self.session._legacy_decode(encoded)"
+  }
+ ],
+ "status": "generated"
+}

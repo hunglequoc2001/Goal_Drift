@@ -1,0 +1,31 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-13135",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 23735,
+ "raw": "<summary>kmeans strategy must no longer sort cluster centers; unsorted edges should raise an error.</summary>\n<requirement>For the `KBinsDiscretizer` when `strategy='kmeans'`, the implementation must **not** sort the cluster centers returned by KMeans. The centers should be used in the order produced by the algorithm, and if this results in non\u2011monotonic bin edges the existing `np.digitize` call will raise a `ValueError`. This requirement supersedes any previous expectation that the centers be sorted.</requirement>\n<source_edit file=\"sklearn/preprocessing/_discretization.py\"><search>                # Must sort, centers may be unsorted even with sorted init\n                centers.sort()</search><replace>                # Do not sort centers; keep original order</replace></source_edit>\n<test_edit file=\"sklearn/preprocessing/tests/test_discretization.py\"><search>    # with 5 bins\n    est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n    Xt = est.fit_transform(X)\n    assert_array_equal(expected_5bins, Xt.ravel())</search><replace>    # with 5 bins\n    est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n    if strategy == 'kmeans':\n        with pytest.raises(ValueError):\n            est.fit_transform(X)\n    else:\n        Xt = est.fit_transform(X)\n        assert_array_equal(expected_5bins, Xt.ravel())</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "kmeans strategy must no longer sort cluster centers; unsorted edges should raise an error.",
+ "requirement": "For the `KBinsDiscretizer` when `strategy='kmeans'`, the implementation must **not** sort the cluster centers returned by KMeans. The centers should be used in the order produced by the algorithm, and if this results in non\u2011monotonic bin edges the existing `np.digitize` call will raise a `ValueError`. This requirement supersedes any previous expectation that the centers be sorted.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/preprocessing/_discretization.py",
+   "search": "                # Must sort, centers may be unsorted even with sorted init\n                centers.sort()",
+   "replace": "                # Do not sort centers; keep original order"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/preprocessing/tests/test_discretization.py",
+   "search": "    # with 5 bins\n    est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n    Xt = est.fit_transform(X)\n    assert_array_equal(expected_5bins, Xt.ravel())",
+   "replace": "    # with 5 bins\n    est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n    if strategy == 'kmeans':\n        with pytest.raises(ValueError):\n            est.fit_transform(X)\n    else:\n        Xt = est.fit_transform(X)\n        assert_array_equal(expected_5bins, Xt.ravel())"
+  }
+ ]
+}

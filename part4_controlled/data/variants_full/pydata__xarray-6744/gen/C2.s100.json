@@ -1,0 +1,37 @@
+{
+ "instance_id": "pydata__xarray-6744",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 18301,
+ "raw": "<summary>Manual iteration over a DataArrayRolling object must always produce left\u2011aligned windows, ignoring the ``center`` argument.</summary>\n<requirement>When manually iterating over a DataArrayRolling object, the iterator must always generate windows aligned to the start of the rolling window (i.e., left\u2011aligned), regardless of the value of the ``center`` kwarg. This behavior supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"xarray/core/rolling.py\"><search>offset = (window0 + 1) // 2 if self.center[0] else 1</search><replace>stops = np.arange(1, len(self.window_labels) + 1)\nstarts = stops - window0\nstarts[:window0] = 0</replace></source_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>rolling_obj_mean = rolling_obj.mean()</search><replace>reference_mean = da.rolling(time=size, center=False).mean()</replace></test_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>actual = rolling_obj_mean.isel(time=i)</search><replace>actual = reference_mean.isel(time=i)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Manual iteration over a DataArrayRolling object must always produce left\u2011aligned windows, ignoring the ``center`` argument.",
+ "requirement": "When manually iterating over a DataArrayRolling object, the iterator must always generate windows aligned to the start of the rolling window (i.e., left\u2011aligned), regardless of the value of the ``center`` kwarg. This behavior supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/rolling.py",
+   "search": "offset = (window0 + 1) // 2 if self.center[0] else 1",
+   "replace": "stops = np.arange(1, len(self.window_labels) + 1)\nstarts = stops - window0\nstarts[:window0] = 0"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "rolling_obj_mean = rolling_obj.mean()",
+   "replace": "reference_mean = da.rolling(time=size, center=False).mean()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "actual = rolling_obj_mean.isel(time=i)",
+   "replace": "actual = reference_mean.isel(time=i)"
+  }
+ ]
+}

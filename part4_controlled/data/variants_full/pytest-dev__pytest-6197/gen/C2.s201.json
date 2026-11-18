@@ -1,0 +1,31 @@
+{
+ "instance_id": "pytest-dev__pytest-6197",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 101,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 26810,
+ "raw": "<summary>src directory is added to sys.path only when it is a package</summary>\n<requirement>During test collection pytest must prepend the top\u2011level \u201csrc\u201d directory to\u202fsys.path **only if** that directory exists in the project root **and** contains an ``__init__.py`` file, making it a package. If \u201csrc\u201d exists without an ``__init__.py`` it must **not** be added to the import path. This supersedes any earlier expectation that the presence of a \u201csrc\u201d directory is ignored entirely.</requirement>\n\n<source_edit file=\"src/_pytest/python.py\"><search>if init_module.check(file=1) and path_matches_patterns(\n            init_module, self.config.getini(\"python_files\")\n        ):</search><replace>        # Add top\u2011level \u201csrc\u201d to sys.path only when it is a package.\n        src_dir = self.session.fspath.join(\"src\")\n        if src_dir.isdir() and src_dir.join(\"__init__.py\").check(file=1):\n            src_path = str(src_dir)\n            if src_path not in sys.path:\n                sys.path.insert(0, src_path)\n\n        if init_module.check(file=1) and path_matches_patterns(\n            init_module, self.config.getini(\"python_files\")\n        ):</replace></source_edit>\n\n<test_edit file=\"testing/test_collection.py\"><search>def test_does_not_put_src_on_path(testdir):\n    # `src` is not on sys.path so it should not be importable\n    testdir.tmpdir.join(\"src/nope/__init__.py\").ensure()\n    testdir.makepyfile(\n        \"import pytest\\n\"\n        \"def test():\\n\"\n        \"    with pytest.raises(ImportError):\\n\"\n        \"        import nope\\n\"\n    )\n    result = testdir.runpytest()\n    assert result.ret == ExitCode.OK</search><replace>def test_src_on_path_if_package(testdir):\n    # 1. When \u201csrc\u201d exists without an ``__init__.py`` it must not be on sys.path.\n    testdir.tmpdir.join(\"src/nope/__init__.py\").ensure()\n    testdir.makepyfile(\n        \"import pytest\\n\"\n        \"def test_no_src_import():\\n\"\n        \"    with pytest.raises(ImportError):\\n\"\n        \"        import nope\\n\"\n    )\n    result = testdir.runpytest()\n    assert result.ret == ExitCode.OK\n\n    # 2. When \u201csrc\u201d is a package (contains ``__init__.py``) it must be added to sys.path.\n    testdir.tmpdir.join(\"src/__init__.py\").write(\"\")\n    testdir.tmpdir.join(\"src/mod.py\").write(\"def answer(): return 42\")\n    testdir.makepyfile(\n        \"def test_src_import():\\n\"\n        \"    import src.mod\\n\"\n        \"    assert src.mod.answer() == 42\\n\"\n    )\n    result2 = testdir.runpytest()\n    assert result2.ret == ExitCode.OK</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "src directory is added to sys.path only when it is a package",
+ "requirement": "During test collection pytest must prepend the top\u2011level \u201csrc\u201d directory to\u202fsys.path **only if** that directory exists in the project root **and** contains an ``__init__.py`` file, making it a package. If \u201csrc\u201d exists without an ``__init__.py`` it must **not** be added to the import path. This supersedes any earlier expectation that the presence of a \u201csrc\u201d directory is ignored entirely.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/python.py",
+   "search": "if init_module.check(file=1) and path_matches_patterns(\n            init_module, self.config.getini(\"python_files\")\n        ):",
+   "replace": "        # Add top\u2011level \u201csrc\u201d to sys.path only when it is a package.\n        src_dir = self.session.fspath.join(\"src\")\n        if src_dir.isdir() and src_dir.join(\"__init__.py\").check(file=1):\n            src_path = str(src_dir)\n            if src_path not in sys.path:\n                sys.path.insert(0, src_path)\n\n        if init_module.check(file=1) and path_matches_patterns(\n            init_module, self.config.getini(\"python_files\")\n        ):"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_collection.py",
+   "search": "def test_does_not_put_src_on_path(testdir):\n    # `src` is not on sys.path so it should not be importable\n    testdir.tmpdir.join(\"src/nope/__init__.py\").ensure()\n    testdir.makepyfile(\n        \"import pytest\\n\"\n        \"def test():\\n\"\n        \"    with pytest.raises(ImportError):\\n\"\n        \"        import nope\\n\"\n    )\n    result = testdir.runpytest()\n    assert result.ret == ExitCode.OK",
+   "replace": "def test_src_on_path_if_package(testdir):\n    # 1. When \u201csrc\u201d exists without an ``__init__.py`` it must not be on sys.path.\n    testdir.tmpdir.join(\"src/nope/__init__.py\").ensure()\n    testdir.makepyfile(\n        \"import pytest\\n\"\n        \"def test_no_src_import():\\n\"\n        \"    with pytest.raises(ImportError):\\n\"\n        \"        import nope\\n\"\n    )\n    result = testdir.runpytest()\n    assert result.ret == ExitCode.OK\n\n    # 2. When \u201csrc\u201d is a package (contains ``__init__.py``) it must be added to sys.path.\n    testdir.tmpdir.join(\"src/__init__.py\").write(\"\")\n    testdir.tmpdir.join(\"src/mod.py\").write(\"def answer(): return 42\")\n    testdir.makepyfile(\n        \"def test_src_import():\\n\"\n        \"    import src.mod\\n\"\n        \"    assert src.mod.answer() == 42\\n\"\n    )\n    result2 = testdir.runpytest()\n    assert result2.ret == ExitCode.OK"
+  }
+ ]
+}

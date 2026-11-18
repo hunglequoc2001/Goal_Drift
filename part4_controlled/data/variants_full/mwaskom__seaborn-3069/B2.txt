@@ -1,0 +1,15 @@
+The drawing of a nominal scale should follow the same rules that apply to categorical scales.
+
+In seaborn’s categorical plots the axis exhibits three distinct behaviours:
+
+- **1** – the limits are extended to ±0.5 beyond the first and last tick marks, bypassing the usual margin logic.  
+- **2** – a grid is omitted, even when the active style would normally display one.  
+- **3** – if the axis is the y‑axis, its direction is automatically inverted.
+
+Consequently, it makes sense for **`so.Nominal`** scales (including inferred ones) to adopt the same handling. Some implementation considerations:
+
+- **1** – this is more complicated than it sounds; I once opened an issue on matplotlib (or raised it on their Gitter). The suggested workaround is to add an invisible artist with sticky edges and set its margin to **0**. It feels like a hack. I have also experimented with configuring the sticky edges **_on** on the spine **artist_** at some point.
+
+- **2** – the change should be relatively straightforward to implement in **`Plotter._finalize_figure`**. Open questions include whether it should always be applied, how to respect the current theme when a user explicitly forces a grid, and whether the grid setting belongs inside the scale object itself.
+
+- **3** – the feature appears feasible to add, though I am unsure which component would be the most appropriate location for the code.

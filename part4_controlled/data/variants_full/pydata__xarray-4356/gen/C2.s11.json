@@ -1,0 +1,36 @@
+{
+ "instance_id": "pydata__xarray-4356",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "e5c326cb3c04a5e1c318eece0aed8d4b5b1d3978b00d05e7f3e99a98d1e4b259",
+ "raw": "<summary>Apply\u202fmin_count\u202findependently to each reduced dimension instead of using the total count across all dimensions.</summary>\n<requirement>When `min_count` is used with a reduction over multiple dimensions, the count check must be applied independently to each dimension. The result should be set to null wherever any of the reduced dimensions contains fewer than `min_count` valid (non\u2011NaN) elements. This behavior supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"xarray/core/nanops.py\"><search>if axis is not None and getattr(result, \"ndim\", False):</search><replace>if axis is not None and getattr(result, \"ndim\", False):\n        # Support min_count for reductions over one or many axes.\n        # If ``axis`` is an iterable, apply the check per\u2011axis and combine\n        # the masks so that the result is null wherever *any* axis fails\n        # the min_count requirement.\n        if hasattr(axis, \"__len__\"):\n            # multiple axes\n            null_mask = None\n            for ax in axis:\n                cur_null = (mask.shape[ax] - mask.sum(ax) - min_count) < 0\n                null_mask = cur_null if null_mask is None else np.logical_or(null_mask, cur_null)\n        else:\n            # single axis\n            null_mask = (mask.shape[axis] - mask.sum(axis) - min_count) < 0\n        if np.any(null_mask):\n            dtype, fill_value = dtypes.maybe_promote(result.dtype)\n            result = result.astype(dtype)</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1962,
+  "prompt_tokens": 1729,
+  "total_tokens": 3691,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1611,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Apply\u202fmin_count\u202findependently to each reduced dimension instead of using the total count across all dimensions.",
+ "requirement": "When `min_count` is used with a reduction over multiple dimensions, the count check must be applied independently to each dimension. The result should be set to null wherever any of the reduced dimensions contains fewer than `min_count` valid (non\u2011NaN) elements. This behavior supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/nanops.py",
+   "search": "if axis is not None and getattr(result, \"ndim\", False):",
+   "replace": "if axis is not None and getattr(result, \"ndim\", False):\n        # Support min_count for reductions over one or many axes.\n        # If ``axis`` is an iterable, apply the check per\u2011axis and combine\n        # the masks so that the result is null wherever *any* axis fails\n        # the min_count requirement.\n        if hasattr(axis, \"__len__\"):\n            # multiple axes\n            null_mask = None\n            for ax in axis:\n                cur_null = (mask.shape[ax] - mask.sum(ax) - min_count) < 0\n                null_mask = cur_null if null_mask is None else np.logical_or(null_mask, cur_null)\n        else:\n            # single axis\n            null_mask = (mask.shape[axis] - mask.sum(axis) - min_count) < 0\n        if np.any(null_mask):\n            dtype, fill_value = dtypes.maybe_promote(result.dtype)\n            result = result.astype(dtype)"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

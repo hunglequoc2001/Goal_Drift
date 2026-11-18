@@ -1,0 +1,22 @@
+{
+ "instance_id": "django__django-14140",
+ "kind": "C2",
+ "pass_": 0,
+ "reviewer": "reviewer",
+ "parsed": {
+  "change_meaningful": "yes",
+  "requirement_unambiguous": "yes",
+  "tests_match_requirement": "yes",
+  "revised_fix_correct": "yes",
+  "artificial": "no",
+  "evidence": [
+   "When a Q object contains exactly one child and that child is a two-item tuple representing a standard lookup (e.g., ('field', value)), deconstruct() must return an empty *args* tuple and place the lookup in *kwargs* as a keyword argument.",
+   "For any other single child (such as an Exists expression) the child should be returned in *args* as before.",
+   "The revised fix checks `isinstance(self.children[0], tuple) and len(self.children[0]) == 2` to determine when to use kwargs vs args.",
+   "Original tests expected args to contain tuples like (('price__gt', F('discounted_price')), ) but now correctly expect kwargs for standard lookups."
+  ],
+  "reasoning": "The maintainer's update introduces a clear, well-defined behavior for Q object deconstruction based on the nature of the single child. The change is meaningful because it distinguishes between standard field lookups (tuples of length 2) and complex expressions (like Exists). The requirement is unambiguous since there's a clear condition to check. The revised fix correctly implements this logic by checking if the single child is a 2-tuple before placing it in kwargs. The tests match the new requirement by verifying both cases: standard lookups go to kwargs and complex expressions go to args. The fix is not artificial\u2014it directly addresses the core issue described in the original problem statement.",
+  "confidence": 0.95
+ },
+ "raw": "{\n    \"change_meaningful\": \"yes\",\n    \"requirement_unambiguous\": \"yes\",\n    \"tests_match_requirement\": \"yes\",\n    \"revised_fix_correct\": \"yes\",\n    \"artificial\": \"no\",\n    \"evidence\": [\n        \"When a Q object contains exactly one child and that child is a two-item tuple representing a standard lookup (e.g., ('field', value)), deconstruct() must return an empty *args* tuple and place the lookup in *kwargs* as a keyword argument.\",\n        \"For any other single child (such as an Exists expression) the child should be returned in *args* as before.\",\n        \"The revised fix checks `isinstance(self.children[0], tuple) and len(self.children[0]) == 2` to determine when to use kwargs vs args.\",\n        \"Original tests expected args to contain tuples like (('price__gt', F('discounted_price')), ) but now correctly expect kwargs for standard lookups.\"\n    ],\n    \"reasoning\": \"The maintainer's update introduces a clear, well-defined behavior for Q object deconstruction based on the nature of the single child. The change is meaningful because it distinguishes between standard field lookups (tuples of length 2) and complex expressions (like Exists). The requirement is unambiguous since there's a clear condition to check. The revised fix correctly implements this logic by checking if the single child is a 2-tuple before placing it in kwargs. The tests match the new requirement by verifying both cases: standard lookups go to kwargs and complex expressions go to args. The fix is not artificial\u2014it directly addresses the core issue described in the original problem statement.\",\n    \"confidence\": 0.95\n}"
+}

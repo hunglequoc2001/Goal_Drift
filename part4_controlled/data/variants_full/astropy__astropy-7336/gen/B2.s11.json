@@ -1,0 +1,41 @@
+{
+ "instance_id": "astropy__astropy-7336",
+ "kind": "B2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "masked": "\u27e6P1\u27e7 decorator fails for constructors with type hinted return value -> None\n### Summary\nI am using the \u27e6P2\u27e7 decorator with typing hints for constructors, however when I add the correct return value for the constructor (\u27e6P3\u27e7) then I get an exception, because \u27e6P4\u27e7 has no attribute \u27e6P5\u27e7.\n\n### Reproducer\nThe issue can be reproduced with the following file:\n\u27e6P6\u27e7\nwhich results in the following error:\n\u27e6P7\u27e7\n\nThis has been tested on Fedora \u27e6P8\u27e7 with python \u27e6P9\u27e7, astropy \u27e6P10\u27e7 and numpy \u27e6P11\u27e7 all from Fedora's repository.\n\n### Workaround\nThe issue can be circumvented by not adding the return type typing hint. Unfortunately, then a static type checker cannot infer that this function returns nothing.\n\n### Possible fix\nMaybe the decorator could explicitly check whether None is returned and then omit the unit check.\n",
+ "spans": [
+  "units.quantity_input",
+  "`units.quantity_input`",
+  "`None`",
+  "`None`",
+  "`to`",
+  "``` Python\nimport astropy.units as u\n\n\nclass PoC(object):\n\n    @u.quantity_input\n    def __init__(self, voltage: u.V) -> None:\n        pass\n\n\nif __name__ == '__main__':\n    poc = PoC(1.*u.V)\n```",
+  "```\n$ python3 poc.py\nTraceback (most recent call last):\n  File \"poc.py\", line 12, in <module>\n    poc = PoC(1.*u.V)\n  File \"/usr/lib64/python3.6/site-packages/astropy/utils/decorators.py\", line 868, in __init__\n    func = make_function_with_signature(func, name=name, **wrapped_args)\n  File \"/usr/lib64/python3.6/site-packages/astropy/units/decorators.py\", line 225, in wrapper\n    return return_.to(wrapped_signature.return_annotation)\nAttributeError: 'NoneType' object has no attribute 'to'\n```",
+  "27",
+  "3.6.3",
+  "2.0.2",
+  "1.13.3"
+ ],
+ "prompt_sha256": "0e6a8d39aecb013882ebcbeeaf49cfb56e94fd8cde4030a923917f0aef501a11",
+ "raw": "<rewrite>\n\u27e6P1\u27e7 decorator fails for constructors with type hinted return value -> None\n\n### Summary\nWhen I apply the \u27e6P2\u27e7 decorator to a constructor and annotate the constructor with its proper return type (\u27e6P3\u27e7), an exception is raised, indicating that \u27e6P4\u27e7 lacks the attribute \u27e6P5\u27e7.\n\n### Reproducer\nA minimal example that triggers the problem is contained in \u27e6P6\u27e7; executing it yields the error shown in \u27e6P7\u27e7.  \nThe behaviour has been observed on Fedora \u27e6P8\u27e7 using python \u27e6P9\u27e7 together with astropy \u27e6P10\u27e7 and numpy \u27e6P11\u27e7 sourced from the Fedora repositories.\n\n### Workaround\nA temporary mitigation is to omit the return\u2011type annotation entirely. The downside is that static type checkers lose the ability to infer that the function returns None.\n\n### Possible fix\nOne possible remedy would be for the decorator to detect a None return value and skip the unit verification step in that case.\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1074,
+  "prompt_tokens": 518,
+  "total_tokens": 1592,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 816,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "\u27e6P1\u27e7 decorator fails for constructors with type hinted return value -> None\n\n### Summary\nWhen I apply the \u27e6P2\u27e7 decorator to a constructor and annotate the constructor with its proper return type (\u27e6P3\u27e7), an exception is raised, indicating that \u27e6P4\u27e7 lacks the attribute \u27e6P5\u27e7.\n\n### Reproducer\nA minimal example that triggers the problem is contained in \u27e6P6\u27e7; executing it yields the error shown in \u27e6P7\u27e7.  \nThe behaviour has been observed on Fedora \u27e6P8\u27e7 using python \u27e6P9\u27e7 together with astropy \u27e6P10\u27e7 and numpy \u27e6P11\u27e7 sourced from the Fedora repositories.\n\n### Workaround\nA temporary mitigation is to omit the return\u2011type annotation entirely. The downside is that static type checkers lose the ability to infer that the function returns None.\n\n### Possible fix\nOne possible remedy would be for the decorator to detect a None return value and skip the unit verification step in that case.",
+ "rewrite": "units.quantity_input decorator fails for constructors with type hinted return value -> None\n\n### Summary\nWhen I apply the `units.quantity_input` decorator to a constructor and annotate the constructor with its proper return type (`None`), an exception is raised, indicating that `None` lacks the attribute `to`.\n\n### Reproducer\nA minimal example that triggers the problem is contained in ``` Python\nimport astropy.units as u\n\n\nclass PoC(object):\n\n    @u.quantity_input\n    def __init__(self, voltage: u.V) -> None:\n        pass\n\n\nif __name__ == '__main__':\n    poc = PoC(1.*u.V)\n```; executing it yields the error shown in ```\n$ python3 poc.py\nTraceback (most recent call last):\n  File \"poc.py\", line 12, in <module>\n    poc = PoC(1.*u.V)\n  File \"/usr/lib64/python3.6/site-packages/astropy/utils/decorators.py\", line 868, in __init__\n    func = make_function_with_signature(func, name=name, **wrapped_args)\n  File \"/usr/lib64/python3.6/site-packages/astropy/units/decorators.py\", line 225, in wrapper\n    return return_.to(wrapped_signature.return_annotation)\nAttributeError: 'NoneType' object has no attribute 'to'\n```.  \nThe behaviour has been observed on Fedora 27 using python 3.6.3 together with astropy 2.0.2 and numpy 1.13.3 sourced from the Fedora repositories.\n\n### Workaround\nA temporary mitigation is to omit the return\u2011type annotation entirely. The downside is that static type checkers lose the ability to infer that the function returns None.\n\n### Possible fix\nOne possible remedy would be for the decorator to detect a None return value and skip the unit verification step in that case.",
+ "status": "generated"
+}

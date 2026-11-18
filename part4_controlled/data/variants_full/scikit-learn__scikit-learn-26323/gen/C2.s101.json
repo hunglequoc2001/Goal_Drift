@@ -1,0 +1,31 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-26323",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 12,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 19732,
+ "raw": "<summary>ColumnTransformer.set_output must ignore the remainder estimator when configuring output format</summary>\n<requirement>When calling `set_output` on a `ColumnTransformer`, the estimator supplied via the `remainder` argument must never have its output format altered; it should always retain the default (NumPy array) output regardless of the `transform` parameter. This supersedes any previous expectation that the remainder's output could be set to pandas or other formats.</requirement>\n<source_edit file=\"sklearn/compose/_column_transformer.py\"><search>        if self.remainder not in {\"passthrough\", \"drop\"}:\n            _safe_set_output(self.remainder, transform=transform)</search><replace></replace></source_edit>\n<test_edit file=\"sklearn/compose/tests/test_column_transformer.py\"><search>    out = ct.fit_transform(df)\n    pd.testing.assert_frame_equal(out, df)</search><replace>    out = ct.fit_transform(df)\n    assert isinstance(out, np.ndarray)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "ColumnTransformer.set_output must ignore the remainder estimator when configuring output format",
+ "requirement": "When calling `set_output` on a `ColumnTransformer`, the estimator supplied via the `remainder` argument must never have its output format altered; it should always retain the default (NumPy array) output regardless of the `transform` parameter. This supersedes any previous expectation that the remainder's output could be set to pandas or other formats.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/compose/_column_transformer.py",
+   "search": "        if self.remainder not in {\"passthrough\", \"drop\"}:\n            _safe_set_output(self.remainder, transform=transform)",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/compose/tests/test_column_transformer.py",
+   "search": "    out = ct.fit_transform(df)\n    pd.testing.assert_frame_equal(out, df)",
+   "replace": "    out = ct.fit_transform(df)\n    assert isinstance(out, np.ndarray)"
+  }
+ ]
+}

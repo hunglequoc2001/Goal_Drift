@@ -1,0 +1,49 @@
+{
+ "instance_id": "sympy__sympy-13031",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "924160126f51ff039eba07ff47d07422edc52e0a0a5a95222ed3071ab98bfdbc",
+ "raw": "<summary>hstack/vstack must reject zero\u2011row or zero\u2011column matrices by raising ShapeError.</summary>\n<requirement>The hstack and vstack class methods must now reject any attempt to stack matrices that have zero rows (for hstack) or zero columns (for vstack). In such cases they should raise a ShapeError with an appropriate message. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sympy/matrices/sparse.py\"><search># A null matrix can always be stacked (see  #10770)\nif self.rows == 0 and self.cols != other.cols:\n    return self._new(0, other.cols, []).col_join(other)</search><replace># Stacking matrices with zero rows is not allowed\nif self.rows == 0:\n    raise ShapeError(\"cannot hstack matrices with zero rows\")</replace></source_edit>\n<source_edit file=\"sympy/matrices/sparse.py\"><search># A null matrix can always be stacked (see  #10770)\nif self.cols == 0 and self.rows != other.rows:\n    return self._new(other.rows, 0, []).row_join(other)</search><replace># Stacking matrices with zero columns is not allowed\nif self.cols == 0:\n    raise ShapeError(\"cannot vstack matrices with zero columns\")</replace></source_edit>\n<test_edit file=\"sympy/matrices/tests/test_sparse.py\"><search>    # make sure 0 x n matrices get stacked correctly\n    sparse_matrices = [SparseMatrix.zeros(0, n) for n in range(4)]\n    assert SparseMatrix.hstack(*sparse_matrices) == Matrix(0, 6, [])\n    sparse_matrices = [SparseMatrix.zeros(n, 0) for n in range(4)]\n    assert SparseMatrix.vstack(*sparse_matrices) == Matrix(6, 0, [])</search><replace>    # stacking matrices with zero rows or zero columns should raise ShapeError\n    sparse_matrices = [SparseMatrix.zeros(0, n) for n in range(4)]\n    raises(ShapeError, lambda: SparseMatrix.hstack(*sparse_matrices))\n    sparse_matrices = [SparseMatrix.zeros(n, 0) for n in range(4)]\n    raises(ShapeError, lambda: SparseMatrix.vstack(*sparse_matrices))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2211,
+  "prompt_tokens": 1354,
+  "total_tokens": 3565,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1702,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "hstack/vstack must reject zero\u2011row or zero\u2011column matrices by raising ShapeError.",
+ "requirement": "The hstack and vstack class methods must now reject any attempt to stack matrices that have zero rows (for hstack) or zero columns (for vstack). In such cases they should raise a ShapeError with an appropriate message. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/sparse.py",
+   "search": "# A null matrix can always be stacked (see  #10770)\nif self.rows == 0 and self.cols != other.cols:\n    return self._new(0, other.cols, []).col_join(other)",
+   "replace": "# Stacking matrices with zero rows is not allowed\nif self.rows == 0:\n    raise ShapeError(\"cannot hstack matrices with zero rows\")"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/sparse.py",
+   "search": "# A null matrix can always be stacked (see  #10770)\nif self.cols == 0 and self.rows != other.rows:\n    return self._new(other.rows, 0, []).row_join(other)",
+   "replace": "# Stacking matrices with zero columns is not allowed\nif self.cols == 0:\n    raise ShapeError(\"cannot vstack matrices with zero columns\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/tests/test_sparse.py",
+   "search": "    # make sure 0 x n matrices get stacked correctly\n    sparse_matrices = [SparseMatrix.zeros(0, n) for n in range(4)]\n    assert SparseMatrix.hstack(*sparse_matrices) == Matrix(0, 6, [])\n    sparse_matrices = [SparseMatrix.zeros(n, 0) for n in range(4)]\n    assert SparseMatrix.vstack(*sparse_matrices) == Matrix(6, 0, [])",
+   "replace": "    # stacking matrices with zero rows or zero columns should raise ShapeError\n    sparse_matrices = [SparseMatrix.zeros(0, n) for n in range(4)]\n    raises(ShapeError, lambda: SparseMatrix.hstack(*sparse_matrices))\n    sparse_matrices = [SparseMatrix.zeros(n, 0) for n in range(4)]\n    raises(ShapeError, lambda: SparseMatrix.vstack(*sparse_matrices))"
+  }
+ ],
+ "status": "generated"
+}

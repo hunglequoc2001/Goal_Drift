@@ -1,0 +1,37 @@
+{
+ "instance_id": "matplotlib__matplotlib-24970",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 100,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 17426,
+ "raw": "<summary>Deprecate unsigned integer inputs to colormaps and emit a warning.</summary>\n<requirement>When a colormap is called with a NumPy unsigned integer (e.g., `np.uint8`), the implementation must emit a `DeprecationWarning` with the message \u201cUnsigned integer inputs are deprecated\u201d. The input should be treated as a float for scaling purposes, preserving the existing behavior otherwise. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"lib/matplotlib/colors.py\"><search>import numpy as np</search><replace>import numpy as np\nimport warnings</replace></source_edit>\n<source_edit file=\"lib/matplotlib/colors.py\"><search>if xa.dtype.kind == \"f\":</search><replace>if xa.dtype.kind == \"u\":\n    warnings.warn(\n        \"Unsigned integer inputs are deprecated\", DeprecationWarning)\n    xa = xa.astype(float)\nif xa.dtype.kind == \"f\":</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_colors.py\"><search>assert_array_equal(cm(dtype(0)), cm(0))</search><replace>if dtype is np.uint8:\n    with pytest.warns(DeprecationWarning,\n                      match=\"Unsigned integer inputs are deprecated\"):\n        result = cm(dtype(0))\n    assert_array_equal(result, cm(0))\nelse:\n    assert_array_equal(cm(dtype(0)), cm(0))</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Deprecate unsigned integer inputs to colormaps and emit a warning.",
+ "requirement": "When a colormap is called with a NumPy unsigned integer (e.g., `np.uint8`), the implementation must emit a `DeprecationWarning` with the message \u201cUnsigned integer inputs are deprecated\u201d. The input should be treated as a float for scaling purposes, preserving the existing behavior otherwise. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/colors.py",
+   "search": "import numpy as np",
+   "replace": "import numpy as np\nimport warnings"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/colors.py",
+   "search": "if xa.dtype.kind == \"f\":",
+   "replace": "if xa.dtype.kind == \"u\":\n    warnings.warn(\n        \"Unsigned integer inputs are deprecated\", DeprecationWarning)\n    xa = xa.astype(float)\nif xa.dtype.kind == \"f\":"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_colors.py",
+   "search": "assert_array_equal(cm(dtype(0)), cm(0))",
+   "replace": "if dtype is np.uint8:\n    with pytest.warns(DeprecationWarning,\n                      match=\"Unsigned integer inputs are deprecated\"):\n        result = cm(dtype(0))\n    assert_array_equal(result, cm(0))\nelse:\n    assert_array_equal(cm(dtype(0)), cm(0))"
+  }
+ ]
+}

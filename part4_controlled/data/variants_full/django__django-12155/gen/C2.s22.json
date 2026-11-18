@@ -1,0 +1,54 @@
+{
+ "instance_id": "django__django-12155",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "a86dfe50e23fd020f235d0c068e6b634bc76ff74e7b8b1265de47e611a687f41",
+ "raw": "<summary>parse_docstring must dedent based on indentation of lines after the first line, not using inspect.cleandoc</summary>\n<requirement>When parsing a docstring, the implementation must ignore the first line when computing common indentation and must strip that indentation from the remaining lines. The function should not use\u202finspect.cleandoc; instead it should apply a custom trimming that left\u2011strips the first line and dedents subsequent lines based on the minimum indentation found among them. This supersedes any earlier description that suggested using\u202finspect.cleandoc.</requirement>\n\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>from inspect import cleandoc</search><replace>def trim_docstring(docstring):\n    \"\"\"\n    Uniformly trim leading/trailing whitespace from docstrings.\n\n    Based on https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation\n    The first line is left\u2011stripped, and the common indentation of the\n    remaining lines (if any) is removed from those lines.\n    \"\"\"\n    if not docstring or not docstring.strip():\n        return ''\n    # Convert tabs to spaces and split into lines\n    lines = docstring.expandtabs().splitlines()\n    if len(lines) == 1:\n        # Single\u2011line docstring \u2013 just strip it.\n        return lines[0].strip()\n    # Determine the minimum indentation of non\u2011blank lines after the first.\n    indent = min((len(line) - len(line.lstrip())) for line in lines[1:] if line.lstrip())\n    # Left\u2011strip the first line, dedent the rest, and strip trailing whitespace.\n    trimmed = [lines[0].lstrip()] + [line[indent:].rstrip() for line in lines[1:]]\n    return \"\\n\".join(trimmed).strip()</replace></source_edit>\n\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>docstring = cleandoc(docstring)</search><replace>docstring = trim_docstring(docstring)</replace></source_edit>\n\n<source_edit file=\"django/contrib/admindocs/views.py\"><search>from inspect import cleandoc</search><replace></replace></source_edit>\n\n<source_edit file=\"django/contrib/admindocs/views.py\"><search>utils.parse_rst(cleandoc(verbose), 'model', _('model:') + opts.model_name)</search><replace>utils.parse_rst(trim_docstring(verbose), 'model', _('model:') + opts.model_name)</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2680,
+  "prompt_tokens": 1864,
+  "total_tokens": 4544,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2133,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "parse_docstring must dedent based on indentation of lines after the first line, not using inspect.cleandoc",
+ "requirement": "When parsing a docstring, the implementation must ignore the first line when computing common indentation and must strip that indentation from the remaining lines. The function should not use\u202finspect.cleandoc; instead it should apply a custom trimming that left\u2011strips the first line and dedents subsequent lines based on the minimum indentation found among them. This supersedes any earlier description that suggested using\u202finspect.cleandoc.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "from inspect import cleandoc",
+   "replace": "def trim_docstring(docstring):\n    \"\"\"\n    Uniformly trim leading/trailing whitespace from docstrings.\n\n    Based on https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation\n    The first line is left\u2011stripped, and the common indentation of the\n    remaining lines (if any) is removed from those lines.\n    \"\"\"\n    if not docstring or not docstring.strip():\n        return ''\n    # Convert tabs to spaces and split into lines\n    lines = docstring.expandtabs().splitlines()\n    if len(lines) == 1:\n        # Single\u2011line docstring \u2013 just strip it.\n        return lines[0].strip()\n    # Determine the minimum indentation of non\u2011blank lines after the first.\n    indent = min((len(line) - len(line.lstrip())) for line in lines[1:] if line.lstrip())\n    # Left\u2011strip the first line, dedent the rest, and strip trailing whitespace.\n    trimmed = [lines[0].lstrip()] + [line[indent:].rstrip() for line in lines[1:]]\n    return \"\\n\".join(trimmed).strip()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "docstring = cleandoc(docstring)",
+   "replace": "docstring = trim_docstring(docstring)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/views.py",
+   "search": "from inspect import cleandoc",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/views.py",
+   "search": "utils.parse_rst(cleandoc(verbose), 'model', _('model:') + opts.model_name)",
+   "replace": "utils.parse_rst(trim_docstring(verbose), 'model', _('model:') + opts.model_name)"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

@@ -1,0 +1,31 @@
+{
+ "instance_id": "sympy__sympy-16450",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 17260,
+ "raw": "<summary>posify must drop finiteness assumptions when creating dummy symbols</summary>\n<requirement>When posify creates dummy symbols for symbols without an explicit positivity assumption, it should copy all of the original symbol\u2019s assumptions **except** the finiteness-related assumptions `finite` and `infinite`. These two assumptions must not be transferred to the dummy symbol. This supersedes any previous expectation that all assumptions are preserved.</requirement>\n<source_edit file=\"sympy/simplify/simplify.py\"><search>reps = {s: Dummy(s.name, positive=True, **s.assumptions0)</search><replace>reps = {s: Dummy(s.name, positive=True, **{k: v for k, v in s.assumptions0.items() if k not in ('finite', 'infinite')})</replace></source_edit>\n<test_edit file=\"sympy/simplify/tests/test_simplify.py\"><search>assert eq.assumptions0 == {'positive': True, 'zero': False, 'imaginary': False,\n     'nonpositive': False, 'commutative': True, 'hermitian': True, 'real': True, 'nonzero': True,\n     'nonnegative': True, 'negative': False, 'complex': True, 'finite': True, 'infinite': False}</search><replace>assert eq.assumptions0 == {'positive': True, 'zero': False, 'imaginary': False,\n     'nonpositive': False, 'commutative': True, 'hermitian': True, 'real': True, 'nonzero': True,\n     'nonnegative': True, 'negative': False, 'complex': True}</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "posify must drop finiteness assumptions when creating dummy symbols",
+ "requirement": "When posify creates dummy symbols for symbols without an explicit positivity assumption, it should copy all of the original symbol\u2019s assumptions **except** the finiteness-related assumptions `finite` and `infinite`. These two assumptions must not be transferred to the dummy symbol. This supersedes any previous expectation that all assumptions are preserved.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/simplify/simplify.py",
+   "search": "reps = {s: Dummy(s.name, positive=True, **s.assumptions0)",
+   "replace": "reps = {s: Dummy(s.name, positive=True, **{k: v for k, v in s.assumptions0.items() if k not in ('finite', 'infinite')})"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_simplify.py",
+   "search": "assert eq.assumptions0 == {'positive': True, 'zero': False, 'imaginary': False,\n     'nonpositive': False, 'commutative': True, 'hermitian': True, 'real': True, 'nonzero': True,\n     'nonnegative': True, 'negative': False, 'complex': True, 'finite': True, 'infinite': False}",
+   "replace": "assert eq.assumptions0 == {'positive': True, 'zero': False, 'imaginary': False,\n     'nonpositive': False, 'commutative': True, 'hermitian': True, 'real': True, 'nonzero': True,\n     'nonnegative': True, 'negative': False, 'complex': True}"
+  }
+ ]
+}

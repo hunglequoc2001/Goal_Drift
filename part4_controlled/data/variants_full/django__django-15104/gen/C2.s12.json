@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-15104",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "8d690be5d652ef290bc686408ddad0b95a66bed5daa9a267b37656c7d9e81abb",
+ "raw": "<summary>Autodetector must raise an error when a ForeignKey\u2019s deconstruction lacks the required \u201cto\u201d entry.</summary>\n<requirement>When autodetecting migrations, the system should no longer silently ignore a missing ``to`` keyword in a ForeignKey\u2019s deconstruction dictionary. Instead, it must raise a ``RuntimeError`` with the message **\u201cForeignKey 'to' attribute missing during migration autodetection\u201d**. This requirement supersedes any previous expectation that the missing key be ignored or removed.</requirement>\n<source_edit file=\"django/db/migrations/autodetector.py\"><search>deconstruction[2].pop('to', None)</search><replace>if 'to' not in deconstruction[2]:\n    raise RuntimeError(\"ForeignKey 'to' attribute missing during migration autodetection\")\ndel deconstruction[2]['to']</replace></source_edit>\n<test_edit file=\"tests/migrations/test_autodetector.py\"><search>book_hardcoded_fk_to = ModelState('testapp', 'Book', [</search><replace>book_hardcoded_fk_to = ModelState('testapp', 'Book', [\n            ('author', HardcodedForeignKey(on_delete=models.CASCADE)),\n        ])\n        with self.assertRaises(RuntimeError) as cm:\n            self.get_changes(\n                [self.author_empty],\n                [self.author_empty, book_hardcoded_fk_to],\n            )\n        self.assertIn(\"ForeignKey 'to' attribute missing\", str(cm.exception))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1569,
+  "prompt_tokens": 2156,
+  "total_tokens": 3725,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1246,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Autodetector must raise an error when a ForeignKey\u2019s deconstruction lacks the required \u201cto\u201d entry.",
+ "requirement": "When autodetecting migrations, the system should no longer silently ignore a missing ``to`` keyword in a ForeignKey\u2019s deconstruction dictionary. Instead, it must raise a ``RuntimeError`` with the message **\u201cForeignKey 'to' attribute missing during migration autodetection\u201d**. This requirement supersedes any previous expectation that the missing key be ignored or removed.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/migrations/autodetector.py",
+   "search": "deconstruction[2].pop('to', None)",
+   "replace": "if 'to' not in deconstruction[2]:\n    raise RuntimeError(\"ForeignKey 'to' attribute missing during migration autodetection\")\ndel deconstruction[2]['to']"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/migrations/test_autodetector.py",
+   "search": "book_hardcoded_fk_to = ModelState('testapp', 'Book', [",
+   "replace": "book_hardcoded_fk_to = ModelState('testapp', 'Book', [\n            ('author', HardcodedForeignKey(on_delete=models.CASCADE)),\n        ])\n        with self.assertRaises(RuntimeError) as cm:\n            self.get_changes(\n                [self.author_empty],\n                [self.author_empty, book_hardcoded_fk_to],\n            )\n        self.assertIn(\"ForeignKey 'to' attribute missing\", str(cm.exception))"
+  }
+ ],
+ "status": "generated"
+}

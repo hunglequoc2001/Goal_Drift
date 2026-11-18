@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-11087",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 12,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 38337,
+ "raw": "<summary>Deletion signals no longer affect field selection during cascade deletes.</summary>\n<requirement>When performing cascade deletions, the ORM must always defer non\u2011referenced fields by selecting only the fields required for the cascade, regardless of whether any pre_delete or post_delete signal listeners are connected to the related model. The presence of deletion signals must not cause a full field selection. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"django/db/models/deletion.py\"><search>if not (sub_objs.query.select_related or self._has_signal_listeners(related_model)):</search><replace>if not sub_objs.query.select_related:</replace></source_edit>\n<test_edit file=\"tests/delete/tests.py\"><search>self.assertIn(\n                    connection.ops.quote_name('large_field'),\n                    ctx.captured_queries[0]['sql'],\n                )</search><replace>self.assertNotIn(\n                    connection.ops.quote_name('large_field'),\n                    ctx.captured_queries[0]['sql'],\n                )</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Deletion signals no longer affect field selection during cascade deletes.",
+ "requirement": "When performing cascade deletions, the ORM must always defer non\u2011referenced fields by selecting only the fields required for the cascade, regardless of whether any pre_delete or post_delete signal listeners are connected to the related model. The presence of deletion signals must not cause a full field selection. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/deletion.py",
+   "search": "if not (sub_objs.query.select_related or self._has_signal_listeners(related_model)):",
+   "replace": "if not sub_objs.query.select_related:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/delete/tests.py",
+   "search": "self.assertIn(\n                    connection.ops.quote_name('large_field'),\n                    ctx.captured_queries[0]['sql'],\n                )",
+   "replace": "self.assertNotIn(\n                    connection.ops.quote_name('large_field'),\n                    ctx.captured_queries[0]['sql'],\n                )"
+  }
+ ]
+}

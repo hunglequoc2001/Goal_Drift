@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-16255",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "814ff6be37a0ba6a4631e9962552b0c4c07149a560d6d405e36e6ce40d942da9",
+ "raw": "<summary>Empty sitemaps with a callable\u202flastmod should fallback to the Unix epoch instead of\u202fNone.</summary>\n<requirement>When a sitemap defines a callable\u202flastmod but its\u202fitems() method returns an empty list, the sitemap\u2019s\u202fget_latest_lastmod() method must return a timezone\u2011aware datetime representing the Unix epoch (1970\u201101\u201101\u202f00:00:00\u202fUTC) rather than\u202fNone. Consequently, the index view must include a \u201cLast\u2011Modified\u201d header with that date formatted as an RFC\u202f2822 HTTP date. This requirement supersedes any earlier expectation that no header be sent for empty sitemaps.</requirement>\n<source_edit file=\"django/contrib/sitemaps/__init__.py\"><search>if callable(self.lastmod):\n            try:\n                return max([self.lastmod(item) for item in self.items()], default=None)\n            except TypeError:\n                return None</search><replace>if callable(self.lastmod):\n            # Compute lastmod values for all items.\n            lastmod_values = [self.lastmod(item) for item in self.items()]\n            if not lastmod_values:\n                # No items \u2013 fall back to the Unix epoch (UTC).\n                return datetime(1970, 1, 1, tzinfo=timezone.utc)\n            return max(lastmod_values)</replace></source_edit>\n<source_edit file=\"django/contrib/sitemaps/__init__.py\"><search>from datetime import datetime</search><replace>from datetime import datetime, timezone</replace></source_edit>\n<test_edit file=\"tests/sitemaps_tests/test_http.py\"><search>self.assertNotIn(\"Last-Modified\", index_response)</search><replace>self.assertIn(\"Last-Modified\", index_response)\n        self.assertEqual(index_response[\"Last-Modified\"], \"Thu, 01 Jan 1970 00:00:00 GMT\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1735,
+  "prompt_tokens": 1709,
+  "total_tokens": 3444,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1326,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Empty sitemaps with a callable\u202flastmod should fallback to the Unix epoch instead of\u202fNone.",
+ "requirement": "When a sitemap defines a callable\u202flastmod but its\u202fitems() method returns an empty list, the sitemap\u2019s\u202fget_latest_lastmod() method must return a timezone\u2011aware datetime representing the Unix epoch (1970\u201101\u201101\u202f00:00:00\u202fUTC) rather than\u202fNone. Consequently, the index view must include a \u201cLast\u2011Modified\u201d header with that date formatted as an RFC\u202f2822 HTTP date. This requirement supersedes any earlier expectation that no header be sent for empty sitemaps.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sitemaps/__init__.py",
+   "search": "if callable(self.lastmod):\n            try:\n                return max([self.lastmod(item) for item in self.items()], default=None)\n            except TypeError:\n                return None",
+   "replace": "if callable(self.lastmod):\n            # Compute lastmod values for all items.\n            lastmod_values = [self.lastmod(item) for item in self.items()]\n            if not lastmod_values:\n                # No items \u2013 fall back to the Unix epoch (UTC).\n                return datetime(1970, 1, 1, tzinfo=timezone.utc)\n            return max(lastmod_values)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sitemaps/__init__.py",
+   "search": "from datetime import datetime",
+   "replace": "from datetime import datetime, timezone"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/sitemaps_tests/test_http.py",
+   "search": "self.assertNotIn(\"Last-Modified\", index_response)",
+   "replace": "self.assertIn(\"Last-Modified\", index_response)\n        self.assertEqual(index_response[\"Last-Modified\"], \"Thu, 01 Jan 1970 00:00:00 GMT\")"
+  }
+ ],
+ "status": "generated"
+}

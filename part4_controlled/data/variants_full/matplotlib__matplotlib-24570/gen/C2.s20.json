@@ -1,0 +1,55 @@
+{
+ "instance_id": "matplotlib__matplotlib-24570",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "66d9c1732628a3962edc10c6110ee0895659b394d03ab75376044fc583654aa6",
+ "raw": "<summary>Disallow \u201ctop\u201d and \u201cbottom\u201d values for the\u202falign\u202fargument of packers.</summary>\n<requirement>For both\u202fHPacker\u202fand\u202fVPacker, the\u202falign\u202fparameter must be one of\u202f\u201cbaseline\u201d,\u202f\u201cleft\u201d,\u202f\u201cright\u201d,\u202for\u202f\u201ccenter\u201d. Supplying \u201ctop\u201d or \u201cbottom\u201d should raise a\u202fValueError\u202fwith an appropriate message. This supersedes any earlier expectation that \u201ctop\u201d/\u201cbottom\u201d were accepted values.</requirement>\n<source_edit file=\"lib/matplotlib/offsetbox.py\"><search>def _get_aligned_offsets(hd_list, height, align=\"baseline\"):</search><replace>def _get_aligned_offsets(hd_list, height, align=\"baseline\"):\n    # Only the canonical alignment strings are supported.\n    # \u201ctop\u201d and \u201cbottom\u201d are no longer valid and will raise an error.\n    if align not in {\"baseline\", \"left\", \"right\", \"center\"}:\n        raise ValueError(f\"Invalid align: {align}\")\n</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_offsetbox.py\"><search>from matplotlib.offsetbox import (</search><replace>from matplotlib.offsetbox import (\n    HPacker, VPacker,\n</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_offsetbox.py\"><search>import matplotlib.pyplot as plt</search><replace>import matplotlib.pyplot as plt\nimport pytest\n</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_offsetbox.py\"><search>def test_packers(align):</search><replace>def test_packers(align):\n    # \u201ctop\u201d and \u201cbottom\u201d are now invalid alignment strings and should raise.\n    if align in (\"bottom\", \"top\"):\n        with pytest.raises(ValueError):\n            HPacker(children=[r1, r2], pad=0, sep=0, align=align)\n            VPacker(children=[r1, r2], pad=0, sep=0, align=align)\n        return\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3744,
+  "prompt_tokens": 1892,
+  "total_tokens": 5636,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 3292,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow \u201ctop\u201d and \u201cbottom\u201d values for the\u202falign\u202fargument of packers.",
+ "requirement": "For both\u202fHPacker\u202fand\u202fVPacker, the\u202falign\u202fparameter must be one of\u202f\u201cbaseline\u201d,\u202f\u201cleft\u201d,\u202f\u201cright\u201d,\u202for\u202f\u201ccenter\u201d. Supplying \u201ctop\u201d or \u201cbottom\u201d should raise a\u202fValueError\u202fwith an appropriate message. This supersedes any earlier expectation that \u201ctop\u201d/\u201cbottom\u201d were accepted values.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/offsetbox.py",
+   "search": "def _get_aligned_offsets(hd_list, height, align=\"baseline\"):",
+   "replace": "def _get_aligned_offsets(hd_list, height, align=\"baseline\"):\n    # Only the canonical alignment strings are supported.\n    # \u201ctop\u201d and \u201cbottom\u201d are no longer valid and will raise an error.\n    if align not in {\"baseline\", \"left\", \"right\", \"center\"}:\n        raise ValueError(f\"Invalid align: {align}\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_offsetbox.py",
+   "search": "from matplotlib.offsetbox import (",
+   "replace": "from matplotlib.offsetbox import (\n    HPacker, VPacker,"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_offsetbox.py",
+   "search": "import matplotlib.pyplot as plt",
+   "replace": "import matplotlib.pyplot as plt\nimport pytest"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_offsetbox.py",
+   "search": "def test_packers(align):",
+   "replace": "def test_packers(align):\n    # \u201ctop\u201d and \u201cbottom\u201d are now invalid alignment strings and should raise.\n    if align in (\"bottom\", \"top\"):\n        with pytest.raises(ValueError):\n            HPacker(children=[r1, r2], pad=0, sep=0, align=align)\n            VPacker(children=[r1, r2], pad=0, sep=0, align=align)\n        return"
+  }
+ ],
+ "status": "generated"
+}

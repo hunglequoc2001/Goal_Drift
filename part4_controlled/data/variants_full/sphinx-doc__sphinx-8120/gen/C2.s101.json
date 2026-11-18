@@ -1,0 +1,37 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8120",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 26599,
+ "raw": "<summary>Custom locale directories are now only consulted after Sphinx\u2019s built\u2011in translations.</summary>\n<requirement>Custom locale directories specified via ``locale_dirs`` are now considered only after Sphinx\u2019s own locale directory. The search order for translation catalogs must be: ``None`` (the source directory), then the Sphinx package\u2019s ``locale`` directory, and finally any directories listed in ``locale_dirs``. This supersedes any earlier expectation that user\u2011provided locales override the built\u2011in ones.</requirement>\n<source_edit file=\"sphinx/application.py\"><search>            locale_dirs = [None]  # type: List[Optional[str]]\n            locale_dirs += list(repo.locale_dirs)\n            locale_dirs += [path.join(package_dir, 'locale')]</search><replace>            locale_dirs = [None, path.join(package_dir, 'locale')] + list(repo.locale_dirs)</replace></source_edit>\n<test_edit file=\"tests/test_intl.py\"><search>        assert app.translator.gettext('Quick search') == 'QUICK SEARCH'</search><replace>        assert app.translator.gettext('Quick search') != 'QUICK SEARCH'</replace></test_edit>\n<test_edit file=\"tests/test_intl.py\"><search>        assert 'QUICK SEARCH' in content</search><replace>        assert 'QUICK SEARCH' not in content</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Custom locale directories are now only consulted after Sphinx\u2019s built\u2011in translations.",
+ "requirement": "Custom locale directories specified via ``locale_dirs`` are now considered only after Sphinx\u2019s own locale directory. The search order for translation catalogs must be: ``None`` (the source directory), then the Sphinx package\u2019s ``locale`` directory, and finally any directories listed in ``locale_dirs``. This supersedes any earlier expectation that user\u2011provided locales override the built\u2011in ones.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/application.py",
+   "search": "            locale_dirs = [None]  # type: List[Optional[str]]\n            locale_dirs += list(repo.locale_dirs)\n            locale_dirs += [path.join(package_dir, 'locale')]",
+   "replace": "            locale_dirs = [None, path.join(package_dir, 'locale')] + list(repo.locale_dirs)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_intl.py",
+   "search": "        assert app.translator.gettext('Quick search') == 'QUICK SEARCH'",
+   "replace": "        assert app.translator.gettext('Quick search') != 'QUICK SEARCH'"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_intl.py",
+   "search": "        assert 'QUICK SEARCH' in content",
+   "replace": "        assert 'QUICK SEARCH' not in content"
+  }
+ ]
+}

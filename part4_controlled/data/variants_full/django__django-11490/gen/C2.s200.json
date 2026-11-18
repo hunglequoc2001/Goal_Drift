@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-11490",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 18594,
+ "raw": "<summary>Composed queries must keep the original column list for all subsequent values()/values_list() calls.</summary>\n<requirement>When a composed query (e.g., using union, intersection, or difference) is evaluated with values() or values_list(), the set of selected columns is fixed for that query. Any later call to values() or values_list() on the same composed query must return the same columns in the same order as the first call, even if a different field list is supplied. This supersedes any earlier expectation that the column list could be changed on subsequent evaluations.</requirement>\n<source_edit file=\"django/db/models/sql/compiler.py\"><search>\n                    compiler.query = compiler.query.clone()\n                    compiler.query.set_values((\n                        *self.query.extra_select,\n                        *self.query.values_select,\n                        *self.query.annotation_select,\n                    ))\n</search><replace></replace></source_edit>\n<test_edit file=\"tests/queries/test_qs_combinators.py\"><search>self.assertEqual(reserved_name, (2,))</search><replace>self.assertEqual(reserved_name, ('a', 2, 1))</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Composed queries must keep the original column list for all subsequent values()/values_list() calls.",
+ "requirement": "When a composed query (e.g., using union, intersection, or difference) is evaluated with values() or values_list(), the set of selected columns is fixed for that query. Any later call to values() or values_list() on the same composed query must return the same columns in the same order as the first call, even if a different field list is supplied. This supersedes any earlier expectation that the column list could be changed on subsequent evaluations.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/compiler.py",
+   "search": "                    compiler.query = compiler.query.clone()\n                    compiler.query.set_values((\n                        *self.query.extra_select,\n                        *self.query.values_select,\n                        *self.query.annotation_select,\n                    ))",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_qs_combinators.py",
+   "search": "self.assertEqual(reserved_name, (2,))",
+   "replace": "self.assertEqual(reserved_name, ('a', 2, 1))"
+  }
+ ]
+}

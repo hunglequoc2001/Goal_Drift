@@ -1,0 +1,67 @@
+{
+ "instance_id": "django__django-13344",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 37576,
+ "raw": "<summary>Suppress the deprecation warning for three core middle\u2011wares while keeping async detection.</summary>\n<requirement>When any of the following middleware classes \u2013\u202fSessionMiddleware, UpdateCacheMiddleware, or SecurityMiddleware \u2013\u202fis instantiated with *get_response=None*, the constructor must no longer emit a\u202fRemovedInDjango40Warning. This requirement supersedes any previous expectation that a warning is always raised for a\u202fNone\u202f*get_response* argument. All other middleware classes continue to raise the warning as before.</requirement>\n\n<source_edit file=\"django/contrib/sessions/middleware.py\"><search>from django.utils.deprecation import MiddlewareMixin</search><replace>from django.utils.deprecation import MiddlewareMixin\nimport warnings\nfrom django.utils.deprecation import RemovedInDjango40Warning</replace></source_edit>\n\n<source_edit file=\"django/contrib/sessions/middleware.py\"><search>super().__init__(get_response)</search><replace>with warnings.catch_warnings():\n    warnings.filterwarnings(\"ignore\", category=RemovedInDjango40Warning)\n    super().__init__(get_response)</replace></source_edit>\n\n<source_edit file=\"django/middleware/cache.py\"><search>from django.utils.deprecation import MiddlewareMixin</search><replace>from django.utils.deprecation import MiddlewareMixin\nimport warnings\nfrom django.utils.deprecation import RemovedInDjango40Warning</replace></source_edit>\n\n<source_edit file=\"django/middleware/cache.py\"><search>super().__init__(get_response)</search><replace>with warnings.catch_warnings():\n    warnings.filterwarnings(\"ignore\", category=RemovedInDjango40Warning)\n    super().__init__(get_response)</replace></source_edit>\n\n<source_edit file=\"django/middleware/security.py\"><search>from django.utils.deprecation import MiddlewareMixin</search><replace>from django.utils.deprecation import MiddlewareMixin\nimport warnings\nfrom django.utils.deprecation import RemovedInDjango40Warning</replace></source_edit>\n\n<source_edit file=\"django/middleware/security.py\"><search>super().__init__(get_response)</search><replace>with warnings.catch_warnings():\n    warnings.filterwarnings(\"ignore\", category=RemovedInDjango40Warning)\n    super().__init__(get_response)</replace></source_edit>\n\n<test_edit file=\"tests/deprecation/test_middleware_mixin.py\"><search>def test_deprecation(self):</search><replace>def test_deprecation(self):\n        # The three core middle\u2011wares no longer raise the deprecation warning.\n        no_warning = {SessionMiddleware, UpdateCacheMiddleware, SecurityMiddleware}\n        for middleware in self.middlewares:\n            with self.subTest(middleware=middleware):\n                if middleware in no_warning:\n                    # Should not raise a warning.\n                    middleware()\n                else:\n                    with self.assertRaisesMessage(RemovedInDjango40Warning, self.msg):\n                        middleware()</replace></test_edit>\n\n<test_edit file=\"tests/deprecation/test_middleware_mixin.py\"><search>def test_passing_explicit_none(self):</search><replace>def test_passing_explicit_none(self):\n        no_warning = {SessionMiddleware, UpdateCacheMiddleware, SecurityMiddleware}\n        for middleware in self.middlewares:\n            with self.subTest(middleware=middleware):\n                if middleware in no_warning:\n                    # Passing explicit None should not raise a warning for these.\n                    middleware(None)\n                else:\n                    with self.assertRaisesMessage(RemovedInDjango40Warning, self.msg):\n                        middleware(None)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Suppress the deprecation warning for three core middle\u2011wares while keeping async detection.",
+ "requirement": "When any of the following middleware classes \u2013\u202fSessionMiddleware, UpdateCacheMiddleware, or SecurityMiddleware \u2013\u202fis instantiated with *get_response=None*, the constructor must no longer emit a\u202fRemovedInDjango40Warning. This requirement supersedes any previous expectation that a warning is always raised for a\u202fNone\u202f*get_response* argument. All other middleware classes continue to raise the warning as before.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sessions/middleware.py",
+   "search": "from django.utils.deprecation import MiddlewareMixin",
+   "replace": "from django.utils.deprecation import MiddlewareMixin\nimport warnings\nfrom django.utils.deprecation import RemovedInDjango40Warning"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sessions/middleware.py",
+   "search": "super().__init__(get_response)",
+   "replace": "with warnings.catch_warnings():\n    warnings.filterwarnings(\"ignore\", category=RemovedInDjango40Warning)\n    super().__init__(get_response)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "from django.utils.deprecation import MiddlewareMixin",
+   "replace": "from django.utils.deprecation import MiddlewareMixin\nimport warnings\nfrom django.utils.deprecation import RemovedInDjango40Warning"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "super().__init__(get_response)",
+   "replace": "with warnings.catch_warnings():\n    warnings.filterwarnings(\"ignore\", category=RemovedInDjango40Warning)\n    super().__init__(get_response)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/security.py",
+   "search": "from django.utils.deprecation import MiddlewareMixin",
+   "replace": "from django.utils.deprecation import MiddlewareMixin\nimport warnings\nfrom django.utils.deprecation import RemovedInDjango40Warning"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/security.py",
+   "search": "super().__init__(get_response)",
+   "replace": "with warnings.catch_warnings():\n    warnings.filterwarnings(\"ignore\", category=RemovedInDjango40Warning)\n    super().__init__(get_response)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/deprecation/test_middleware_mixin.py",
+   "search": "def test_deprecation(self):",
+   "replace": "def test_deprecation(self):\n        # The three core middle\u2011wares no longer raise the deprecation warning.\n        no_warning = {SessionMiddleware, UpdateCacheMiddleware, SecurityMiddleware}\n        for middleware in self.middlewares:\n            with self.subTest(middleware=middleware):\n                if middleware in no_warning:\n                    # Should not raise a warning.\n                    middleware()\n                else:\n                    with self.assertRaisesMessage(RemovedInDjango40Warning, self.msg):\n                        middleware()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/deprecation/test_middleware_mixin.py",
+   "search": "def test_passing_explicit_none(self):",
+   "replace": "def test_passing_explicit_none(self):\n        no_warning = {SessionMiddleware, UpdateCacheMiddleware, SecurityMiddleware}\n        for middleware in self.middlewares:\n            with self.subTest(middleware=middleware):\n                if middleware in no_warning:\n                    # Passing explicit None should not raise a warning for these.\n                    middleware(None)\n                else:\n                    with self.assertRaisesMessage(RemovedInDjango40Warning, self.msg):\n                        middleware(None)"
+  }
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "instance_id": "psf__requests-2317",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "f606f25ed82ce5611693f95494bc560f12d4d33ccd9aff138a5bd6ea852a171a",
+ "raw": "<summary>Disallow non\u2011string HTTP method values and raise a clear TypeError.</summary>\n<requirement>Requests must reject any HTTP method argument that is not a native Python string. If the caller provides a bytes object (or any non\u2011string type) as the method, the library should raise a TypeError with the message \u201cHTTP method must be a string, not <type>\u201d. This requirement supersedes any previous expectation that binary strings be accepted as method values.</requirement>\n<source_edit file=\"requests/sessions.py\"><search>method = to_native_string(method)</search><replace>if not isinstance(method, str):\n    raise TypeError(\"HTTP method must be a string, not %s\" % type(method).__name__)\nmethod = to_native_string(method)</replace></source_edit>\n<test_edit file=\"test_requests.py\"><search>def test_encoded_methods(self):\n        \"\"\"See: https://github.com/kennethreitz/requests/issues/2316\"\"\"\n        r = requests.request(b'GET', httpbin('get'))\n        assert r.ok</search><replace>def test_encoded_methods(self):\n        \"\"\"See: https://github.com/kennethreitz/requests/issues/2316\"\"\"\n        with self.assertRaises(TypeError):\n            requests.request(b'GET', httpbin('get'))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1225,
+  "prompt_tokens": 1202,
+  "total_tokens": 2427,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 939,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow non\u2011string HTTP method values and raise a clear TypeError.",
+ "requirement": "Requests must reject any HTTP method argument that is not a native Python string. If the caller provides a bytes object (or any non\u2011string type) as the method, the library should raise a TypeError with the message \u201cHTTP method must be a string, not <type>\u201d. This requirement supersedes any previous expectation that binary strings be accepted as method values.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "requests/sessions.py",
+   "search": "method = to_native_string(method)",
+   "replace": "if not isinstance(method, str):\n    raise TypeError(\"HTTP method must be a string, not %s\" % type(method).__name__)\nmethod = to_native_string(method)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "test_requests.py",
+   "search": "def test_encoded_methods(self):\n        \"\"\"See: https://github.com/kennethreitz/requests/issues/2316\"\"\"\n        r = requests.request(b'GET', httpbin('get'))\n        assert r.ok",
+   "replace": "def test_encoded_methods(self):\n        \"\"\"See: https://github.com/kennethreitz/requests/issues/2316\"\"\"\n        with self.assertRaises(TypeError):\n            requests.request(b'GET', httpbin('get'))"
+  }
+ ],
+ "status": "generated"
+}

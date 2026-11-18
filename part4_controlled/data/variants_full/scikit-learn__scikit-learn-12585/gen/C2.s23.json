@@ -1,0 +1,43 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-12585",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "ce78aeb8b938c11111f09ebad80fc081b873007cd8763823498c9cd4737fc970",
+ "raw": "<summary>clone must reject estimator class objects as parameters</summary>\n<requirement>When cloning an estimator, any parameter that is an estimator class (i.e., a type object) is considered invalid. The clone function should raise a\u202fTypeError with the message \u201cEstimator parameters must be instances, not classes\u201d in this case. This requirement supersedes any previous expectation that such parameters would be cloned successfully.</requirement>\n<source_edit file=\"sklearn/base.py\"><search>elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):</search><replace>    if isinstance(estimator, type):\n        raise TypeError(\"Estimator parameters must be instances, not classes\")\n    elif not hasattr(estimator, 'get_params'):</replace></source_edit>\n<test_edit file=\"sklearn/tests/test_base.py\"><search>assert clf.empty is clf2.empty</search><replace>with pytest.raises(TypeError, match=\"Estimator parameters must be instances, not classes\"):\n        clone(clf)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2262,
+  "prompt_tokens": 1177,
+  "total_tokens": 3439,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2040,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "clone must reject estimator class objects as parameters",
+ "requirement": "When cloning an estimator, any parameter that is an estimator class (i.e., a type object) is considered invalid. The clone function should raise a\u202fTypeError with the message \u201cEstimator parameters must be instances, not classes\u201d in this case. This requirement supersedes any previous expectation that such parameters would be cloned successfully.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/base.py",
+   "search": "elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):",
+   "replace": "    if isinstance(estimator, type):\n        raise TypeError(\"Estimator parameters must be instances, not classes\")\n    elif not hasattr(estimator, 'get_params'):"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/tests/test_base.py",
+   "search": "assert clf.empty is clf2.empty",
+   "replace": "with pytest.raises(TypeError, match=\"Estimator parameters must be instances, not classes\"):\n        clone(clf)"
+  }
+ ],
+ "status": "generated"
+}

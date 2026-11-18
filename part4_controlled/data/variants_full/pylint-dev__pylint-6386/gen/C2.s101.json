@@ -1,0 +1,37 @@
+{
+ "instance_id": "pylint-dev__pylint-6386",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 12,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 18334,
+ "raw": "<summary>Short\u202f-v flag is deprecated and must emit a deprecation warning.</summary>\n<requirement>The short\u202f\u2018-v\u2019 flag is now deprecated. Invoking pylint with \u2018-v\u2019 should still enable verbose mode, but it must emit a deprecation warning with the exact message \u201cOption -v is deprecated, use --verbose\u201d. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"pylint/config/utils.py\"><search>-v\": (False, _set_verbose_mode),</search><replace>-v\": (False, _set_verbose_mode_deprecated),</replace></source_edit>\n<source_edit file=\"pylint/config/utils.py\"><search>def _set_verbose_mode(run: Run, value: str | None) -> None:\n    assert value is None\n    run.verbose = True</search><replace>def _set_verbose_mode(run: Run, value: str | None) -> None:\n    assert value is None\n    run.verbose = True\n\ndef _set_verbose_mode_deprecated(run: Run, value: str | None) -> None:\n    warnings.warn(\"Option -v is deprecated, use --verbose\", DeprecationWarning)\n    _set_verbose_mode(run, value)</replace></source_edit>\n<test_edit file=\"tests/config/test_config.py\"><search>assert \"Using config file\" in output.err</search><replace>assert \"Option -v is deprecated\" in output.err</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Short\u202f-v flag is deprecated and must emit a deprecation warning.",
+ "requirement": "The short\u202f\u2018-v\u2019 flag is now deprecated. Invoking pylint with \u2018-v\u2019 should still enable verbose mode, but it must emit a deprecation warning with the exact message \u201cOption -v is deprecated, use --verbose\u201d. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "pylint/config/utils.py",
+   "search": "-v\": (False, _set_verbose_mode),",
+   "replace": "-v\": (False, _set_verbose_mode_deprecated),"
+  },
+  {
+   "kind": "source_edit",
+   "file": "pylint/config/utils.py",
+   "search": "def _set_verbose_mode(run: Run, value: str | None) -> None:\n    assert value is None\n    run.verbose = True",
+   "replace": "def _set_verbose_mode(run: Run, value: str | None) -> None:\n    assert value is None\n    run.verbose = True\n\ndef _set_verbose_mode_deprecated(run: Run, value: str | None) -> None:\n    warnings.warn(\"Option -v is deprecated, use --verbose\", DeprecationWarning)\n    _set_verbose_mode(run, value)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/config/test_config.py",
+   "search": "assert \"Using config file\" in output.err",
+   "replace": "assert \"Option -v is deprecated\" in output.err"
+  }
+ ]
+}

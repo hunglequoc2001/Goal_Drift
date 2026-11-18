@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-14122",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 12,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 18639,
+ "raw": "<summary>Default Meta ordering fields must be included in GROUP BY clauses.</summary>\n<requirement>When a query uses aggregation (e.g., annotate or values with aggregates), the fields specified by a model\u2019s Meta.ordering should be treated like any other ORDER BY expression and therefore must be added to the GROUP BY clause. This supersedes any earlier expectation that default ordering fields are ignored for GROUP BY.</requirement>\n<source_edit file=\"django/db/models/sql/compiler.py\"><search>if not self._meta_ordering:\n            for expr, (sql, params, is_ref) in order_by:\n                # Skip references to the SELECT clause, as all expressions in\n                # the SELECT clause are already part of the GROUP BY.\n                if not is_ref:\n                    expressions.extend(expr.get_group_by_cols())</search><replace>for expr, (sql, params, is_ref) in order_by:\n                # Skip references to the SELECT clause, as all expressions in\n                # the SELECT clause are already part of the GROUP BY.\n                if not is_ref:\n                    expressions.extend(expr.get_group_by_cols())</replace></source_edit>\n<test_edit file=\"tests/ordering/tests.py\"><search>self.assertCountEqual(articles, [\n            {'author': self.author_1.pk, 'count': 3},\n            {'author': self.author_2.pk, 'count': 1},\n        ])</search><replace>self.assertCountEqual(articles, [\n            {'author': self.author_1.pk, 'count': 1},\n            {'author': self.author_1.pk, 'count': 1},\n            {'author': self.author_1.pk, 'count': 1},\n            {'author': self.author_2.pk, 'count': 1},\n        ])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Default Meta ordering fields must be included in GROUP BY clauses.",
+ "requirement": "When a query uses aggregation (e.g., annotate or values with aggregates), the fields specified by a model\u2019s Meta.ordering should be treated like any other ORDER BY expression and therefore must be added to the GROUP BY clause. This supersedes any earlier expectation that default ordering fields are ignored for GROUP BY.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/compiler.py",
+   "search": "if not self._meta_ordering:\n            for expr, (sql, params, is_ref) in order_by:\n                # Skip references to the SELECT clause, as all expressions in\n                # the SELECT clause are already part of the GROUP BY.\n                if not is_ref:\n                    expressions.extend(expr.get_group_by_cols())",
+   "replace": "for expr, (sql, params, is_ref) in order_by:\n                # Skip references to the SELECT clause, as all expressions in\n                # the SELECT clause are already part of the GROUP BY.\n                if not is_ref:\n                    expressions.extend(expr.get_group_by_cols())"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/ordering/tests.py",
+   "search": "self.assertCountEqual(articles, [\n            {'author': self.author_1.pk, 'count': 3},\n            {'author': self.author_2.pk, 'count': 1},\n        ])",
+   "replace": "self.assertCountEqual(articles, [\n            {'author': self.author_1.pk, 'count': 1},\n            {'author': self.author_1.pk, 'count': 1},\n            {'author': self.author_1.pk, 'count': 1},\n            {'author': self.author_2.pk, 'count': 1},\n        ])"
+  }
+ ]
+}

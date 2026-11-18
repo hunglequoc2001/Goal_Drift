@@ -1,0 +1,31 @@
+{
+ "instance_id": "pytest-dev__pytest-7205",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 13,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 21178,
+ "raw": "<summary>Display bytes fixture parameters as decoded UTF\u20118 strings instead of using saferepr.</summary>\n<requirement>When showing fixture actions (e.g., with\u202f--setup-show), if a fixture\u2019s cached parameter is a ``bytes`` or ``bytearray`` object it must be decoded to a UTF\u20118 string (using ``errors='backslashreplace'``) and displayed without the leading ``b`` prefix or surrounding quotes. This supersedes any previous expectation that the raw ``repr`` (or ``saferepr``) of the bytes value be shown.</requirement>\n<source_edit file=\"src/_pytest/setuponly.py\"><search>tw.write(\"[{}]\".format(saferepr(fixturedef.cached_param, maxsize=42)))</search><replace>if isinstance(fixturedef.cached_param, (bytes, bytearray)):\n            decoded = fixturedef.cached_param.decode('utf-8', 'backslashreplace')\n            tw.write(\"[{}]\".format(decoded))\n        else:\n            tw.write(\"[{}]\".format(saferepr(fixturedef.cached_param, maxsize=42)))</replace></source_edit>\n<test_edit file=\"testing/test_setuponly.py\"><search>assert result.ret == 0</search><replace>assert result.ret == 0\n        result.stdout.fnmatch_lines([\"*Hello World*\"])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Display bytes fixture parameters as decoded UTF\u20118 strings instead of using saferepr.",
+ "requirement": "When showing fixture actions (e.g., with\u202f--setup-show), if a fixture\u2019s cached parameter is a ``bytes`` or ``bytearray`` object it must be decoded to a UTF\u20118 string (using ``errors='backslashreplace'``) and displayed without the leading ``b`` prefix or surrounding quotes. This supersedes any previous expectation that the raw ``repr`` (or ``saferepr``) of the bytes value be shown.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/setuponly.py",
+   "search": "tw.write(\"[{}]\".format(saferepr(fixturedef.cached_param, maxsize=42)))",
+   "replace": "if isinstance(fixturedef.cached_param, (bytes, bytearray)):\n            decoded = fixturedef.cached_param.decode('utf-8', 'backslashreplace')\n            tw.write(\"[{}]\".format(decoded))\n        else:\n            tw.write(\"[{}]\".format(saferepr(fixturedef.cached_param, maxsize=42)))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_setuponly.py",
+   "search": "assert result.ret == 0",
+   "replace": "assert result.ret == 0\n        result.stdout.fnmatch_lines([\"*Hello World*\"])"
+  }
+ ]
+}

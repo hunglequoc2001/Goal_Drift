@@ -1,0 +1,42 @@
+There appears to be an issue with how separability is calculated in the modeling component, specifically when dealing with nested CompoundModels structures. Let me outline the problem with `separability_matrix`:
+
+First, consider a basic model defined as:
+
+```python
+from astropy.modeling import models as m
+from astropy.modeling.separable import separability_matrix
+
+cm = m.Linear1D(10) & m.Linear1D(5)
+```
+
+In this case, the separability matrix is correctly computed as a diagonal matrix:
+
+```python
+>>> separability_matrix(cm)
+array([[ True, False],
+       [False,  True]])
+```
+
+This is the expected behavior. When I expand the model to include more complexity:
+
+```python
+>>> separability_matrix(m.Pix2Sky_TAN() & m.Linear1D(10) & m.Linear1D(5))
+array([[ True,  True, False, False],
+       [ True,  True, False, False],
+       [False, False,  True, False],
+       [False, False, False,  True]])
+```
+
+The resulting matrix maintains the correct separability, with outputs and inputs from the linear models being properly separated and independent.
+
+However, when I attempt to nest these compound models as follows:
+
+```python
+>>> separability_matrix(m.Pix2Sky_TAN() & cm)
+array([[ True,  True, False, False],
+       [ True,  True, False, False],
+       [False, False,  True,  True],
+       [False, False,  True,  True]])
+```
+
+The separability analysis incorrectly indicates that the inputs and outputs are not separable. This seems like a bug, but I wanted to verify that I'm not misunderstanding how nested models should behave.

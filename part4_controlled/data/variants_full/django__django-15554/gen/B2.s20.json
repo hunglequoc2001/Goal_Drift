@@ -1,0 +1,48 @@
+{
+ "instance_id": "django__django-15554",
+ "kind": "B2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "masked": "Using multiple \u27e6P1\u27e7 with different filters but for same relation is ignored.\nDescription\n\u27e6P2\u27e7\nI have a relation that ALWAYS have at least \u27e6P3\u27e7 entry with \u27e6P4\u27e7=True and then I have an optional entry that could have \u27e6P5\u27e7=False but instead have zone set.\nI'm trying to use \u27e6P6\u27e7 together with Case(\u27e6P7\u27e7) to ensure that it use the zone level one (if exist) and fall back on \u27e6P8\u27e7 if zone do not exist.\nfrom \u27e6P9\u27e7 import \u27e6P10\u27e7\n\u27e6P11\u27e7(\n\u27e6P12\u27e7\n).annotate(\n\u27e6P13\u27e7\n)\nI noticed that when using multiple \u27e6P14\u27e7 with the same relation (\u27e6P15\u27e7) it actually just generates a single SQL JOIN (if inspecting the raw SQL) and ignores the other. So in this case if I do print(\u27e6P16\u27e7) I would only see a join for \u27e6P17\u27e7. Not for \u27e6P18\u27e7.\nIs this intended behavior or should I be able to do the thing above?\n",
+ "spans": [
+  "FilteredRelation",
+  "\t \n\t\t(last modified by lind-marcus)\n\t ",
+  "1",
+  "is_all",
+  "is_all",
+  "FilteredRelation",
+  "When()",
+  "\"All\"",
+  "django.db.models",
+  "FilteredRelation",
+  "qs.alias",
+  "\trelation_zone=FilteredRelation(\n\t\t\"myrelation__nested\",\n\t\tcondition=Q(myrelation__nested__zone=F(\"zone\"))\n\t),\n\trelation_all=FilteredRelation(\n\t\t\"myrelation__nested\",\n\t\tcondition=Q(myrelation__nested__is_all=True)\n\t),\n\tprice_zone=F(\"relation_zone__price\")",
+  "\tprice_final=Case(\n\t\tWhen(\n\t\t\tprice_zone__isnull=True,\n\t\t\tthen=F(\"relation_all__price\"),\n\t\t),\n\t\tdefault=F(\"price_zone\")\n\t)",
+  "FilteredRelation",
+  "myrelation__nested",
+  "str(qs.query)",
+  "relation_zone",
+  "relation_all"
+ ],
+ "prompt_sha256": "0391fab58e153eeba4418f615e0b7da6dd182f5ceab2f9a25518821b68d464ea",
+ "raw": "<rewrite>\n**Title:** Multiple \u27e6P1\u27e7 with distinct filters on the same relation are collapsed  \n\n**Description:**  \n\u27e6P2\u27e7  \n\nIn my schema the relation always contains at least \u27e6P3\u27e7 rows with \u27e6P4\u27e7\u202f=\u202fTrue.  There may also be an optional row where \u27e6P5\u27e7\u202f=\u202fFalse but a zone is defined.\n\nI am trying to use \u27e6P6\u27e7 together with `Case(\u27e6P7\u27e7)` so that the query picks the zone\u2011level entry when it exists, and otherwise falls back to \u27e6P8\u27e7.\n\n```python\nfrom \u27e6P9\u27e7 import \u27e6P10\u27e7\n\n\u27e6P11\u27e7(\n    \u27e6P12\u27e7\n).annotate(\n    \u27e6P13\u27e7\n)\n```\n\n**Observed behaviour:**  \nWhen I add several \u27e6P14\u27e7 that reference the same relation (\u27e6P15\u27e7), Django emits only a single SQL\u202fJOIN (visible in the raw SQL).  As a result, printing \u27e6P16\u27e7 shows a join for \u27e6P17\u27e7 but none for \u27e6P18\u27e7.\n\n**Question:**  \nIs this the expected handling of multiple joins on the identical relation, or should each filtered \u27e6P14\u27e7 generate its own join as I anticipated?\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1466,
+  "prompt_tokens": 584,
+  "total_tokens": 2050,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1121,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "**Title:** Multiple \u27e6P1\u27e7 with distinct filters on the same relation are collapsed  \n\n**Description:**  \n\u27e6P2\u27e7  \n\nIn my schema the relation always contains at least \u27e6P3\u27e7 rows with \u27e6P4\u27e7\u202f=\u202fTrue.  There may also be an optional row where \u27e6P5\u27e7\u202f=\u202fFalse but a zone is defined.\n\nI am trying to use \u27e6P6\u27e7 together with `Case(\u27e6P7\u27e7)` so that the query picks the zone\u2011level entry when it exists, and otherwise falls back to \u27e6P8\u27e7.\n\n```python\nfrom \u27e6P9\u27e7 import \u27e6P10\u27e7\n\n\u27e6P11\u27e7(\n    \u27e6P12\u27e7\n).annotate(\n    \u27e6P13\u27e7\n)\n```\n\n**Observed behaviour:**  \nWhen I add several \u27e6P14\u27e7 that reference the same relation (\u27e6P15\u27e7), Django emits only a single SQL\u202fJOIN (visible in the raw SQL).  As a result, printing \u27e6P16\u27e7 shows a join for \u27e6P17\u27e7 but none for \u27e6P18\u27e7.\n\n**Question:**  \nIs this the expected handling of multiple joins on the identical relation, or should each filtered \u27e6P14\u27e7 generate its own join as I anticipated?",
+ "rewrite": "**Title:** Multiple FilteredRelation with distinct filters on the same relation are collapsed  \n\n**Description:**  \n\t \n\t\t(last modified by lind-marcus)\n\t   \n\nIn my schema the relation always contains at least 1 rows with is_all\u202f=\u202fTrue.  There may also be an optional row where is_all\u202f=\u202fFalse but a zone is defined.\n\nI am trying to use FilteredRelation together with `Case(When())` so that the query picks the zone\u2011level entry when it exists, and otherwise falls back to \"All\".\n\n```python\nfrom django.db.models import FilteredRelation\n\nqs.alias(\n    \trelation_zone=FilteredRelation(\n\t\t\"myrelation__nested\",\n\t\tcondition=Q(myrelation__nested__zone=F(\"zone\"))\n\t),\n\trelation_all=FilteredRelation(\n\t\t\"myrelation__nested\",\n\t\tcondition=Q(myrelation__nested__is_all=True)\n\t),\n\tprice_zone=F(\"relation_zone__price\")\n).annotate(\n    \tprice_final=Case(\n\t\tWhen(\n\t\t\tprice_zone__isnull=True,\n\t\t\tthen=F(\"relation_all__price\"),\n\t\t),\n\t\tdefault=F(\"price_zone\")\n\t)\n)\n```\n\n**Observed behaviour:**  \nWhen I add several FilteredRelation that reference the same relation (myrelation__nested), Django emits only a single SQL\u202fJOIN (visible in the raw SQL).  As a result, printing str(qs.query) shows a join for relation_zone but none for relation_all.\n\n**Question:**  \nIs this the expected handling of multiple joins on the identical relation, or should each filtered FilteredRelation generate its own join as I anticipated?",
+ "status": "generated"
+}

@@ -1,0 +1,37 @@
+{
+ "instance_id": "pydata__xarray-6938",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 25662,
+ "raw": "<summary>require `IndexVariable.to_index_variable()` to return the same instance and make its dimensions immutable</summary>\n<requirement>All calls to `IndexVariable.to_index_variable()` must return the original `IndexVariable` instance (i.e., `self`). The returned object\u2019s dimensions may no longer be changed: attempting to assign to its `.dims` attribute must raise an `AttributeError`. This supersedes any previous expectation that a copy is returned or that its dimensions are mutable.</requirement>\n<source_edit file=\"xarray/core/variable.py\"><search>def to_index_variable(self) -> IndexVariable:</search><replace>def to_index_variable(self) -> IndexVariable:\n        \"\"\"Return this variable as an xarray.IndexVariable\"\"\"\n        return self</replace></source_edit>\n<source_edit file=\"xarray/core/variable.py\"><search>@name.setter\n    def name(self, value) -> NoReturn:</search><replace>@name.setter\n    def name(self, value) -> NoReturn:\n        raise AttributeError(\"cannot modify name of IndexVariable in-place\")\n\n    @dims.setter\n    def dims(self, value):\n        raise AttributeError(\"cannot modify dimensions of IndexVariable in-place\")</replace></source_edit>\n<test_edit file=\"xarray/tests/test_variable.py\"><search>def test_to_index_variable_copy(self) -> None:</search><replace>def test_to_index_variable_copy(self) -> None:\n        # to_index_variable should return the original instance and its dimensions must be immutable\n        # https://github.com/pydata/xarray/issues/6931\n        a = IndexVariable(\"x\", [\"a\"])\n        b = a.to_index_variable()\n        assert a is b\n        import pytest\n        with pytest.raises(AttributeError):\n            b.dims = (\"y\",)\n        assert a.dims == (\"x\",)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "require `IndexVariable.to_index_variable()` to return the same instance and make its dimensions immutable",
+ "requirement": "All calls to `IndexVariable.to_index_variable()` must return the original `IndexVariable` instance (i.e., `self`). The returned object\u2019s dimensions may no longer be changed: attempting to assign to its `.dims` attribute must raise an `AttributeError`. This supersedes any previous expectation that a copy is returned or that its dimensions are mutable.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/variable.py",
+   "search": "def to_index_variable(self) -> IndexVariable:",
+   "replace": "def to_index_variable(self) -> IndexVariable:\n        \"\"\"Return this variable as an xarray.IndexVariable\"\"\"\n        return self"
+  },
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/variable.py",
+   "search": "@name.setter\n    def name(self, value) -> NoReturn:",
+   "replace": "@name.setter\n    def name(self, value) -> NoReturn:\n        raise AttributeError(\"cannot modify name of IndexVariable in-place\")\n\n    @dims.setter\n    def dims(self, value):\n        raise AttributeError(\"cannot modify dimensions of IndexVariable in-place\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_variable.py",
+   "search": "def test_to_index_variable_copy(self) -> None:",
+   "replace": "def test_to_index_variable_copy(self) -> None:\n        # to_index_variable should return the original instance and its dimensions must be immutable\n        # https://github.com/pydata/xarray/issues/6931\n        a = IndexVariable(\"x\", [\"a\"])\n        b = a.to_index_variable()\n        assert a is b\n        import pytest\n        with pytest.raises(AttributeError):\n            b.dims = (\"y\",)\n        assert a.dims == (\"x\",)"
+  }
+ ]
+}

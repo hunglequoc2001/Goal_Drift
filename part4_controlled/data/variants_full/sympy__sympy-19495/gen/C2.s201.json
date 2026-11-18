@@ -1,0 +1,31 @@
+{
+ "instance_id": "sympy__sympy-19495",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 27160,
+ "raw": "<summary>Substituting a value that makes the condition True should keep a ConditionSet rather than collapse to its base set.</summary>\n<requirement>When performing a substitution on a ConditionSet, if the substitution causes the condition to evaluate to the Boolean true, the resulting object must remain a ConditionSet whose dummy symbol is unchanged, whose condition is a Contains expression asserting that the dummy belongs to the (substituted) base set, and whose base set is the substituted base set. In other words, the set should not be reduced to the base set itself. This rule supersedes any earlier description of subs behavior for ConditionSet.</requirement>\n<source_edit file=\"sympy/sets/conditionset.py\"><search>else:\n            cond = self.condition.subs(old, new)\n            base = self.base_set.subs(old, new)\n            # The condition may have become true due to assumptions\n            # on 'sym'. In order for .subs() to be consistent with\n            # __new__ we *don't* check if 'sym' actually belongs to\n            # 'base'. In other words: assumptions are ignored.\n            return self.func(self.sym, cond, base)</search><replace>else:\n            cond = self.condition.subs(old, new)\n            base = self.base_set.subs(old, new)\n            # If the condition becomes literally true, keep a ConditionSet\n            # that records the membership requirement instead of collapsing\n            # to the base set.\n            if cond is S.true:\n                return self.func(self.sym, Contains(self.sym, base), base)\n            # The condition may have become true due to assumptions on 'sym'.\n            # In order for .subs() to be consistent with __new__ we *don't*\n            # check if 'sym' actually belongs to 'base'. In other words:\n            # assumptions are ignored.\n            return self.func(self.sym, cond, base)</replace></source_edit>\n<test_edit file=\"sympy/sets/tests/test_conditionset.py\"><search>assert ConditionSet(x, Contains(\n        y, Interval(-1,1)), img1).subs(y, S.One/3).dummy_eq(img2)</search><replace>result = ConditionSet(x, Contains(y, Interval(-1, 1)), img1).subs(y, S.One/3)\n    # The substitution makes the condition true, but the result should stay a ConditionSet\n    assert isinstance(result, ConditionSet)\n    assert result.base_set == img2\n    assert result.condition == Contains(result.sym, img2)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Substituting a value that makes the condition True should keep a ConditionSet rather than collapse to its base set.",
+ "requirement": "When performing a substitution on a ConditionSet, if the substitution causes the condition to evaluate to the Boolean true, the resulting object must remain a ConditionSet whose dummy symbol is unchanged, whose condition is a Contains expression asserting that the dummy belongs to the (substituted) base set, and whose base set is the substituted base set. In other words, the set should not be reduced to the base set itself. This rule supersedes any earlier description of subs behavior for ConditionSet.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/conditionset.py",
+   "search": "else:\n            cond = self.condition.subs(old, new)\n            base = self.base_set.subs(old, new)\n            # The condition may have become true due to assumptions\n            # on 'sym'. In order for .subs() to be consistent with\n            # __new__ we *don't* check if 'sym' actually belongs to\n            # 'base'. In other words: assumptions are ignored.\n            return self.func(self.sym, cond, base)",
+   "replace": "else:\n            cond = self.condition.subs(old, new)\n            base = self.base_set.subs(old, new)\n            # If the condition becomes literally true, keep a ConditionSet\n            # that records the membership requirement instead of collapsing\n            # to the base set.\n            if cond is S.true:\n                return self.func(self.sym, Contains(self.sym, base), base)\n            # The condition may have become true due to assumptions on 'sym'.\n            # In order for .subs() to be consistent with __new__ we *don't*\n            # check if 'sym' actually belongs to 'base'. In other words:\n            # assumptions are ignored.\n            return self.func(self.sym, cond, base)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_conditionset.py",
+   "search": "assert ConditionSet(x, Contains(\n        y, Interval(-1,1)), img1).subs(y, S.One/3).dummy_eq(img2)",
+   "replace": "result = ConditionSet(x, Contains(y, Interval(-1, 1)), img1).subs(y, S.One/3)\n    # The substitution makes the condition true, but the result should stay a ConditionSet\n    assert isinstance(result, ConditionSet)\n    assert result.base_set == img2\n    assert result.condition == Contains(result.sym, img2)"
+  }
+ ]
+}

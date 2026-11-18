@@ -1,0 +1,37 @@
+{
+ "instance_id": "psf__requests-6028",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 100,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 15967,
+ "raw": "<summary>prepend_scheme_if_needed must strip authentication credentials from URLs</summary>\n<requirement>When `prepend_scheme_if_needed` is called, any user authentication component (e.g., `user:pass@` or `user@`) present in the input URL must be removed from the returned URL. The function should always return a URL that contains no authentication information, regardless of whether the original URL already includes a scheme. This requirement supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"requests/utils.py\"><search>    if auth:\n        # parse_url doesn't provide the netloc with auth\n        # so we'll add it ourselves.\n        netloc = '@'.join([auth, netloc])</search><replace>    # Authentication information is stripped per updated requirement.\n    # No changes are made to netloc to preserve only host information.</replace></source_edit>\n<test_edit file=\"tests/test_utils.py\"><search>'http://user:pass@example.com/path?query'</search><replace>'http://example.com/path?query'</replace></test_edit>\n<test_edit file=\"tests/test_utils.py\"><search>'http://user@example.com/path?query'</search><replace>'http://example.com/path?query'</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "prepend_scheme_if_needed must strip authentication credentials from URLs",
+ "requirement": "When `prepend_scheme_if_needed` is called, any user authentication component (e.g., `user:pass@` or `user@`) present in the input URL must be removed from the returned URL. The function should always return a URL that contains no authentication information, regardless of whether the original URL already includes a scheme. This requirement supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "requests/utils.py",
+   "search": "    if auth:\n        # parse_url doesn't provide the netloc with auth\n        # so we'll add it ourselves.\n        netloc = '@'.join([auth, netloc])",
+   "replace": "    # Authentication information is stripped per updated requirement.\n    # No changes are made to netloc to preserve only host information."
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_utils.py",
+   "search": "'http://user:pass@example.com/path?query'",
+   "replace": "'http://example.com/path?query'"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_utils.py",
+   "search": "'http://user@example.com/path?query'",
+   "replace": "'http://example.com/path?query'"
+  }
+ ]
+}

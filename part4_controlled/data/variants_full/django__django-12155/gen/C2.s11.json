@@ -1,0 +1,54 @@
+{
+ "instance_id": "django__django-12155",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "a86dfe50e23fd020f235d0c068e6b634bc76ff74e7b8b1265de47e611a687f41",
+ "raw": "<summary>Re\u2011introduce a custom trim_docstring that skips the first line and make parse_docstring use it.</summary>\n<requirement>When normalising docstrings, the indentation calculation must ignore the first line of the docstring. The project should provide a\u202ftrim_docstring\u202ffunction that implements this behaviour, and\u202fparse_docstring\u202fmust call\u202ftrim_docstring\u202finstead of\u202finspect.cleandoc. This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>from inspect import cleandoc</search><replace></replace></source_edit>\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>def parse_docstring(docstring):</search><replace>def trim_docstring(docstring):\n    \"\"\"\n    Uniformly trim leading/trailing whitespace from docstrings,\n    ignoring the first line when calculating indentation.\n    \"\"\"\n    if not docstring or not docstring.strip():\n        return ''\n    # Convert tabs to spaces and split into lines\n    lines = docstring.expandtabs().splitlines()\n    # Compute the minimum indentation, skipping the first line\n    indent = min((len(line) - len(line.lstrip())) for line in lines[1:] if line.lstrip())\n    # Trim the first line separately and de\u2011indent the rest\n    trimmed = [lines[0].lstrip()] + [line[indent:].rstrip() for line in lines[1:]]\n    return \"\\n\".join(trimmed).strip()\n\n\ndef parse_docstring(docstring):\n    \"\"\"\n    Parse out the parts of a docstring.  Return (title, body, metadata).\n    \"\"\"\n    if not docstring:\n        return '', '', {}\n    docstring = trim_docstring(docstring)</replace></source_edit>\n<source_edit file=\"django/contrib/admindocs/views.py\"><search>from inspect import cleandoc</search><replace></replace></source_edit>\n<source_edit file=\"django/contrib/admindocs/views.py\"><search>utils.parse_rst(cleandoc(verbose), 'model', _('model:') + opts.model_name)</search><replace>utils.parse_rst(utils.trim_docstring(verbose), 'model', _('model:') + opts.model_name)</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2457,
+  "prompt_tokens": 1864,
+  "total_tokens": 4321,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1969,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Re\u2011introduce a custom trim_docstring that skips the first line and make parse_docstring use it.",
+ "requirement": "When normalising docstrings, the indentation calculation must ignore the first line of the docstring. The project should provide a\u202ftrim_docstring\u202ffunction that implements this behaviour, and\u202fparse_docstring\u202fmust call\u202ftrim_docstring\u202finstead of\u202finspect.cleandoc. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "from inspect import cleandoc",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "def parse_docstring(docstring):",
+   "replace": "def trim_docstring(docstring):\n    \"\"\"\n    Uniformly trim leading/trailing whitespace from docstrings,\n    ignoring the first line when calculating indentation.\n    \"\"\"\n    if not docstring or not docstring.strip():\n        return ''\n    # Convert tabs to spaces and split into lines\n    lines = docstring.expandtabs().splitlines()\n    # Compute the minimum indentation, skipping the first line\n    indent = min((len(line) - len(line.lstrip())) for line in lines[1:] if line.lstrip())\n    # Trim the first line separately and de\u2011indent the rest\n    trimmed = [lines[0].lstrip()] + [line[indent:].rstrip() for line in lines[1:]]\n    return \"\\n\".join(trimmed).strip()\n\n\ndef parse_docstring(docstring):\n    \"\"\"\n    Parse out the parts of a docstring.  Return (title, body, metadata).\n    \"\"\"\n    if not docstring:\n        return '', '', {}\n    docstring = trim_docstring(docstring)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/views.py",
+   "search": "from inspect import cleandoc",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/views.py",
+   "search": "utils.parse_rst(cleandoc(verbose), 'model', _('model:') + opts.model_name)",
+   "replace": "utils.parse_rst(utils.trim_docstring(verbose), 'model', _('model:') + opts.model_name)"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

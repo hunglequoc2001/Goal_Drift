@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-12155",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "a86dfe50e23fd020f235d0c068e6b634bc76ff74e7b8b1265de47e611a687f41",
+ "raw": "<summary>parse_docstring must preserve original indentation of lines after the first line</summary>\n<requirement>When parsing a docstring, the implementation must keep the original indentation of every line after the first one. Only leading whitespace on the first line should be stripped, and leading/trailing blank lines may be removed. This behavior supersedes any previous expectation that the docstring be dedented (e.g., via\u202finspect.cleandoc).</requirement>\n\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>docstring = cleandoc(docstring)</search><replace># Preserve original indentation of lines after the first line.\nlines = docstring.expandtabs().splitlines()\nfirst = lines[0].lstrip()\nrest = [line.rstrip() for line in lines[1:]]\ndocstring = \"\\n\".join([first] + rest)</replace></source_edit>\n\n<source_edit file=\"django/contrib/admindocs/views.py\"><search>utils.parse_rst(cleandoc(verbose), 'model', _('model:') + opts.model_name)</search><replace>utils.parse_rst(verbose, 'model', _('model:') + opts.model_name)</replace></source_edit>\n\n<test_edit file=\"tests/admin_docs/test_utils.py\"><search>self.assertEqual(stderr.getvalue(), '')</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3668,
+  "prompt_tokens": 1864,
+  "total_tokens": 5532,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 3377,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "parse_docstring must preserve original indentation of lines after the first line",
+ "requirement": "When parsing a docstring, the implementation must keep the original indentation of every line after the first one. Only leading whitespace on the first line should be stripped, and leading/trailing blank lines may be removed. This behavior supersedes any previous expectation that the docstring be dedented (e.g., via\u202finspect.cleandoc).",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "docstring = cleandoc(docstring)",
+   "replace": "# Preserve original indentation of lines after the first line.\nlines = docstring.expandtabs().splitlines()\nfirst = lines[0].lstrip()\nrest = [line.rstrip() for line in lines[1:]]\ndocstring = \"\\n\".join([first] + rest)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/views.py",
+   "search": "utils.parse_rst(cleandoc(verbose), 'model', _('model:') + opts.model_name)",
+   "replace": "utils.parse_rst(verbose, 'model', _('model:') + opts.model_name)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_docs/test_utils.py",
+   "search": "self.assertEqual(stderr.getvalue(), '')",
+   "replace": ""
+  }
+ ],
+ "status": "generated"
+}

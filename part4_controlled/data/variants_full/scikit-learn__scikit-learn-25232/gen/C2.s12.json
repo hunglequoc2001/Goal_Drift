@@ -1,0 +1,49 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-25232",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "44cc8150820c4f48fe03eadfa21cd2a8f0996806efccec4e98449e6a36c36ea6",
+ "raw": "<summary>IterativeImputer must ignore the `fill_value` parameter and issue a deprecation warning.</summary>\n<requirement>When `initial_strategy` is set to `\"constant\"` in `IterativeImputer`, the `fill_value` parameter is no longer used. Instead, a `DeprecationWarning` should be emitted indicating that `fill_value` is ignored and will be removed in a future version. The underlying `SimpleImputer` must be instantiated without the `fill_value` argument, thereby falling back to its own default (0 for numeric data, \u201cmissing_value\u201d for object data). This requirement supersedes any previous expectation that `IterativeImputer` forwards `fill_value` to `SimpleImputer`.</requirement>\n\n<source_edit file=\"sklearn/impute/_iterative.py\"><search>import numpy as np</search><replace>import numpy as np\nimport warnings</replace></source_edit>\n\n<source_edit file=\"sklearn/impute/_iterative.py\"><search>self.initial_imputer_ = SimpleImputer(\n                missing_values=self.missing_values,\n                strategy=self.initial_strategy,\n                fill_value=self.fill_value,\n                keep_empty_features=self.keep_empty_features,\n            )</search><replace>self.initial_imputer_ = SimpleImputer(\n                missing_values=self.missing_values,\n                strategy=self.initial_strategy,\n                keep_empty_features=self.keep_empty_features,\n            )\n            warnings.warn(\n                \"The 'fill_value' parameter is ignored for IterativeImputer and will be removed in a future version.\",\n                DeprecationWarning,\n            )</replace></source_edit>\n\n<test_edit file=\"sklearn/impute/tests/test_impute.py\"><search>def test_iterative_imputer_constant_fill_value():\n+    \"\"\"Check that we propagate properly the parameter `fill_value`.\"\"\"\n+    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])\n+\n+    fill_value = 100\n+    imputer = IterativeImputer(\n+        missing_values=-1,\n+        initial_strategy=\"constant\",\n+        fill_value=fill_value,\n+        max_iter=0,\n+    )\n+    imputer.fit_transform(X)\n+    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value</search><replace>def test_iterative_imputer_constant_fill_value():\n+    \"\"\"Check that `fill_value` is ignored and a DeprecationWarning is issued.\"\"\"\n+    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])\n+\n+    fill_value = 100\n+    imputer = IterativeImputer(\n+        missing_values=-1,\n+        initial_strategy=\"constant\",\n+        fill_value=fill_value,\n+        max_iter=0,\n+    )\n+    with pytest.warns(DeprecationWarning):\n+        imputer.fit_transform(X)\n+    # Default fill_value for numeric data is 0; ensure all statistics are 0\n+    assert np.all(imputer.initial_imputer_.statistics_ == 0)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2719,
+  "prompt_tokens": 1735,
+  "total_tokens": 4454,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2003,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "IterativeImputer must ignore the `fill_value` parameter and issue a deprecation warning.",
+ "requirement": "When `initial_strategy` is set to `\"constant\"` in `IterativeImputer`, the `fill_value` parameter is no longer used. Instead, a `DeprecationWarning` should be emitted indicating that `fill_value` is ignored and will be removed in a future version. The underlying `SimpleImputer` must be instantiated without the `fill_value` argument, thereby falling back to its own default (0 for numeric data, \u201cmissing_value\u201d for object data). This requirement supersedes any previous expectation that `IterativeImputer` forwards `fill_value` to `SimpleImputer`.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/impute/_iterative.py",
+   "search": "import numpy as np",
+   "replace": "import numpy as np\nimport warnings"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sklearn/impute/_iterative.py",
+   "search": "self.initial_imputer_ = SimpleImputer(\n                missing_values=self.missing_values,\n                strategy=self.initial_strategy,\n                fill_value=self.fill_value,\n                keep_empty_features=self.keep_empty_features,\n            )",
+   "replace": "self.initial_imputer_ = SimpleImputer(\n                missing_values=self.missing_values,\n                strategy=self.initial_strategy,\n                keep_empty_features=self.keep_empty_features,\n            )\n            warnings.warn(\n                \"The 'fill_value' parameter is ignored for IterativeImputer and will be removed in a future version.\",\n                DeprecationWarning,\n            )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/impute/tests/test_impute.py",
+   "search": "def test_iterative_imputer_constant_fill_value():\n+    \"\"\"Check that we propagate properly the parameter `fill_value`.\"\"\"\n+    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])\n+\n+    fill_value = 100\n+    imputer = IterativeImputer(\n+        missing_values=-1,\n+        initial_strategy=\"constant\",\n+        fill_value=fill_value,\n+        max_iter=0,\n+    )\n+    imputer.fit_transform(X)\n+    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value",
+   "replace": "def test_iterative_imputer_constant_fill_value():\n+    \"\"\"Check that `fill_value` is ignored and a DeprecationWarning is issued.\"\"\"\n+    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])\n+\n+    fill_value = 100\n+    imputer = IterativeImputer(\n+        missing_values=-1,\n+        initial_strategy=\"constant\",\n+        fill_value=fill_value,\n+        max_iter=0,\n+    )\n+    with pytest.warns(DeprecationWarning):\n+        imputer.fit_transform(X)\n+    # Default fill_value for numeric data is 0; ensure all statistics are 0\n+    assert np.all(imputer.initial_imputer_.statistics_ == 0)"
+  }
+ ],
+ "status": "generated"
+}

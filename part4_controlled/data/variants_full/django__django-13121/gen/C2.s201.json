@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-13121",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 100,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 44521,
+ "raw": "<summary>Duration arithmetic via F expressions is now disallowed on backends without native duration support.</summary>\n<requirement>When using an F expression to add a plain <code>datetime.timedelta</code> to a <code>DurationField</code>, the operation must raise a <code>NotImplementedError</code> with the message \u201cDuration arithmetic is not supported on this backend.\u201d on any database backend that does not have native duration field support. This supersedes any previous expectation that such addition would succeed.</requirement>\n<source_edit file=\"django/db/models/expressions.py\"><search>if (\n            not connection.features.has_native_duration_field and\n            'DurationField' in {lhs_type, rhs_type} and\n            lhs_type != rhs_type\n        ):\n            return DurationExpression(self.lhs, self.connector, self.rhs).as_sql(compiler, connection)</search><replace>if (\n            not connection.features.has_native_duration_field and\n            'DurationField' in {lhs_type, rhs_type} and\n            lhs_type != rhs_type\n        ):\n            raise NotImplementedError(\"Duration arithmetic is not supported on this backend.\")</replace></source_edit>\n<test_edit file=\"tests/expressions/tests.py\"><search>def test_duration_expressions(self):\n        for delta in self.deltas:\n            qs = Experiment.objects.annotate(duration=F('estimated_time') + delta)\n            for obj in qs:\n                self.assertEqual(obj.duration, obj.estimated_time + delta)</search><replace>def test_duration_expressions(self):\n        for delta in self.deltas:\n            with self.assertRaisesMessage(NotImplementedError, \"Duration arithmetic is not supported on this backend.\"):\n                Experiment.objects.annotate(duration=F('estimated_time') + delta)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Duration arithmetic via F expressions is now disallowed on backends without native duration support.",
+ "requirement": "When using an F expression to add a plain <code>datetime.timedelta</code> to a <code>DurationField</code>, the operation must raise a <code>NotImplementedError</code> with the message \u201cDuration arithmetic is not supported on this backend.\u201d on any database backend that does not have native duration field support. This supersedes any previous expectation that such addition would succeed.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/expressions.py",
+   "search": "if (\n            not connection.features.has_native_duration_field and\n            'DurationField' in {lhs_type, rhs_type} and\n            lhs_type != rhs_type\n        ):\n            return DurationExpression(self.lhs, self.connector, self.rhs).as_sql(compiler, connection)",
+   "replace": "if (\n            not connection.features.has_native_duration_field and\n            'DurationField' in {lhs_type, rhs_type} and\n            lhs_type != rhs_type\n        ):\n            raise NotImplementedError(\"Duration arithmetic is not supported on this backend.\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/expressions/tests.py",
+   "search": "def test_duration_expressions(self):\n        for delta in self.deltas:\n            qs = Experiment.objects.annotate(duration=F('estimated_time') + delta)\n            for obj in qs:\n                self.assertEqual(obj.duration, obj.estimated_time + delta)",
+   "replace": "def test_duration_expressions(self):\n        for delta in self.deltas:\n            with self.assertRaisesMessage(NotImplementedError, \"Duration arithmetic is not supported on this backend.\"):\n                Experiment.objects.annotate(duration=F('estimated_time') + delta)"
+  }
+ ]
+}

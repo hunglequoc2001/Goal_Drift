@@ -1,0 +1,73 @@
+{
+ "instance_id": "pydata__xarray-4075",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "f9ede0ef3861fe006b7a232a10194ee9c47d2880ea728c9d2a103909c8824e5c",
+ "raw": "<summary>Boolean weight arrays are no longer accepted for weighted operations.</summary>\n<requirement>Weighted operations must reject boolean weight arrays. Passing a DataArray with dtype bool to the ``.weighted()`` method should raise a ``TypeError`` with the message \u201cboolean weights are not supported\u201d. This requirement supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"xarray/core/weighted.py\"><search># bool -> int, because ``xr.dot([True, True], [True, True])`` -> True\n        # (and not 2); GH4074\n        if self.weights.dtype == bool:\n            sum_of_weights = self._reduce(\n                mask, self.weights.astype(int), dim=dim, skipna=False\n            )\n        else:\n            sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)</search><replace># Disallow boolean weights; they are ambiguous for weighting operations.\n        if self.weights.dtype == bool:\n            raise TypeError(\"boolean weights are not supported\")\n        sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)</replace></source_edit>\n<test_edit file=\"xarray/tests/test_weighted.py\"><search>result = da.weighted(weights).sum_of_weights()</search><replace>with pytest.raises(TypeError):\n        da.weighted(weights).sum_of_weights()</replace></test_edit>\n<test_edit file=\"xarray/tests/test_weighted.py\"><search>expected = DataArray(2)</search><replace># expected exception</replace></test_edit>\n<test_edit file=\"xarray/tests/test_weighted.py\"><search>assert_equal(expected, result)</search><replace># exception asserted</replace></test_edit>\n<test_edit file=\"xarray/tests/test_weighted.py\"><search>result = da.weighted(weights).mean()</search><replace>with pytest.raises(TypeError):\n        da.weighted(weights).mean()</replace></test_edit>\n<test_edit file=\"xarray/tests/test_weighted.py\"><search>expected = DataArray(1)</search><replace># expected exception</replace></test_edit>\n<test_edit file=\"xarray/tests/test_weighted.py\"><search>assert_equal(expected, result)</search><replace># exception asserted</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2091,
+  "prompt_tokens": 1896,
+  "total_tokens": 3987,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1606,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Boolean weight arrays are no longer accepted for weighted operations.",
+ "requirement": "Weighted operations must reject boolean weight arrays. Passing a DataArray with dtype bool to the ``.weighted()`` method should raise a ``TypeError`` with the message \u201cboolean weights are not supported\u201d. This requirement supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/weighted.py",
+   "search": "# bool -> int, because ``xr.dot([True, True], [True, True])`` -> True\n        # (and not 2); GH4074\n        if self.weights.dtype == bool:\n            sum_of_weights = self._reduce(\n                mask, self.weights.astype(int), dim=dim, skipna=False\n            )\n        else:\n            sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)",
+   "replace": "# Disallow boolean weights; they are ambiguous for weighting operations.\n        if self.weights.dtype == bool:\n            raise TypeError(\"boolean weights are not supported\")\n        sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_weighted.py",
+   "search": "result = da.weighted(weights).sum_of_weights()",
+   "replace": "with pytest.raises(TypeError):\n        da.weighted(weights).sum_of_weights()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_weighted.py",
+   "search": "expected = DataArray(2)",
+   "replace": "# expected exception"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_weighted.py",
+   "search": "assert_equal(expected, result)",
+   "replace": "# exception asserted"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_weighted.py",
+   "search": "result = da.weighted(weights).mean()",
+   "replace": "with pytest.raises(TypeError):\n        da.weighted(weights).mean()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_weighted.py",
+   "search": "expected = DataArray(1)",
+   "replace": "# expected exception"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_weighted.py",
+   "search": "assert_equal(expected, result)",
+   "replace": "# exception asserted"
+  }
+ ],
+ "status": "generated"
+}

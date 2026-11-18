@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-15104",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 12,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 22887,
+ "raw": "<summary>Autodetector must warn when a ForeignKey\u2019s deconstruction lacks the \u201cto\u201d entry instead of silently ignoring it.</summary>\n<requirement>When autodetecting migrations, if a field\u2019s deconstruction dictionary does not contain a ``to`` key (which is required for ForeignKey fields), the system must emit a ``UserWarning`` with the message **\u201cForeignKey deconstruction missing 'to' attribute'**. This warning replaces the previous behaviour of silently ignoring the missing key. This requirement supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"django/db/migrations/autodetector.py\"><search>deconstruction[2].pop('to', None)</search><replace>if 'to' in deconstruction[2]:\n                    del deconstruction[2]['to']\n                else:\n                    import warnings\n                    warnings.warn(\"ForeignKey deconstruction missing 'to' attribute\", UserWarning)</replace></source_edit>\n\n<source_edit file=\"tests/migrations/test_autodetector.py\"><search>from django.db import models</search><replace>from django.db import models\nimport warnings</replace></source_edit>\n\n<test_edit file=\"tests/migrations/test_autodetector.py\"><search>book_hardcoded_fk_to = ModelState('testapp', 'Book', [</search><replace>book_hardcoded_fk_to = ModelState('testapp', 'Book', [\n            ('author', HardcodedForeignKey(on_delete=models.CASCADE)),\n        ])\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\")\n            changes = self.get_changes(\n                [self.author_empty],\n                [self.author_empty, book_hardcoded_fk_to],\n            )\n            # Verify that the expected warning was emitted\n            self.assertTrue(any(\n                issubclass(warn.category, UserWarning) and\n                \"ForeignKey deconstruction missing 'to' attribute\" in str(warn.message)\n                for warn in w\n            ))\n        self.assertNumberMigrations(changes, 'testapp', 1)\n        self.assertOperationTypes(changes, 'testapp', 0, ['CreateModel'])\n        self.assertOperationAttributes(changes, 'testapp', 0, 0, name='Book')</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Autodetector must warn when a ForeignKey\u2019s deconstruction lacks the \u201cto\u201d entry instead of silently ignoring it.",
+ "requirement": "When autodetecting migrations, if a field\u2019s deconstruction dictionary does not contain a ``to`` key (which is required for ForeignKey fields), the system must emit a ``UserWarning`` with the message **\u201cForeignKey deconstruction missing 'to' attribute'**. This warning replaces the previous behaviour of silently ignoring the missing key. This requirement supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/migrations/autodetector.py",
+   "search": "deconstruction[2].pop('to', None)",
+   "replace": "if 'to' in deconstruction[2]:\n                    del deconstruction[2]['to']\n                else:\n                    import warnings\n                    warnings.warn(\"ForeignKey deconstruction missing 'to' attribute\", UserWarning)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "tests/migrations/test_autodetector.py",
+   "search": "from django.db import models",
+   "replace": "from django.db import models\nimport warnings"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/migrations/test_autodetector.py",
+   "search": "book_hardcoded_fk_to = ModelState('testapp', 'Book', [",
+   "replace": "book_hardcoded_fk_to = ModelState('testapp', 'Book', [\n            ('author', HardcodedForeignKey(on_delete=models.CASCADE)),\n        ])\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\")\n            changes = self.get_changes(\n                [self.author_empty],\n                [self.author_empty, book_hardcoded_fk_to],\n            )\n            # Verify that the expected warning was emitted\n            self.assertTrue(any(\n                issubclass(warn.category, UserWarning) and\n                \"ForeignKey deconstruction missing 'to' attribute\" in str(warn.message)\n                for warn in w\n            ))\n        self.assertNumberMigrations(changes, 'testapp', 1)\n        self.assertOperationTypes(changes, 'testapp', 0, ['CreateModel'])\n        self.assertOperationAttributes(changes, 'testapp', 0, 0, name='Book')"
+  }
+ ]
+}

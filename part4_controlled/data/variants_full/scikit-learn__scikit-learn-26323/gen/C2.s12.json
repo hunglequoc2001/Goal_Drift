@@ -1,0 +1,43 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-26323",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "c92e50fa2fa8434edfecf93ae0f9e9c9ee7a0d6db9edc4e459697fd9a63ef47d",
+ "raw": "<summary>ColumnTransformer.set_output should ignore the remainder estimator when setting output format</summary>\n<requirement>When calling `set_output` on a `ColumnTransformer`, the estimator provided via the `remainder` argument must **not** have its output format altered; it should always use the default (NumPy array) output regardless of the `transform` parameter. This supersedes any previous expectation that the remainder's output could be set to pandas or other formats.</requirement>\n<source_edit file=\"sklearn/compose/_column_transformer.py\"><search>        if self.remainder not in {\"passthrough\", \"drop\"}:\n            _safe_set_output(self.remainder, transform=transform)</search><replace></replace></source_edit>\n<test_edit file=\"sklearn/compose/tests/test_column_transformer.py\"><search>    out = ct.fit_transform(df)\n    pd.testing.assert_frame_equal(out, df)</search><replace>    out = ct.fit_transform(df)\n    assert isinstance(out, np.ndarray)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1202,
+  "prompt_tokens": 1939,
+  "total_tokens": 3141,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 978,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "ColumnTransformer.set_output should ignore the remainder estimator when setting output format",
+ "requirement": "When calling `set_output` on a `ColumnTransformer`, the estimator provided via the `remainder` argument must **not** have its output format altered; it should always use the default (NumPy array) output regardless of the `transform` parameter. This supersedes any previous expectation that the remainder's output could be set to pandas or other formats.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/compose/_column_transformer.py",
+   "search": "        if self.remainder not in {\"passthrough\", \"drop\"}:\n            _safe_set_output(self.remainder, transform=transform)",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/compose/tests/test_column_transformer.py",
+   "search": "    out = ct.fit_transform(df)\n    pd.testing.assert_frame_equal(out, df)",
+   "replace": "    out = ct.fit_transform(df)\n    assert isinstance(out, np.ndarray)"
+  }
+ ],
+ "status": "generated"
+}

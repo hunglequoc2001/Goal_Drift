@@ -1,0 +1,55 @@
+{
+ "instance_id": "matplotlib__matplotlib-24026",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "2e877f80bb7a6855871469cdf28c7cf79fab7b458e0da1899a69503c04cddd3c",
+ "raw": "<summary>Require a single color string for the `colors` argument and raise an error for iterables.</summary>\n<requirement>When a `colors` argument is supplied to `stackplot`, it must be a single color specification (e.g., `'C0'` or `'#ff0000'`). Supplying an iterable of multiple colors is no longer supported; the function should raise a `ValueError` with the message `'colors argument must be a single color'`. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"lib/matplotlib/stackplot.py\"><search>if colors is not None:</search><replace>if colors is not None:\n    # colors must be a single color specification; iterable of multiple colors is not allowed\n    if isinstance(colors, (list, tuple, np.ndarray)):\n        raise ValueError(\"colors argument must be a single color\")\n    # use an infinite iterator yielding the single color\n    color_iter = itertools.repeat(colors)\nelse:\n    color_iter = (axes._get_lines.get_next_color() for _ in y)</replace></source_edit>\n<source_edit file=\"lib/matplotlib/stackplot.py\"><search>facecolor=next(colors)</search><replace>facecolor=next(color_iter)</replace></source_edit>\n<source_edit file=\"lib/matplotlib/stackplot.py\"><search>facecolor=next(colors)</search><replace>facecolor=next(color_iter)</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])</search><replace>with pytest.raises(ValueError):\n    ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2361,
+  "prompt_tokens": 1860,
+  "total_tokens": 4221,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1940,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Require a single color string for the `colors` argument and raise an error for iterables.",
+ "requirement": "When a `colors` argument is supplied to `stackplot`, it must be a single color specification (e.g., `'C0'` or `'#ff0000'`). Supplying an iterable of multiple colors is no longer supported; the function should raise a `ValueError` with the message `'colors argument must be a single color'`. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/stackplot.py",
+   "search": "if colors is not None:",
+   "replace": "if colors is not None:\n    # colors must be a single color specification; iterable of multiple colors is not allowed\n    if isinstance(colors, (list, tuple, np.ndarray)):\n        raise ValueError(\"colors argument must be a single color\")\n    # use an infinite iterator yielding the single color\n    color_iter = itertools.repeat(colors)\nelse:\n    color_iter = (axes._get_lines.get_next_color() for _ in y)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/stackplot.py",
+   "search": "facecolor=next(colors)",
+   "replace": "facecolor=next(color_iter)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/stackplot.py",
+   "search": "facecolor=next(colors)",
+   "replace": "facecolor=next(color_iter)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])",
+   "replace": "with pytest.raises(ValueError):\n    ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])"
+  }
+ ],
+ "status": "generated"
+}

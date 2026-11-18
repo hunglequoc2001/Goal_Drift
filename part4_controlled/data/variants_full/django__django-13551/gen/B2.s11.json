@@ -1,0 +1,34 @@
+{
+ "instance_id": "django__django-13551",
+ "kind": "B2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "masked": "Changing user's email could invalidate password reset tokens\nDescription\n\u27e6P1\u27e7\nSequence:\nHave account with email address foo@\u2026\nPassword reset request for that email (unused)\nfoo@\u2026 account changes their email address\nPassword reset email is used\nThe password reset email's token should be rejected at that point, but in fact it is allowed.\nThe fix is to add the user's email address into \u200b\u27e6P2\u27e7\nNothing forces a user to even have an email as per \u27e6P3\u27e7. Perhaps the token generation method could be factored out onto the model, ala \u27e6P4\u27e7.\n",
+ "spans": [
+  "\t",
+  "PasswordResetTokenGenerator._make_hash_value()",
+  "AbstractBaseUser",
+  "get_session_auth_hash()"
+ ],
+ "prompt_sha256": "56b75b38910f5caf5f97fe40cf220c758ac8e5857760835edd46a5e902db6845",
+ "raw": "<rewrite>\n**Title:** Altering a user's email address may keep password\u2011reset tokens valid  \n\n**Description**  \n\u27e6P1\u27e7  \n\n**Expected behavior**  \nWhen a password\u2011reset link has been generated for a given e\u2011mail address, any subsequent change of that address should render the previously issued token unusable.\n\n**Actual behavior**  \n1. Create an account whose e\u2011mail is `foo@\u2026`.  \n2. Issue a password\u2011reset request for that address (the link is not used yet).  \n3. Change the account\u2019s e\u2011mail to a different one.  \n4. Use the original password\u2011reset e\u2011mail.  \n\nThe system accepts the token even though the e\u2011mail it was tied to no longer belongs to the user.\n\n**Proposed change**  \nInclude the user's e\u2011mail address as part of \u27e6P2\u27e7 so that a token can be invalidated when the address changes.\n\n**Additional notes**  \nThe current design does not require a user to possess an e\u2011mail address, as noted in \u27e6P3\u27e7. It might be worthwhile to move the token\u2011generation logic onto the model itself, similar to the approach shown in \u27e6P4\u27e7.\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 453,
+  "prompt_tokens": 421,
+  "total_tokens": 874,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 178,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "**Title:** Altering a user's email address may keep password\u2011reset tokens valid  \n\n**Description**  \n\u27e6P1\u27e7  \n\n**Expected behavior**  \nWhen a password\u2011reset link has been generated for a given e\u2011mail address, any subsequent change of that address should render the previously issued token unusable.\n\n**Actual behavior**  \n1. Create an account whose e\u2011mail is `foo@\u2026`.  \n2. Issue a password\u2011reset request for that address (the link is not used yet).  \n3. Change the account\u2019s e\u2011mail to a different one.  \n4. Use the original password\u2011reset e\u2011mail.  \n\nThe system accepts the token even though the e\u2011mail it was tied to no longer belongs to the user.\n\n**Proposed change**  \nInclude the user's e\u2011mail address as part of \u27e6P2\u27e7 so that a token can be invalidated when the address changes.\n\n**Additional notes**  \nThe current design does not require a user to possess an e\u2011mail address, as noted in \u27e6P3\u27e7. It might be worthwhile to move the token\u2011generation logic onto the model itself, similar to the approach shown in \u27e6P4\u27e7.",
+ "rewrite": "**Title:** Altering a user's email address may keep password\u2011reset tokens valid  \n\n**Description**  \n\t  \n\n**Expected behavior**  \nWhen a password\u2011reset link has been generated for a given e\u2011mail address, any subsequent change of that address should render the previously issued token unusable.\n\n**Actual behavior**  \n1. Create an account whose e\u2011mail is `foo@\u2026`.  \n2. Issue a password\u2011reset request for that address (the link is not used yet).  \n3. Change the account\u2019s e\u2011mail to a different one.  \n4. Use the original password\u2011reset e\u2011mail.  \n\nThe system accepts the token even though the e\u2011mail it was tied to no longer belongs to the user.\n\n**Proposed change**  \nInclude the user's e\u2011mail address as part of PasswordResetTokenGenerator._make_hash_value() so that a token can be invalidated when the address changes.\n\n**Additional notes**  \nThe current design does not require a user to possess an e\u2011mail address, as noted in AbstractBaseUser. It might be worthwhile to move the token\u2011generation logic onto the model itself, similar to the approach shown in get_session_auth_hash().",
+ "status": "generated"
+}

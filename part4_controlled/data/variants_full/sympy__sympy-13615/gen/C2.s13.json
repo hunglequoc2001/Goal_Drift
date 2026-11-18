@@ -1,0 +1,36 @@
+{
+ "instance_id": "sympy__sympy-13615",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "55d445f5aa9646eda3b46ef11fe74cc2af6540e9acddbb2c81804d7806eaf014",
+ "raw": "<summary>Complement of a FiniteSet now returns a single Complement wrapping the remaining elements instead of a Union.</summary>\n<requirement>When computing the complement of a FiniteSet with another set, the result must be expressed as a `Complement` of a `FiniteSet` containing all elements that are not definitively inside the other set (i.e., elements for which `contains` returns `False` or `None`). If no such elements remain, return `EmptySet`. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sympy/sets/sets.py\"><search>elif isinstance(other, FiniteSet):\n    from sympy.utilities.iterables import sift\n\n    def ternary_sift(el):\n        contains = self.contains(el)\n        return contains if contains in [True, False] else None\n\n    sifted = sift(other, ternary_sift)\n    # ignore those that are contained in self\n    return Union(FiniteSet(*(sifted[False])),\n        Complement(FiniteSet(*(sifted[None])), self, evaluate=False)\n        if sifted[None] else S.EmptySet)</search><replace>elif isinstance(other, FiniteSet):\n    from sympy.utilities.iterables import sift\n\n    def ternary_sift(el):\n        contains = self.contains(el)\n        return contains if contains in [True, False] else None\n\n    sifted = sift(other, ternary_sift)\n    # elements not definitively in self (False or None)\n    remaining = list(sifted.get(False, [])) + list(sifted.get(None, []))\n    if not remaining:\n        return S.EmptySet\n    return Complement(FiniteSet(*remaining), self, evaluate=False)</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2494,
+  "prompt_tokens": 1021,
+  "total_tokens": 3515,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2116,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Complement of a FiniteSet now returns a single Complement wrapping the remaining elements instead of a Union.",
+ "requirement": "When computing the complement of a FiniteSet with another set, the result must be expressed as a `Complement` of a `FiniteSet` containing all elements that are not definitively inside the other set (i.e., elements for which `contains` returns `False` or `None`). If no such elements remain, return `EmptySet`. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/sets.py",
+   "search": "elif isinstance(other, FiniteSet):\n    from sympy.utilities.iterables import sift\n\n    def ternary_sift(el):\n        contains = self.contains(el)\n        return contains if contains in [True, False] else None\n\n    sifted = sift(other, ternary_sift)\n    # ignore those that are contained in self\n    return Union(FiniteSet(*(sifted[False])),\n        Complement(FiniteSet(*(sifted[None])), self, evaluate=False)\n        if sifted[None] else S.EmptySet)",
+   "replace": "elif isinstance(other, FiniteSet):\n    from sympy.utilities.iterables import sift\n\n    def ternary_sift(el):\n        contains = self.contains(el)\n        return contains if contains in [True, False] else None\n\n    sifted = sift(other, ternary_sift)\n    # elements not definitively in self (False or None)\n    remaining = list(sifted.get(False, [])) + list(sifted.get(None, []))\n    if not remaining:\n        return S.EmptySet\n    return Complement(FiniteSet(*remaining), self, evaluate=False)"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

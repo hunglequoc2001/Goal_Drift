@@ -1,0 +1,37 @@
+{
+ "instance_id": "matplotlib__matplotlib-25311",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 17987,
+ "raw": "<summary>DraggableBase must store its canvas as a regular attribute and the canvas should be serialized when a Figure is pickled.</summary>\n<requirement>When a Figure containing a draggable legend or annotation is pickled, the DraggableBase class must keep a concrete ``self.canvas`` attribute (assigned at initialization) rather than a property, and the canvas object must be included in the pickle stream. Consequently, the serialized pickle data should contain the canvas class name (e.g., \u201cFigureCanvasAgg\u201d). This requirement supersedes any previous expectation that the canvas be omitted for picklability.</requirement>\n<source_edit file=\"lib/matplotlib/offsetbox.py\"><search>self.got_artist = False</search><replace>self.got_artist = False\n        self.canvas = self.ref_artist.figure.canvas</replace></source_edit>\n<source_edit file=\"lib/matplotlib/offsetbox.py\"><search># A property, not an attribute, to maintain picklability.\n    canvas = property(lambda self: self.ref_artist.figure.canvas)</search><replace></replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_pickle.py\"><search>assert \"FigureCanvasAgg\" not in [arg for op, arg, pos in pickletools.genops(pkl)]</search><replace>assert \"FigureCanvasAgg\" in [arg for op, arg, pos in pickletools.genops(pkl)]</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "DraggableBase must store its canvas as a regular attribute and the canvas should be serialized when a Figure is pickled.",
+ "requirement": "When a Figure containing a draggable legend or annotation is pickled, the DraggableBase class must keep a concrete ``self.canvas`` attribute (assigned at initialization) rather than a property, and the canvas object must be included in the pickle stream. Consequently, the serialized pickle data should contain the canvas class name (e.g., \u201cFigureCanvasAgg\u201d). This requirement supersedes any previous expectation that the canvas be omitted for picklability.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/offsetbox.py",
+   "search": "self.got_artist = False",
+   "replace": "self.got_artist = False\n        self.canvas = self.ref_artist.figure.canvas"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/offsetbox.py",
+   "search": "# A property, not an attribute, to maintain picklability.\n    canvas = property(lambda self: self.ref_artist.figure.canvas)",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_pickle.py",
+   "search": "assert \"FigureCanvasAgg\" not in [arg for op, arg, pos in pickletools.genops(pkl)]",
+   "replace": "assert \"FigureCanvasAgg\" in [arg for op, arg, pos in pickletools.genops(pkl)]"
+  }
+ ]
+}

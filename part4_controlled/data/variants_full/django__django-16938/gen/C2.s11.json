@@ -1,0 +1,67 @@
+{
+ "instance_id": "django__django-16938",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "f0977b25a670127c2a7df6dbb7a09ad485c78ccb95e86204b635e575a4df1e0c",
+ "raw": "<summary>Serializer must not use select_related when iterating many\u2011to\u2011many fields</summary>\n<requirement>When serializing many\u2011to\u2011many relationships, the serializer must retrieve only the primary key values of the related objects. The iterator used for a many\u2011to\u2011many field must call only(\"pk\") and must **not** invoke select_related(). This supersedes any previous guidance suggesting the use of select_related for many\u2011to\u2011many serialization.</requirement>\n\n<source_edit file=\"django/core/serializers/python.py\"><search>select_related().only(\"pk\").iterator()</search><replace>only(\"pk\").iterator()</replace></source_edit>\n\n<source_edit file=\"django/core/serializers/xml_serializer.py\"><search>select_related().only(\"pk\").iterator()</search><replace>only(\"pk\").iterator()</replace></source_edit>\n\n<test_edit file=\"tests/serializers/tests.py\"><search>with self.assertNumQueries(4):</search><replace>with self.assertNumQueries(3):</replace></test_edit>\n\n<test_edit file=\"tests/serializers/tests.py\"><search>with self.assertNumQueries(7):</search><replace>with self.assertNumQueries(5):</replace></test_edit>\n\n<test_edit file=\"tests/serializers/tests.py\"><search>with self.assertNumQueries(7) as ctx:</search><replace>with self.assertNumQueries(5) as ctx:</replace></test_edit>\n\n<test_edit file=\"tests/serializers/tests.py\"><search>with self.assertNumQueries(7) as ctx:</search><replace>with self.assertNumQueries(5) as ctx:</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1426,
+  "prompt_tokens": 3633,
+  "total_tokens": 5059,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1067,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Serializer must not use select_related when iterating many\u2011to\u2011many fields",
+ "requirement": "When serializing many\u2011to\u2011many relationships, the serializer must retrieve only the primary key values of the related objects. The iterator used for a many\u2011to\u2011many field must call only(\"pk\") and must **not** invoke select_related(). This supersedes any previous guidance suggesting the use of select_related for many\u2011to\u2011many serialization.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/core/serializers/python.py",
+   "search": "select_related().only(\"pk\").iterator()",
+   "replace": "only(\"pk\").iterator()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/core/serializers/xml_serializer.py",
+   "search": "select_related().only(\"pk\").iterator()",
+   "replace": "only(\"pk\").iterator()"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/serializers/tests.py",
+   "search": "with self.assertNumQueries(4):",
+   "replace": "with self.assertNumQueries(3):"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/serializers/tests.py",
+   "search": "with self.assertNumQueries(7):",
+   "replace": "with self.assertNumQueries(5):"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/serializers/tests.py",
+   "search": "with self.assertNumQueries(7) as ctx:",
+   "replace": "with self.assertNumQueries(5) as ctx:"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/serializers/tests.py",
+   "search": "with self.assertNumQueries(7) as ctx:",
+   "replace": "with self.assertNumQueries(5) as ctx:"
+  }
+ ],
+ "status": "generated"
+}

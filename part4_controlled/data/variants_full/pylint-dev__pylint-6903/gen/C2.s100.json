@@ -1,0 +1,31 @@
+{
+ "instance_id": "pylint-dev__pylint-6903",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 15851,
+ "raw": "<summary>Make zero\u2011CPU detection emit a warning and return None instead of forcing 1 CPU.</summary>\n<requirement>When `_query_cpu()` determines that the calculated number of available CPUs is zero, it must issue a `RuntimeWarning` with the message \u201cDetected fractional CPU allocation; using system CPU count\u201d and then return `None` (so that the later logic falls back to the system CPU count). This supersedes any previous expectation that the function should coerce a zero value to one.</requirement>\n<source_edit file=\"pylint/lint/run.py\"><search>if avail_cpu == 0:</search><replace>if avail_cpu == 0:\n        warnings.warn(\n            \"Detected fractional CPU allocation; using system CPU count\",\n            RuntimeWarning,\n        )\n        avail_cpu = None</replace></source_edit>\n<test_edit file=\"tests/test_pylint_runners.py\"><search>Run(testargs, reporter=Reporter())</search><replace>with pytest.warns(RuntimeWarning):\n                Run(testargs, reporter=Reporter())</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Make zero\u2011CPU detection emit a warning and return None instead of forcing 1 CPU.",
+ "requirement": "When `_query_cpu()` determines that the calculated number of available CPUs is zero, it must issue a `RuntimeWarning` with the message \u201cDetected fractional CPU allocation; using system CPU count\u201d and then return `None` (so that the later logic falls back to the system CPU count). This supersedes any previous expectation that the function should coerce a zero value to one.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "pylint/lint/run.py",
+   "search": "if avail_cpu == 0:",
+   "replace": "if avail_cpu == 0:\n        warnings.warn(\n            \"Detected fractional CPU allocation; using system CPU count\",\n            RuntimeWarning,\n        )\n        avail_cpu = None"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_pylint_runners.py",
+   "search": "Run(testargs, reporter=Reporter())",
+   "replace": "with pytest.warns(RuntimeWarning):\n                Run(testargs, reporter=Reporter())"
+  }
+ ]
+}

@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-14672",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "ec796be40007e2d31b950b1164da363e163ebb8ce15ddaf910cd92d0ae61ea7d",
+ "raw": "<summary>Make\u202fthrough_fields immutable (store as a tuple) and drop the make_hashable call in the identity.</summary>\n<requirement>For\u202fManyToManyRel, the\u202fthrough_fields\u202fattribute must be stored as an immutable\u202ftuple\u202finstead of a mutable\u202flist, and the\u202fidentity\u202fproperty should include this stored tuple directly (i.e., without calling\u202fmake_hashable). This supersedes any earlier expectation that\u202fthrough_fields\u202fremain a list.</requirement>\n<source_edit file=\"django/db/models/fields/reverse_related.py\"><search>self.through_fields = through_fields</search><replace>self.through_fields = tuple(through_fields) if through_fields is not None else None</replace></source_edit>\n<source_edit file=\"django/db/models/fields/reverse_related.py\"><search>make_hashable(self.through_fields)</search><replace>self.through_fields</replace></source_edit>\n<test_edit file=\"tests/m2m_through/tests.py\"><search>self.assertEqual(reverse_m2m.through_fields, ['event', 'invitee'])</search><replace>self.assertEqual(reverse_m2m.through_fields, ('event', 'invitee'))</replace></test_edit>\n<test_edit file=\"tests/m2m_through/tests.py\"><search>self.assertEqual(inherited_reverse_m2m.through_fields, ['event', 'invitee'])</search><replace>self.assertEqual(inherited_reverse_m2m.through_fields, ('event', 'invitee'))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1937,
+  "prompt_tokens": 6551,
+  "total_tokens": 8488,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1604,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Make\u202fthrough_fields immutable (store as a tuple) and drop the make_hashable call in the identity.",
+ "requirement": "For\u202fManyToManyRel, the\u202fthrough_fields\u202fattribute must be stored as an immutable\u202ftuple\u202finstead of a mutable\u202flist, and the\u202fidentity\u202fproperty should include this stored tuple directly (i.e., without calling\u202fmake_hashable). This supersedes any earlier expectation that\u202fthrough_fields\u202fremain a list.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/fields/reverse_related.py",
+   "search": "self.through_fields = through_fields",
+   "replace": "self.through_fields = tuple(through_fields) if through_fields is not None else None"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/fields/reverse_related.py",
+   "search": "make_hashable(self.through_fields)",
+   "replace": "self.through_fields"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/m2m_through/tests.py",
+   "search": "self.assertEqual(reverse_m2m.through_fields, ['event', 'invitee'])",
+   "replace": "self.assertEqual(reverse_m2m.through_fields, ('event', 'invitee'))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/m2m_through/tests.py",
+   "search": "self.assertEqual(inherited_reverse_m2m.through_fields, ['event', 'invitee'])",
+   "replace": "self.assertEqual(inherited_reverse_m2m.through_fields, ('event', 'invitee'))"
+  }
+ ],
+ "status": "generated"
+}

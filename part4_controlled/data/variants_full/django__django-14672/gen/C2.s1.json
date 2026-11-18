@@ -1,0 +1,44 @@
+{
+ "instance_id": "django__django-14672",
+ "kind": "C2",
+ "sample": 1,
+ "generator": "glm-4-32b-0414",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 1,
+ "prompt_sha256": "ec796be40007e2d31b950b1164da363e163ebb8ce15ddaf910cd92d0ae61ea7d",
+ "raw": "\n<summary>Change the through_fields in ManyToManyRel to be a tuple instead of a list to ensure hashability.</summary>\n<requirement>The through_fields attribute in ManyToManyRel should be a tuple instead of a list to ensure it is hashable. This change is necessary because the identity property uses through_fields as part of a tuple, and tuples are hashable while lists are not. This requirement supersedes any conflicting expectations in the original issue.</requirement>\n<source_edit file=\"django/db/models/fields/reverse_related.py\">\n<search>self.through_fields,</search>\n<replace>tuple(self.through_fields),</replace>\n</source_edit>\n<test_edit file=\"tests/m2m_through/tests.py\">\n<search>self.assertEqual(reverse_m2m.through_fields, ['event', 'invitee'])</search>\n<replace>self.assertEqual(reverse_m2m.through_fields, ('event', 'invitee'))</replace>\n</test_edit>\n<test_edit file=\"tests/m2m_through/tests.py\">\n<search>self.assertEqual(inherited_reverse_m2m.through_fields, ['event', 'invitee'])</search>\n<replace>self.assertEqual(inherited_reverse_m2m.through_fields, ('event', 'invitee'))</replace>\n</test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 267,
+  "prompt_tokens": 6336,
+  "total_tokens": 6603,
+  "completion_tokens_details": null,
+  "prompt_tokens_details": null
+ },
+ "summary": "Change the through_fields in ManyToManyRel to be a tuple instead of a list to ensure hashability.",
+ "requirement": "The through_fields attribute in ManyToManyRel should be a tuple instead of a list to ensure it is hashable. This change is necessary because the identity property uses through_fields as part of a tuple, and tuples are hashable while lists are not. This requirement supersedes any conflicting expectations in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/fields/reverse_related.py",
+   "search": "self.through_fields,",
+   "replace": "tuple(self.through_fields),"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/m2m_through/tests.py",
+   "search": "self.assertEqual(reverse_m2m.through_fields, ['event', 'invitee'])",
+   "replace": "self.assertEqual(reverse_m2m.through_fields, ('event', 'invitee'))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/m2m_through/tests.py",
+   "search": "self.assertEqual(inherited_reverse_m2m.through_fields, ['event', 'invitee'])",
+   "replace": "self.assertEqual(inherited_reverse_m2m.through_fields, ('event', 'invitee'))"
+  }
+ ],
+ "status": "generated"
+}

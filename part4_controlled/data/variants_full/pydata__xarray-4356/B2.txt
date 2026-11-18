@@ -1,0 +1,31 @@
+**Problem summary**  
+Reducing min_count across more than one dimension is not supported, causing a failure.
+
+**Is your feature request related to a problem? Please describe.**
+
+Using `sum` with `min_count` triggers an error when more than a single dimension is supplied:
+
+```python
+import xarray as xr
+da = xr.DataArray([[1., 2, 3], [4, 5, 6]])
+da.sum(["dim_0", "dim_1"], min_count=1)
+```
+
+**Desired behavior**  
+The code that computes the number of valid elements should follow the logic shown here:
+
+https://github.com/pydata/xarray/blob/1be777fe725a85b8cc0f65a2bc41f4bc2ba18043/xarray/core/nanops.py#L35
+
+**Proposed change**  
+It seems that replacing  
+
+`mask.shape[axis]`  
+
+with  
+
+`np.take(a.shape, axis).prod()`  
+
+would fix the problem.
+
+**Additional context**  
+Possibly relevant to issue #4351.

@@ -1,0 +1,49 @@
+{
+ "instance_id": "pylint-dev__pylint-6386",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "766090e8ddc00311596a8f95063bec0af2effa5bea83ab34c64207a828b1ea80",
+ "raw": "<summary>Deprecate the short\u202f\u2011v flag and emit a warning when it is used.</summary>\n<requirement>The short `-v` option is now deprecated. Using it should still enable verbose mode, but it must emit a `DeprecationWarning` with the message \u201cThe -v option is deprecated, use --verbose instead.\u201d This requirement supersedes any previous expectation that `-v` works silently.</requirement>\n<source_edit file=\"pylint/config/utils.py\"><search>if not argument.startswith(\"-\"):</search><replace>if not argument.startswith(\"-\"):\n    processed_args.append(argument)\n    i += 1\n    continue\n\nif argument == \"-v\":\n    import warnings\n    warnings.warn(\n        \"The -v option is deprecated, use --verbose instead.\", DeprecationWarning, stacklevel=2\n    )</replace></source_edit>\n<test_edit file=\"tests/config/test_config.py\"><search>from pytest import CaptureFixture</search><replace>from pytest import CaptureFixture\nimport pytest</replace></test_edit>\n<test_edit file=\"tests/config/test_config.py\"><search>def test_short_verbose(capsys: CaptureFixture) -> None:</search><replace>def test_short_verbose(capsys: CaptureFixture) -> None:\n    \"\"\"Check that we correctly handle the -v flag.\"\"\"\n    with pytest.warns(DeprecationWarning, match=\"The -v option is deprecated\"):\n        Run([str(EMPTY_MODULE), \"-v\"], exit=False)\n    output = capsys.readouterr()\n    assert \"Using config file\" in output.err</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2927,
+  "prompt_tokens": 1719,
+  "total_tokens": 4646,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2581,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Deprecate the short\u202f\u2011v flag and emit a warning when it is used.",
+ "requirement": "The short `-v` option is now deprecated. Using it should still enable verbose mode, but it must emit a `DeprecationWarning` with the message \u201cThe -v option is deprecated, use --verbose instead.\u201d This requirement supersedes any previous expectation that `-v` works silently.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "pylint/config/utils.py",
+   "search": "if not argument.startswith(\"-\"):",
+   "replace": "if not argument.startswith(\"-\"):\n    processed_args.append(argument)\n    i += 1\n    continue\n\nif argument == \"-v\":\n    import warnings\n    warnings.warn(\n        \"The -v option is deprecated, use --verbose instead.\", DeprecationWarning, stacklevel=2\n    )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/config/test_config.py",
+   "search": "from pytest import CaptureFixture",
+   "replace": "from pytest import CaptureFixture\nimport pytest"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/config/test_config.py",
+   "search": "def test_short_verbose(capsys: CaptureFixture) -> None:",
+   "replace": "def test_short_verbose(capsys: CaptureFixture) -> None:\n    \"\"\"Check that we correctly handle the -v flag.\"\"\"\n    with pytest.warns(DeprecationWarning, match=\"The -v option is deprecated\"):\n        Run([str(EMPTY_MODULE), \"-v\"], exit=False)\n    output = capsys.readouterr()\n    assert \"Using config file\" in output.err"
+  }
+ ],
+ "status": "generated"
+}

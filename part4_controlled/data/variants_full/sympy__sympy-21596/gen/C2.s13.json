@@ -1,0 +1,49 @@
+{
+ "instance_id": "sympy__sympy-21596",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "4728ebc9c6513731def2f8cdeb21595b2661d0696dde792c7169ecabfc24280f",
+ "raw": "<summary>Intersection of an ImageSet with Reals must now return a concrete FiniteSet of real values whenever the parameter solutions are finite, never a ConditionSet or ImageSet containing a ConditionSet.</summary>\n<requirement>When an ImageSet is intersected with the set of real numbers, the result must be a concrete set of real numbers. If the intersection condition restricts the integer (or other) parameter to a finite number of values, the method should evaluate the ImageSet on those values and return a FiniteSet of the resulting real numbers. Under no circumstances should the result be a ConditionSet or an ImageSet that still contains a ConditionSet; such symbolic conditions must be resolved to explicit real values (or to EmptySet if no solutions exist). This supersedes any previous expectation that a symbolic ConditionSet may be returned.</requirement>\n<source_edit file=\"sympy/sets/handlers/intersection.py\"><search>        return imageset(lam, base_set)</search><replace>        # If the resulting base_set is a ConditionSet that can be solved\n        # to a finite number of integer values, evaluate the lambda on those\n        # values and return a FiniteSet of the real results.\n        if isinstance(base_set, ConditionSet):\n            from sympy.solvers.solveset import solveset\n            sols = solveset(base_set.condition, n, base_set.base_set)\n            if sols.is_FiniteSet:\n                vals = [lam.subs(n, v) for v in sols]\n                return FiniteSet(*vals)\n        return imageset(lam, base_set)</replace></source_edit>\n<source_edit file=\"sympy/sets/handlers/intersection.py\"><search>from sympy.sets.fancysets import (Integers, Naturals, Reals, Range,\n     ImageSet, Rationals)</search><replace>from sympy.sets.fancysets import (Integers, Naturals, Reals, Range,\n     ImageSet, Rationals)\nfrom sympy.sets.sets import FiniteSet, ConditionSet</replace></source_edit>\n\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>assert imageset(Lambda(n, n/2 + im.expand()*I), S.Integers\n        ).intersect(S.Reals) == ImageSet(Lambda(x, x/2), ConditionSet(\n        n, Eq(n**2 - n/2 - S(1)/2, 0), S.Integers))</search><replace>assert imageset(Lambda(n, n/2 + im.expand()*I), S.Integers\n        ).intersect(S.Reals) == FiniteSet(S.Half)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2722,
+  "prompt_tokens": 2239,
+  "total_tokens": 4961,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2144,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Intersection of an ImageSet with Reals must now return a concrete FiniteSet of real values whenever the parameter solutions are finite, never a ConditionSet or ImageSet containing a ConditionSet.",
+ "requirement": "When an ImageSet is intersected with the set of real numbers, the result must be a concrete set of real numbers. If the intersection condition restricts the integer (or other) parameter to a finite number of values, the method should evaluate the ImageSet on those values and return a FiniteSet of the resulting real numbers. Under no circumstances should the result be a ConditionSet or an ImageSet that still contains a ConditionSet; such symbolic conditions must be resolved to explicit real values (or to EmptySet if no solutions exist). This supersedes any previous expectation that a symbolic ConditionSet may be returned.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/handlers/intersection.py",
+   "search": "        return imageset(lam, base_set)",
+   "replace": "        # If the resulting base_set is a ConditionSet that can be solved\n        # to a finite number of integer values, evaluate the lambda on those\n        # values and return a FiniteSet of the real results.\n        if isinstance(base_set, ConditionSet):\n            from sympy.solvers.solveset import solveset\n            sols = solveset(base_set.condition, n, base_set.base_set)\n            if sols.is_FiniteSet:\n                vals = [lam.subs(n, v) for v in sols]\n                return FiniteSet(*vals)\n        return imageset(lam, base_set)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/handlers/intersection.py",
+   "search": "from sympy.sets.fancysets import (Integers, Naturals, Reals, Range,\n     ImageSet, Rationals)",
+   "replace": "from sympy.sets.fancysets import (Integers, Naturals, Reals, Range,\n     ImageSet, Rationals)\nfrom sympy.sets.sets import FiniteSet, ConditionSet"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": "assert imageset(Lambda(n, n/2 + im.expand()*I), S.Integers\n        ).intersect(S.Reals) == ImageSet(Lambda(x, x/2), ConditionSet(\n        n, Eq(n**2 - n/2 - S(1)/2, 0), S.Integers))",
+   "replace": "assert imageset(Lambda(n, n/2 + im.expand()*I), S.Integers\n        ).intersect(S.Reals) == FiniteSet(S.Half)"
+  }
+ ],
+ "status": "generated"
+}

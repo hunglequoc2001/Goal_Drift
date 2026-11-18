@@ -1,0 +1,55 @@
+{
+ "instance_id": "sympy__sympy-13798",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "a1e9e021d4335c77dedbd8eab42a410f36b8113403f2638cedcd6e2b93339e3b",
+ "raw": "<summary>Restrict mul_symbol to the predefined set and raise ValueError for unsupported values.</summary>\n<requirement>The `mul_symbol` keyword argument for the LaTeX printer must be limited to the four supported symbols ('dot', 'times', 'centerdot', 'none'). Supplying any other value should raise a `ValueError` indicating an unsupported mul_symbol. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sympy/printing/latex.py\"><search>        try:\n            self._settings['mul_symbol_latex'] = \\\n                mul_symbol_table[self._settings['mul_symbol']]\n        except KeyError:\n            self._settings['mul_symbol_latex'] = \\\n                self._settings['mul_symbol']\n        try:\n            self._settings['mul_symbol_latex_numbers'] = \\\n                mul_symbol_table[self._settings['mul_symbol'] or 'dot']\n        except KeyError:\n            if (self._settings['mul_symbol'].strip() in\n                    ['', ' ', '\\\\', '\\\\,', '\\\\:', '\\\\;', '\\\\quad']):\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    mul_symbol_table['dot']\n            else:\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    self._settings['mul_symbol']</search><replace>        if self._settings['mul_symbol'] not in mul_symbol_table:\n            raise ValueError(f\"Unsupported mul_symbol: {self._settings['mul_symbol']}\")\n        self._settings['mul_symbol_latex'] = mul_symbol_table[self._settings['mul_symbol']]\n        self._settings['mul_symbol_latex_numbers'] = mul_symbol_table[self._settings['mul_symbol'] or 'dot']</replace></source_edit>\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>from sympy import latex</search><replace>from sympy import latex\nimport pytest</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>    assert latex(3*x**2*y, mul_symbol='\\\\,') == r\"3\\\\,x^{2}\\\\,y\"</search><replace>    with pytest.raises(ValueError):\n        latex(3*x**2*y, mul_symbol='\\\\,')</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>    assert latex(1.5*3**x, mul_symbol='\\\\,') == r\"1.5 \\cdot 3^{x}\"</search><replace>    with pytest.raises(ValueError):\n        latex(1.5*3**x, mul_symbol='\\\\,')</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2144,
+  "prompt_tokens": 1327,
+  "total_tokens": 3471,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1575,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Restrict mul_symbol to the predefined set and raise ValueError for unsupported values.",
+ "requirement": "The `mul_symbol` keyword argument for the LaTeX printer must be limited to the four supported symbols ('dot', 'times', 'centerdot', 'none'). Supplying any other value should raise a `ValueError` indicating an unsupported mul_symbol. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/latex.py",
+   "search": "        try:\n            self._settings['mul_symbol_latex'] = \\\n                mul_symbol_table[self._settings['mul_symbol']]\n        except KeyError:\n            self._settings['mul_symbol_latex'] = \\\n                self._settings['mul_symbol']\n        try:\n            self._settings['mul_symbol_latex_numbers'] = \\\n                mul_symbol_table[self._settings['mul_symbol'] or 'dot']\n        except KeyError:\n            if (self._settings['mul_symbol'].strip() in\n                    ['', ' ', '\\\\', '\\\\,', '\\\\:', '\\\\;', '\\\\quad']):\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    mul_symbol_table['dot']\n            else:\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    self._settings['mul_symbol']",
+   "replace": "        if self._settings['mul_symbol'] not in mul_symbol_table:\n            raise ValueError(f\"Unsupported mul_symbol: {self._settings['mul_symbol']}\")\n        self._settings['mul_symbol_latex'] = mul_symbol_table[self._settings['mul_symbol']]\n        self._settings['mul_symbol_latex_numbers'] = mul_symbol_table[self._settings['mul_symbol'] or 'dot']"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "from sympy import latex",
+   "replace": "from sympy import latex\nimport pytest"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "    assert latex(3*x**2*y, mul_symbol='\\\\,') == r\"3\\\\,x^{2}\\\\,y\"",
+   "replace": "    with pytest.raises(ValueError):\n        latex(3*x**2*y, mul_symbol='\\\\,')"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "    assert latex(1.5*3**x, mul_symbol='\\\\,') == r\"1.5 \\cdot 3^{x}\"",
+   "replace": "    with pytest.raises(ValueError):\n        latex(1.5*3**x, mul_symbol='\\\\,')"
+  }
+ ],
+ "status": "generated"
+}

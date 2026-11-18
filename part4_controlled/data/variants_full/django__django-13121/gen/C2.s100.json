@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-13121",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 44859,
+ "raw": "<summary>Disallow adding plain datetime.timedelta objects to DurationField expressions.</summary>\n<requirement>Adding a plain <code>datetime.timedelta</code> to a <code>DurationField</code> via an <code>F</code> expression must now raise a <code>TypeError</code>. This supersedes any previous expectation that such addition would succeed.</requirement>\n<source_edit file=\"django/db/models/expressions.py\"><search>output_field = (</search><replace>if isinstance(other, datetime.timedelta):\n                raise TypeError(\"Adding a plain datetime.timedelta to a DurationField is not supported.\")\n            other = Value(other)\n            # original logic for other types continues below\n            # (no output_field is set for non\u2011timedelta values)\n            # \n            # Note: the following line replaces the previous block that set\n            # an output_field for timedelta instances.\n            # \n            # output_field = (\n</replace></source_edit>\n<test_edit file=\"tests/expressions/tests.py\"><search>def test_duration_expressions(self):</search><replace>def test_duration_expressions(self):\n        for delta in self.deltas:\n            with self.assertRaises(TypeError):\n                Experiment.objects.annotate(duration=F('estimated_time') + delta)\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Disallow adding plain datetime.timedelta objects to DurationField expressions.",
+ "requirement": "Adding a plain <code>datetime.timedelta</code> to a <code>DurationField</code> via an <code>F</code> expression must now raise a <code>TypeError</code>. This supersedes any previous expectation that such addition would succeed.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/expressions.py",
+   "search": "output_field = (",
+   "replace": "if isinstance(other, datetime.timedelta):\n                raise TypeError(\"Adding a plain datetime.timedelta to a DurationField is not supported.\")\n            other = Value(other)\n            # original logic for other types continues below\n            # (no output_field is set for non\u2011timedelta values)\n            # \n            # Note: the following line replaces the previous block that set\n            # an output_field for timedelta instances.\n            # \n            # output_field = ("
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/expressions/tests.py",
+   "search": "def test_duration_expressions(self):",
+   "replace": "def test_duration_expressions(self):\n        for delta in self.deltas:\n            with self.assertRaises(TypeError):\n                Experiment.objects.annotate(duration=F('estimated_time') + delta)"
+  }
+ ]
+}

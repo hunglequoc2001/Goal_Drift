@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-15741",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 20846,
+ "raw": "<summary>get_format must reject lazy format_type arguments</summary>\n<requirement>The get_format function must reject lazy format type arguments; if *format_type* is a lazy translation object (i.e., an instance of ``django.utils.functional.Promise``), it should raise a ``TypeError`` with a clear message. Callers should use ``get_format_lazy`` for lazy handling. This supersedes any conflicting expectation in the issue.</requirement>\n\n<source_edit file=\"django/utils/formats.py\"><search>from django.utils.functional import lazy</search><replace>from django.utils.functional import lazy, Promise</replace></source_edit>\n\n<source_edit file=\"django/utils/formats.py\"><search>format_type = str(format_type)  # format_type may be lazy.</search><replace>if isinstance(format_type, Promise):\n    raise TypeError(\"format_type must be a string, not a lazy object\")</replace></source_edit>\n\n<test_edit file=\"tests/i18n/tests.py\"><search>self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")</search><replace>with self.assertRaises(TypeError):\n    get_format(gettext_lazy(\"DATE_FORMAT\"))</replace></test_edit>\n\n<test_edit file=\"tests/template_tests/filter_tests/test_date.py\"><search>output = self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})</search><replace>with self.assertRaises(TypeError):\n    self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})</replace></test_edit>\n\n<test_edit file=\"tests/template_tests/filter_tests/test_date.py\"><search>self.assertEqual(output, \"00:00\")</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "get_format must reject lazy format_type arguments",
+ "requirement": "The get_format function must reject lazy format type arguments; if *format_type* is a lazy translation object (i.e., an instance of ``django.utils.functional.Promise``), it should raise a ``TypeError`` with a clear message. Callers should use ``get_format_lazy`` for lazy handling. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "from django.utils.functional import lazy",
+   "replace": "from django.utils.functional import lazy, Promise"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "format_type = str(format_type)  # format_type may be lazy.",
+   "replace": "if isinstance(format_type, Promise):\n    raise TypeError(\"format_type must be a string, not a lazy object\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/i18n/tests.py",
+   "search": "self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")",
+   "replace": "with self.assertRaises(TypeError):\n    get_format(gettext_lazy(\"DATE_FORMAT\"))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_date.py",
+   "search": "output = self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})",
+   "replace": "with self.assertRaises(TypeError):\n    self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_date.py",
+   "search": "self.assertEqual(output, \"00:00\")",
+   "replace": ""
+  }
+ ]
+}

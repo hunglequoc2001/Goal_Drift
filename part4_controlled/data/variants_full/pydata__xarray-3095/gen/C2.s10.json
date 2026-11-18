@@ -1,0 +1,43 @@
+{
+ "instance_id": "pydata__xarray-3095",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "2b10ec1870cc6f3a7e08dd97ad9acdace83787132b437f14be8515c48952a60d",
+ "raw": "<summary>Copying an IndexVariable with deep=True now casts string indices to object dtype.</summary>\n<requirement>When performing a deep copy (deep=True) of a Dataset, DataArray, or Variable that contains an IndexVariable with a string (unicode) dtype, the resulting copy must have its index dtype converted to object, matching pandas' default behavior for string indices. This supersedes any previous expectation that the original string dtype be preserved during a deep copy.</requirement>\n<source_edit file=\"xarray/core/indexing.py\"><search>def copy(self, deep: bool = True) -> 'PandasIndexAdapter':</search><replace>def copy(self, deep: bool = True) -> 'PandasIndexAdapter':\n        # Not the same as just writing `self.array.copy(deep=deep)`, as\n        # shallow copies of the underlying numpy.ndarrays become deep ones\n        # upon pickling\n        # >>> len(pickle.dumps((self.array, self.array)))\n        # 4000281\n        # >>> len(pickle.dumps((self.array, self.array.copy(deep=False))))\n        # 8000341\n        array = self.array.copy(deep=True) if deep else self.array\n        return PandasIndexAdapter(array)</replace></source_edit>\n<test_edit file=\"xarray/tests/test_variable.py\"><search>w = v.copy(deep=deep)</search><replace>w = v.copy(deep=deep)\n        assert type(v) is type(w)\n        if astype is str and deep:\n            # Deep copy of a string IndexVariable should result in object dtype\n            assert w.dtype == object\n        else:\n            assert_identical(v, w)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2091,
+  "prompt_tokens": 2334,
+  "total_tokens": 4425,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1725,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Copying an IndexVariable with deep=True now casts string indices to object dtype.",
+ "requirement": "When performing a deep copy (deep=True) of a Dataset, DataArray, or Variable that contains an IndexVariable with a string (unicode) dtype, the resulting copy must have its index dtype converted to object, matching pandas' default behavior for string indices. This supersedes any previous expectation that the original string dtype be preserved during a deep copy.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/indexing.py",
+   "search": "def copy(self, deep: bool = True) -> 'PandasIndexAdapter':",
+   "replace": "def copy(self, deep: bool = True) -> 'PandasIndexAdapter':\n        # Not the same as just writing `self.array.copy(deep=deep)`, as\n        # shallow copies of the underlying numpy.ndarrays become deep ones\n        # upon pickling\n        # >>> len(pickle.dumps((self.array, self.array)))\n        # 4000281\n        # >>> len(pickle.dumps((self.array, self.array.copy(deep=False))))\n        # 8000341\n        array = self.array.copy(deep=True) if deep else self.array\n        return PandasIndexAdapter(array)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_variable.py",
+   "search": "w = v.copy(deep=deep)",
+   "replace": "w = v.copy(deep=deep)\n        assert type(v) is type(w)\n        if astype is str and deep:\n            # Deep copy of a string IndexVariable should result in object dtype\n            assert w.dtype == object\n        else:\n            assert_identical(v, w)"
+  }
+ ],
+ "status": "generated"
+}

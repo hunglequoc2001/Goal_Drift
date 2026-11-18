@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-15741",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "818502a3096b79bad9b16e7acdd3076bccd202b4cb0be8a9b77e3b8f5c77fd0f",
+ "raw": "<summary>get_format must reject lazy format strings unless explicitly allowed</summary>\n<requirement>Superseding the previous discussion,\u202fdjango.utils.formats.get_format now takes an additional optional keyword argument\u202fallow_lazy\u202f(default\u202fFalse). If\u202fformat_type\u202fis a lazy translation object (a\u202fPromise) and\u202fallow_lazy\u202fis\u202fFalse, the function must raise\u202fTypeError\u202finstead of silently converting it to a string. Callers that intentionally want to accept lazy values must pass\u202fallow_lazy=True. This new rule overrides any earlier expectations that get_format should automatically handle lazy format strings.</requirement>\n<source_edit file=\"django/utils/formats.py\"><search>def get_format(format_type, lang=None, use_l10n=None):</search><replace>def get_format(format_type, lang=None, use_l10n=None, allow_lazy=False):</replace></source_edit>\n<source_edit file=\"django/utils/formats.py\"><search>from django.utils.functional import Promise</search><replace>from django.utils.functional import Promise</replace></source_edit>\n<source_edit file=\"django/utils/formats.py\"><search>format_type = str(format_type)  # format_type may be lazy.</search><replace>if isinstance(format_type, Promise):\n    if not allow_lazy:\n        raise TypeError(\"format_type must be a string, not a lazy translation object\")\n    # If lazy is explicitly allowed, resolve it to a string.\n    format_type = str(format_type)\nelse:\n    format_type = str(format_type)  # ensure a plain string</replace></source_edit>\n<test_edit file=\"tests/i18n/tests.py\"><search>self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")</search><replace>with self.assertRaises(TypeError):\n    get_format(gettext_lazy(\"DATE_FORMAT\"))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2827,
+  "prompt_tokens": 1115,
+  "total_tokens": 3942,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2430,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "get_format must reject lazy format strings unless explicitly allowed",
+ "requirement": "Superseding the previous discussion,\u202fdjango.utils.formats.get_format now takes an additional optional keyword argument\u202fallow_lazy\u202f(default\u202fFalse). If\u202fformat_type\u202fis a lazy translation object (a\u202fPromise) and\u202fallow_lazy\u202fis\u202fFalse, the function must raise\u202fTypeError\u202finstead of silently converting it to a string. Callers that intentionally want to accept lazy values must pass\u202fallow_lazy=True. This new rule overrides any earlier expectations that get_format should automatically handle lazy format strings.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "def get_format(format_type, lang=None, use_l10n=None):",
+   "replace": "def get_format(format_type, lang=None, use_l10n=None, allow_lazy=False):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "from django.utils.functional import Promise",
+   "replace": "from django.utils.functional import Promise"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "format_type = str(format_type)  # format_type may be lazy.",
+   "replace": "if isinstance(format_type, Promise):\n    if not allow_lazy:\n        raise TypeError(\"format_type must be a string, not a lazy translation object\")\n    # If lazy is explicitly allowed, resolve it to a string.\n    format_type = str(format_type)\nelse:\n    format_type = str(format_type)  # ensure a plain string"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/i18n/tests.py",
+   "search": "self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")",
+   "replace": "with self.assertRaises(TypeError):\n    get_format(gettext_lazy(\"DATE_FORMAT\"))"
+  }
+ ],
+ "status": "generated"
+}

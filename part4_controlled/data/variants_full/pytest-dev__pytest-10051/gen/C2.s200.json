@@ -1,0 +1,43 @@
+{
+ "instance_id": "pytest-dev__pytest-10051",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 100,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "mentions_tests",
+ "prompt_chars": 19120,
+ "raw": "<summary>caplog.clear() now clears records for all test stages</summary>\n<requirement>When `caplog.clear()` is invoked, it must reset the captured log records for **all** test phases (\u201csetup\u201d, \u201ccall\u201d, and \u201cteardown\u201d) as well as the captured log text. This supersedes any earlier expectation that `clear()` only affects the call stage.</requirement>\n<source_edit file=\"src/_pytest/logging.py\"><search>def clear(self) -> None:\n        \"\"\"Reset the list of log records and the captured log text.\"\"\"\n        self.handler.clear()</search><replace>def clear(self) -> None:\n        \"\"\"Reset the list of log records and the captured log text for all stages.\"\"\"\n        self.handler.clear()\n        # Also clear the per\u2011stage record storage.\n        self._item.stash[caplog_records_key].clear()</replace></source_edit>\n<test_edit file=\"testing/logging/test_fixture.py\"><search>assert [x.message for x in caplog.get_records(\"setup\")] == [\"a_setup_log\"]</search><replace>assert [x.message for x in caplog.get_records(\"setup\")] == []</replace></test_edit>\n<test_edit file=\"testing/logging/test_fixture.py\"><search>assert [x.message for x in caplog.get_records(\"setup\")] == [\"a_setup_log\"]</search><replace>assert [x.message for x in caplog.get_records(\"setup\")] == []</replace></test_edit>\n<test_edit file=\"testing/logging/test_fixture.py\"><search>assert [x.message for x in caplog.get_records(\"setup\")] == [\"a_setup_log\"]</search><replace>assert [x.message for x in caplog.get_records(\"setup\")] == []</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "caplog.clear() now clears records for all test stages",
+ "requirement": "When `caplog.clear()` is invoked, it must reset the captured log records for **all** test phases (\u201csetup\u201d, \u201ccall\u201d, and \u201cteardown\u201d) as well as the captured log text. This supersedes any earlier expectation that `clear()` only affects the call stage.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "def clear(self) -> None:\n        \"\"\"Reset the list of log records and the captured log text.\"\"\"\n        self.handler.clear()",
+   "replace": "def clear(self) -> None:\n        \"\"\"Reset the list of log records and the captured log text for all stages.\"\"\"\n        self.handler.clear()\n        # Also clear the per\u2011stage record storage.\n        self._item.stash[caplog_records_key].clear()"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/logging/test_fixture.py",
+   "search": "assert [x.message for x in caplog.get_records(\"setup\")] == [\"a_setup_log\"]",
+   "replace": "assert [x.message for x in caplog.get_records(\"setup\")] == []"
+  },
+  {
+   "kind": "test_edit",
+   "file": "testing/logging/test_fixture.py",
+   "search": "assert [x.message for x in caplog.get_records(\"setup\")] == [\"a_setup_log\"]",
+   "replace": "assert [x.message for x in caplog.get_records(\"setup\")] == []"
+  },
+  {
+   "kind": "test_edit",
+   "file": "testing/logging/test_fixture.py",
+   "search": "assert [x.message for x in caplog.get_records(\"setup\")] == [\"a_setup_log\"]",
+   "replace": "assert [x.message for x in caplog.get_records(\"setup\")] == []"
+  }
+ ]
+}

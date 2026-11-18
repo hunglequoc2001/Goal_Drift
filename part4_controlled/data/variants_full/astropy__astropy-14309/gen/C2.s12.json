@@ -1,0 +1,43 @@
+{
+ "instance_id": "astropy__astropy-14309",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "e4bfcf619074037600bbbc08d6ae8c8746e337ca0d212fe54a0e93179180a7bf",
+ "raw": "<summary>is_fits must inspect positional arguments when the filename lacks a FITS extension</summary>\n<requirement>When `identify_format` (or any caller) invokes `connect.is_fits` with a non\u2011None `filepath` that does **not** end with a recognized FITS extension (\".fits\", \".fits.gz\", \".fit\", \".fit.gz\", \".fts\", \".fts.gz\"), the function should no longer return immediately. Instead it must check whether any positional arguments were supplied: if at least one positional argument is present, return `True` if the first argument is an instance of a FITS class (`HDUList`, `TableHDU`, `BinTableHDU`, or `GroupsHDU`), and `False` otherwise. If no positional arguments are given, simply return `False`. This supersedes any previous expectation that the function returns `False` outright for non\u2011FITS filenames regardless of arguments.</requirement>\n<source_edit file=\"astropy/io/fits/connect.py\"><search>elif filepath is not None:</search><replace>elif filepath is not None:\n    if filepath.lower().endswith(\n        (\".fits\", \".fits.gz\", \".fit\", \".fit.gz\", \".fts\", \".fts.gz\")\n    ):\n        return True\n    elif args:\n        return isinstance(args[0], (HDUList, TableHDU, BinTableHDU, GroupsHDU))\n    else:\n        return False</replace></source_edit>\n<test_edit file=\"astropy/io/fits/tests/test_connect.py\"><search>def test_is_fits_gh_14305():</search><replace>def test_is_fits_gh_14305():\n    \"\"\"Regression test for https://github.com/astropy/astropy/issues/14305\"\"\"\n    # Non\u2011FITS extension with no positional arguments should return False\n    assert not connect.is_fits(\"\", \"foo.bar\", None)\n    # Non\u2011FITS extension with a FITS object as the first positional argument should return True\n    hdulist = HDUList()\n    assert connect.is_fits(\"\", \"foo.bar\", None, hdulist)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1728,
+  "prompt_tokens": 2312,
+  "total_tokens": 4040,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1268,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "is_fits must inspect positional arguments when the filename lacks a FITS extension",
+ "requirement": "When `identify_format` (or any caller) invokes `connect.is_fits` with a non\u2011None `filepath` that does **not** end with a recognized FITS extension (\".fits\", \".fits.gz\", \".fit\", \".fit.gz\", \".fts\", \".fts.gz\"), the function should no longer return immediately. Instead it must check whether any positional arguments were supplied: if at least one positional argument is present, return `True` if the first argument is an instance of a FITS class (`HDUList`, `TableHDU`, `BinTableHDU`, or `GroupsHDU`), and `False` otherwise. If no positional arguments are given, simply return `False`. This supersedes any previous expectation that the function returns `False` outright for non\u2011FITS filenames regardless of arguments.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/io/fits/connect.py",
+   "search": "elif filepath is not None:",
+   "replace": "elif filepath is not None:\n    if filepath.lower().endswith(\n        (\".fits\", \".fits.gz\", \".fit\", \".fit.gz\", \".fts\", \".fts.gz\")\n    ):\n        return True\n    elif args:\n        return isinstance(args[0], (HDUList, TableHDU, BinTableHDU, GroupsHDU))\n    else:\n        return False"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/io/fits/tests/test_connect.py",
+   "search": "def test_is_fits_gh_14305():",
+   "replace": "def test_is_fits_gh_14305():\n    \"\"\"Regression test for https://github.com/astropy/astropy/issues/14305\"\"\"\n    # Non\u2011FITS extension with no positional arguments should return False\n    assert not connect.is_fits(\"\", \"foo.bar\", None)\n    # Non\u2011FITS extension with a FITS object as the first positional argument should return True\n    hdulist = HDUList()\n    assert connect.is_fits(\"\", \"foo.bar\", None, hdulist)"
+  }
+ ],
+ "status": "generated"
+}

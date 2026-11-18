@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-14539",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 14056,
+ "raw": "<summary>urlize must keep HTML\u2011escaped entities in the href without unescaping them first</summary>\n<requirement>When converting plain\u2011text URLs to HTML links, the URL used for the\u202fhref attribute must be derived directly from the original text, preserving any HTML\u2011escaped entities (e.g., \u201c&lt;\u201d) as\u2011is; the URL should then be HTML\u2011escaped for safe inclusion in the attribute. This supersedes any earlier expectation that the URL be HTML\u2011unescaped before quoting.</requirement>\n<source_edit file=\"django/utils/html.py\"><search>url = smart_urlquote(html.unescape(middle))</search><replace>url = smart_urlquote(middle)</replace></source_edit>\n<source_edit file=\"django/utils/html.py\"><search>url = smart_urlquote('http://%s' % html.unescape(middle))</search><replace>url = smart_urlquote('http://%s' % middle)</replace></source_edit>\n<test_edit file=\"tests/utils_tests/test_html.py\"><search>'Search for <a href=\"http://google.com/?q=1%3C\">google.com/?q=1&lt</a>! and see.'</search><replace>'Search for <a href=\"http://google.com/?q=1&amp;lt\">google.com/?q=1&lt</a>! and see.'</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "urlize must keep HTML\u2011escaped entities in the href without unescaping them first",
+ "requirement": "When converting plain\u2011text URLs to HTML links, the URL used for the\u202fhref attribute must be derived directly from the original text, preserving any HTML\u2011escaped entities (e.g., \u201c&lt;\u201d) as\u2011is; the URL should then be HTML\u2011escaped for safe inclusion in the attribute. This supersedes any earlier expectation that the URL be HTML\u2011unescaped before quoting.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/html.py",
+   "search": "url = smart_urlquote(html.unescape(middle))",
+   "replace": "url = smart_urlquote(middle)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/utils/html.py",
+   "search": "url = smart_urlquote('http://%s' % html.unescape(middle))",
+   "replace": "url = smart_urlquote('http://%s' % middle)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/utils_tests/test_html.py",
+   "search": "'Search for <a href=\"http://google.com/?q=1%3C\">google.com/?q=1&lt</a>! and see.'",
+   "replace": "'Search for <a href=\"http://google.com/?q=1&amp;lt\">google.com/?q=1&lt</a>! and see.'"
+  }
+ ]
+}

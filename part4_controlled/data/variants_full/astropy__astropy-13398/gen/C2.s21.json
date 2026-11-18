@@ -1,0 +1,61 @@
+{
+ "instance_id": "astropy__astropy-13398",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "78b9adf2796f96125a4f4a06a5a7f672d9cbd9c28ae702f1cb6bceb8d236975d",
+ "raw": "<summary>Topocentric ITRS frames are no longer supported for ITRS\u202f\u2194\u202fObserved transforms.</summary>\n<requirement>All ITRS\u202f\u2194\u202fObserved (AltAz/HADec) transformations must reject any ITRS coordinate that has a non\u2011default EarthLocation (i.e. a location other than the Earth\u2019s centre). In such cases the transform should raise a\u202fValueError with the message \u201cTopocentric ITRS frames are not supported in observed transforms\u201d. This supersedes any previous expectation that the transform would automatically handle topocentric ITRS positions.</requirement>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>from .itrs import ITRS</search><replace>from .itrs import ITRS\nfrom .utils import EARTH_CENTER</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>def itrs_to_observed(itrs_coo, observed_frame):</search><replace>def itrs_to_observed(itrs_coo, observed_frame):\n    # Reject topocentric ITRS inputs\n    if itrs_coo.location != EARTH_CENTER:\n        raise ValueError(\"Topocentric ITRS frames are not supported in observed transforms\")</replace></source_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>def test_itrs_topo_to_altaz_with_refraction():</search><replace>def test_itrs_topo_to_altaz_with_refraction():\n    \"\"\"\n    Verify that transforming a topocentric ITRS coordinate to AltAz raises\n    a ValueError because topocentric ITRS frames are not supported.\n    \"\"\"\n    import pytest\n\n    loc = EarthLocation(lat=0*u.deg, lon=0*u.deg, height=0*u.m)\n    usph = golden_spiral_grid(200)\n    dist = np.linspace(1., 1000.0, len(usph)) * u.au\n    icrs = ICRS(ra=usph.lon, dec=usph.lat, distance=dist)\n    altaz_frame1 = AltAz(obstime='J2000', location=loc)\n    altaz_frame2 = AltAz(obstime='J2000', location=loc,\n                         pressure=1000.0 * u.hPa, relative_humidity=0.5)\n    itrs_frame = ITRS(location=loc)\n\n    # Transform ICRS to a topocentric ITRS (location != EARTH_CENTER)\n    itrs = icrs.transform_to(itrs_frame)\n\n    # Both AltAz transforms must raise ValueError\n    with pytest.raises(ValueError):\n        itrs.transform_to(altaz_frame1)\n    with pytest.raises(ValueError):\n        itrs.transform_to(altaz_frame2)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>def test_itrs_topo_to_hadec_with_refraction():</search><replace>def test_itrs_topo_to_hadec_with_refraction():\n    \"\"\"\n    Verify that transforming a topocentric ITRS coordinate to HADec raises\n    a ValueError because topocentric ITRS frames are not supported.\n    \"\"\"\n    import pytest\n\n    loc = EarthLocation(lat=0*u.deg, lon=0*u.deg, height=0*u.m)\n    usph = golden_spiral_grid(200)\n    dist = np.linspace(1., 1000.0, len(usph)) * u.au\n    icrs = ICRS(ra=usph.lon, dec=usph.lat, distance=dist)\n    hadec_frame1 = HADec(obstime='J2000', location=loc)\n    hadec_frame2 = HADec(obstime='J2000', location=loc,\n                         pressure=1000.0 * u.hPa, relative_humidity=0.5)\n    itrs_frame = ITRS(location=loc)\n\n    # Transform ICRS to a topocentric ITRS (location != EARTH_CENTER)\n    itrs = icrs.transform_to(itrs_frame)\n\n    # Both HADec transforms must raise ValueError\n    with pytest.raises(ValueError):\n        itrs.transform_to(hadec_frame1)\n    with pytest.raises(ValueError):\n        itrs.transform_to(hadec_frame2)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>def test_itrs_straight_overhead():</search><replace>def test_itrs_straight_overhead():\n    \"\"\"\n    Verify that a topocentric ITRS object cannot be transformed to AltAz or HADec\n    because topocentric ITRS frames are not supported in observed transforms.\n    \"\"\"\n    import pytest\n\n    t = Time('J2010')\n    obj = EarthLocation(-1*u.deg, 52*u.deg, height=10.*u.km)\n    home = EarthLocation(-1*u.deg, 52*u.deg, height=0.*u.km)\n\n    # Geocentric ITRS position of the object\n    itrs_geo = obj.get_itrs(t).cartesian\n\n    # Geocentric ITRS position of observatory\n    obsrepr = home.get_itrs(t).cartesian\n\n    # Topocentric ITRS position of a straight\u2011overhead object\n    itrs_repr = itrs_geo - obsrepr\n\n    # Create a topocentric ITRS object (location != EARTH_CENTER)\n    itrs_topo = ITRS(itrs_repr, obstime=t, location=home)\n\n    # Transformations to AltAz and HADec must raise ValueError\n    with pytest.raises(ValueError):\n        itrs_topo.transform_to(AltAz(obstime=t, location=home))\n    with pytest.raises(ValueError):\n        itrs_topo.transform_to(HADec(obstime=t, location=home))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3355,
+  "prompt_tokens": 8280,
+  "total_tokens": 11635,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2061,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Topocentric ITRS frames are no longer supported for ITRS\u202f\u2194\u202fObserved transforms.",
+ "requirement": "All ITRS\u202f\u2194\u202fObserved (AltAz/HADec) transformations must reject any ITRS coordinate that has a non\u2011default EarthLocation (i.e. a location other than the Earth\u2019s centre). In such cases the transform should raise a\u202fValueError with the message \u201cTopocentric ITRS frames are not supported in observed transforms\u201d. This supersedes any previous expectation that the transform would automatically handle topocentric ITRS positions.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "from .itrs import ITRS",
+   "replace": "from .itrs import ITRS\nfrom .utils import EARTH_CENTER"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "def itrs_to_observed(itrs_coo, observed_frame):",
+   "replace": "def itrs_to_observed(itrs_coo, observed_frame):\n    # Reject topocentric ITRS inputs\n    if itrs_coo.location != EARTH_CENTER:\n        raise ValueError(\"Topocentric ITRS frames are not supported in observed transforms\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "def test_itrs_topo_to_altaz_with_refraction():",
+   "replace": "def test_itrs_topo_to_altaz_with_refraction():\n    \"\"\"\n    Verify that transforming a topocentric ITRS coordinate to AltAz raises\n    a ValueError because topocentric ITRS frames are not supported.\n    \"\"\"\n    import pytest\n\n    loc = EarthLocation(lat=0*u.deg, lon=0*u.deg, height=0*u.m)\n    usph = golden_spiral_grid(200)\n    dist = np.linspace(1., 1000.0, len(usph)) * u.au\n    icrs = ICRS(ra=usph.lon, dec=usph.lat, distance=dist)\n    altaz_frame1 = AltAz(obstime='J2000', location=loc)\n    altaz_frame2 = AltAz(obstime='J2000', location=loc,\n                         pressure=1000.0 * u.hPa, relative_humidity=0.5)\n    itrs_frame = ITRS(location=loc)\n\n    # Transform ICRS to a topocentric ITRS (location != EARTH_CENTER)\n    itrs = icrs.transform_to(itrs_frame)\n\n    # Both AltAz transforms must raise ValueError\n    with pytest.raises(ValueError):\n        itrs.transform_to(altaz_frame1)\n    with pytest.raises(ValueError):\n        itrs.transform_to(altaz_frame2)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "def test_itrs_topo_to_hadec_with_refraction():",
+   "replace": "def test_itrs_topo_to_hadec_with_refraction():\n    \"\"\"\n    Verify that transforming a topocentric ITRS coordinate to HADec raises\n    a ValueError because topocentric ITRS frames are not supported.\n    \"\"\"\n    import pytest\n\n    loc = EarthLocation(lat=0*u.deg, lon=0*u.deg, height=0*u.m)\n    usph = golden_spiral_grid(200)\n    dist = np.linspace(1., 1000.0, len(usph)) * u.au\n    icrs = ICRS(ra=usph.lon, dec=usph.lat, distance=dist)\n    hadec_frame1 = HADec(obstime='J2000', location=loc)\n    hadec_frame2 = HADec(obstime='J2000', location=loc,\n                         pressure=1000.0 * u.hPa, relative_humidity=0.5)\n    itrs_frame = ITRS(location=loc)\n\n    # Transform ICRS to a topocentric ITRS (location != EARTH_CENTER)\n    itrs = icrs.transform_to(itrs_frame)\n\n    # Both HADec transforms must raise ValueError\n    with pytest.raises(ValueError):\n        itrs.transform_to(hadec_frame1)\n    with pytest.raises(ValueError):\n        itrs.transform_to(hadec_frame2)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "def test_itrs_straight_overhead():",
+   "replace": "def test_itrs_straight_overhead():\n    \"\"\"\n    Verify that a topocentric ITRS object cannot be transformed to AltAz or HADec\n    because topocentric ITRS frames are not supported in observed transforms.\n    \"\"\"\n    import pytest\n\n    t = Time('J2010')\n    obj = EarthLocation(-1*u.deg, 52*u.deg, height=10.*u.km)\n    home = EarthLocation(-1*u.deg, 52*u.deg, height=0.*u.km)\n\n    # Geocentric ITRS position of the object\n    itrs_geo = obj.get_itrs(t).cartesian\n\n    # Geocentric ITRS position of observatory\n    obsrepr = home.get_itrs(t).cartesian\n\n    # Topocentric ITRS position of a straight\u2011overhead object\n    itrs_repr = itrs_geo - obsrepr\n\n    # Create a topocentric ITRS object (location != EARTH_CENTER)\n    itrs_topo = ITRS(itrs_repr, obstime=t, location=home)\n\n    # Transformations to AltAz and HADec must raise ValueError\n    with pytest.raises(ValueError):\n        itrs_topo.transform_to(AltAz(obstime=t, location=home))\n    with pytest.raises(ValueError):\n        itrs_topo.transform_to(HADec(obstime=t, location=home))"
+  }
+ ],
+ "status": "generated"
+}

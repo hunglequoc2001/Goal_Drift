@@ -1,0 +1,61 @@
+{
+ "instance_id": "django__django-12325",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "8b08203ff0ee5af458a71247b601180bda3aed8af5f762ca84d65ee30b34c386",
+ "raw": "<summary>OneToOneFields that link a child model to its parent must be declared with\u202fparent_link=True, otherwise raise\u202fImproperlyConfigured.</summary>\n<requirement>When a model inherits from another model, any explicit OneToOneField that points to the parent class must include\u202fparent_link=True. If such a field is defined without\u202fparent_link=True, Django should raise an\u202fImproperlyConfigured\u202fexception with the message \u201cAdd parent_link=True to\u202f<app>.<Model>.<field>.\u201d. This requirement supersedes any previous expectation that the framework would accept the field without the\u202fparent_link\u202fflag.</requirement>\n<source_edit file=\"django/db/models/base.py\"><search>if isinstance(field, OneToOneField) and field.remote_field.parent_link:</search><replace>if isinstance(field, OneToOneField):</replace></source_edit>\n<source_edit file=\"django/db/models/options.py\"><search>from django.core.exceptions import FieldDoesNotExist</search><replace>from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured</replace></source_edit>\n<source_edit file=\"django/db/models/options.py\"><search>self.setup_pk(field)</search><replace>self.setup_pk(field)\n                if not field.remote_field.parent_link:\n                    raise ImproperlyConfigured(\n                        'Add parent_link=True to %s.' % field,\n                    )</replace></source_edit>\n<test_edit file=\"tests/invalid_models_tests/test_models.py\"><search>from django.core.exceptions import ImproperlyConfigured</search><replace>from django.core.exceptions import ImproperlyConfigured</replace></test_edit>\n<test_edit file=\"tests/invalid_models_tests/test_models.py\"><search>def test_onetoone_with_parent_model(self):</search><replace>def test_onetoone_with_parent_model(self):\n        class Place(models.Model):\n            pass\n\n        msg = 'Add parent_link=True to invalid_models_tests.ParkingLot.other_place.'\n        with self.assertRaisesMessage(ImproperlyConfigured, msg):\n            class ParkingLot(Place):\n                other_place = models.OneToOneField(Place, models.CASCADE, related_name='other_parking')</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2953,
+  "prompt_tokens": 1988,
+  "total_tokens": 4941,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2489,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "OneToOneFields that link a child model to its parent must be declared with\u202fparent_link=True, otherwise raise\u202fImproperlyConfigured.",
+ "requirement": "When a model inherits from another model, any explicit OneToOneField that points to the parent class must include\u202fparent_link=True. If such a field is defined without\u202fparent_link=True, Django should raise an\u202fImproperlyConfigured\u202fexception with the message \u201cAdd parent_link=True to\u202f<app>.<Model>.<field>.\u201d. This requirement supersedes any previous expectation that the framework would accept the field without the\u202fparent_link\u202fflag.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/base.py",
+   "search": "if isinstance(field, OneToOneField) and field.remote_field.parent_link:",
+   "replace": "if isinstance(field, OneToOneField):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/options.py",
+   "search": "from django.core.exceptions import FieldDoesNotExist",
+   "replace": "from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/options.py",
+   "search": "self.setup_pk(field)",
+   "replace": "self.setup_pk(field)\n                if not field.remote_field.parent_link:\n                    raise ImproperlyConfigured(\n                        'Add parent_link=True to %s.' % field,\n                    )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/invalid_models_tests/test_models.py",
+   "search": "from django.core.exceptions import ImproperlyConfigured",
+   "replace": "from django.core.exceptions import ImproperlyConfigured"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/invalid_models_tests/test_models.py",
+   "search": "def test_onetoone_with_parent_model(self):",
+   "replace": "def test_onetoone_with_parent_model(self):\n        class Place(models.Model):\n            pass\n\n        msg = 'Add parent_link=True to invalid_models_tests.ParkingLot.other_place.'\n        with self.assertRaisesMessage(ImproperlyConfigured, msg):\n            class ParkingLot(Place):\n                other_place = models.OneToOneField(Place, models.CASCADE, related_name='other_parking')"
+  }
+ ],
+ "status": "generated"
+}

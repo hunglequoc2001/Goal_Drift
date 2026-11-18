@@ -1,0 +1,43 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-26323",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "c92e50fa2fa8434edfecf93ae0f9e9c9ee7a0d6db9edc4e459697fd9a63ef47d",
+ "raw": "<summary>set_output should reject a remainder estimator</summary>\n<requirement>When calling `ColumnTransformer.set_output`, if the `remainder` argument is an estimator (i.e., not the strings `\"passthrough\"` or `\"drop\"`), the method must raise a `TypeError` with the message `\"Remainder estimator does not support set_output\"`. This requirement supersedes any previous expectation that the remainder estimator would have its output configured.</requirement>\n<source_edit file=\"sklearn/compose/_column_transformer.py\"><search>\n        if self.remainder not in {\"passthrough\", \"drop\"}:\n            _safe_set_output(self.remainder, transform=transform)\n</search><replace>\n        if self.remainder not in {\"passthrough\", \"drop\"}:\n            raise TypeError(\"Remainder estimator does not support set_output\")\n</replace></source_edit>\n<test_edit file=\"sklearn/compose/tests/test_column_transformer.py\"><search>\ndef test_remainder_set_output():\n    \"\"\"Check that the output is set for the remainder.\n\n    Non-regression test for #26306.\n    \"\"\"\n\n    pd = pytest.importorskip(\"pandas\")\n    df = pd.DataFrame({\"a\": [True, False, True], \"b\": [1, 2, 3]})\n\n    ct = make_column_transformer(\n        (VarianceThreshold(), make_column_selector(dtype_include=bool)),\n        remainder=VarianceThreshold(),\n        verbose_feature_names_out=False,\n    )\n    ct.set_output(transform=\"pandas\")\n\n    out = ct.fit_transform(df)\n    pd.testing.assert_frame_equal(out, df)\n\n    ct.set_output(transform=\"default\")\n    out = ct.fit_transform(df)\n    assert isinstance(out, np.ndarray)\n</search><replace>\ndef test_remainder_set_output():\n    \"\"\"Check that set_output raises when remainder is an estimator.\n\n    Non-regression test for #26306.\n    \"\"\"\n\n    pd = pytest.importorskip(\"pandas\")\n    df = pd.DataFrame({\"a\": [True, False, True], \"b\": [1, 2, 3]})\n\n    ct = make_column_transformer(\n        (VarianceThreshold(), make_column_selector(dtype_include=bool)),\n        remainder=VarianceThreshold(),\n        verbose_feature_names_out=False,\n    )\n    with pytest.raises(TypeError, match=\"Remainder estimator does not support set_output\"):\n        ct.set_output(transform=\"pandas\")\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2279,
+  "prompt_tokens": 1939,
+  "total_tokens": 4218,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1762,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "set_output should reject a remainder estimator",
+ "requirement": "When calling `ColumnTransformer.set_output`, if the `remainder` argument is an estimator (i.e., not the strings `\"passthrough\"` or `\"drop\"`), the method must raise a `TypeError` with the message `\"Remainder estimator does not support set_output\"`. This requirement supersedes any previous expectation that the remainder estimator would have its output configured.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/compose/_column_transformer.py",
+   "search": "        if self.remainder not in {\"passthrough\", \"drop\"}:\n            _safe_set_output(self.remainder, transform=transform)",
+   "replace": "        if self.remainder not in {\"passthrough\", \"drop\"}:\n            raise TypeError(\"Remainder estimator does not support set_output\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/compose/tests/test_column_transformer.py",
+   "search": "def test_remainder_set_output():\n    \"\"\"Check that the output is set for the remainder.\n\n    Non-regression test for #26306.\n    \"\"\"\n\n    pd = pytest.importorskip(\"pandas\")\n    df = pd.DataFrame({\"a\": [True, False, True], \"b\": [1, 2, 3]})\n\n    ct = make_column_transformer(\n        (VarianceThreshold(), make_column_selector(dtype_include=bool)),\n        remainder=VarianceThreshold(),\n        verbose_feature_names_out=False,\n    )\n    ct.set_output(transform=\"pandas\")\n\n    out = ct.fit_transform(df)\n    pd.testing.assert_frame_equal(out, df)\n\n    ct.set_output(transform=\"default\")\n    out = ct.fit_transform(df)\n    assert isinstance(out, np.ndarray)",
+   "replace": "def test_remainder_set_output():\n    \"\"\"Check that set_output raises when remainder is an estimator.\n\n    Non-regression test for #26306.\n    \"\"\"\n\n    pd = pytest.importorskip(\"pandas\")\n    df = pd.DataFrame({\"a\": [True, False, True], \"b\": [1, 2, 3]})\n\n    ct = make_column_transformer(\n        (VarianceThreshold(), make_column_selector(dtype_include=bool)),\n        remainder=VarianceThreshold(),\n        verbose_feature_names_out=False,\n    )\n    with pytest.raises(TypeError, match=\"Remainder estimator does not support set_output\"):\n        ct.set_output(transform=\"pandas\")"
+  }
+ ],
+ "status": "generated"
+}

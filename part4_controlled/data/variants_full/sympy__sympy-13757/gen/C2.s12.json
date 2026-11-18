@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-13757",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "7d41e928e95a437ebdcce38508e774429e93e76ecc97c21e2c6cb6675c833579",
+ "raw": "<summary>Poly multiplication should only auto\u2011evaluate when the Poly instance is on the left side of the `*` operator.</summary>\n<requirement>From now on, a multiplication involving a Poly must be evaluated only if the Poly object appears as the left operand of the `*`. If a Poly appears on the right side of the `*`, the expression should remain an unevaluated Mul (e.g., `x*Poly(x)` stays as `x*Poly(x)`). This rule supersedes any previous expectation that such right\u2011hand multiplications would automatically produce a new Poly.</requirement>\n\n<source_edit file=\"sympy/polys/polytools.py\"><search>    _op_priority = 10.001</search><replace></replace></source_edit>\n\n<test_edit file=\"sympy/polys/tests/test_polytools.py\"><search>def test_issue_13079():\n    assert Poly(x)*x == Poly(x**2, x, domain='ZZ')\n    assert x*Poly(x) == Poly(x**2, x, domain='ZZ')\n    assert -2*Poly(x) == Poly(-2*x, x, domain='ZZ')\n    assert S(-2)*Poly(x) == Poly(-2*x, x, domain='ZZ')\n    assert Poly(x)*S(-2) == Poly(-2*x, x, domain='ZZ')</search><replace>def test_issue_13079():\n    assert Poly(x)*x == Poly(x**2, x, domain='ZZ')\n    assert x*Poly(x) == x*Poly(x)\n    assert -2*Poly(x) == Poly(-2*x, x, domain='ZZ')\n    assert S(-2)*Poly(x) == S(-2)*Poly(x)\n    assert Poly(x)*S(-2) == Poly(-2*x, x, domain='ZZ')</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1421,
+  "prompt_tokens": 1213,
+  "total_tokens": 2634,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1023,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Poly multiplication should only auto\u2011evaluate when the Poly instance is on the left side of the `*` operator.",
+ "requirement": "From now on, a multiplication involving a Poly must be evaluated only if the Poly object appears as the left operand of the `*`. If a Poly appears on the right side of the `*`, the expression should remain an unevaluated Mul (e.g., `x*Poly(x)` stays as `x*Poly(x)`). This rule supersedes any previous expectation that such right\u2011hand multiplications would automatically produce a new Poly.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/polys/polytools.py",
+   "search": "    _op_priority = 10.001",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/polys/tests/test_polytools.py",
+   "search": "def test_issue_13079():\n    assert Poly(x)*x == Poly(x**2, x, domain='ZZ')\n    assert x*Poly(x) == Poly(x**2, x, domain='ZZ')\n    assert -2*Poly(x) == Poly(-2*x, x, domain='ZZ')\n    assert S(-2)*Poly(x) == Poly(-2*x, x, domain='ZZ')\n    assert Poly(x)*S(-2) == Poly(-2*x, x, domain='ZZ')",
+   "replace": "def test_issue_13079():\n    assert Poly(x)*x == Poly(x**2, x, domain='ZZ')\n    assert x*Poly(x) == x*Poly(x)\n    assert -2*Poly(x) == Poly(-2*x, x, domain='ZZ')\n    assert S(-2)*Poly(x) == S(-2)*Poly(x)\n    assert Poly(x)*S(-2) == Poly(-2*x, x, domain='ZZ')"
+  }
+ ],
+ "status": "generated"
+}

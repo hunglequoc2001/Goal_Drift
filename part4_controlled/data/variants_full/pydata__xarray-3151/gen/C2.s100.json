@@ -1,0 +1,43 @@
+{
+ "instance_id": "pydata__xarray-3151",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 12,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 20324,
+ "raw": "<summary>Require strictly monotonic (no duplicate values) coordinate indexes for concatenated dimensions.</summary>\n<requirement>When combine_by_coords concatenates along a dimension, the resulting coordinate index for that dimension must be strictly monotonic \u2013 it must be either strictly increasing or strictly decreasing with no duplicate values. If this condition is not met, combine_by_coords must raise a ValueError with the message \u201cResulting object does not have strictly monotonic global indexes along dimension {dim}\u201d. This supersedes any previous expectation that non\u2011strict monotonicity is sufficient.</requirement>\n<source_edit file=\"xarray/core/combine.py\"><search>for dim in concat_dims:</search><replace>for dim in concat_dims:</replace></source_edit>\n<source_edit file=\"xarray/core/combine.py\"><search>if not (indexes.is_monotonic_increasing\n                    or indexes.is_monotonic_decreasing):</search><replace>if not ((indexes.is_monotonic_increasing or indexes.is_monotonic_decreasing) and indexes.is_unique):</replace></source_edit>\n<source_edit file=\"xarray/core/combine.py\"><search>raise ValueError(\"Resulting object does not have monotonic\"\n                                 \" global indexes along dimension {}\"\n                                 .format(dim))</search><replace>raise ValueError(\"Resulting object does not have strictly monotonic\"\n                                 \" global indexes along dimension {}\"\n                                 .format(dim))</replace></source_edit>\n<test_edit file=\"xarray/tests/test_combine.py\"><search>with raises_regex(ValueError, \"does not have monotonic global indexes\"\n                                      \" along dimension x\"):</search><replace>with raises_regex(ValueError, \"does not have strictly monotonic global indexes\"\n                                      \" along dimension x\"):</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Require strictly monotonic (no duplicate values) coordinate indexes for concatenated dimensions.",
+ "requirement": "When combine_by_coords concatenates along a dimension, the resulting coordinate index for that dimension must be strictly monotonic \u2013 it must be either strictly increasing or strictly decreasing with no duplicate values. If this condition is not met, combine_by_coords must raise a ValueError with the message \u201cResulting object does not have strictly monotonic global indexes along dimension {dim}\u201d. This supersedes any previous expectation that non\u2011strict monotonicity is sufficient.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/combine.py",
+   "search": "for dim in concat_dims:",
+   "replace": "for dim in concat_dims:"
+  },
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/combine.py",
+   "search": "if not (indexes.is_monotonic_increasing\n                    or indexes.is_monotonic_decreasing):",
+   "replace": "if not ((indexes.is_monotonic_increasing or indexes.is_monotonic_decreasing) and indexes.is_unique):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/combine.py",
+   "search": "raise ValueError(\"Resulting object does not have monotonic\"\n                                 \" global indexes along dimension {}\"\n                                 .format(dim))",
+   "replace": "raise ValueError(\"Resulting object does not have strictly monotonic\"\n                                 \" global indexes along dimension {}\"\n                                 .format(dim))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_combine.py",
+   "search": "with raises_regex(ValueError, \"does not have monotonic global indexes\"\n                                      \" along dimension x\"):",
+   "replace": "with raises_regex(ValueError, \"does not have strictly monotonic global indexes\"\n                                      \" along dimension x\"):"
+  }
+ ]
+}

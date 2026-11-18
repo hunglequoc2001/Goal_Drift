@@ -1,0 +1,43 @@
+{
+ "instance_id": "astropy__astropy-13236",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "38b2eb4bc0ce16084f9a1b71bb7c73c8b4f2c4ec69fd1b0129dfad6a61a31de4",
+ "raw": "<summary>Structured ndarray addition now triggers a deprecation warning.</summary>\n<requirement>When a user adds a structured ``numpy.ndarray`` directly to a ``Table`` (i.e., without first wrapping it in a ``Column`` or viewing it as an ``NdarrayMixin``), the operation must emit a ``FutureWarning`` stating that this usage is deprecated and that the array should be wrapped in a ``Column``. This warning supersedes any previous expectations about silent handling of such arrays.</requirement>\n<source_edit file=\"astropy/table/table.py\"><search># Get the final column name using precedence.  Some objects may not</search><replace>\n        # Emit a FutureWarning when a structured ndarray is added directly.\n        if (not isinstance(data, Column) and isinstance(data, np.ndarray) and\n                len(data.dtype) > 1):\n            warnings.warn(\n                \"Adding a structured ndarray directly is deprecated; wrap it in Column.\",\n                FutureWarning)\n        # Get the final column name using precedence.  Some objects may not\n        # have an info attribute. Also avoid creating info as a side effect.\n</replace></source_edit>\n<test_edit file=\"astropy/table/tests/test_mixin.py\"><search>t = Table([a], names=['a'])</search><replace>\n        if as_ndarray_mixin:\n            t = Table([a], names=['a'])\n        else:\n            with pytest.warns(FutureWarning):\n                t = Table([a], names=['a'])\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1843,
+  "prompt_tokens": 2482,
+  "total_tokens": 4325,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1517,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Structured ndarray addition now triggers a deprecation warning.",
+ "requirement": "When a user adds a structured ``numpy.ndarray`` directly to a ``Table`` (i.e., without first wrapping it in a ``Column`` or viewing it as an ``NdarrayMixin``), the operation must emit a ``FutureWarning`` stating that this usage is deprecated and that the array should be wrapped in a ``Column``. This warning supersedes any previous expectations about silent handling of such arrays.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/table/table.py",
+   "search": "# Get the final column name using precedence.  Some objects may not",
+   "replace": "        # Emit a FutureWarning when a structured ndarray is added directly.\n        if (not isinstance(data, Column) and isinstance(data, np.ndarray) and\n                len(data.dtype) > 1):\n            warnings.warn(\n                \"Adding a structured ndarray directly is deprecated; wrap it in Column.\",\n                FutureWarning)\n        # Get the final column name using precedence.  Some objects may not\n        # have an info attribute. Also avoid creating info as a side effect."
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/table/tests/test_mixin.py",
+   "search": "t = Table([a], names=['a'])",
+   "replace": "        if as_ndarray_mixin:\n            t = Table([a], names=['a'])\n        else:\n            with pytest.warns(FutureWarning):\n                t = Table([a], names=['a'])"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,36 @@
+{
+ "instance_id": "django__django-15732",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "20af06a99b530690c675617cacd47d3864f2d2aaf7429317cb83265b154f9fa9",
+ "raw": "<summary>Prefer non\u2011field\u2011generated unique constraints when dropping unique_together on a field that also has a unique=True constraint.</summary>\n<requirement>The migration system must, when removing a unique_together constraint on fields that already have a unique=True constraint, select the unique_together constraint for deletion even if the database allows multiple constraints on the same columns. Specifically, if multiple constraints are found, the editor should ignore any constraint whose name ends with \u201c_key\u201d (the automatically generated unique\u2011field constraint) and use the remaining constraint(s). This rule supersedes any earlier description of how constraints are selected for deletion.</requirement>\n<source_edit file=\"django/db/backends/base/schema.py\"><search>if (\n            constraint_kwargs.get(\"unique\") is True\n            and constraint_names\n            and self.connection.features.allows_multiple_constraints_on_same_fields\n        ):\n            # Constraint matching the unique_together name.\n            default_name = str(\n                self._unique_constraint_name(model._meta.db_table, columns, quote=False)\n            )\n            if default_name in constraint_names:\n                constraint_names = [default_name]</search><replace>if (\n            constraint_kwargs.get(\"unique\") is True\n            and constraint_names\n            and self.connection.features.allows_multiple_constraints_on_same_fields\n        ):\n            # Prefer constraints that are not the automatically generated unique\u2011field constraint.\n            filtered = [n for n in constraint_names if not n.endswith(\"_key\")]\n            if filtered:\n                constraint_names = filtered</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1828,
+  "prompt_tokens": 2042,
+  "total_tokens": 3870,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1507,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Prefer non\u2011field\u2011generated unique constraints when dropping unique_together on a field that also has a unique=True constraint.",
+ "requirement": "The migration system must, when removing a unique_together constraint on fields that already have a unique=True constraint, select the unique_together constraint for deletion even if the database allows multiple constraints on the same columns. Specifically, if multiple constraints are found, the editor should ignore any constraint whose name ends with \u201c_key\u201d (the automatically generated unique\u2011field constraint) and use the remaining constraint(s). This rule supersedes any earlier description of how constraints are selected for deletion.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/backends/base/schema.py",
+   "search": "if (\n            constraint_kwargs.get(\"unique\") is True\n            and constraint_names\n            and self.connection.features.allows_multiple_constraints_on_same_fields\n        ):\n            # Constraint matching the unique_together name.\n            default_name = str(\n                self._unique_constraint_name(model._meta.db_table, columns, quote=False)\n            )\n            if default_name in constraint_names:\n                constraint_names = [default_name]",
+   "replace": "if (\n            constraint_kwargs.get(\"unique\") is True\n            and constraint_names\n            and self.connection.features.allows_multiple_constraints_on_same_fields\n        ):\n            # Prefer constraints that are not the automatically generated unique\u2011field constraint.\n            filtered = [n for n in constraint_names if not n.endswith(\"_key\")]\n            if filtered:\n                constraint_names = filtered"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

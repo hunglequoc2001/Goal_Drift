@@ -1,0 +1,31 @@
+{
+ "instance_id": "matplotlib__matplotlib-22719",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 25326,
+ "raw": "<summary>Deprecation warnings must be emitted even for empty data when using categorical units.</summary>\n<requirement>When an axis that has categorical units configured is used to plot an empty dataset (e.g., `ax.plot([], [])`), the library must still emit a MatplotlibDeprecationWarning about passing numbers through unit converters. This requirement supersedes any previous expectation that empty data would suppress the warning.</requirement>\n<source_edit file=\"lib/matplotlib/category.py\"><search>if values.size and is_numlike:</search><replace>if is_numlike:</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_category.py\"><search>def test_no_deprecation_on_empty_data():\n    \"\"\"\n    Smoke test to check that no deprecation warning is emitted. See #22640.\n    \"\"\"\n    f, ax = plt.subplots()\n    ax.xaxis.update_units([\"a\", \"b\"])\n    ax.plot([], [])</search><replace>def test_no_deprecation_on_empty_data():\n    \"\"\"\n    Verify that a deprecation warning is emitted when plotting empty data with categorical units.\n    \"\"\"\n    import pytest\n    from matplotlib._api import MatplotlibDeprecationWarning\n    f, ax = plt.subplots()\n    ax.xaxis.update_units([\"a\", \"b\"])\n    with pytest.warns(MatplotlibDeprecationWarning):\n        ax.plot([], [])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Deprecation warnings must be emitted even for empty data when using categorical units.",
+ "requirement": "When an axis that has categorical units configured is used to plot an empty dataset (e.g., `ax.plot([], [])`), the library must still emit a MatplotlibDeprecationWarning about passing numbers through unit converters. This requirement supersedes any previous expectation that empty data would suppress the warning.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/category.py",
+   "search": "if values.size and is_numlike:",
+   "replace": "if is_numlike:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_category.py",
+   "search": "def test_no_deprecation_on_empty_data():\n    \"\"\"\n    Smoke test to check that no deprecation warning is emitted. See #22640.\n    \"\"\"\n    f, ax = plt.subplots()\n    ax.xaxis.update_units([\"a\", \"b\"])\n    ax.plot([], [])",
+   "replace": "def test_no_deprecation_on_empty_data():\n    \"\"\"\n    Verify that a deprecation warning is emitted when plotting empty data with categorical units.\n    \"\"\"\n    import pytest\n    from matplotlib._api import MatplotlibDeprecationWarning\n    f, ax = plt.subplots()\n    ax.xaxis.update_units([\"a\", \"b\"])\n    with pytest.warns(MatplotlibDeprecationWarning):\n        ax.plot([], [])"
+  }
+ ]
+}

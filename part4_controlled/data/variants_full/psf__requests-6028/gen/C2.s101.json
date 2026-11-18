@@ -1,0 +1,37 @@
+{
+ "instance_id": "psf__requests-6028",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 14315,
+ "raw": "<summary>prepend_scheme_if_needed must strip authentication information from the URL</summary>\n<requirement>When `prepend_scheme_if_needed` is called, any user authentication component (e.g., `user:pass@` or `user@`) present in the input URL must be removed from the returned URL; the function should return the URL without the auth part, such as `http://example.com/path?query`. This supersedes any previous expectation that authentication information be retained.</requirement>\n<source_edit file=\"requests/utils.py\"><search>    if auth:\n        # parse_url doesn't provide the netloc with auth\n        # so we'll add it ourselves.\n        netloc = '@'.join([auth, netloc])</search><replace></replace></source_edit>\n<test_edit file=\"tests/test_utils.py\"><search>('http://user:pass@example.com/path?query',\n            'http://user:pass@example.com/path?query'</search><replace>('http://user:pass@example.com/path?query',\n            'http://example.com/path?query'</replace></test_edit>\n<test_edit file=\"tests/test_utils.py\"><search>('http://user@example.com/path?query',\n            'http://user@example.com/path?query'</search><replace>('http://user@example.com/path?query',\n            'http://example.com/path?query'</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "prepend_scheme_if_needed must strip authentication information from the URL",
+ "requirement": "When `prepend_scheme_if_needed` is called, any user authentication component (e.g., `user:pass@` or `user@`) present in the input URL must be removed from the returned URL; the function should return the URL without the auth part, such as `http://example.com/path?query`. This supersedes any previous expectation that authentication information be retained.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "requests/utils.py",
+   "search": "    if auth:\n        # parse_url doesn't provide the netloc with auth\n        # so we'll add it ourselves.\n        netloc = '@'.join([auth, netloc])",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_utils.py",
+   "search": "('http://user:pass@example.com/path?query',\n            'http://user:pass@example.com/path?query'",
+   "replace": "('http://user:pass@example.com/path?query',\n            'http://example.com/path?query'"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_utils.py",
+   "search": "('http://user@example.com/path?query',\n            'http://user@example.com/path?query'",
+   "replace": "('http://user@example.com/path?query',\n            'http://example.com/path?query'"
+  }
+ ]
+}

@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-16667",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "f691ccecbc4c50a18c48e3f596a6b2e52088bf7a0a585a82ae0b13a218152da7",
+ "raw": "<summary>Overflow handling now returns None instead of a dummy date string.</summary>\n<requirement>When a user supplies a year value that causes an OverflowError while constructing a date, the SelectDateWidget must return None rather than a placeholder string. This supersedes any previous expectation that a string such as \"0-0-0\" would be returned in this situation.</requirement>\n<source_edit file=\"django/forms/widgets.py\"><search>except OverflowError:\n                return \"0-0-0\"</search><replace>except OverflowError:\n                return None</replace></source_edit>\n<test_edit file=\"tests/forms_tests/field_tests/test_datefield.py\"><search>{\"mydate\": [\"Enter a valid date.\"]}</search><replace>{\"mydate\": [\"This field is required.\"]}</replace></test_edit>\n<test_edit file=\"tests/forms_tests/field_tests/test_datefield.py\"><search>with self.assertRaisesMessage(ValidationError, \"'Enter a valid date.'\"):</search><replace>with self.assertRaisesMessage(ValidationError, \"'This field is required.'\"):</replace></test_edit>\n<test_edit file=\"tests/forms_tests/widget_tests/test_selectdatewidget.py\"><search>((str(sys.maxsize + 1), \"12\", \"1\"), \"0-0-0\")</search><replace>((str(sys.maxsize + 1), \"12\", \"1\"), None)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1145,
+  "prompt_tokens": 1719,
+  "total_tokens": 2864,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 839,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Overflow handling now returns None instead of a dummy date string.",
+ "requirement": "When a user supplies a year value that causes an OverflowError while constructing a date, the SelectDateWidget must return None rather than a placeholder string. This supersedes any previous expectation that a string such as \"0-0-0\" would be returned in this situation.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/widgets.py",
+   "search": "except OverflowError:\n                return \"0-0-0\"",
+   "replace": "except OverflowError:\n                return None"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/field_tests/test_datefield.py",
+   "search": "{\"mydate\": [\"Enter a valid date.\"]}",
+   "replace": "{\"mydate\": [\"This field is required.\"]}"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/field_tests/test_datefield.py",
+   "search": "with self.assertRaisesMessage(ValidationError, \"'Enter a valid date.'\"):",
+   "replace": "with self.assertRaisesMessage(ValidationError, \"'This field is required.'\"):"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/widget_tests/test_selectdatewidget.py",
+   "search": "((str(sys.maxsize + 1), \"12\", \"1\"), \"0-0-0\")",
+   "replace": "((str(sys.maxsize + 1), \"12\", \"1\"), None)"
+  }
+ ],
+ "status": "generated"
+}

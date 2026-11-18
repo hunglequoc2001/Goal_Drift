@@ -1,0 +1,49 @@
+{
+ "instance_id": "pytest-dev__pytest-6197",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "91b723aea44757e8f794514e2c735d818333929199fc1af8eb3cd879820be7d7",
+ "raw": "<summary>add top\u2011level \u201csrc\u201d directory to sys.path during collection</summary>\n<requirement>When collecting tests, if a directory named\u202f`src` exists in the project root, pytest must prepend that directory to\u202f`sys.path` before any test modules are imported. This supersedes any earlier expectation that `src` should not be on the import path.</requirement>\n\n<source_edit file=\"src/_pytest/python.py\"><search>def collect(self):</search><replace>def collect(self):\n        # Ensure that a top\u2011level 'src' directory is on sys.path if it exists.\n        src_dir = self.session.fspath.join(\"src\")\n        if src_dir.isdir() and str(src_dir) not in sys.path:\n            sys.path.insert(0, str(src_dir))\n        this_path = self.fspath.dirpath()\n        init_module = this_path.join(\"__init__.py\")\n        if init_module.check(file=1) and path_matches_patterns(\n</replace></source_edit>\n\n<source_edit file=\"src/_pytest/python.py\"><search>def isinitpath(self, path):</search><replace>import sys\n\ndef isinitpath(self, path):\n</replace></source_edit>\n\n<test_edit file=\"testing/test_collection.py\"><search>with pytest.raises(ImportError):</search><replace>import nope</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1896,
+  "prompt_tokens": 2378,
+  "total_tokens": 4274,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1604,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "add top\u2011level \u201csrc\u201d directory to sys.path during collection",
+ "requirement": "When collecting tests, if a directory named\u202f`src` exists in the project root, pytest must prepend that directory to\u202f`sys.path` before any test modules are imported. This supersedes any earlier expectation that `src` should not be on the import path.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/python.py",
+   "search": "def collect(self):",
+   "replace": "def collect(self):\n        # Ensure that a top\u2011level 'src' directory is on sys.path if it exists.\n        src_dir = self.session.fspath.join(\"src\")\n        if src_dir.isdir() and str(src_dir) not in sys.path:\n            sys.path.insert(0, str(src_dir))\n        this_path = self.fspath.dirpath()\n        init_module = this_path.join(\"__init__.py\")\n        if init_module.check(file=1) and path_matches_patterns("
+  },
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/python.py",
+   "search": "def isinitpath(self, path):",
+   "replace": "import sys\n\ndef isinitpath(self, path):"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_collection.py",
+   "search": "with pytest.raises(ImportError):",
+   "replace": "import nope"
+  }
+ ],
+ "status": "generated"
+}

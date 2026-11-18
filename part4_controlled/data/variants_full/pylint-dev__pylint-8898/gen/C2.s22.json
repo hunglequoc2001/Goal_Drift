@@ -1,0 +1,49 @@
+{
+ "instance_id": "pylint-dev__pylint-8898",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "dc34eee0b68fe6bd4103da28511dc3788a8c195909fa407b5c50cd61b2d18b2e",
+ "raw": "<summary>Commas inside regex quantifiers are now treated as separators like any other comma.</summary>\n<requirement>From now on, the `bad-names-rgx` option should split its value on every comma, without trying to detect or preserve commas that appear inside regular\u2011expression quantifier braces (e.g., `{1,3}`). This supersedes any previous expectation that commas inside such braces would be ignored during splitting.</requirement>\n\n<source_edit file=\"pylint/utils/utils.py\"><search>def _check_regexp_csv(value: list[str] | tuple[str] | str) -> Iterable[str]:\n    r\"\"\"Split a comma-separated list of regexps, taking care to avoid splitting\n    a regex employing a comma as quantifier, as in `\\d{1,2}`.\"\"\"\n    if isinstance(value, (list, tuple)):\n        yield from value\n    else:\n        # None is a sentinel value here\n        regexps: deque[deque[str] | None] = deque([None])\n        open_braces = False\n        for char in value:\n            if char == \"{\":\n                open_braces = True\n            elif char == \"}\" and open_braces:\n                open_braces = False\n\n            if char == \",\" and not open_braces:\n                regexps.append(None)\n            elif regexps[-1] is None:\n                regexps.pop()\n                regexps.append(deque([char]))\n            else:\n                regexps[-1].append(char)\n        yield from (\"\".join(regexp).strip() for regexp in regexps if regexp is not None)</search><replace>def _check_regexp_csv(value: list[str] | tuple[str] | str) -> Iterable[str]:\n    \"\"\"Split a comma\u2011separated list of regular expressions, treating every comma as a separator.\"\"\"\n    # Reuse the generic CSV splitter; no special handling for braces is required.\n    return _check_csv(value)</replace></source_edit>\n\n<test_edit file=\"tests/config/test_config.py\"><search>CSV_REGEX_COMMA_CASES = [\n    (\"foo\", [\"foo\"]),\n    (\"foo,bar\", [\"foo\", \"bar\"]),\n    (\"foo, bar\", [\"foo\", \"bar\"]),\n    (\"foo, bar{1,3}\", [\"foo\", \"bar{1,3}\"]),\n]</search><replace>CSV_REGEX_COMMA_CASES = [\n    (\"foo\", [\"foo\"]),\n    (\"foo,bar\", [\"foo\", \"bar\"]),\n    (\"foo, bar\", [\"foo\", \"bar\"]),\n    (\"foo, bar{1,3}\", [\"foo\", \"bar{1\", \"3}\"]),\n]</replace></test_edit>\n\n<test_edit file=\"tests/config/test_config.py\"><search>r\"Error in provided regular expression: (foo{1,} beginning at index 0: missing ), unterminated subpattern\"</search><replace>r\"Error in provided regular expression: (foo{1} beginning at index 0: missing ), unterminated subpattern\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2315,
+  "prompt_tokens": 2823,
+  "total_tokens": 5138,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1679,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Commas inside regex quantifiers are now treated as separators like any other comma.",
+ "requirement": "From now on, the `bad-names-rgx` option should split its value on every comma, without trying to detect or preserve commas that appear inside regular\u2011expression quantifier braces (e.g., `{1,3}`). This supersedes any previous expectation that commas inside such braces would be ignored during splitting.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "pylint/utils/utils.py",
+   "search": "def _check_regexp_csv(value: list[str] | tuple[str] | str) -> Iterable[str]:\n    r\"\"\"Split a comma-separated list of regexps, taking care to avoid splitting\n    a regex employing a comma as quantifier, as in `\\d{1,2}`.\"\"\"\n    if isinstance(value, (list, tuple)):\n        yield from value\n    else:\n        # None is a sentinel value here\n        regexps: deque[deque[str] | None] = deque([None])\n        open_braces = False\n        for char in value:\n            if char == \"{\":\n                open_braces = True\n            elif char == \"}\" and open_braces:\n                open_braces = False\n\n            if char == \",\" and not open_braces:\n                regexps.append(None)\n            elif regexps[-1] is None:\n                regexps.pop()\n                regexps.append(deque([char]))\n            else:\n                regexps[-1].append(char)\n        yield from (\"\".join(regexp).strip() for regexp in regexps if regexp is not None)",
+   "replace": "def _check_regexp_csv(value: list[str] | tuple[str] | str) -> Iterable[str]:\n    \"\"\"Split a comma\u2011separated list of regular expressions, treating every comma as a separator.\"\"\"\n    # Reuse the generic CSV splitter; no special handling for braces is required.\n    return _check_csv(value)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/config/test_config.py",
+   "search": "CSV_REGEX_COMMA_CASES = [\n    (\"foo\", [\"foo\"]),\n    (\"foo,bar\", [\"foo\", \"bar\"]),\n    (\"foo, bar\", [\"foo\", \"bar\"]),\n    (\"foo, bar{1,3}\", [\"foo\", \"bar{1,3}\"]),\n]",
+   "replace": "CSV_REGEX_COMMA_CASES = [\n    (\"foo\", [\"foo\"]),\n    (\"foo,bar\", [\"foo\", \"bar\"]),\n    (\"foo, bar\", [\"foo\", \"bar\"]),\n    (\"foo, bar{1,3}\", [\"foo\", \"bar{1\", \"3}\"]),\n]"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/config/test_config.py",
+   "search": "r\"Error in provided regular expression: (foo{1,} beginning at index 0: missing ), unterminated subpattern\"",
+   "replace": "r\"Error in provided regular expression: (foo{1} beginning at index 0: missing ), unterminated subpattern\""
+  }
+ ],
+ "status": "generated"
+}

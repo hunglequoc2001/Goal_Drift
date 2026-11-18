@@ -1,0 +1,32 @@
+diff --git a/tests/admin_views/test_autocomplete_view.py b/tests/admin_views/test_autocomplete_view.py
+index aa978f7a83..79b1758241 100755
+--- a/tests/admin_views/test_autocomplete_view.py
++++ b/tests/admin_views/test_autocomplete_view.py
+@@ -424,3 +424,52 @@ class SeleniumTests(AdminSeleniumTestCase):
+         rows = self.selenium.find_elements_by_css_selector('.dynamic-authorship_set')
+         self.assertEqual(len(rows), 4)
+         assertNoResults(rows[-1])
++
++class CustomAutocompleteJsonView(AutocompleteJsonView):
++    def serialize_result(self, obj, to_field_name):
++        result = super().serialize_result(obj, to_field_name)
++        # Add a custom field 'notes' to the result
++        result['notes'] = 'Custom note for ' + str(obj)
++        return result
++
++class AutocompleteJsonViewSerializeResultTest(AdminViewBasicTestCase):
++    def test_serialize_result_override(self):
++        """Test that the serialize_result method can be overridden to add extra fields."""
++        # Create a request to the custom view
++        request = RequestFactory().get('/autocomplete/')
++        request.user = User.objects.create_superuser('admin', 'admin@example.com', 'password')
++
++        # Create a custom view instance
++        view = CustomAutocompleteJsonView()
++        view.request = request
++        view.kwargs = {}
++        view.model_admin = AuthorAdmin(site, Author)
++        view.source_field = 'id'
++        view.term = ''
++
++        # Mock the queryset to return a single autho

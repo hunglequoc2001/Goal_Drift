@@ -1,0 +1,49 @@
+{
+ "instance_id": "mwaskom__seaborn-3187",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 23467,
+ "raw": "<summary>Legends must now include the ScalarFormatter offset for large numeric values.</summary>\n<requirement>Legends should display the offset value that Matplotlib\u2019s ScalarFormatter applies to large numbers; each legend label must be prefixed with this offset (e.g., \u201c1e+08\u202f0.5\u201d). This supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"seaborn/_core/scales.py\"><search>\nif hasattr(axis.major.formatter, \"set_useOffset\"):\n    axis.major.formatter.set_useOffset(False)\nif hasattr(axis.major.formatter, \"set_scientific\"):\n    axis.major.formatter.set_scientific(False)\n</search><replace>\n# Ensure the formatter includes its offset in legend labels\nif hasattr(axis.major.formatter, \"set_useOffset\"):\n    axis.major.formatter.set_useOffset(True)\nif hasattr(axis.major.formatter, \"set_scientific\"):\n    axis.major.formatter.set_scientific(False)\n# Retrieve the offset string (e.g., \"1e+08\") and prepend it to each label\noffset = getattr(axis.major.formatter, \"get_offset\", lambda: \"\")()\nif offset and offset not in (\"\", \"0\"):\n    offset = offset.strip()\n    labels = [f\"{offset}{lbl}\" for lbl in labels]\n</replace></source_edit>\n\n<source_edit file=\"seaborn/utils.py\"><search>\nformatter = mpl.ticker.ScalarFormatter()\n# Avoid having an offset/scientific notation which we don't currently\n# have any way of representing in the legend\nformatter.set_useOffset(False)\nformatter.set_scientific(False)\n</search><replace>\nformatter = mpl.ticker.ScalarFormatter()\n# Enable the offset so it can be incorporated into legend labels\nformatter.set_useOffset(True)\nformatter.set_scientific(False)\n</replace></source_edit>\n\n<source_edit file=\"seaborn/utils.py\"><search>formatted_levels = [formatter(x) for x in raw_levels]</search><replace>formatted_levels = [formatter(x) for x in raw_levels]\n# Prepend the formatter\u2019s offset to each label when an offset is present\noffset = getattr(formatter, \"get_offset\", lambda: \"\")()\nif offset and offset not in (\"\", \"0\"):\n    offset = offset.strip()\n    formatted_levels = [f\"{offset}{lbl}\" for lbl in formatted_levels]\n</replace></source_edit>\n\n<test_edit file=\"tests/_core/test_plot.py\"><search>assert float(text.get_text()) > 1e7</search><replace>assert \"+\" in text.get_text()</replace></test_edit>\n\n<test_edit file=\"tests/test_relational.py\"><search>assert float(text.get_text()) > 1e7</search><replace>assert \"+\" in text.get_text()</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Legends must now include the ScalarFormatter offset for large numeric values.",
+ "requirement": "Legends should display the offset value that Matplotlib\u2019s ScalarFormatter applies to large numbers; each legend label must be prefixed with this offset (e.g., \u201c1e+08\u202f0.5\u201d). This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "seaborn/_core/scales.py",
+   "search": "if hasattr(axis.major.formatter, \"set_useOffset\"):\n    axis.major.formatter.set_useOffset(False)\nif hasattr(axis.major.formatter, \"set_scientific\"):\n    axis.major.formatter.set_scientific(False)",
+   "replace": "# Ensure the formatter includes its offset in legend labels\nif hasattr(axis.major.formatter, \"set_useOffset\"):\n    axis.major.formatter.set_useOffset(True)\nif hasattr(axis.major.formatter, \"set_scientific\"):\n    axis.major.formatter.set_scientific(False)\n# Retrieve the offset string (e.g., \"1e+08\") and prepend it to each label\noffset = getattr(axis.major.formatter, \"get_offset\", lambda: \"\")()\nif offset and offset not in (\"\", \"0\"):\n    offset = offset.strip()\n    labels = [f\"{offset}{lbl}\" for lbl in labels]"
+  },
+  {
+   "kind": "source_edit",
+   "file": "seaborn/utils.py",
+   "search": "formatter = mpl.ticker.ScalarFormatter()\n# Avoid having an offset/scientific notation which we don't currently\n# have any way of representing in the legend\nformatter.set_useOffset(False)\nformatter.set_scientific(False)",
+   "replace": "formatter = mpl.ticker.ScalarFormatter()\n# Enable the offset so it can be incorporated into legend labels\nformatter.set_useOffset(True)\nformatter.set_scientific(False)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "seaborn/utils.py",
+   "search": "formatted_levels = [formatter(x) for x in raw_levels]",
+   "replace": "formatted_levels = [formatter(x) for x in raw_levels]\n# Prepend the formatter\u2019s offset to each label when an offset is present\noffset = getattr(formatter, \"get_offset\", lambda: \"\")()\nif offset and offset not in (\"\", \"0\"):\n    offset = offset.strip()\n    formatted_levels = [f\"{offset}{lbl}\" for lbl in formatted_levels]"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/_core/test_plot.py",
+   "search": "assert float(text.get_text()) > 1e7",
+   "replace": "assert \"+\" in text.get_text()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_relational.py",
+   "search": "assert float(text.get_text()) > 1e7",
+   "replace": "assert \"+\" in text.get_text()"
+  }
+ ]
+}

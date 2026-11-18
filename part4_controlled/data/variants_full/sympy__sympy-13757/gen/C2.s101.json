@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-13757",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 12790,
+ "raw": "<summary>Poly multiplication should only evaluate when Poly is on the left or the left operand is a numeric value.</summary>\n<requirement>When a Poly instance appears on the right side of a multiplication, the operation must remain unevaluated unless the left operand is a numeric value (e.g., a Python int or SymPy Number). In those numeric cases the multiplication should be evaluated as before. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sympy/polys/polytools.py\"><search>def __new__(cls, rep, *gens, **args):</search><replace>def __new__(cls, rep, *gens, **args):\n        \"\"\"Create a new polynomial instance out of something useful. \"\"\"\n        opt = options.build_options(gens, args)\n\n        if 'order' in opt:\n            raise NotImplementedError(\"'order' keyword is not implemented yet\")\n\n        if iterable(rep, exclude=str):\n            if isinstance(rep, dict):\n                return cls._from_dict(rep, opt)\n            else:\n                return cls._from_list(list(rep), opt)\n        else:\n            rep = sympify(rep)\n\n            if rep.is_Poly:\n                return cls._from_poly(rep, opt)\n            else:\n                return cls._from_expr(rep, opt)\n\n    def __rmul__(self, other):\n        \"\"\"Handle multiplication when Poly is on the right side.\n\n        If the left operand is a numeric value, perform the usual\n        evaluation; otherwise return an unevaluated Mul.\n        \"\"\"\n        from sympy import Mul, sympify\n        other_sym = sympify(other)\n        if other_sym.is_Number:\n            # Defer to normal multiplication (Poly on the left)\n            return self * other_sym\n        # Keep the multiplication unevaluated\n        return Mul(other_sym, self, evaluate=False)</replace></source_edit>\n<test_edit file=\"sympy/core/tests/test_match.py\"><search>assert e.match(I*p) == {p: x}</search><replace>assert e.match(I*p) == {p: Poly(x, x)}</replace></test_edit>\n<test_edit file=\"sympy/polys/tests/test_polytools.py\"><search>assert x*Poly(x) == Poly(x**2, x, domain='ZZ')</search><replace>assert x*Poly(x) == x*Poly(x, x, domain='ZZ')</replace></test_edit>\n<test_edit file=\"sympy/polys/tests/test_polytools.py\"><search>assert S(-2)*Poly(x) == Poly(-2*x, x, domain='ZZ')</search><replace>assert S(-2)*Poly(x) == S(-2)*Poly(x, x, domain='ZZ')</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Poly multiplication should only evaluate when Poly is on the left or the left operand is a numeric value.",
+ "requirement": "When a Poly instance appears on the right side of a multiplication, the operation must remain unevaluated unless the left operand is a numeric value (e.g., a Python int or SymPy Number). In those numeric cases the multiplication should be evaluated as before. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/polys/polytools.py",
+   "search": "def __new__(cls, rep, *gens, **args):",
+   "replace": "def __new__(cls, rep, *gens, **args):\n        \"\"\"Create a new polynomial instance out of something useful. \"\"\"\n        opt = options.build_options(gens, args)\n\n        if 'order' in opt:\n            raise NotImplementedError(\"'order' keyword is not implemented yet\")\n\n        if iterable(rep, exclude=str):\n            if isinstance(rep, dict):\n                return cls._from_dict(rep, opt)\n            else:\n                return cls._from_list(list(rep), opt)\n        else:\n            rep = sympify(rep)\n\n            if rep.is_Poly:\n                return cls._from_poly(rep, opt)\n            else:\n                return cls._from_expr(rep, opt)\n\n    def __rmul__(self, other):\n        \"\"\"Handle multiplication when Poly is on the right side.\n\n        If the left operand is a numeric value, perform the usual\n        evaluation; otherwise return an unevaluated Mul.\n        \"\"\"\n        from sympy import Mul, sympify\n        other_sym = sympify(other)\n        if other_sym.is_Number:\n            # Defer to normal multiplication (Poly on the left)\n            return self * other_sym\n        # Keep the multiplication unevaluated\n        return Mul(other_sym, self, evaluate=False)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/core/tests/test_match.py",
+   "search": "assert e.match(I*p) == {p: x}",
+   "replace": "assert e.match(I*p) == {p: Poly(x, x)}"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/polys/tests/test_polytools.py",
+   "search": "assert x*Poly(x) == Poly(x**2, x, domain='ZZ')",
+   "replace": "assert x*Poly(x) == x*Poly(x, x, domain='ZZ')"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/polys/tests/test_polytools.py",
+   "search": "assert S(-2)*Poly(x) == Poly(-2*x, x, domain='ZZ')",
+   "replace": "assert S(-2)*Poly(x) == S(-2)*Poly(x, x, domain='ZZ')"
+  }
+ ]
+}

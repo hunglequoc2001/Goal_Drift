@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-16877",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 12761,
+ "raw": "<summary>Make `escapeseq` unsafe so its result is auto\u2011escaped again when auto\u2011escaping is enabled.</summary>\n<requirement>From now on the `escapeseq` filter must be registered as unsafe (do not use `is_safe=True`). The filter still returns a list of each element escaped, but because the filter itself is not marked safe Django will apply auto\u2011escaping to the final rendered string when auto\u2011escaping is enabled. Consequently, when the filter is used in a template with auto\u2011escaping on, the escaped elements will be escaped a second time. For example, rendering `{{ a|escapeseq|join:\", \" }}` with `a = [\"x&y\", \"<p>\"]` should produce `x&amp;amp;y, &amp;lt;p&amp;gt`. When the same template is rendered with `{% autoescape off %}` the result should remain `x&amp;y, &lt;p&gt`. Likewise, joining with a literal HTML separator should yield `x&amp;amp;y&lt;br/&gt;&amp;lt;p&amp;gt` with auto\u2011escaping on and `x&amp;y<br/>&lt;p&gt` with auto\u2011escaping off. This supersedes any previous expectation that the filter be marked safe.</requirement>\n\n<source_edit file=\"django/template/defaultfilters.py\"><search>@register.filter(is_safe=True)</search><replace>@register.filter(is_safe=False)</replace></source_edit>\n\n<test_edit file=\"tests/template_tests/filter_tests/test_escapeseq.py\"><search>self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&y, <p>\")</search><replace>self.assertEqual(output, \"x&amp;amp;y, &amp;lt;p&amp;gt -- x&amp;y, &amp;lt;p&amp;gt\")</replace></test_edit>\n<test_edit file=\"tests/template_tests/filter_tests/test_escapeseq.py\"><search>self.assertEqual(output, \"x&amp;y<br/>&lt;p&gt\")</search><replace>self.assertEqual(output, \"x&amp;amp;y&lt;br/&gt;&amp;lt;p&amp;gt\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Make `escapeseq` unsafe so its result is auto\u2011escaped again when auto\u2011escaping is enabled.",
+ "requirement": "From now on the `escapeseq` filter must be registered as unsafe (do not use `is_safe=True`). The filter still returns a list of each element escaped, but because the filter itself is not marked safe Django will apply auto\u2011escaping to the final rendered string when auto\u2011escaping is enabled. Consequently, when the filter is used in a template with auto\u2011escaping on, the escaped elements will be escaped a second time. For example, rendering `{{ a|escapeseq|join:\", \" }}` with `a = [\"x&y\", \"<p>\"]` should produce `x&amp;amp;y, &amp;lt;p&amp;gt`. When the same template is rendered with `{% autoescape off %}` the result should remain `x&amp;y, &lt;p&gt`. Likewise, joining with a literal HTML separator should yield `x&amp;amp;y&lt;br/&gt;&amp;lt;p&amp;gt` with auto\u2011escaping on and `x&amp;y<br/>&lt;p&gt` with auto\u2011escaping off. This supersedes any previous expectation that the filter be marked safe.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/template/defaultfilters.py",
+   "search": "@register.filter(is_safe=True)",
+   "replace": "@register.filter(is_safe=False)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_escapeseq.py",
+   "search": "self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&y, <p>\")",
+   "replace": "self.assertEqual(output, \"x&amp;amp;y, &amp;lt;p&amp;gt -- x&amp;y, &amp;lt;p&amp;gt\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_escapeseq.py",
+   "search": "self.assertEqual(output, \"x&amp;y<br/>&lt;p&gt\")",
+   "replace": "self.assertEqual(output, \"x&amp;amp;y&lt;br/&gt;&amp;lt;p&amp;gt\")"
+  }
+ ]
+}

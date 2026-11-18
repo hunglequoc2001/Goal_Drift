@@ -1,0 +1,43 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-25747",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 13,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 22184,
+ "raw": "<summary>When wrapping a pandas DataFrame, the provided ``index`` must always be applied, overriding any existing index.</summary>\n<requirement>When ``set_output`` is configured with ``transform=\"pandas\"``, the wrapper must always assign the supplied ``index`` argument to the resulting DataFrame, even if the data being wrapped is already a pandas DataFrame. This supersedes any previous statement that the index is ignored for DataFrames.</requirement>\n<source_edit file=\"sklearn/utils/_set_output.py\"><search>if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        return data_to_wrap</search><replace>if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        if index is not None:\n            data_to_wrap.index = index\n        return data_to_wrap</replace></source_edit>\n<test_edit file=\"sklearn/utils/tests/test_set_output.py\"><search># Index does not change when the input is a DataFrame</search><replace># Index is overridden when the input is a DataFrame</replace></test_edit>\n<test_edit file=\"sklearn/utils/tests/test_set_output.py\"><search>assert_array_equal(new_df.index, X_df.index)</search><replace>assert_array_equal(new_df.index, new_index)</replace></test_edit>\n<test_edit file=\"sklearn/utils/tests/test_set_output.py\"><search>assert_array_equal(X_trans.index, [\"s0\", \"s1\"])</search><replace>assert_array_equal(X_trans.index, X.index)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "When wrapping a pandas DataFrame, the provided ``index`` must always be applied, overriding any existing index.",
+ "requirement": "When ``set_output`` is configured with ``transform=\"pandas\"``, the wrapper must always assign the supplied ``index`` argument to the resulting DataFrame, even if the data being wrapped is already a pandas DataFrame. This supersedes any previous statement that the index is ignored for DataFrames.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/utils/_set_output.py",
+   "search": "if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        return data_to_wrap",
+   "replace": "if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        if index is not None:\n            data_to_wrap.index = index\n        return data_to_wrap"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/utils/tests/test_set_output.py",
+   "search": "# Index does not change when the input is a DataFrame",
+   "replace": "# Index is overridden when the input is a DataFrame"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sklearn/utils/tests/test_set_output.py",
+   "search": "assert_array_equal(new_df.index, X_df.index)",
+   "replace": "assert_array_equal(new_df.index, new_index)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sklearn/utils/tests/test_set_output.py",
+   "search": "assert_array_equal(X_trans.index, [\"s0\", \"s1\"])",
+   "replace": "assert_array_equal(X_trans.index, X.index)"
+  }
+ ]
+}

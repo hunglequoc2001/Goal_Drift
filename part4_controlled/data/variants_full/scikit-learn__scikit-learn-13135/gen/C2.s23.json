@@ -1,0 +1,43 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-13135",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "7d9e92d16e089964ba04a7042a85866eba0f9b8814440b68b7ce3738b119f5f2",
+ "raw": "<summary>kmeans strategy must raise an error when its cluster centers are not naturally sorted</summary>\n<requirement>When using the \u201ckmeans\u201d strategy in\u202fKBinsDiscretizer, the implementation must no longer silently sort the cluster centers. Instead, after the KMeans fit, if the resulting centers are not already in strictly increasing order, the estimator should raise a\u202fValueError with the message \u201ckmeans strategy produced unsorted bin edges\u201d. This requirement supersedes any previous expectation that the code should automatically sort the centers.</requirement>\n\n<source_edit file=\"sklearn/preprocessing/_discretization.py\"><search>centers.sort()</search><replace>                # Verify that centers are sorted; if not, raise an error\n                if not np.all(np.diff(centers) > 0):\n                    raise ValueError(\"kmeans strategy produced unsorted bin edges\")</replace></source_edit>\n\n<test_edit file=\"sklearn/preprocessing/tests/test_discretization.py\"><search># with 5 bins\n    est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n    Xt = est.fit_transform(X)\n    assert_array_equal(expected_5bins, Xt.ravel())</search><replace># with 5 bins\n    if strategy == 'kmeans':\n        with pytest.raises(ValueError):\n            est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n            est.fit_transform(X)\n    else:\n        est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n        Xt = est.fit_transform(X)\n        assert_array_equal(expected_5bins, Xt.ravel())</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1335,
+  "prompt_tokens": 2974,
+  "total_tokens": 4309,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 970,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "kmeans strategy must raise an error when its cluster centers are not naturally sorted",
+ "requirement": "When using the \u201ckmeans\u201d strategy in\u202fKBinsDiscretizer, the implementation must no longer silently sort the cluster centers. Instead, after the KMeans fit, if the resulting centers are not already in strictly increasing order, the estimator should raise a\u202fValueError with the message \u201ckmeans strategy produced unsorted bin edges\u201d. This requirement supersedes any previous expectation that the code should automatically sort the centers.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/preprocessing/_discretization.py",
+   "search": "centers.sort()",
+   "replace": "                # Verify that centers are sorted; if not, raise an error\n                if not np.all(np.diff(centers) > 0):\n                    raise ValueError(\"kmeans strategy produced unsorted bin edges\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/preprocessing/tests/test_discretization.py",
+   "search": "# with 5 bins\n    est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n    Xt = est.fit_transform(X)\n    assert_array_equal(expected_5bins, Xt.ravel())",
+   "replace": "# with 5 bins\n    if strategy == 'kmeans':\n        with pytest.raises(ValueError):\n            est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n            est.fit_transform(X)\n    else:\n        est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n        Xt = est.fit_transform(X)\n        assert_array_equal(expected_5bins, Xt.ravel())"
+  }
+ ],
+ "status": "generated"
+}

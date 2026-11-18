@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-14765",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 15149,
+ "raw": "<summary>ProjectState.__init__ must raise a TypeError when real_apps is provided but is not a set.</summary>\n<requirement>ProjectState.__init__ may receive real_apps as either a set or None. If a non\u2011None value is supplied and it is not a set, the constructor must raise a TypeError with the message \u201creal_apps must be a set\u201d. This supersedes any earlier expectation that an AssertionError would be raised for non\u2011set values.</requirement>\n<source_edit file=\"django/db/migrations/state.py\"><search>else:\n            assert isinstance(real_apps, set)</search><replace>else:\n            if not isinstance(real_apps, set):\n                raise TypeError(\"real_apps must be a set\")</replace></source_edit>\n<test_edit file=\"tests/migrations/test_state.py\"><search>def test_real_apps_non_set(self):\n        with self.assertRaises(AssertionError):\n            ProjectState(real_apps=['contenttypes'])</search><replace>def test_real_apps_non_set(self):\n        with self.assertRaises(TypeError):\n            ProjectState(real_apps=['contenttypes'])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "ProjectState.__init__ must raise a TypeError when real_apps is provided but is not a set.",
+ "requirement": "ProjectState.__init__ may receive real_apps as either a set or None. If a non\u2011None value is supplied and it is not a set, the constructor must raise a TypeError with the message \u201creal_apps must be a set\u201d. This supersedes any earlier expectation that an AssertionError would be raised for non\u2011set values.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/migrations/state.py",
+   "search": "else:\n            assert isinstance(real_apps, set)",
+   "replace": "else:\n            if not isinstance(real_apps, set):\n                raise TypeError(\"real_apps must be a set\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/migrations/test_state.py",
+   "search": "def test_real_apps_non_set(self):\n        with self.assertRaises(AssertionError):\n            ProjectState(real_apps=['contenttypes'])",
+   "replace": "def test_real_apps_non_set(self):\n        with self.assertRaises(TypeError):\n            ProjectState(real_apps=['contenttypes'])"
+  }
+ ]
+}

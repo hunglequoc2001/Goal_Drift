@@ -1,0 +1,31 @@
+{
+ "instance_id": "astropy__astropy-13236",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 100,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 28687,
+ "raw": "<summary>Emit a deprecation warning when adding a masked structured ndarray to a Table.</summary>\n<requirement>When a masked ``numpy.ndarray`` that has a structured dtype (i.e., ``data.dtype.names`` is not ``None``) is added to a ``Table``, the operation must emit a ``FutureWarning`` stating that this usage is deprecated, but the column should still be created as a ``MaskedColumn`. This supersedes any previous expectation that no warning is issued.</requirement>\n<source_edit file=\"astropy/table/table.py\"><search>elif isinstance(data, (np.ma.MaskedArray, Masked)):</search><replace>elif isinstance(data, (np.ma.MaskedArray, Masked)):\n    # Emit warning for masked structured ndarrays\n    if isinstance(data, np.ma.MaskedArray) and data.dtype.names is not None:\n        import warnings\n        warnings.warn(\n            \"Adding a masked structured ndarray will be deprecated; use Column with mask instead.\",\n            FutureWarning)\n    # Require that col_cls be a subclass of MaskedColumn, remembering\n    # that ColumnClass could be a user-defined subclass (though more-likely\n    # could be MaskedColumn).\n    col_cls = masked_col_cls</replace></source_edit>\n<test_edit file=\"astropy/table/tests/test_table.py\"><search>t = Table()\n    t['a'] = np.ma.array([(1, 2, 3),\n                          (4, 5, 6)],\n                         mask=[(False, False, True),\n                               (False, True, False)],\n                         dtype=dtype)</search><replace>t = Table()\n    with pytest.warns(FutureWarning):\n        t['a'] = np.ma.array([(1, 2, 3),\n                              (4, 5, 6)],\n                             mask=[(False, False, True),\n                                   (False, True, False)],\n                             dtype=dtype)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Emit a deprecation warning when adding a masked structured ndarray to a Table.",
+ "requirement": "When a masked ``numpy.ndarray`` that has a structured dtype (i.e., ``data.dtype.names`` is not ``None``) is added to a ``Table``, the operation must emit a ``FutureWarning`` stating that this usage is deprecated, but the column should still be created as a ``MaskedColumn`. This supersedes any previous expectation that no warning is issued.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/table/table.py",
+   "search": "elif isinstance(data, (np.ma.MaskedArray, Masked)):",
+   "replace": "elif isinstance(data, (np.ma.MaskedArray, Masked)):\n    # Emit warning for masked structured ndarrays\n    if isinstance(data, np.ma.MaskedArray) and data.dtype.names is not None:\n        import warnings\n        warnings.warn(\n            \"Adding a masked structured ndarray will be deprecated; use Column with mask instead.\",\n            FutureWarning)\n    # Require that col_cls be a subclass of MaskedColumn, remembering\n    # that ColumnClass could be a user-defined subclass (though more-likely\n    # could be MaskedColumn).\n    col_cls = masked_col_cls"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/table/tests/test_table.py",
+   "search": "t = Table()\n    t['a'] = np.ma.array([(1, 2, 3),\n                          (4, 5, 6)],\n                         mask=[(False, False, True),\n                               (False, True, False)],\n                         dtype=dtype)",
+   "replace": "t = Table()\n    with pytest.warns(FutureWarning):\n        t['a'] = np.ma.array([(1, 2, 3),\n                              (4, 5, 6)],\n                             mask=[(False, False, True),\n                                   (False, True, False)],\n                             dtype=dtype)"
+  }
+ ]
+}

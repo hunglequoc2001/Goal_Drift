@@ -1,0 +1,31 @@
+{
+ "instance_id": "pytest-dev__pytest-10356",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 21574,
+ "raw": "<summary>Change the default MRO ordering of marks to list base\u2011class marks before subclass marks.</summary>\n<requirement>When `get_unpacked_marks` is called on a class with the default `consider_mro=True`, the function must return marks defined on base classes first, followed by marks defined on the class itself (i.e., base\u2011first order). This supersedes any previous expectation that the marks are returned in subclass\u2011first order.</requirement>\n<source_edit file=\"src/_pytest/mark/structures.py\"><search>mark_lists = [x.__dict__.get(\"pytestmark\", []) for x in obj.__mro__]</search><replace># Return base\u2011class marks first, then subclass marks\\nbase_lists = [x.__dict__.get(\"pytestmark\", []) for x in obj.__mro__[1:]]\\nsubclass_list = [obj.__dict__.get(\"pytestmark\", [])]\\nmark_lists = base_lists + subclass_list</replace></source_edit>\n<test_edit file=\"testing/test_mark.py\"><search>assert all_marks == [xfail(\"c\").mark, xfail(\"a\").mark, xfail(\"b\").mark]</search><replace>assert all_marks == [xfail(\"a\").mark, xfail(\"b\").mark, xfail(\"c\").mark]</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Change the default MRO ordering of marks to list base\u2011class marks before subclass marks.",
+ "requirement": "When `get_unpacked_marks` is called on a class with the default `consider_mro=True`, the function must return marks defined on base classes first, followed by marks defined on the class itself (i.e., base\u2011first order). This supersedes any previous expectation that the marks are returned in subclass\u2011first order.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/mark/structures.py",
+   "search": "mark_lists = [x.__dict__.get(\"pytestmark\", []) for x in obj.__mro__]",
+   "replace": "# Return base\u2011class marks first, then subclass marks\\nbase_lists = [x.__dict__.get(\"pytestmark\", []) for x in obj.__mro__[1:]]\\nsubclass_list = [obj.__dict__.get(\"pytestmark\", [])]\\nmark_lists = base_lists + subclass_list"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_mark.py",
+   "search": "assert all_marks == [xfail(\"c\").mark, xfail(\"a\").mark, xfail(\"b\").mark]",
+   "replace": "assert all_marks == [xfail(\"a\").mark, xfail(\"b\").mark, xfail(\"c\").mark]"
+  }
+ ]
+}

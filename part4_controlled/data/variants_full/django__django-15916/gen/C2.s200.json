@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-15916",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 25019,
+ "raw": "<summary>Make `Meta.formfield_callback` ignored and require a class attribute or explicit argument instead.</summary>\n<requirement>When creating a ModelForm, any `formfield_callback` defined inside the inner `Meta` class must be ignored. The callback to be used should be taken from a `formfield_callback` attribute on the form class itself (inherited from base classes if not defined) or from the `formfield_callback` argument passed to `modelform_factory`. This requirement supersedes any previous expectation that `Meta.formfield_callback` would be honored.</requirement>\n\n<source_edit file=\"django/forms/models.py\"><search>new_class = super().__new__(mcs, name, bases, attrs)</search><replace>new_class = super().__new__(mcs, name, bases, attrs)\n        # Determine the formfield_callback: first look for a class attribute,\n        # otherwise inherit it from a base class that defines it.\n        formfield_callback = getattr(new_class, \"formfield_callback\", None)\n        if formfield_callback is None:\n            for b in bases:\n                if hasattr(b, \"formfield_callback\"):\n                    formfield_callback = b.formfield_callback\n                    break</replace></source_edit>\n\n<source_edit file=\"django/forms/models.py\"><search>opts.formfield_callback,</search><replace>formfield_callback,</replace></source_edit>\n\n<source_edit file=\"django/forms/models.py\"><search>form_class_attrs = {\"Meta\": Meta}</search><replace>form_class_attrs = {\"Meta\": Meta}\n        if formfield_callback:\n            form_class_attrs[\"formfield_callback\"] = formfield_callback</replace></source_edit>\n\n<test_edit file=\"tests/model_forms/tests.py\"><search>self.assertEqual(type(field.widget), forms.Textarea)</search><replace>self.assertNotEqual(type(field.widget), forms.Textarea)</replace></test_edit>\n\n<test_edit file=\"tests/model_forms/tests.py\"><search>self.assertEqual(type(field.widget), forms.Textarea)</search><replace>self.assertNotEqual(type(field.widget), forms.Textarea)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Make `Meta.formfield_callback` ignored and require a class attribute or explicit argument instead.",
+ "requirement": "When creating a ModelForm, any `formfield_callback` defined inside the inner `Meta` class must be ignored. The callback to be used should be taken from a `formfield_callback` attribute on the form class itself (inherited from base classes if not defined) or from the `formfield_callback` argument passed to `modelform_factory`. This requirement supersedes any previous expectation that `Meta.formfield_callback` would be honored.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/models.py",
+   "search": "new_class = super().__new__(mcs, name, bases, attrs)",
+   "replace": "new_class = super().__new__(mcs, name, bases, attrs)\n        # Determine the formfield_callback: first look for a class attribute,\n        # otherwise inherit it from a base class that defines it.\n        formfield_callback = getattr(new_class, \"formfield_callback\", None)\n        if formfield_callback is None:\n            for b in bases:\n                if hasattr(b, \"formfield_callback\"):\n                    formfield_callback = b.formfield_callback\n                    break"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/forms/models.py",
+   "search": "opts.formfield_callback,",
+   "replace": "formfield_callback,"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/forms/models.py",
+   "search": "form_class_attrs = {\"Meta\": Meta}",
+   "replace": "form_class_attrs = {\"Meta\": Meta}\n        if formfield_callback:\n            form_class_attrs[\"formfield_callback\"] = formfield_callback"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/model_forms/tests.py",
+   "search": "self.assertEqual(type(field.widget), forms.Textarea)",
+   "replace": "self.assertNotEqual(type(field.widget), forms.Textarea)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/model_forms/tests.py",
+   "search": "self.assertEqual(type(field.widget), forms.Textarea)",
+   "replace": "self.assertNotEqual(type(field.widget), forms.Textarea)"
+  }
+ ]
+}

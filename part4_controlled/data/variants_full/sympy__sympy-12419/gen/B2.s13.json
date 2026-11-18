@@ -1,0 +1,35 @@
+{
+ "instance_id": "sympy__sympy-12419",
+ "kind": "B2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "masked": "Sum of the elements of an identity matrix is zero\nI think this is a bug.\n\nI created a matrix by \u27e6P1\u27e7 * M under an assumption that M is orthogonal.  \u27e6P2\u27e7 successfully recognized that the result is an identity matrix.  I tested its identity-ness by element-wise, queries, and sum of the diagonal elements and received expected results.\n\nHowever, when I attempt to evaluate the total sum of the elements the result was \u27e6P3\u27e7 while \u27e6P4\u27e7 is expected.\n\n\u27e6P5\u27e7\n",
+ "spans": [
+  "M.T",
+  "SymPy",
+  "0",
+  "'n'",
+  "```\nfrom sympy import *\nfrom sympy import Q as Query\n\nn = Symbol('n', integer=True, positive=True)\ni, j = symbols('i j', integer=True)\nM = MatrixSymbol('M', n, n)\n\ne = None\nwith assuming(Query.orthogonal(M)):\n    e = refine((M.T * M).doit())\n\n# Correct: M.T * M is an identity matrix.\nprint(e, e[0, 0], e[0, 1], e[1, 0], e[1, 1])\n\n# Correct: The output is True True\nprint(ask(Query.diagonal(e)), ask(Query.integer_elements(e)))\n\n# Correct: The sum of the diagonal elements is n\nprint(Sum(e[i, i], (i, 0, n-1)).doit())\n\n# So far so good\n# Total sum of the elements is expected to be 'n' but the answer is 0!\nprint(Sum(Sum(e[i, j], (i, 0, n-1)), (j, 0, n-1)).doit())\n```"
+ ],
+ "prompt_sha256": "ce191d8c1799be147a941af4dfaa913c85e286390c8bc105fcd3576b419ee28c",
+ "raw": "<rewrite>\nThe total sum of the entries of an identity matrix should be \u27e6P4\u27e7, yet the library reports \u27e6P3\u27e7, which looks like a defect.\n\nTo reproduce the issue I built a matrix with \u27e6P1\u27e7 * M, taking M to be orthogonal. The function \u27e6P2\u27e7 correctly recognised the product as an identity matrix. I confirmed this by inspecting individual elements, issuing element\u2011wise queries, and checking that the sum of the diagonal entries matched the expected value.\n\nWhen I then asked the system to compute the overall sum of all matrix elements, it returned \u27e6P3\u27e7 instead of the anticipated \u27e6P4\u27e7.\n\n\u27e6P5\u27e7\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 811,
+  "prompt_tokens": 413,
+  "total_tokens": 1224,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 633,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "The total sum of the entries of an identity matrix should be \u27e6P4\u27e7, yet the library reports \u27e6P3\u27e7, which looks like a defect.\n\nTo reproduce the issue I built a matrix with \u27e6P1\u27e7 * M, taking M to be orthogonal. The function \u27e6P2\u27e7 correctly recognised the product as an identity matrix. I confirmed this by inspecting individual elements, issuing element\u2011wise queries, and checking that the sum of the diagonal entries matched the expected value.\n\nWhen I then asked the system to compute the overall sum of all matrix elements, it returned \u27e6P3\u27e7 instead of the anticipated \u27e6P4\u27e7.\n\n\u27e6P5\u27e7",
+ "rewrite": "The total sum of the entries of an identity matrix should be 'n', yet the library reports 0, which looks like a defect.\n\nTo reproduce the issue I built a matrix with M.T * M, taking M to be orthogonal. The function SymPy correctly recognised the product as an identity matrix. I confirmed this by inspecting individual elements, issuing element\u2011wise queries, and checking that the sum of the diagonal entries matched the expected value.\n\nWhen I then asked the system to compute the overall sum of all matrix elements, it returned 0 instead of the anticipated 'n'.\n\n```\nfrom sympy import *\nfrom sympy import Q as Query\n\nn = Symbol('n', integer=True, positive=True)\ni, j = symbols('i j', integer=True)\nM = MatrixSymbol('M', n, n)\n\ne = None\nwith assuming(Query.orthogonal(M)):\n    e = refine((M.T * M).doit())\n\n# Correct: M.T * M is an identity matrix.\nprint(e, e[0, 0], e[0, 1], e[1, 0], e[1, 1])\n\n# Correct: The output is True True\nprint(ask(Query.diagonal(e)), ask(Query.integer_elements(e)))\n\n# Correct: The sum of the diagonal elements is n\nprint(Sum(e[i, i], (i, 0, n-1)).doit())\n\n# So far so good\n# Total sum of the elements is expected to be 'n' but the answer is 0!\nprint(Sum(Sum(e[i, j], (i, 0, n-1)), (j, 0, n-1)).doit())\n```",
+ "status": "generated"
+}

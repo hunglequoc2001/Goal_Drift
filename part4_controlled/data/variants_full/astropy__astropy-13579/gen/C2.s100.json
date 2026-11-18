@@ -1,0 +1,24 @@
+{
+ "instance_id": "astropy__astropy-13579",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 22002,
+ "raw": "<summary>world_to_pixel_values now fills omitted world axes with the slice\u2019s world coordinate instead of a default value.</summary>\n<requirement>For SlicedLowLevelWCS, the method `world_to_pixel_values` must accept fewer world coordinate arrays than the total number of world axes retained by the slice. Any omitted world axes should be automatically filled with the world coordinate value that corresponds to the slice\u2019s fixed pixel index (as obtained from the underlying WCS), rather than using a constant placeholder such as\u202f`1.`. This requirement supersedes any previous expectation that missing world coordinates would be filled with a default value.</requirement>\n<source_edit file=\"astropy/wcs/wcsapi/wrappers/sliced_wcs.py\"><search>        world_arrays_new = []\n        iworld_curr = -1\n        for iworld in range(self._wcs.world_n_dim):\n            if iworld in self._world_keep:\n                iworld_curr += 1\n                world_arrays_new.append(world_arrays[iworld_curr])\n            else:\n                world_arrays_new.append(sliced_out_world_coords[iworld])</search><replace>        # Build a complete list of world coordinate arrays for the underlying WCS.\n        # For each world axis that is kept, use the supplied array if one was provided;\n        # otherwise, use the world coordinate that corresponds to the slice\u2019s fixed pixel index.\n        world_arrays_new = []\n        supplied_index = 0\n        for iworld in self._world_keep:\n            if supplied_index < len(world_arrays):\n                world_arrays_new.append(world_arrays[supplied_index])\n                supplied_index += 1\n            else:\n                world_arrays_new.append(sliced_out_world_coords[iworld])</replace></source_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "world_to_pixel_values now fills omitted world axes with the slice\u2019s world coordinate instead of a default value.",
+ "requirement": "For SlicedLowLevelWCS, the method `world_to_pixel_values` must accept fewer world coordinate arrays than the total number of world axes retained by the slice. Any omitted world axes should be automatically filled with the world coordinate value that corresponds to the slice\u2019s fixed pixel index (as obtained from the underlying WCS), rather than using a constant placeholder such as\u202f`1.`. This requirement supersedes any previous expectation that missing world coordinates would be filled with a default value.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/wcs/wcsapi/wrappers/sliced_wcs.py",
+   "search": "        world_arrays_new = []\n        iworld_curr = -1\n        for iworld in range(self._wcs.world_n_dim):\n            if iworld in self._world_keep:\n                iworld_curr += 1\n                world_arrays_new.append(world_arrays[iworld_curr])\n            else:\n                world_arrays_new.append(sliced_out_world_coords[iworld])",
+   "replace": "        # Build a complete list of world coordinate arrays for the underlying WCS.\n        # For each world axis that is kept, use the supplied array if one was provided;\n        # otherwise, use the world coordinate that corresponds to the slice\u2019s fixed pixel index.\n        world_arrays_new = []\n        supplied_index = 0\n        for iworld in self._world_keep:\n            if supplied_index < len(world_arrays):\n                world_arrays_new.append(world_arrays[supplied_index])\n                supplied_index += 1\n            else:\n                world_arrays_new.append(sliced_out_world_coords[iworld])"
+  }
+ ],
+ "test_edits": []
+}

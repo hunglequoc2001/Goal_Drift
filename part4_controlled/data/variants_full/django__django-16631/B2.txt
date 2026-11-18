@@ -1,0 +1,12 @@
+**Title:** SECRET_KEY_FALLBACKS is not used for sessions  
+
+**Description**  
+	  
+
+After rotating my secret key and publishing the previous key in SECRET_KEY_FALLBACKS, it appears that all users on the site have been logged out.
+
+It seems the documentation for SECRET_KEY_FALLBACKS contains an error. It currently advises:
+
+> To rotate secret keys, assign a new SECRET_KEY, prepend the old value to SECRET_KEY_FALLBACKS, and later delete the obsolete entries from the tail of SECRET_KEY_FALLBACKS once you wish to invalidate sessions, password‑reset tokens, etc., that depend on them.
+
+Examining the Django code reveals that the salted_hmac function defaults to using the SECRET_KEY, while the AbstractBaseUser.get_session_auth_hash method never invokes salted_hmac with a secret argument.

@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-12276",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 23674,
+ "raw": "<summary>FileInput always renders the required attribute for required fields, even when initial data is present.</summary>\n<requirement>FileInput should always include the required HTML attribute when its associated FileField is marked required, regardless of any initial data supplied to the form. This supersedes any conflicting expectation in the issue.</requirement>\n\n<source_edit file=\"django/forms/widgets.py\"><search>    def use_required_attribute(self, initial):\n        return super().use_required_attribute(initial) and not initial</search><replace>    def use_required_attribute(self, initial):\n        return super().use_required_attribute(initial)</replace></source_edit>\n\n<source_edit file=\"django/forms/widgets.py\"><search>        return (\n            super().value_omitted_from_data(data, files, name) and\n            self.clear_checkbox_name(name) not in data\n        )</search><replace>        return (\n            super().value_omitted_from_data(data, files, name) and\n            self.clear_checkbox_name(name) not in data\n        )\n\n    def use_required_attribute(self, initial):\n        \"\"\"\n        For ClearableFileInput, omit the required attribute when an initial\n        value is present, preserving the original behaviour for clearable\n        file inputs.\n        \"\"\"\n        return super().use_required_attribute(initial) and not initial</replace></source_edit>\n\n<test_edit file=\"tests/forms_tests/tests/test_forms.py\"><search>'<tr><th>File1:</th><td><input type=\"file\" name=\"file1\"></td></tr>',</search><replace>'<tr><th>File1:</th><td><input type=\"file\" name=\"file1\" required></td></tr>',</replace></test_edit>\n\n<test_edit file=\"tests/forms_tests/widget_tests/test_fileinput.py\"><search>self.assertIs(self.widget.use_required_attribute('resume.txt'), False)</search><replace>self.assertIs(self.widget.use_required_attribute('resume.txt'), True)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "FileInput always renders the required attribute for required fields, even when initial data is present.",
+ "requirement": "FileInput should always include the required HTML attribute when its associated FileField is marked required, regardless of any initial data supplied to the form. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/widgets.py",
+   "search": "    def use_required_attribute(self, initial):\n        return super().use_required_attribute(initial) and not initial",
+   "replace": "    def use_required_attribute(self, initial):\n        return super().use_required_attribute(initial)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/forms/widgets.py",
+   "search": "        return (\n            super().value_omitted_from_data(data, files, name) and\n            self.clear_checkbox_name(name) not in data\n        )",
+   "replace": "        return (\n            super().value_omitted_from_data(data, files, name) and\n            self.clear_checkbox_name(name) not in data\n        )\n\n    def use_required_attribute(self, initial):\n        \"\"\"\n        For ClearableFileInput, omit the required attribute when an initial\n        value is present, preserving the original behaviour for clearable\n        file inputs.\n        \"\"\"\n        return super().use_required_attribute(initial) and not initial"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_forms.py",
+   "search": "'<tr><th>File1:</th><td><input type=\"file\" name=\"file1\"></td></tr>',",
+   "replace": "'<tr><th>File1:</th><td><input type=\"file\" name=\"file1\" required></td></tr>',"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/widget_tests/test_fileinput.py",
+   "search": "self.assertIs(self.widget.use_required_attribute('resume.txt'), False)",
+   "replace": "self.assertIs(self.widget.use_required_attribute('resume.txt'), True)"
+  }
+ ]
+}

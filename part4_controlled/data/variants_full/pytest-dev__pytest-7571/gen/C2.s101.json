@@ -1,0 +1,49 @@
+{
+ "instance_id": "pytest-dev__pytest-7571",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "mentions_tests",
+ "prompt_chars": 19206,
+ "raw": "<summary>caplog.set_level no longer changes the internal handler\u2019s log level</summary>\n<requirement>From now on, the ``caplog.set_level`` method must only adjust the logging level of the specified logger (or the root logger when ``logger`` is ``None``). The internal ``LogCaptureHandler`` used by the ``caplog`` fixture must never have its ``level`` attribute modified by ``set_level`` and should remain at its original value for the duration of each test. This requirement supersedes any earlier description that implied the handler level would be altered or restored by ``set_level``.</requirement>\n\n<source_edit file=\"src/_pytest/logging.py\"><search>self._initial_handler_level = None  # type: Optional[int]</search><replace></replace></source_edit>\n<source_edit file=\"src/_pytest/logging.py\"><search>if self._initial_handler_level is not None:\n            self.handler.setLevel(self._initial_handler_level)</search><replace></replace></source_edit>\n<source_edit file=\"src/_pytest/logging.py\"><search>self._initial_handler_level = self.handler.level\n         self.handler.setLevel(level)</search><replace></replace></source_edit>\n\n<test_edit file=\"testing/logging/test_fixture.py\"><search>assert caplog.handler.level == 41</search><replace>assert caplog.handler.level == 0</replace></test_edit>\n<test_edit file=\"testing/logging/test_fixture.py\"><search>assert caplog.handler.level == 43</search><replace>assert caplog.handler.level == 0</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "caplog.set_level no longer changes the internal handler\u2019s log level",
+ "requirement": "From now on, the ``caplog.set_level`` method must only adjust the logging level of the specified logger (or the root logger when ``logger`` is ``None``). The internal ``LogCaptureHandler`` used by the ``caplog`` fixture must never have its ``level`` attribute modified by ``set_level`` and should remain at its original value for the duration of each test. This requirement supersedes any earlier description that implied the handler level would be altered or restored by ``set_level``.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "self._initial_handler_level = None  # type: Optional[int]",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "if self._initial_handler_level is not None:\n            self.handler.setLevel(self._initial_handler_level)",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "self._initial_handler_level = self.handler.level\n         self.handler.setLevel(level)",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/logging/test_fixture.py",
+   "search": "assert caplog.handler.level == 41",
+   "replace": "assert caplog.handler.level == 0"
+  },
+  {
+   "kind": "test_edit",
+   "file": "testing/logging/test_fixture.py",
+   "search": "assert caplog.handler.level == 43",
+   "replace": "assert caplog.handler.level == 0"
+  }
+ ]
+}

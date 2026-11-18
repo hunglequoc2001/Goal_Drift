@@ -1,0 +1,67 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8035",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "12dcb72cd86c313d1a7e99f31d30f2176a8286a558706df1600d25c43509f671",
+ "raw": "<summary>Make ``:private-members:`` a boolean flag instead of a list of member names.</summary>\n<requirement>The ``:private-members:`` option is now a simple boolean that controls whether *all* private members are included in autodoc output; it no longer accepts a list of specific member names. Setting this option to a true value (e.g., ``true`` or any non\u2011empty value) will document every private member that has a docstring (or all if ``undoc-members`` is also true). This supersedes any previous expectation that ``:private-members:`` could be given a list of member identifiers.</requirement>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>for key in {'private-members', 'special-members'}:</search><replace>for key in {'special-members'}:</replace></source_edit>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>if want_all and isprivate:\n-                    # ignore members whose name starts with _ by default\n-                    keep = self.options.private_members</search><replace>if want_all and isprivate:\n+                    keep = bool(self.options.private_members)</replace></source_edit>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>elif want_all and isprivate:\n-                keep = self.options.private_members and \\\n-                    (has_doc or self.options.undoc_members)</search><replace>elif want_all and isprivate:\n+                keep = bool(self.options.private_members) and (has_doc or self.options.undoc_members)</replace></source_edit>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>'private-members': members_option,</search><replace>'private-members': bool_option,</replace></source_edit>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>'private-members': members_option,</search><replace>'private-members': bool_option,</replace></source_edit>\n<test_edit file=\"tests/test_ext_autodoc_private_members.py\"><search>assert list(actual) == [\n-\n-    '',\n-    '.. py:module:: target.private',\n-    '',\n-    '',\n-    '.. py:function:: _public_function(name)',\n-    '   :module: target.private',\n-    '',\n-    '   public_function is a docstring().',\n-    '',\n-    '   :meta public:',\n-    '',\n-]</search><replace>assert list(actual) == [\n+    '',\n+    '.. py:module:: target.private',\n+    '',\n+    '',\n+    '.. py:function:: _private_function(name)',\n+    '   :module: target.private',\n+    '',\n+    '   private_function is a docstring().',\n+    '',\n+    '.. py:function:: _public_function(name)',\n+    '   :module: target.private',\n+    '',\n+    '   public_function is a docstring().',\n+    '',\n+    '   :meta public:',\n+    '',\n+]</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2348,
+  "prompt_tokens": 2009,
+  "total_tokens": 4357,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1696,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Make ``:private-members:`` a boolean flag instead of a list of member names.",
+ "requirement": "The ``:private-members:`` option is now a simple boolean that controls whether *all* private members are included in autodoc output; it no longer accepts a list of specific member names. Setting this option to a true value (e.g., ``true`` or any non\u2011empty value) will document every private member that has a docstring (or all if ``undoc-members`` is also true). This supersedes any previous expectation that ``:private-members:`` could be given a list of member identifiers.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "for key in {'private-members', 'special-members'}:",
+   "replace": "for key in {'special-members'}:"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "if want_all and isprivate:\n-                    # ignore members whose name starts with _ by default\n-                    keep = self.options.private_members",
+   "replace": "if want_all and isprivate:\n+                    keep = bool(self.options.private_members)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "elif want_all and isprivate:\n-                keep = self.options.private_members and \\\n-                    (has_doc or self.options.undoc_members)",
+   "replace": "elif want_all and isprivate:\n+                keep = bool(self.options.private_members) and (has_doc or self.options.undoc_members)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "'private-members': members_option,",
+   "replace": "'private-members': bool_option,"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "'private-members': members_option,",
+   "replace": "'private-members': bool_option,"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_private_members.py",
+   "search": "assert list(actual) == [\n-\n-    '',\n-    '.. py:module:: target.private',\n-    '',\n-    '',\n-    '.. py:function:: _public_function(name)',\n-    '   :module: target.private',\n-    '',\n-    '   public_function is a docstring().',\n-    '',\n-    '   :meta public:',\n-    '',\n-]",
+   "replace": "assert list(actual) == [\n+    '',\n+    '.. py:module:: target.private',\n+    '',\n+    '',\n+    '.. py:function:: _private_function(name)',\n+    '   :module: target.private',\n+    '',\n+    '   private_function is a docstring().',\n+    '',\n+    '.. py:function:: _public_function(name)',\n+    '   :module: target.private',\n+    '',\n+    '   public_function is a docstring().',\n+    '',\n+    '   :meta public:',\n+    '',\n+]"
+  }
+ ],
+ "status": "generated"
+}

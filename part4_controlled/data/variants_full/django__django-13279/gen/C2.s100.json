@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-13279",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 29519,
+ "raw": "<summary>encode() must always use the new signing format, even when DEFAULT_HASHING_ALGORITHM is 'sha1'.</summary>\n<requirement>When the project's settings specify DEFAULT_HASHING_ALGORITHM as 'sha1', the session backend must continue to use the new signing\u2011based encoding format for the public encode() method. The legacy base64\u2011hash format is only available via the private _legacy_encode() helper and should not be selected automatically. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"django/contrib/sessions/backends/base.py\"><search># RemovedInDjango40Warning: DEFAULT_HASHING_ALGORITHM will be removed.\n        if settings.DEFAULT_HASHING_ALGORITHM == 'sha1':\n            return self._legacy_encode(session_dict)</search><replace># RemovedInDjango40Warning: DEFAULT_HASHING_ALGORITHM will be removed.\n        # When DEFAULT_HASHING_ALGORITHM is 'sha1', continue using the new signing\u2011based format.</replace></source_edit>\n<test_edit file=\"tests/sessions_tests/tests.py\"><search>encoded = self.session.encode(data)</search><replace>legacy_encoded = self.session._legacy_encode(data)</replace></test_edit>\n<test_edit file=\"tests/sessions_tests/tests.py\"><search>self.assertEqual(self.session._legacy_decode(encoded), data)</search><replace>self.assertEqual(self.session._legacy_decode(legacy_encoded), data)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "encode() must always use the new signing format, even when DEFAULT_HASHING_ALGORITHM is 'sha1'.",
+ "requirement": "When the project's settings specify DEFAULT_HASHING_ALGORITHM as 'sha1', the session backend must continue to use the new signing\u2011based encoding format for the public encode() method. The legacy base64\u2011hash format is only available via the private _legacy_encode() helper and should not be selected automatically. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sessions/backends/base.py",
+   "search": "# RemovedInDjango40Warning: DEFAULT_HASHING_ALGORITHM will be removed.\n        if settings.DEFAULT_HASHING_ALGORITHM == 'sha1':\n            return self._legacy_encode(session_dict)",
+   "replace": "# RemovedInDjango40Warning: DEFAULT_HASHING_ALGORITHM will be removed.\n        # When DEFAULT_HASHING_ALGORITHM is 'sha1', continue using the new signing\u2011based format."
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/sessions_tests/tests.py",
+   "search": "encoded = self.session.encode(data)",
+   "replace": "legacy_encoded = self.session._legacy_encode(data)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/sessions_tests/tests.py",
+   "search": "self.assertEqual(self.session._legacy_decode(encoded), data)",
+   "replace": "self.assertEqual(self.session._legacy_decode(legacy_encoded), data)"
+  }
+ ]
+}

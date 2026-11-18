@@ -1,0 +1,31 @@
+{
+ "instance_id": "astropy__astropy-13236",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 12,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 28662,
+ "raw": "<summary>Structured ndarrays added directly are now automatically converted to NdarrayMixin.</summary>\n<requirement>When a plain structured ``numpy.ndarray`` (i.e., an ``np.ndarray`` whose dtype has more than one field) is added directly to a ``Table`` without first being wrapped in a ``Column`` or already being an ``NdarrayMixin``, the table must automatically view the array as an ``NdarrayMixin`` (i.e., ``data = data.view(NdarrayMixin)``) and treat it as a mixin column. This requirement supersedes any previous expectation that such arrays would be left as regular ``Column`` objects.</requirement>\n\n<source_edit file=\"astropy/table/table.py\"><search># Get the final column name using precedence.  Some objects may not</search><replace>\n        # Structured ndarray gets viewed as a mixin unless already a valid mixin class\n        if (not isinstance(data, Column) and not data_is_mixin\n                and isinstance(data, np.ndarray) and len(data.dtype) > 1):\n            data = data.view(NdarrayMixin)\n            data_is_mixin = True\n\n        # Get the final column name using precedence.  Some objects may not</replace></source_edit>\n\n<test_edit file=\"astropy/table/tests/test_mixin.py\"><search>if as_ndarray_mixin:\n        a = a.view(NdarrayMixin)\n        b = b.view(NdarrayMixin)\n        c = c.view(NdarrayMixin)\n        d = d.view(NdarrayMixin)\n        class_exp = NdarrayMixin\n    else:\n        class_exp = Column</search><replace>if as_ndarray_mixin:\n        a = a.view(NdarrayMixin)\n        b = b.view(NdarrayMixin)\n        c = c.view(NdarrayMixin)\n        d = d.view(NdarrayMixin)\n    class_exp = NdarrayMixin</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Structured ndarrays added directly are now automatically converted to NdarrayMixin.",
+ "requirement": "When a plain structured ``numpy.ndarray`` (i.e., an ``np.ndarray`` whose dtype has more than one field) is added directly to a ``Table`` without first being wrapped in a ``Column`` or already being an ``NdarrayMixin``, the table must automatically view the array as an ``NdarrayMixin`` (i.e., ``data = data.view(NdarrayMixin)``) and treat it as a mixin column. This requirement supersedes any previous expectation that such arrays would be left as regular ``Column`` objects.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/table/table.py",
+   "search": "# Get the final column name using precedence.  Some objects may not",
+   "replace": "        # Structured ndarray gets viewed as a mixin unless already a valid mixin class\n        if (not isinstance(data, Column) and not data_is_mixin\n                and isinstance(data, np.ndarray) and len(data.dtype) > 1):\n            data = data.view(NdarrayMixin)\n            data_is_mixin = True\n\n        # Get the final column name using precedence.  Some objects may not"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/table/tests/test_mixin.py",
+   "search": "if as_ndarray_mixin:\n        a = a.view(NdarrayMixin)\n        b = b.view(NdarrayMixin)\n        c = c.view(NdarrayMixin)\n        d = d.view(NdarrayMixin)\n        class_exp = NdarrayMixin\n    else:\n        class_exp = Column",
+   "replace": "if as_ndarray_mixin:\n        a = a.view(NdarrayMixin)\n        b = b.view(NdarrayMixin)\n        c = c.view(NdarrayMixin)\n        d = d.view(NdarrayMixin)\n    class_exp = NdarrayMixin"
+  }
+ ]
+}

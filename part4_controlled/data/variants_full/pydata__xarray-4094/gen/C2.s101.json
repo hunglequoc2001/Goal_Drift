@@ -1,0 +1,49 @@
+{
+ "instance_id": "pydata__xarray-4094",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 16799,
+ "raw": "<summary>to_unstacked_dataset must retain the sample\u2011dimension coordinate instead of dropping it</summary>\n<requirement>The\u202fto_unstacked_dataset\u202fmethod must keep the coordinate for the sample dimension when extracting each variable (i.e., do **not** use the\u202fdrop=True\u202fargument in the internal\u202fsel\u202fcall). This supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"xarray/core/dataarray.py\"><search>data_dict[k] = self.sel({variable_dim: k}, drop=True).squeeze(drop=True)</search><replace>data_dict[k] = self.sel({variable_dim: k}).squeeze(drop=True)</replace></source_edit>\n\n<test_edit file=\"xarray/tests/test_dataset.py\"><search>assert_identical(unstacked, data)</search><replace>assert_identical(unstacked.drop_vars('y'), data)</replace></test_edit>\n\n<test_edit file=\"xarray/tests/test_dataset.py\"><search>assert_identical(D, x)</search><replace>assert_identical(D, x.drop_vars('features'))</replace></test_edit>\n\n<test_edit file=\"xarray/tests/test_dataset.py\"><search>assert_identical(d0, x0)</search><replace>assert_identical(d0, x0.drop_vars('features'))</replace></test_edit>\n\n<test_edit file=\"xarray/tests/test_dataset.py\"><search>assert_identical(D, x)</search><replace>assert_identical(D, x.drop_vars('features'))</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "to_unstacked_dataset must retain the sample\u2011dimension coordinate instead of dropping it",
+ "requirement": "The\u202fto_unstacked_dataset\u202fmethod must keep the coordinate for the sample dimension when extracting each variable (i.e., do **not** use the\u202fdrop=True\u202fargument in the internal\u202fsel\u202fcall). This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/dataarray.py",
+   "search": "data_dict[k] = self.sel({variable_dim: k}, drop=True).squeeze(drop=True)",
+   "replace": "data_dict[k] = self.sel({variable_dim: k}).squeeze(drop=True)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_dataset.py",
+   "search": "assert_identical(unstacked, data)",
+   "replace": "assert_identical(unstacked.drop_vars('y'), data)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_dataset.py",
+   "search": "assert_identical(D, x)",
+   "replace": "assert_identical(D, x.drop_vars('features'))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_dataset.py",
+   "search": "assert_identical(d0, x0)",
+   "replace": "assert_identical(d0, x0.drop_vars('features'))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_dataset.py",
+   "search": "assert_identical(D, x)",
+   "replace": "assert_identical(D, x.drop_vars('features'))"
+  }
+ ]
+}

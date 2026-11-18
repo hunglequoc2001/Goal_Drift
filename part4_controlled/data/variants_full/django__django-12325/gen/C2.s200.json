@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-12325",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 30729,
+ "raw": "<summary>Require a\u202fValueError\u202fwhen a OneToOneField that references a parent model is missing\u202fparent_link=True.</summary>\n<requirement>When a model inherits from another model and defines a\u202fOneToOneField\u202fthat points to its parent model, the field must be declared with\u202fparent_link=True. If such a field is defined without\u202fparent_link=True, Django must raise a\u202fValueError\u202fwith the exact message \u201cAdd parent_link=True to\u202f<app_label>.<ModelName>.<field_name>.\u201d This requirement supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"django/db/models/options.py\"><search>self.setup_pk(field)</search><replace>self.setup_pk(field)\n                if not field.remote_field.parent_link:\n                    raise ValueError('Add parent_link=True to %s.' % field)</replace></source_edit>\n\n<test_edit file=\"tests/invalid_models_tests/test_models.py\"><search>def test_onetoone_with_parent_model(self):</search><replace>def test_onetoone_with_parent_model(self):\n        class Place(models.Model):\n            pass\n\n        class ParkingLot(Place):\n            other_place = models.OneToOneField(Place, models.CASCADE, related_name='other_parking')\n\n        msg = 'Add parent_link=True to invalid_models_tests.ParkingLot.other_place.'\n        with self.assertRaisesMessage(ValueError, msg):\n            ParkingLot.check()</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Require a\u202fValueError\u202fwhen a OneToOneField that references a parent model is missing\u202fparent_link=True.",
+ "requirement": "When a model inherits from another model and defines a\u202fOneToOneField\u202fthat points to its parent model, the field must be declared with\u202fparent_link=True. If such a field is defined without\u202fparent_link=True, Django must raise a\u202fValueError\u202fwith the exact message \u201cAdd parent_link=True to\u202f<app_label>.<ModelName>.<field_name>.\u201d This requirement supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/options.py",
+   "search": "self.setup_pk(field)",
+   "replace": "self.setup_pk(field)\n                if not field.remote_field.parent_link:\n                    raise ValueError('Add parent_link=True to %s.' % field)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/invalid_models_tests/test_models.py",
+   "search": "def test_onetoone_with_parent_model(self):",
+   "replace": "def test_onetoone_with_parent_model(self):\n        class Place(models.Model):\n            pass\n\n        class ParkingLot(Place):\n            other_place = models.OneToOneField(Place, models.CASCADE, related_name='other_parking')\n\n        msg = 'Add parent_link=True to invalid_models_tests.ParkingLot.other_place.'\n        with self.assertRaisesMessage(ValueError, msg):\n            ParkingLot.check()"
+  }
+ ]
+}

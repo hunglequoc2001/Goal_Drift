@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-15554",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "1aed4ac2753aeb51e36da96456739614995db133bb96edb7733ec3f47a8ff031",
+ "raw": "<summary>FilteredRelation aliases on the same relation must share a single join.</summary>\n<requirement>When a queryset is annotated with more than one FilteredRelation that refer to the same related name, Django must reuse a single SQL join for all of them. The join should be created the first time a FilteredRelation for that relation is encountered, and subsequent FilteredRelation aliases must reuse that join regardless of their individual conditions. This supersedes any previous expectation that each FilteredRelation creates its own separate join.</requirement>\n\n<source_edit file=\"django/db/models/sql/query.py\"><search>if reuse_with_filtered_relation and reuse:</search><replace>if reuse_with_filtered_relation and reuse:\n            # Reuse any existing join that targets the same table, ignoring the specific\n            # FilteredRelation condition. This ensures that all FilteredRelation aliases for\n            # the same relation share a single join.\n            reuse_aliases = [\n                a\n                for a, j in self.alias_map.items()\n                if a in reuse\n                and getattr(j, \"table_name\", getattr(j, \"table\", None))\n                == getattr(join, \"table_name\", getattr(join, \"table\", None))\n            ]</replace></source_edit>\n\n<test_edit file=\"tests/filtered_relation/tests.py\"><search>self.assertCountEqual(\n            qs,\n            [\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane A\",\n                },\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane B\",\n                },\n            ],\n        )</search><replace>self.assertCountEqual(\n            qs,\n            [\n                {\n                    \"book_title_alice__title\": \"The book by Jane A\",\n                    \"book_title_jane__title\": \"The book by Jane A\",\n                },\n                {\n                    \"book_title_alice__title\": \"The book by Jane B\",\n                    \"book_title_jane__title\": \"The book by Jane B\",\n                },\n            ],\n        )</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2449,
+  "prompt_tokens": 2304,
+  "total_tokens": 4753,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1998,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "FilteredRelation aliases on the same relation must share a single join.",
+ "requirement": "When a queryset is annotated with more than one FilteredRelation that refer to the same related name, Django must reuse a single SQL join for all of them. The join should be created the first time a FilteredRelation for that relation is encountered, and subsequent FilteredRelation aliases must reuse that join regardless of their individual conditions. This supersedes any previous expectation that each FilteredRelation creates its own separate join.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/query.py",
+   "search": "if reuse_with_filtered_relation and reuse:",
+   "replace": "if reuse_with_filtered_relation and reuse:\n            # Reuse any existing join that targets the same table, ignoring the specific\n            # FilteredRelation condition. This ensures that all FilteredRelation aliases for\n            # the same relation share a single join.\n            reuse_aliases = [\n                a\n                for a, j in self.alias_map.items()\n                if a in reuse\n                and getattr(j, \"table_name\", getattr(j, \"table\", None))\n                == getattr(join, \"table_name\", getattr(join, \"table\", None))\n            ]"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/filtered_relation/tests.py",
+   "search": "self.assertCountEqual(\n            qs,\n            [\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane A\",\n                },\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane B\",\n                },\n            ],\n        )",
+   "replace": "self.assertCountEqual(\n            qs,\n            [\n                {\n                    \"book_title_alice__title\": \"The book by Jane A\",\n                    \"book_title_jane__title\": \"The book by Jane A\",\n                },\n                {\n                    \"book_title_alice__title\": \"The book by Jane B\",\n                    \"book_title_jane__title\": \"The book by Jane B\",\n                },\n            ],\n        )"
+  }
+ ],
+ "status": "generated"
+}

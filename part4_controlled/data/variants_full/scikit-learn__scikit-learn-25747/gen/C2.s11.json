@@ -1,0 +1,49 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-25747",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "fc73396b8e4c544593aa483fae44443a91c93561001e53005f4ab4c32c3819a8",
+ "raw": "<summary>set_output with pandas should overwrite a DataFrame\u2019s index with the original input index</summary>\n<requirement>When `set_output(transform=\"pandas\")` wraps a pandas DataFrame, the wrapper must set the DataFrame\u2019s index to the index of the original input data, even if the DataFrame already carries its own index. This supersedes any previous expectation that the index would be preserved.</requirement>\n<source_edit file=\"sklearn/utils/_set_output.py\"><search>Index for data. `index` is ignored if `data_to_wrap` is already a DataFrame.</search><replace>Index for data.</replace></source_edit>\n<source_edit file=\"sklearn/utils/_set_output.py\"><search>if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        return data_to_wrap</search><replace>if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        if index is not None:\n            data_to_wrap.index = index\n        return data_to_wrap</replace></source_edit>\n<test_edit file=\"sklearn/utils/tests/test_set_output.py\"><search>assert_array_equal(X_trans.index, [\"s0\", \"s1\"])</search><replace>assert_array_equal(X_trans.index, X.index)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1358,
+  "prompt_tokens": 2923,
+  "total_tokens": 4281,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1060,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "set_output with pandas should overwrite a DataFrame\u2019s index with the original input index",
+ "requirement": "When `set_output(transform=\"pandas\")` wraps a pandas DataFrame, the wrapper must set the DataFrame\u2019s index to the index of the original input data, even if the DataFrame already carries its own index. This supersedes any previous expectation that the index would be preserved.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/utils/_set_output.py",
+   "search": "Index for data. `index` is ignored if `data_to_wrap` is already a DataFrame.",
+   "replace": "Index for data."
+  },
+  {
+   "kind": "source_edit",
+   "file": "sklearn/utils/_set_output.py",
+   "search": "if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        return data_to_wrap",
+   "replace": "if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        if index is not None:\n            data_to_wrap.index = index\n        return data_to_wrap"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/utils/tests/test_set_output.py",
+   "search": "assert_array_equal(X_trans.index, [\"s0\", \"s1\"])",
+   "replace": "assert_array_equal(X_trans.index, X.index)"
+  }
+ ],
+ "status": "generated"
+}

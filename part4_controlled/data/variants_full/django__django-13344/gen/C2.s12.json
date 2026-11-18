@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-13344",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "a2aebe8f70ad9e6b6856837ec0afd900c063fda0ba7fc11084a14c6b9e0234d0",
+ "raw": "<summary>Make middleware __call__ always synchronous, even with async get_response.</summary>\n<requirement>All built\u2011in middleware classes must treat the ``get_response`` callable as a regular function; the middleware instance must never be recognized as a coroutine function by ``asyncio.iscoroutinefunction`` regardless of whether ``get_response`` is a coroutine. This supersedes any earlier expectation that the first middleware could receive a coroutine response.</requirement>\n<source_edit file=\"django/contrib/sessions/middleware.py\"><search>super().__init__(get_response)</search><replace>super().__init__(get_response)\\n        self._is_coroutine = False</replace></source_edit>\n<source_edit file=\"django/middleware/cache.py\"><search>super().__init__(get_response)</search><replace>super().__init__(get_response)\\n        self._is_coroutine = False</replace></source_edit>\n<source_edit file=\"django/middleware/security.py\"><search>super().__init__(get_response)</search><replace>super().__init__(get_response)\\n        self._is_coroutine = False</replace></source_edit>\n<test_edit file=\"tests/deprecation/test_middleware_mixin.py\"><search>self.assertIs(asyncio.iscoroutinefunction(middleware_instance), True)</search><replace>self.assertIs(asyncio.iscoroutinefunction(middleware_instance), False)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2121,
+  "prompt_tokens": 3675,
+  "total_tokens": 5796,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1822,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Make middleware __call__ always synchronous, even with async get_response.",
+ "requirement": "All built\u2011in middleware classes must treat the ``get_response`` callable as a regular function; the middleware instance must never be recognized as a coroutine function by ``asyncio.iscoroutinefunction`` regardless of whether ``get_response`` is a coroutine. This supersedes any earlier expectation that the first middleware could receive a coroutine response.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sessions/middleware.py",
+   "search": "super().__init__(get_response)",
+   "replace": "super().__init__(get_response)\\n        self._is_coroutine = False"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "super().__init__(get_response)",
+   "replace": "super().__init__(get_response)\\n        self._is_coroutine = False"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/security.py",
+   "search": "super().__init__(get_response)",
+   "replace": "super().__init__(get_response)\\n        self._is_coroutine = False"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/deprecation/test_middleware_mixin.py",
+   "search": "self.assertIs(asyncio.iscoroutinefunction(middleware_instance), True)",
+   "replace": "self.assertIs(asyncio.iscoroutinefunction(middleware_instance), False)"
+  }
+ ],
+ "status": "generated"
+}

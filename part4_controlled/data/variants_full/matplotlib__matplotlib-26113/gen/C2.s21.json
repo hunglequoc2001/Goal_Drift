@@ -1,0 +1,67 @@
+{
+ "instance_id": "matplotlib__matplotlib-26113",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "e08c451f975dc9ae430b03052fa5f94b181fd44b7f0a623c25607927fcc813a8",
+ "raw": "<summary>Make `mincnt` behave exclusively when `C` is provided and adjust the test accordingly.</summary>\n<requirement>When a `C` array is supplied to `Axes.hexbin`, the `mincnt` parameter must be interpreted as a strict lower bound: a hexbin is plotted only if the number of points in that bin is greater than `mincnt` (i.e., `len(vals) > mincnt`). This supersedes any earlier expectation that `mincnt` should be inclusive when `C` is given.</requirement>\n<source_edit file=\"lib/matplotlib/axes/_axes.py\"><search>len(acc) >= mincnt</search><replace>len(acc) > mincnt</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>@check_figures_equal(extensions=['png'])</search><replace># Test that `mincnt` is exclusive when `C` is provided</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>def test_hexbin_mincnt_behavior_upon_C_parameter(fig_test, fig_ref):</search><replace>def test_hexbin_mincnt_behavior_upon_C_parameter():</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>ax_test = fig_test.subplots()</search><replace>fig_test, ax_test = plt.subplots()</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>ax_ref = fig_ref.subplots()</search><replace>fig_ref, ax_ref = plt.subplots()</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>ax_test.set_facecolor(\"green\")</search><replace>ax_test.set_facecolor(\"green\")\n    # Verify that the hexbin with C uses exclusive mincnt (strict >)\n    import numpy as np\n    arr_ref = ax_ref.collections[0].get_array()\n    arr_test = ax_test.collections[0].get_array()\n    assert not np.array_equal(arr_ref, arr_test)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2117,
+  "prompt_tokens": 3818,
+  "total_tokens": 5935,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1660,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Make `mincnt` behave exclusively when `C` is provided and adjust the test accordingly.",
+ "requirement": "When a `C` array is supplied to `Axes.hexbin`, the `mincnt` parameter must be interpreted as a strict lower bound: a hexbin is plotted only if the number of points in that bin is greater than `mincnt` (i.e., `len(vals) > mincnt`). This supersedes any earlier expectation that `mincnt` should be inclusive when `C` is given.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/axes/_axes.py",
+   "search": "len(acc) >= mincnt",
+   "replace": "len(acc) > mincnt"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "@check_figures_equal(extensions=['png'])",
+   "replace": "# Test that `mincnt` is exclusive when `C` is provided"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "def test_hexbin_mincnt_behavior_upon_C_parameter(fig_test, fig_ref):",
+   "replace": "def test_hexbin_mincnt_behavior_upon_C_parameter():"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "ax_test = fig_test.subplots()",
+   "replace": "fig_test, ax_test = plt.subplots()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "ax_ref = fig_ref.subplots()",
+   "replace": "fig_ref, ax_ref = plt.subplots()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "ax_test.set_facecolor(\"green\")",
+   "replace": "ax_test.set_facecolor(\"green\")\n    # Verify that the hexbin with C uses exclusive mincnt (strict >)\n    import numpy as np\n    arr_ref = ax_ref.collections[0].get_array()\n    arr_test = ax_test.collections[0].get_array()\n    assert not np.array_equal(arr_ref, arr_test)"
+  }
+ ],
+ "status": "generated"
+}

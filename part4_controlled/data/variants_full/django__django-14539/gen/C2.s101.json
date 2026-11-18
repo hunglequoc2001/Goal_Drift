@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-14539",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 14334,
+ "raw": "<summary>Preserve complete HTML entities when trimming trailing punctuation.</summary>\n<requirement>When removing trailing punctuation from a potential URL, the function must recognize HTML entities (e.g., \u201c&lt;\u201d, \u201c&amp;\u201d, \u201c&#39;\u201d) that end with a semicolon and treat the entire entity as a single, inseparable character. The terminating semicolon of such an entity must never be stripped as punctuation, even though \u201c;\u201d is normally considered trailing punctuation. This rule supersedes any earlier description that suggested unescaping before punctuation removal.</requirement>\n\n<source_edit file=\"django/utils/html.py\"><search>middle_unescaped = html.unescape(middle)</search><replace>middle_unescaped = html.unescape(middle)\n                # Determine if the end of `middle` is an HTML entity (e.g., &lt;).\n                if middle.endswith(';') and '&' in middle:\n                    amp_index = middle.rfind('&')\n                    # Ensure the semicolon is the final character of the entity.\n                    if amp_index != -1 and ';' == middle[-1] and '&' not in middle[amp_index+1:-1]:\n                        # Ends with an HTML entity; do not treat the trailing ';' as punctuation.\n                        stripped = middle_unescaped\n                    else:\n                        stripped = middle_unescaped.rstrip(TRAILING_PUNCTUATION_CHARS)\n                else:\n                    stripped = middle_unescaped.rstrip(TRAILING_PUNCTUATION_CHARS)\n                if middle_unescaped != stripped:\n                    punctuation_count = len(middle_unescaped) - len(stripped)\n                    trail = middle[-punctuation_count:] + trail\n                    middle = middle[:-punctuation_count]\n                    trimmed_something = True</replace></source_edit>\n\n<test_edit file=\"tests/utils_tests/test_html.py\"><search>            ),\\n            (\\n                'Search for google.com/?q=1&lt! and see.',</search><replace>            ),\\n            (\\n                'Search for google.com/?q=1&lt! and see.',\\n                'Search for <a href=\"http://google.com/?q=1%3C\">google.com/?q=1&lt</a>! and see.'\\n            ),\\n            (\\n                'Search for google.com/?q=1&lt;! and see.',\\n                'Search for <a href=\"http://google.com/?q=1%3C\">google.com/?q=1&lt;</a>! and see.'\\n            ),</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Preserve complete HTML entities when trimming trailing punctuation.",
+ "requirement": "When removing trailing punctuation from a potential URL, the function must recognize HTML entities (e.g., \u201c&lt;\u201d, \u201c&amp;\u201d, \u201c&#39;\u201d) that end with a semicolon and treat the entire entity as a single, inseparable character. The terminating semicolon of such an entity must never be stripped as punctuation, even though \u201c;\u201d is normally considered trailing punctuation. This rule supersedes any earlier description that suggested unescaping before punctuation removal.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/html.py",
+   "search": "middle_unescaped = html.unescape(middle)",
+   "replace": "middle_unescaped = html.unescape(middle)\n                # Determine if the end of `middle` is an HTML entity (e.g., &lt;).\n                if middle.endswith(';') and '&' in middle:\n                    amp_index = middle.rfind('&')\n                    # Ensure the semicolon is the final character of the entity.\n                    if amp_index != -1 and ';' == middle[-1] and '&' not in middle[amp_index+1:-1]:\n                        # Ends with an HTML entity; do not treat the trailing ';' as punctuation.\n                        stripped = middle_unescaped\n                    else:\n                        stripped = middle_unescaped.rstrip(TRAILING_PUNCTUATION_CHARS)\n                else:\n                    stripped = middle_unescaped.rstrip(TRAILING_PUNCTUATION_CHARS)\n                if middle_unescaped != stripped:\n                    punctuation_count = len(middle_unescaped) - len(stripped)\n                    trail = middle[-punctuation_count:] + trail\n                    middle = middle[:-punctuation_count]\n                    trimmed_something = True"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/utils_tests/test_html.py",
+   "search": "            ),\\n            (\\n                'Search for google.com/?q=1&lt! and see.',",
+   "replace": "            ),\\n            (\\n                'Search for google.com/?q=1&lt! and see.',\\n                'Search for <a href=\"http://google.com/?q=1%3C\">google.com/?q=1&lt</a>! and see.'\\n            ),\\n            (\\n                'Search for google.com/?q=1&lt;! and see.',\\n                'Search for <a href=\"http://google.com/?q=1%3C\">google.com/?q=1&lt;</a>! and see.'\\n            ),"
+  }
+ ]
+}

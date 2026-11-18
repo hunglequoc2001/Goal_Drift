@@ -1,0 +1,31 @@
+{
+ "instance_id": "astropy__astropy-7671",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 100,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 19135,
+ "raw": "<summary>minversion must reject version strings containing non\u2011numeric identifiers</summary>\n<requirement>The `minversion` function must now reject any version string that includes non\u2011numeric identifiers such as \u201cdev\u201d, \u201crc\u201d, \u201ca\u201d, \u201cb\u201d, etc. Instead of stripping these suffixes, the function should raise a `ValueError` with a clear message indicating the version string is invalid. This supersedes any earlier expectation that such strings be accepted or silently truncated.</requirement>\n\n<source_edit file=\"astropy/utils/introspection.py\"><search># LooseVersion raises a TypeError when strings like dev, rc1 are part\n    # of the version number. Match the dotted numbers only. Regex taken\n    # from PEP440, https://www.python.org/dev/peps/pep-0440/, Appendix B\n    expr = '^([1-9]\\\\d*!)?(0|[1-9]\\\\d*)(\\\\.(0|[1-9]\\\\d*))*'\n    m = re.match(expr, version)\n    if m:\n        version = m.group(0)</search><replace># Reject version strings containing non\u2011numeric identifiers (e.g. dev, rc, a, b).\n    # Only pure numeric dotted versions (optionally with a leading epoch) are allowed.\n    expr = '^([1-9]\\\\d*!)?(0|[1-9]\\\\d*)(\\\\.(0|[1-9]\\\\d*))*$'\n    if not re.fullmatch(expr, version):\n        raise ValueError(f\"Invalid version string: '{version}'\")</replace></source_edit>\n\n<test_edit file=\"astropy/utils/tests/test_introspection.py\"><search>good_versions = ['0.12', '0.12.1', '0.12.0.dev', '0.12dev']\nbad_versions = ['1', '1.2rc1']\nfor version in good_versions:\n    assert minversion(test_module, version)\nfor version in bad_versions:\n    assert not minversion(test_module, version)</search><replace>good_versions = ['0.12', '0.12.1']\nbad_versions = ['1', '1.2rc1', '0.12dev', '0.12.0.dev']\nfor version in good_versions:\n    assert minversion(test_module, version)\nfor version in bad_versions:\n    with pytest.raises(ValueError):\n        minversion(test_module, version)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "minversion must reject version strings containing non\u2011numeric identifiers",
+ "requirement": "The `minversion` function must now reject any version string that includes non\u2011numeric identifiers such as \u201cdev\u201d, \u201crc\u201d, \u201ca\u201d, \u201cb\u201d, etc. Instead of stripping these suffixes, the function should raise a `ValueError` with a clear message indicating the version string is invalid. This supersedes any earlier expectation that such strings be accepted or silently truncated.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/utils/introspection.py",
+   "search": "# LooseVersion raises a TypeError when strings like dev, rc1 are part\n    # of the version number. Match the dotted numbers only. Regex taken\n    # from PEP440, https://www.python.org/dev/peps/pep-0440/, Appendix B\n    expr = '^([1-9]\\\\d*!)?(0|[1-9]\\\\d*)(\\\\.(0|[1-9]\\\\d*))*'\n    m = re.match(expr, version)\n    if m:\n        version = m.group(0)",
+   "replace": "# Reject version strings containing non\u2011numeric identifiers (e.g. dev, rc, a, b).\n    # Only pure numeric dotted versions (optionally with a leading epoch) are allowed.\n    expr = '^([1-9]\\\\d*!)?(0|[1-9]\\\\d*)(\\\\.(0|[1-9]\\\\d*))*$'\n    if not re.fullmatch(expr, version):\n        raise ValueError(f\"Invalid version string: '{version}'\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/utils/tests/test_introspection.py",
+   "search": "good_versions = ['0.12', '0.12.1', '0.12.0.dev', '0.12dev']\nbad_versions = ['1', '1.2rc1']\nfor version in good_versions:\n    assert minversion(test_module, version)\nfor version in bad_versions:\n    assert not minversion(test_module, version)",
+   "replace": "good_versions = ['0.12', '0.12.1']\nbad_versions = ['1', '1.2rc1', '0.12dev', '0.12.0.dev']\nfor version in good_versions:\n    assert minversion(test_module, version)\nfor version in bad_versions:\n    with pytest.raises(ValueError):\n        minversion(test_module, version)"
+  }
+ ]
+}

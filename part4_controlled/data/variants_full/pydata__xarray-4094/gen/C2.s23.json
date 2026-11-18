@@ -1,0 +1,49 @@
+{
+ "instance_id": "pydata__xarray-4094",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "bfac0c2c5e2c1c9c7dece0b262b3f5239a24d4eaef6015c85ccca7134b6c3749",
+ "raw": "<summary>Require that `to_unstacked_dataset` retain the stacked dimension coordinate instead of dropping it.</summary>\n<requirement>When unstacking a stacked DataArray using `to_unstacked_dataset`, the resulting Dataset must keep the stacked dimension as a coordinate (e.g., `'y'` in the example) rather than discarding it. This supersedes any previous expectation that the coordinate be removed.</requirement>\n<source_edit file=\"xarray/core/dataarray.py\"><search>data_dict[k] = self.sel({variable_dim: k}, drop=True).squeeze(drop=True)</search><replace>data_dict[k] = self.sel({variable_dim: k}).squeeze(drop=True)</replace></source_edit>\n<source_edit file=\"xarray/core/dataarray.py\"><search>return Dataset(data_dict)</search><replace>return Dataset(data_dict, compat='override')</replace></source_edit>\n<test_edit file=\"xarray/tests/test_dataset.py\"><search>assert_identical(unstacked, data)</search><replace>assert \"y\" in unstacked.coords\nassert unstacked[\"y\"].size == 1</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3196,
+  "prompt_tokens": 1509,
+  "total_tokens": 4705,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2945,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Require that `to_unstacked_dataset` retain the stacked dimension coordinate instead of dropping it.",
+ "requirement": "When unstacking a stacked DataArray using `to_unstacked_dataset`, the resulting Dataset must keep the stacked dimension as a coordinate (e.g., `'y'` in the example) rather than discarding it. This supersedes any previous expectation that the coordinate be removed.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/dataarray.py",
+   "search": "data_dict[k] = self.sel({variable_dim: k}, drop=True).squeeze(drop=True)",
+   "replace": "data_dict[k] = self.sel({variable_dim: k}).squeeze(drop=True)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/dataarray.py",
+   "search": "return Dataset(data_dict)",
+   "replace": "return Dataset(data_dict, compat='override')"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_dataset.py",
+   "search": "assert_identical(unstacked, data)",
+   "replace": "assert \"y\" in unstacked.coords\nassert unstacked[\"y\"].size == 1"
+  }
+ ],
+ "status": "generated"
+}

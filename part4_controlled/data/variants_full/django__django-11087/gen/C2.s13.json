@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-11087",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "d73d7070d88623aa5a250327dd697c556d3561d23fdabbcbc2f4f6e0a238ee48",
+ "raw": "<summary>Disable the optimization that only selects referenced fields during cascade deletions.</summary>\n<requirement>When performing cascade deletions, Django must always select all fields of related objects unless a deletion signal is connected. This supersedes any previous expectation that only fields referenced by further cascade relations would be selected.</requirement>\n<source_edit file=\"django/db/models/deletion.py\"><search>\nif not (sub_objs.query.select_related or self._has_signal_listeners(related_model)):\n    referenced_fields = set(chain.from_iterable(\n        (rf.attname for rf in rel.field.foreign_related_fields)\n        for rel in get_candidate_relations_to_delete(related_model._meta)\n    ))\n    sub_objs = sub_objs.only(*tuple(referenced_fields))\nif sub_objs:\n    field.remote_field.on_delete(self, field, sub_objs, self.using)\n</search><replace>\nif sub_objs:\n    field.remote_field.on_delete(self, field, sub_objs, self.using)\n</replace></source_edit>\n<test_edit file=\"tests/delete/tests.py\"><search>\nexpected_sql = str(\n    Referrer.objects.only(\n        # Both fields are referenced by SecondReferrer.\n        'id', 'unique_field',\n    ).filter(origin__in=[origin]).query\n)\nwith self.assertNumQueries(2) as ctx:\n    origin.delete()\nself.assertEqual(ctx.captured_queries[0]['sql'], expected_sql)\n</search><replace>\nwith self.assertNumQueries(2) as ctx:\n    origin.delete()\nself.assertIn(\n    connection.ops.quote_name('large_field'),\n    ctx.captured_queries[0]['sql'],\n)\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2309,
+  "prompt_tokens": 4270,
+  "total_tokens": 6579,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1958,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disable the optimization that only selects referenced fields during cascade deletions.",
+ "requirement": "When performing cascade deletions, Django must always select all fields of related objects unless a deletion signal is connected. This supersedes any previous expectation that only fields referenced by further cascade relations would be selected.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/deletion.py",
+   "search": "if not (sub_objs.query.select_related or self._has_signal_listeners(related_model)):\n    referenced_fields = set(chain.from_iterable(\n        (rf.attname for rf in rel.field.foreign_related_fields)\n        for rel in get_candidate_relations_to_delete(related_model._meta)\n    ))\n    sub_objs = sub_objs.only(*tuple(referenced_fields))\nif sub_objs:\n    field.remote_field.on_delete(self, field, sub_objs, self.using)",
+   "replace": "if sub_objs:\n    field.remote_field.on_delete(self, field, sub_objs, self.using)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/delete/tests.py",
+   "search": "expected_sql = str(\n    Referrer.objects.only(\n        # Both fields are referenced by SecondReferrer.\n        'id', 'unique_field',\n    ).filter(origin__in=[origin]).query\n)\nwith self.assertNumQueries(2) as ctx:\n    origin.delete()\nself.assertEqual(ctx.captured_queries[0]['sql'], expected_sql)",
+   "replace": "with self.assertNumQueries(2) as ctx:\n    origin.delete()\nself.assertIn(\n    connection.ops.quote_name('large_field'),\n    ctx.captured_queries[0]['sql'],\n)"
+  }
+ ],
+ "status": "generated"
+}

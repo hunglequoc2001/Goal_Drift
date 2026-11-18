@@ -1,0 +1,43 @@
+{
+ "instance_id": "matplotlib__matplotlib-26466",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 21774,
+ "raw": "<summary>OffsetFrom must retain a reference to the input coordinate array instead of copying it.</summary>\n<requirement>When creating an `OffsetFrom` instance, the `ref_coord` argument should be stored directly (as a reference) without making a copy. Subsequent modifications to the original array must affect the offset used by the annotation. This supersedes any previous expectation that `ref_coord` be copied.</requirement>\n<source_edit file=\"lib/matplotlib/text.py\"><search>x, y = ref_coord  # Make copy when ref_coord is an array (and check the shape).</search><replace>self._ref_coord = ref_coord</replace></source_edit>\n<source_edit file=\"lib/matplotlib/text.py\"><search>self._ref_coord = x, y</search><replace></replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>@check_figures_equal(extensions=[\"png\"])</search><replace></replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>def test_annotate_and_offsetfrom_copy_input(fig_test, fig_ref):</search><replace>def test_annotate_and_offsetfrom_copy_input(fig_test):\n    # Verify that OffsetFrom keeps a reference to the input array,\n    # so mutating the array changes the offset.\n    ax = fig_test.add_subplot()\n    line, = ax.plot([0, 2], [0, 2])\n    of_xy = np.array([0.5, 0.5])\n    of = OffsetFrom(line, of_xy)\n    # Use the OffsetFrom instance in an annotation.\n    ann = ax.annotate(\"foo\", textcoords=of, xytext=(10, 0), xy=(0, 0))\n    renderer = fig_test.canvas.get_renderer()\n    # Capture the offset translation before mutation.\n    tr_before = of(renderer)\n    offset_before = tr_before.transform((0, 0))\n    # Mutate the original array.\n    of_xy[:] = 1.0\n    tr_after = of(renderer)\n    offset_after = tr_after.transform((0, 0))\n    # The offsets should differ because the array was mutated.\n    assert not np.allclose(offset_before, offset_after)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "OffsetFrom must retain a reference to the input coordinate array instead of copying it.",
+ "requirement": "When creating an `OffsetFrom` instance, the `ref_coord` argument should be stored directly (as a reference) without making a copy. Subsequent modifications to the original array must affect the offset used by the annotation. This supersedes any previous expectation that `ref_coord` be copied.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/text.py",
+   "search": "x, y = ref_coord  # Make copy when ref_coord is an array (and check the shape).",
+   "replace": "self._ref_coord = ref_coord"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/text.py",
+   "search": "self._ref_coord = x, y",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "@check_figures_equal(extensions=[\"png\"])",
+   "replace": ""
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "def test_annotate_and_offsetfrom_copy_input(fig_test, fig_ref):",
+   "replace": "def test_annotate_and_offsetfrom_copy_input(fig_test):\n    # Verify that OffsetFrom keeps a reference to the input array,\n    # so mutating the array changes the offset.\n    ax = fig_test.add_subplot()\n    line, = ax.plot([0, 2], [0, 2])\n    of_xy = np.array([0.5, 0.5])\n    of = OffsetFrom(line, of_xy)\n    # Use the OffsetFrom instance in an annotation.\n    ann = ax.annotate(\"foo\", textcoords=of, xytext=(10, 0), xy=(0, 0))\n    renderer = fig_test.canvas.get_renderer()\n    # Capture the offset translation before mutation.\n    tr_before = of(renderer)\n    offset_before = tr_before.transform((0, 0))\n    # Mutate the original array.\n    of_xy[:] = 1.0\n    tr_after = of(renderer)\n    offset_after = tr_after.transform((0, 0))\n    # The offsets should differ because the array was mutated.\n    assert not np.allclose(offset_before, offset_after)"
+  }
+ ]
+}

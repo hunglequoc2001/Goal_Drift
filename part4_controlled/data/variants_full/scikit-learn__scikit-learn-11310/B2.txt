@@ -1,0 +1,25 @@
+**Retrieving time to refit the estimator in BaseSearchCV**
+
+I would like to know how long it takes to refit the selected model on the full dataset after completing a grid/random search. At present the only timing information I can obtain is the fit‑and‑score duration for each candidate model, which I retrieve with:
+
+```
+import sklearn.datasets
+import sklearn.model_selection
+import sklearn.ensemble
+
+X, y = sklearn.datasets.load_iris(return_X_y=True)
+
+rs = sklearn.model_selection.GridSearchCV(
+    estimator=sklearn.ensemble.RandomForestClassifier(),
+    param_grid={'n_estimators': [2, 3, 4, 5]}
+)
+rs.fit(X, y)
+print(rs.cv_results_['mean_fit_time'])
+print(rs.cv_results_['mean_score_time'])
+```
+
+When the search runs on a single core, I could measure the total runtime of the search and then deduct the time spent fitting the individual folds during hyperparameter optimisation. This workaround breaks as soon as `n_jobs != 1` is enabled.
+
+Consequently, it would be very useful to have an attribute `refit_time_` that directly reports the time required to refit the best model.
+
+**Use case:** the functionality described in [OpenML.org](https://openml.org)) aims to upload hyperparameter‑optimization results, and it needs to include the elapsed time of the optimisation process.

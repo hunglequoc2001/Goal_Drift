@@ -1,0 +1,127 @@
+{
+ "instance_id": "sympy__sympy-14248",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 51428,
+ "raw": "<summary>Matrix addition printing must omit all spaces around plus and minus signs.</summary>\n<requirement>When printing a matrix addition (MatAdd) in any of the printers (str, pretty, latex), the output must not contain any space characters surrounding the \u201c+\u201d or \u201c\u2011\u201d operators. Each term should be concatenated directly to its preceding sign (if any). This supersedes any previous expectation that spaces are inserted around these operators.</requirement>\n<source_edit file=\"sympy/printing/latex.py\"><search>def _print_MatAdd(self, expr):\n        terms = [self._print(t) for t in expr.args]\n        l = []\n        for t in terms:\n            if t.startswith('-'):\n                sign = \"-\"\n                t = t[1:]\n            else:\n                sign = \"+\"\n            l.extend([sign, t])\n        sign = l.pop(0)\n        if sign == '+':\n            sign = \"\"\n        return sign + ' '.join(l)</search><replace>def _print_MatAdd(self, expr):\n        # Build the string without any spaces around '+' or '-'\n        terms = [self._print(t) for t in expr.args]\n        result = ''\n        for i, t in enumerate(terms):\n            if t.startswith('-'):\n                sign = '-'\n                t = t[1:]\n            else:\n                sign = '+' if i != 0 else ''\n            result += sign + t\n        return result</replace></source_edit>\n<source_edit file=\"sympy/printing/pretty/pretty.py\"><search>def _print_MatAdd(self, expr):\n        s = None\n        for item in expr.args:\n            pform = self._print(item)\n            if s is None:\n                s = pform     # First element\n            else:\n                if S(item.args[0]).is_negative:\n                    s = prettyForm(*stringPict.next(s, ' '))\n                    pform = self._print(item)\n                else:\n                    s = prettyForm(*stringPict.next(s, ' + '))\n                s = prettyForm(*stringPict.next(s, pform))\n\n        return s</search><replace>def _print_MatAdd(self, expr):\n        # Build the pretty representation without spaces around '+' or '-'\n        result = ''\n        for i, item in enumerate(expr.args):\n            term_str = str(self._print(item))\n            if term_str.startswith('-'):\n                sign = '-'\n                term_str = term_str[1:]\n            else:\n                sign = '+' if i != 0 else ''\n            result += sign + term_str\n        return prettyForm(result)</replace></source_edit>\n<source_edit file=\"sympy/printing/str.py\"><search>def _print_MatAdd(self, expr):\n        terms = [self.parenthesize(arg, precedence(expr))\n             for arg in expr.args]\n        l = []\n        for t in terms:\n            if t.startswith('-'):\n                sign = \"-\"\n                t = t[1:]\n            else:\n                sign = \"+\"\n            l.extend([sign, t])\n        sign = l.pop(0)\n        if sign == '+':\n            sign = \"\"\n        return sign + ' '.join(l)</search><replace>def _print_MatAdd(self, expr):\n        # Build the string without spaces around '+' or '-'\n        terms = [self.parenthesize(arg, precedence(expr))\n                 for arg in expr.args]\n        result = ''\n        for i, t in enumerate(terms):\n            if t.startswith('-'):\n                sign = '-'\n                t = t[1:]\n            else:\n                sign = '+' if i != 0 else ''\n            result += sign + t\n        return result</replace></source_edit>\n<test_edit file=\"sympy/printing/pretty/tests/test_pretty.py\"><search>assert pretty(A - B) == \"-B + A\"</search><replace>assert pretty(A - B) == \"-B+A\"</replace></test_edit>\n<test_edit file=\"sympy/printing/pretty/tests/test_pretty.py\"><search>assert pretty(A*B*C - A*B - B*C) == \"-A*B -B*C + A*B*C\"</search><replace>assert pretty(A*B*C - A*B - B*C) == \"-A*B-B*C+A*B*C\"</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_ccode.py\"><search>assert(ccode(F) == \"(-B + A)[0]\")</search><replace>assert(ccode(F) == \"(-B+A)[0]\")</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_fcode.py\"><search>assert fcode(F) == \"      (-B + A)(1, 1)\"</search><replace>assert fcode(F) == \"      (-B+A)(1, 1)\"</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_jscode.py\"><search>assert(jscode(F) == \"(-B + A)[0]\")</search><replace>assert(jscode(F) == \"(-B+A)[0]\")</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_julia.py\"><search>assert(julia_code(F) == \"(-B + A)[1,1]\")</search><replace>assert(julia_code(F) == \"(-B+A)[1,1]\"</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_octave.py\"><search>assert mcode(F) == \"(-B + A)(1, 1)\"</search><replace>assert mcode(F) == \"(-B+A)(1, 1)\"</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_rcode.py\"><search>assert(rcode(F) == \"(-B + A)[0]\")</search><replace>assert(rcode(F) == \"(-B+A)[0]\"</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(F) == r\"\\left(-B + A\\right)_{0, 0}\"</search><replace>assert latex(F) == r\"\\left(-B+A\\right)_{0, 0}\"</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(-A) == r\"-A\"</search><replace>assert latex(-A) == r\"-A\"</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(A - A*B - B) == r\"-B - A B + A\"</search><replace>assert latex(A - A*B - B) == r\"-B-A B+A\"</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(-A*B - A*B*C - B) == r\"-B - A B - A B C\"</search><replace>assert latex(-A*B - A*B*C - B) == r\"-B-A B-A B C\"</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_str.py\"><search>assert str(F) == \"(-B + A)[0, 0]\"</search><replace>assert str(F) == \"(-B+A)[0, 0]\"</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_str.py\"><search>assert str(A - A*B - B) == \"-B - A*B + A\"</search><replace>assert str(A - A*B - B) == \"-B-A*B+A\"</replace></test_edit>\n<test_edit file=\"sympy/printing/tests/test_str.py\"><search>assert str(A*B - (A+B)) == \"-(A + B) + A*B\"</search><replace>assert str(A*B - (A+B)) == \"-(A+B)+A*B\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Matrix addition printing must omit all spaces around plus and minus signs.",
+ "requirement": "When printing a matrix addition (MatAdd) in any of the printers (str, pretty, latex), the output must not contain any space characters surrounding the \u201c+\u201d or \u201c\u2011\u201d operators. Each term should be concatenated directly to its preceding sign (if any). This supersedes any previous expectation that spaces are inserted around these operators.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/latex.py",
+   "search": "def _print_MatAdd(self, expr):\n        terms = [self._print(t) for t in expr.args]\n        l = []\n        for t in terms:\n            if t.startswith('-'):\n                sign = \"-\"\n                t = t[1:]\n            else:\n                sign = \"+\"\n            l.extend([sign, t])\n        sign = l.pop(0)\n        if sign == '+':\n            sign = \"\"\n        return sign + ' '.join(l)",
+   "replace": "def _print_MatAdd(self, expr):\n        # Build the string without any spaces around '+' or '-'\n        terms = [self._print(t) for t in expr.args]\n        result = ''\n        for i, t in enumerate(terms):\n            if t.startswith('-'):\n                sign = '-'\n                t = t[1:]\n            else:\n                sign = '+' if i != 0 else ''\n            result += sign + t\n        return result"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/pretty/pretty.py",
+   "search": "def _print_MatAdd(self, expr):\n        s = None\n        for item in expr.args:\n            pform = self._print(item)\n            if s is None:\n                s = pform     # First element\n            else:\n                if S(item.args[0]).is_negative:\n                    s = prettyForm(*stringPict.next(s, ' '))\n                    pform = self._print(item)\n                else:\n                    s = prettyForm(*stringPict.next(s, ' + '))\n                s = prettyForm(*stringPict.next(s, pform))\n\n        return s",
+   "replace": "def _print_MatAdd(self, expr):\n        # Build the pretty representation without spaces around '+' or '-'\n        result = ''\n        for i, item in enumerate(expr.args):\n            term_str = str(self._print(item))\n            if term_str.startswith('-'):\n                sign = '-'\n                term_str = term_str[1:]\n            else:\n                sign = '+' if i != 0 else ''\n            result += sign + term_str\n        return prettyForm(result)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/str.py",
+   "search": "def _print_MatAdd(self, expr):\n        terms = [self.parenthesize(arg, precedence(expr))\n             for arg in expr.args]\n        l = []\n        for t in terms:\n            if t.startswith('-'):\n                sign = \"-\"\n                t = t[1:]\n            else:\n                sign = \"+\"\n            l.extend([sign, t])\n        sign = l.pop(0)\n        if sign == '+':\n            sign = \"\"\n        return sign + ' '.join(l)",
+   "replace": "def _print_MatAdd(self, expr):\n        # Build the string without spaces around '+' or '-'\n        terms = [self.parenthesize(arg, precedence(expr))\n                 for arg in expr.args]\n        result = ''\n        for i, t in enumerate(terms):\n            if t.startswith('-'):\n                sign = '-'\n                t = t[1:]\n            else:\n                sign = '+' if i != 0 else ''\n            result += sign + t\n        return result"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/pretty/tests/test_pretty.py",
+   "search": "assert pretty(A - B) == \"-B + A\"",
+   "replace": "assert pretty(A - B) == \"-B+A\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/pretty/tests/test_pretty.py",
+   "search": "assert pretty(A*B*C - A*B - B*C) == \"-A*B -B*C + A*B*C\"",
+   "replace": "assert pretty(A*B*C - A*B - B*C) == \"-A*B-B*C+A*B*C\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_ccode.py",
+   "search": "assert(ccode(F) == \"(-B + A)[0]\")",
+   "replace": "assert(ccode(F) == \"(-B+A)[0]\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_fcode.py",
+   "search": "assert fcode(F) == \"      (-B + A)(1, 1)\"",
+   "replace": "assert fcode(F) == \"      (-B+A)(1, 1)\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_jscode.py",
+   "search": "assert(jscode(F) == \"(-B + A)[0]\")",
+   "replace": "assert(jscode(F) == \"(-B+A)[0]\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_julia.py",
+   "search": "assert(julia_code(F) == \"(-B + A)[1,1]\")",
+   "replace": "assert(julia_code(F) == \"(-B+A)[1,1]\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_octave.py",
+   "search": "assert mcode(F) == \"(-B + A)(1, 1)\"",
+   "replace": "assert mcode(F) == \"(-B+A)(1, 1)\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_rcode.py",
+   "search": "assert(rcode(F) == \"(-B + A)[0]\")",
+   "replace": "assert(rcode(F) == \"(-B+A)[0]\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(F) == r\"\\left(-B + A\\right)_{0, 0}\"",
+   "replace": "assert latex(F) == r\"\\left(-B+A\\right)_{0, 0}\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(-A) == r\"-A\"",
+   "replace": "assert latex(-A) == r\"-A\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(A - A*B - B) == r\"-B - A B + A\"",
+   "replace": "assert latex(A - A*B - B) == r\"-B-A B+A\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(-A*B - A*B*C - B) == r\"-B - A B - A B C\"",
+   "replace": "assert latex(-A*B - A*B*C - B) == r\"-B-A B-A B C\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_str.py",
+   "search": "assert str(F) == \"(-B + A)[0, 0]\"",
+   "replace": "assert str(F) == \"(-B+A)[0, 0]\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_str.py",
+   "search": "assert str(A - A*B - B) == \"-B - A*B + A\"",
+   "replace": "assert str(A - A*B - B) == \"-B-A*B+A\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_str.py",
+   "search": "assert str(A*B - (A+B)) == \"-(A + B) + A*B\"",
+   "replace": "assert str(A*B - (A+B)) == \"-(A+B)+A*B\""
+  }
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "instance_id": "pydata__xarray-6744",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "7232f9fff71a4d8e128be8d5dedaed3346975c14e05e4bfc9cb547ed43fcc928",
+ "raw": "<summary>Iteration over a rolling object must ignore the ``center`` flag and always use left\u2011aligned windows.</summary>\n<requirement>When iterating over a ``DataArrayRolling`` (i.e., using ``for label, window in da.rolling(...):``), the iterator must **ignore** any ``center=True`` argument and always produce windows aligned to the start of the rolling dimension (the same behaviour as when ``center=False``). This supersedes any previous expectation that the iterator should honour the ``center`` option.</requirement>\n<source_edit file=\"xarray/core/rolling.py\"><search>dim0 = self.dim[0]\n        window0 = int(self.window[0])\n        offset = (window0 + 1) // 2 if self.center[0] else 1\n        stops = np.arange(offset, self.obj.sizes[dim0] + offset)\n        starts = stops - window0\n        starts[: window0 - offset] = 0</search><replace>dim0 = self.dim[0]\n        window0 = int(self.window[0])\n        stops = np.arange(1, len(self.window_labels) + 1)\n        starts = stops - window0\n        starts[:window0] = 0</replace></source_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>np.testing.assert_allclose(actual.values, expected.values)</search><replace>if center:\n                offset = (size + 1) // 2\n                shifted = rolling_obj_mean.shift(time=offset - 1, fill_value=np.nan)\n                np.testing.assert_allclose(actual.values, shifted.isel(time=i).values)\n            else:\n                np.testing.assert_allclose(actual.values, expected.values)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1896,
+  "prompt_tokens": 1805,
+  "total_tokens": 3701,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1517,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Iteration over a rolling object must ignore the ``center`` flag and always use left\u2011aligned windows.",
+ "requirement": "When iterating over a ``DataArrayRolling`` (i.e., using ``for label, window in da.rolling(...):``), the iterator must **ignore** any ``center=True`` argument and always produce windows aligned to the start of the rolling dimension (the same behaviour as when ``center=False``). This supersedes any previous expectation that the iterator should honour the ``center`` option.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/rolling.py",
+   "search": "dim0 = self.dim[0]\n        window0 = int(self.window[0])\n        offset = (window0 + 1) // 2 if self.center[0] else 1\n        stops = np.arange(offset, self.obj.sizes[dim0] + offset)\n        starts = stops - window0\n        starts[: window0 - offset] = 0",
+   "replace": "dim0 = self.dim[0]\n        window0 = int(self.window[0])\n        stops = np.arange(1, len(self.window_labels) + 1)\n        starts = stops - window0\n        starts[:window0] = 0"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "np.testing.assert_allclose(actual.values, expected.values)",
+   "replace": "if center:\n                offset = (size + 1) // 2\n                shifted = rolling_obj_mean.shift(time=offset - 1, fill_value=np.nan)\n                np.testing.assert_allclose(actual.values, shifted.isel(time=i).values)\n            else:\n                np.testing.assert_allclose(actual.values, expected.values)"
+  }
+ ],
+ "status": "generated"
+}

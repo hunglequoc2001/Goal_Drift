@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-20801",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "b1da0fd56ffc3e94a3a2f18c4fe3187fe6eb0b8f6420f512a11710d2f49a042f",
+ "raw": "<summary>Float equality with a Boolean must raise a TypeError</summary>\n<requirement>The equality operator (==) between a Float instance and a Boolean (True or False) must raise a TypeError, regardless of the Float\u2019s value. This supersedes any previous expectation that a zero Float could compare equal to False.</requirement>\n<source_edit file=\"sympy/core/numbers.py\"><search>if isinstance(other, Boolean):</search><replace>if isinstance(other, Boolean):\n    raise TypeError(\"cannot compare Float with Boolean\")</replace></source_edit>\n<test_edit file=\"sympy/core/tests/test_numbers.py\"><search>def test_zero_not_false():</search><replace>def test_zero_not_false():\n    # https://github.com/sympy/sympy/issues/20796\n    import pytest\n    with pytest.raises(TypeError):\n        S(0.0) == S.false\n    assert (S.false == S(0.0)) is False\n    assert (S(0) == S.false) is False\n    assert (S.false == S(0)) is False</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1868,
+  "prompt_tokens": 1221,
+  "total_tokens": 3089,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1623,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Float equality with a Boolean must raise a TypeError",
+ "requirement": "The equality operator (==) between a Float instance and a Boolean (True or False) must raise a TypeError, regardless of the Float\u2019s value. This supersedes any previous expectation that a zero Float could compare equal to False.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/core/numbers.py",
+   "search": "if isinstance(other, Boolean):",
+   "replace": "if isinstance(other, Boolean):\n    raise TypeError(\"cannot compare Float with Boolean\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/core/tests/test_numbers.py",
+   "search": "def test_zero_not_false():",
+   "replace": "def test_zero_not_false():\n    # https://github.com/sympy/sympy/issues/20796\n    import pytest\n    with pytest.raises(TypeError):\n        S(0.0) == S.false\n    assert (S.false == S(0.0)) is False\n    assert (S(0) == S.false) is False\n    assert (S.false == S(0)) is False"
+  }
+ ],
+ "status": "generated"
+}

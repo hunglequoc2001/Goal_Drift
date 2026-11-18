@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-15127",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "a78d54d7195e6eb1eece8d11961b5a12d70e055f3a01ee7f1a62a4fd15963544",
+ "raw": "<summary>LEVEL_TAGS is no longer updated automatically; callers should use utils.get_level_tags() to obtain the current mapping.</summary>\n<requirement>When MESSAGE_TAGS is overridden via @override_settings, the internal constant LEVEL_TAGS in django.contrib.messages.storage.base must no longer be updated automatically. Instead, code should retrieve the current level\u2011tag mapping by calling django.contrib.messages.utils.get_level_tags(). This supersedes any previous expectation that LEVEL_TAGS would reflect the overridden settings.</requirement>\n<source_edit file=\"django/contrib/messages/apps.py\"><search>def update_level_tags(setting, **kwargs):\n    if setting == 'MESSAGE_TAGS':\n        base.LEVEL_TAGS = get_level_tags()</search><replace>def update_level_tags(setting, **kwargs):\n    # No longer updates LEVEL_TAGS; callers should use utils.get_level_tags()\n    pass</replace></source_edit>\n<test_edit file=\"tests/messages_tests/tests.py\"><search>from django.contrib.messages.storage import base</search><replace>from django.contrib.messages import utils</replace></test_edit>\n<test_edit file=\"tests/messages_tests/tests.py\"><search>self.assertEqual(base.LEVEL_TAGS, self.message_tags)</search><replace>self.assertEqual(utils.get_level_tags(), self.message_tags)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1914,
+  "prompt_tokens": 1504,
+  "total_tokens": 3418,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1637,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "LEVEL_TAGS is no longer updated automatically; callers should use utils.get_level_tags() to obtain the current mapping.",
+ "requirement": "When MESSAGE_TAGS is overridden via @override_settings, the internal constant LEVEL_TAGS in django.contrib.messages.storage.base must no longer be updated automatically. Instead, code should retrieve the current level\u2011tag mapping by calling django.contrib.messages.utils.get_level_tags(). This supersedes any previous expectation that LEVEL_TAGS would reflect the overridden settings.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/messages/apps.py",
+   "search": "def update_level_tags(setting, **kwargs):\n    if setting == 'MESSAGE_TAGS':\n        base.LEVEL_TAGS = get_level_tags()",
+   "replace": "def update_level_tags(setting, **kwargs):\n    # No longer updates LEVEL_TAGS; callers should use utils.get_level_tags()\n    pass"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/messages_tests/tests.py",
+   "search": "from django.contrib.messages.storage import base",
+   "replace": "from django.contrib.messages import utils"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/messages_tests/tests.py",
+   "search": "self.assertEqual(base.LEVEL_TAGS, self.message_tags)",
+   "replace": "self.assertEqual(utils.get_level_tags(), self.message_tags)"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,49 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-25747",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "fc73396b8e4c544593aa483fae44443a91c93561001e53005f4ab4c32c3819a8",
+ "raw": "<summary>Index should always be set to the provided value, even when wrapping an existing DataFrame.</summary>\n<requirement>When `set_output` is configured with ``transform=\"pandas\"``, the wrapper must always assign the supplied ``index`` argument to the resulting DataFrame, regardless of whether the data being wrapped is already a pandas DataFrame. This supersedes any previous statement that the index is ignored for DataFrames.</requirement>\n<source_edit file=\"sklearn/utils/_set_output.py\"><search>if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        return data_to_wrap</search><replace>if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        if index is not None:\n            data_to_wrap.index = index\n        return data_to_wrap</replace></source_edit>\n<test_edit file=\"sklearn/utils/tests/test_set_output.py\"><search>assert_array_equal(new_df.index, X_df.index)</search><replace>assert_array_equal(new_df.index, new_index)</replace></test_edit>\n<test_edit file=\"sklearn/utils/tests/test_set_output.py\"><search>assert_array_equal(X_trans.index, [\"s0\", \"s1\"])</search><replace>assert_array_equal(X_trans.index, X.index)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1102,
+  "prompt_tokens": 2923,
+  "total_tokens": 4025,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 803,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Index should always be set to the provided value, even when wrapping an existing DataFrame.",
+ "requirement": "When `set_output` is configured with ``transform=\"pandas\"``, the wrapper must always assign the supplied ``index`` argument to the resulting DataFrame, regardless of whether the data being wrapped is already a pandas DataFrame. This supersedes any previous statement that the index is ignored for DataFrames.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/utils/_set_output.py",
+   "search": "if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        return data_to_wrap",
+   "replace": "if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        if index is not None:\n            data_to_wrap.index = index\n        return data_to_wrap"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/utils/tests/test_set_output.py",
+   "search": "assert_array_equal(new_df.index, X_df.index)",
+   "replace": "assert_array_equal(new_df.index, new_index)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sklearn/utils/tests/test_set_output.py",
+   "search": "assert_array_equal(X_trans.index, [\"s0\", \"s1\"])",
+   "replace": "assert_array_equal(X_trans.index, X.index)"
+  }
+ ],
+ "status": "generated"
+}

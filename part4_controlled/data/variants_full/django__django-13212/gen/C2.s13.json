@@ -1,0 +1,91 @@
+{
+ "instance_id": "django__django-13212",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "9de2e7db3a6ad656a29a795f0c8bae91ad09407a72c2462e1a0832f79384735a",
+ "raw": "<summary>Validators should use their existing placeholder names (e.g., limit_value, max, extension) instead of %(value)s for limit\u2011based errors.</summary>\n<requirement>All built\u2011in validators that report a limit (such as maximum length, numeric limits, or file extensions) must continue to use their documented placeholder names (e.g., %(limit_value)s, %(max)s, %(extension)s) in ValidationError messages. They must not be changed to include a %(value)s placeholder for these cases. This supersedes any earlier expectation that %(value)s be available for those validators.</requirement>\n\n<source_edit file=\"django/core/validators.py\"><search>raise ValidationError(self.messages['invalid'], code='invalid', params={'value': value})</search><replace>raise ValidationError(self.messages['invalid'])</replace></source_edit>\n<source_edit file=\"django/core/validators.py\"><search>params={'max': self.max_digits, 'value': value},</search><replace>params={'max': self.max_digits},</replace></source_edit>\n<source_edit file=\"django/core/validators.py\"><search>params={'max': self.decimal_places, 'value': value},</search><replace>params={'max': self.decimal_places},</replace></source_edit>\n<source_edit file=\"django/core/validators.py\"><search>params={'max': (self.max_digits - self.decimal_places), 'value': value},</search><replace>params={'max': (self.max_digits - self.decimal_places)},</replace></source_edit>\n\n<test_edit file=\"tests/forms_tests/tests/test_validators.py\"><search>error_messages={code: '%(value)s'},</search><replace>error_messages={code: ('%(limit_value)s' if code in ('max_length', 'min_length') else '%(value)s')},</replace></test_edit>\n<test_edit file=\"tests/forms_tests/tests/test_validators.py\"><search>self.assertEqual(form.errors, {'field': [str(value)]})</search><replace>expected = str(value) if code not in ('max_value', 'min_value') else '0'\\nself.assertEqual(form.errors, {'field': [expected]})</replace></test_edit>\n<test_edit file=\"tests/forms_tests/tests/test_validators.py\"><search>error_messages={code: '%(value)s'},</search><replace>error_messages={code: ('%(limit_value)s' if code in ('max_value', 'min_value') else '%(value)s')},</replace></test_edit>\n<test_edit file=\"tests/forms_tests/tests/test_validators.py\"><search>self.assertEqual(form.errors, {'field': [value]})</search><replace>if code == 'invalid':\\n    expected = '%(value)s'\\nelif code == 'max_digits':\\n    expected = '2'\\nelif code == 'max_decimal_places':\\n    expected = '1'\\nelif code == 'max_whole_digits':\\n    expected = '1'\\nself.assertEqual(form.errors, {'field': [expected]})</replace></test_edit>\n<test_edit file=\"tests/forms_tests/tests/test_validators.py\"><search>error_messages={'invalid_extension': '%(value)s'},</search><replace>error_messages={'invalid_extension': '%(extension)s'},</replace></test_edit>\n<test_edit file=\"tests/forms_tests/tests/test_validators.py\"><search>self.assertEqual(form.errors, {'field': ['myfile.txt']})</search><replace>self.assertEqual(form.errors, {'field': ['txt']})</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 7057,
+  "prompt_tokens": 3647,
+  "total_tokens": 10704,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 6290,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Validators should use their existing placeholder names (e.g., limit_value, max, extension) instead of %(value)s for limit\u2011based errors.",
+ "requirement": "All built\u2011in validators that report a limit (such as maximum length, numeric limits, or file extensions) must continue to use their documented placeholder names (e.g., %(limit_value)s, %(max)s, %(extension)s) in ValidationError messages. They must not be changed to include a %(value)s placeholder for these cases. This supersedes any earlier expectation that %(value)s be available for those validators.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/core/validators.py",
+   "search": "raise ValidationError(self.messages['invalid'], code='invalid', params={'value': value})",
+   "replace": "raise ValidationError(self.messages['invalid'])"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/core/validators.py",
+   "search": "params={'max': self.max_digits, 'value': value},",
+   "replace": "params={'max': self.max_digits},"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/core/validators.py",
+   "search": "params={'max': self.decimal_places, 'value': value},",
+   "replace": "params={'max': self.decimal_places},"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/core/validators.py",
+   "search": "params={'max': (self.max_digits - self.decimal_places), 'value': value},",
+   "replace": "params={'max': (self.max_digits - self.decimal_places)},"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_validators.py",
+   "search": "error_messages={code: '%(value)s'},",
+   "replace": "error_messages={code: ('%(limit_value)s' if code in ('max_length', 'min_length') else '%(value)s')},"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_validators.py",
+   "search": "self.assertEqual(form.errors, {'field': [str(value)]})",
+   "replace": "expected = str(value) if code not in ('max_value', 'min_value') else '0'\\nself.assertEqual(form.errors, {'field': [expected]})"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_validators.py",
+   "search": "error_messages={code: '%(value)s'},",
+   "replace": "error_messages={code: ('%(limit_value)s' if code in ('max_value', 'min_value') else '%(value)s')},"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_validators.py",
+   "search": "self.assertEqual(form.errors, {'field': [value]})",
+   "replace": "if code == 'invalid':\\n    expected = '%(value)s'\\nelif code == 'max_digits':\\n    expected = '2'\\nelif code == 'max_decimal_places':\\n    expected = '1'\\nelif code == 'max_whole_digits':\\n    expected = '1'\\nself.assertEqual(form.errors, {'field': [expected]})"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_validators.py",
+   "search": "error_messages={'invalid_extension': '%(value)s'},",
+   "replace": "error_messages={'invalid_extension': '%(extension)s'},"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_validators.py",
+   "search": "self.assertEqual(form.errors, {'field': ['myfile.txt']})",
+   "replace": "self.assertEqual(form.errors, {'field': ['txt']})"
+  }
+ ],
+ "status": "generated"
+}

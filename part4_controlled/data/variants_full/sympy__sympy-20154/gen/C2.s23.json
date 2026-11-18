@@ -1,0 +1,109 @@
+{
+ "instance_id": "sympy__sympy-20154",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "7469f01c565734355ccfab52b32a2fa3428e4f5fce392a60acad1b9c1350f481",
+ "raw": "<summary>partitions() must reuse the same dictionary object for each yielded partition</summary>\n<requirement>All calls to\u202fpartitions() should return the *same* mutable dictionary object on every iteration, reusing it for speed. Users who need independent dictionaries must explicitly copy the result (e.g., using\u202fp.copy()). This supersedes any previous expectation that a fresh dictionary is returned each time.</requirement>\n\n<source_edit file=\"sympy/utilities/iterables.py\"><search>>>> [p for p in partitions(6, k=2)]</search><replace>>>> [p for p in partitions(6, k=2)]\nNote that the _same_ dictionary object is returned each time.\nThis is for speed:  generating each partition goes quickly,\ntaking constant time, independent of n.\n\n>>> [p for p in partitions(6, k=2)]\n>>> [p.copy() for p in partitions(6, k=2)]  # doctest: +SKIP\n[{2: 3}, {1: 2, 2: 2}, {1: 4, 2: 1}, {1: 6}]\n>>> [(M, p.copy()) for M, p in partitions(6, k=2, size=True)]  # doctest: +SKIP\n[(3, {2: 3}), (4, {1: 2, 2: 2}), (5, {1: 4, 2: 1}), (6, {1: 6})]</replace></source_edit>\n\n<source_edit file=\"sympy/utilities/iterables.py\"><search>yield sum(ms.values()), ms.copy()</search><replace>yield sum(ms.values()), ms</replace></source_edit>\n\n<source_edit file=\"sympy/utilities/iterables.py\"><search>yield ms.copy()</search><replace>yield ms</replace></source_edit>\n\n<source_edit file=\"sympy/utilities/iterables.py\"><search>yield sum(ms.values()), ms.copy()</search><replace>yield sum(ms.values()), ms</replace></source_edit>\n\n<source_edit file=\"sympy/utilities/iterables.py\"><search>yield ms.copy()</search><replace>yield ms</replace></source_edit>\n\n<test_edit file=\"sympy/utilities/tests/test_iterables.py\"><search>    assert [p for p in partitions(6, k=2)] == [</search><replace>    assert [p.copy() for p in partitions(6, k=2)] == [</replace></test_edit>\n\n<test_edit file=\"sympy/utilities/tests/test_iterables.py\"><search>    assert [p for p in partitions(6, k=3)] == [</search><replace>    assert [p.copy() for p in partitions(6, k=3)] == [</replace></test_edit>\n\n<test_edit file=\"sympy/utilities/tests/test_iterables.py\"><search>    assert [p for p in partitions(8, k=4, m=3)] == [</search><replace>    assert [p.copy() for p in partitions(8, k=4, m=3)] == [</replace></test_edit>\n\n<test_edit file=\"sympy/utilities/tests/test_iterables.py\"><search>        i for i in partitions(8, k=4, m=3) if all(k <= 4 for k in i)</search><replace>        i.copy() for i in partitions(8, k=4, m=3) if all(k <= 4 for k in i)</replace></test_edit>\n\n<test_edit file=\"sympy/utilities/tests/test_iterables.py\"><search>    assert [p for p in partitions(S(3), m=2)] == [</search><replace>    assert [p.copy() for p in partitions(S(3), m=2)] == [</replace></test_edit>\n\n<test_edit file=\"sympy/utilities/tests/test_iterables.py\"><search>    assert [i for i in partitions(4, k=3)] == [</search><replace>    assert [i.copy() for i in partitions(4, k=3)] == [</replace></test_edit>\n\n<test_edit file=\"sympy/utilities/tests/test_iterables.py\"><search>        i for i in partitions(4) if all(k <= 3 for k in i)]</search><replace>        i.copy() for i in partitions(4) if all(k <= 3 for k in i)]</replace></test_edit>\n\n<test_edit file=\"sympy/utilities/tests/test_iterables.py\"><search>    assert list(uniq(p for p in partitions(4))) == \\</search><replace>    assert list(uniq(p.copy() for p in partitions(4))) == \\</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2909,
+  "prompt_tokens": 2008,
+  "total_tokens": 4917,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1882,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "partitions() must reuse the same dictionary object for each yielded partition",
+ "requirement": "All calls to\u202fpartitions() should return the *same* mutable dictionary object on every iteration, reusing it for speed. Users who need independent dictionaries must explicitly copy the result (e.g., using\u202fp.copy()). This supersedes any previous expectation that a fresh dictionary is returned each time.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/iterables.py",
+   "search": ">>> [p for p in partitions(6, k=2)]",
+   "replace": ">>> [p for p in partitions(6, k=2)]\nNote that the _same_ dictionary object is returned each time.\nThis is for speed:  generating each partition goes quickly,\ntaking constant time, independent of n.\n\n>>> [p for p in partitions(6, k=2)]\n>>> [p.copy() for p in partitions(6, k=2)]  # doctest: +SKIP\n[{2: 3}, {1: 2, 2: 2}, {1: 4, 2: 1}, {1: 6}]\n>>> [(M, p.copy()) for M, p in partitions(6, k=2, size=True)]  # doctest: +SKIP\n[(3, {2: 3}), (4, {1: 2, 2: 2}), (5, {1: 4, 2: 1}), (6, {1: 6})]"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/iterables.py",
+   "search": "yield sum(ms.values()), ms.copy()",
+   "replace": "yield sum(ms.values()), ms"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/iterables.py",
+   "search": "yield ms.copy()",
+   "replace": "yield ms"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/iterables.py",
+   "search": "yield sum(ms.values()), ms.copy()",
+   "replace": "yield sum(ms.values()), ms"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/iterables.py",
+   "search": "yield ms.copy()",
+   "replace": "yield ms"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/utilities/tests/test_iterables.py",
+   "search": "    assert [p for p in partitions(6, k=2)] == [",
+   "replace": "    assert [p.copy() for p in partitions(6, k=2)] == ["
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/utilities/tests/test_iterables.py",
+   "search": "    assert [p for p in partitions(6, k=3)] == [",
+   "replace": "    assert [p.copy() for p in partitions(6, k=3)] == ["
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/utilities/tests/test_iterables.py",
+   "search": "    assert [p for p in partitions(8, k=4, m=3)] == [",
+   "replace": "    assert [p.copy() for p in partitions(8, k=4, m=3)] == ["
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/utilities/tests/test_iterables.py",
+   "search": "        i for i in partitions(8, k=4, m=3) if all(k <= 4 for k in i)",
+   "replace": "        i.copy() for i in partitions(8, k=4, m=3) if all(k <= 4 for k in i)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/utilities/tests/test_iterables.py",
+   "search": "    assert [p for p in partitions(S(3), m=2)] == [",
+   "replace": "    assert [p.copy() for p in partitions(S(3), m=2)] == ["
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/utilities/tests/test_iterables.py",
+   "search": "    assert [i for i in partitions(4, k=3)] == [",
+   "replace": "    assert [i.copy() for i in partitions(4, k=3)] == ["
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/utilities/tests/test_iterables.py",
+   "search": "        i for i in partitions(4) if all(k <= 3 for k in i)]",
+   "replace": "        i.copy() for i in partitions(4) if all(k <= 3 for k in i)]"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/utilities/tests/test_iterables.py",
+   "search": "    assert list(uniq(p for p in partitions(4))) == \\",
+   "replace": "    assert list(uniq(p.copy() for p in partitions(4))) == \\"
+  }
+ ],
+ "status": "generated"
+}

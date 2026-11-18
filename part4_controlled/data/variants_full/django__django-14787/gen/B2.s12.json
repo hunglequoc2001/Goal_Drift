@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-14787",
+ "kind": "B2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "masked": "\u27e6P1\u27e7 should preserve wrapper assignments\nDescription\n\u27e6P2\u27e7\nthe function that is passed to the decorator is a partial object and does not have any of the attributes expected from a function \u27e6P3\u27e7. \u27e6P4\u27e7, \u27e6P5\u27e7 etc...\nconsider the following case\ndef \u27e6P6\u27e7:\n\u27e6P7\u27e7\nclass Test:\n\u27e6P8\u27e7\n\u27e6P9\u27e7.\u27e6P10\u27e7\nThis results in the following exception\n\u27e6P11\u27e7: \u27e6P12\u27e7 object has no attribute \u27e6P13\u27e7\n",
+ "spans": [
+  "method_decorator()",
+  "\t",
+  "i.e",
+  "__name__",
+  "__module__",
+  "logger(func)",
+  "\t@wraps(func)\n\tdef inner(*args, **kwargs):\n\t\ttry:\n\t\t\tresult = func(*args, **kwargs)\n\t\texcept Exception as e:\n\t\t\tresult = str(e)\n\t\tfinally:\n\t\t\tlogger.debug(f\"{func.__name__} called with args: {args} and kwargs: {kwargs} resulting: {result}\")\n\treturn inner",
+  "\t@method_decorator(logger)\n\tdef hello_world(self):\n\t\treturn \"hello\"",
+  "Test()",
+  "test_method()",
+  "AttributeError",
+  "'functools.partial'",
+  "'__name__'"
+ ],
+ "prompt_sha256": "c118b84971753137aa47e1f024f692ca6ac752348aeabfa276e3db604fac007c",
+ "raw": "<rewrite>\n**Title:** \u27e6P1\u27e7 must preserve wrapper assignments  \n\n**Description:**  \n\u27e6P2\u27e7  \n\n**Observed behavior:**  \nThe function supplied to the decorator arrives as a `partial` object and consequently lacks the usual function attributes \u27e6P3\u27e7, \u27e6P4\u27e7, \u27e6P5\u27e7, etc.\n\n**Steps to reproduce:**  \n```python\ndef \u27e6P6\u27e7:\n    \u27e6P7\u27e7\n\nclass Test:\n    \u27e6P8\u27e7\n    \u27e6P9\u27e7.\u27e6P10\u27e7\n```  \n\nExecuting the snippet raises the following exception:  \n\n```\n\u27e6P11\u27e7: \u27e6P12\u27e7 object has no attribute \u27e6P13\u27e7\n```  \n\n**Expected behavior:**  \nThe wrapper should retain the original assignments so that the decorator can access the standard function attributes.\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 891,
+  "prompt_tokens": 450,
+  "total_tokens": 1341,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 663,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "**Title:** \u27e6P1\u27e7 must preserve wrapper assignments  \n\n**Description:**  \n\u27e6P2\u27e7  \n\n**Observed behavior:**  \nThe function supplied to the decorator arrives as a `partial` object and consequently lacks the usual function attributes \u27e6P3\u27e7, \u27e6P4\u27e7, \u27e6P5\u27e7, etc.\n\n**Steps to reproduce:**  \n```python\ndef \u27e6P6\u27e7:\n    \u27e6P7\u27e7\n\nclass Test:\n    \u27e6P8\u27e7\n    \u27e6P9\u27e7.\u27e6P10\u27e7\n```  \n\nExecuting the snippet raises the following exception:  \n\n```\n\u27e6P11\u27e7: \u27e6P12\u27e7 object has no attribute \u27e6P13\u27e7\n```  \n\n**Expected behavior:**  \nThe wrapper should retain the original assignments so that the decorator can access the standard function attributes.",
+ "rewrite": "**Title:** method_decorator() must preserve wrapper assignments  \n\n**Description:**  \n\t  \n\n**Observed behavior:**  \nThe function supplied to the decorator arrives as a `partial` object and consequently lacks the usual function attributes i.e, __name__, __module__, etc.\n\n**Steps to reproduce:**  \n```python\ndef logger(func):\n    \t@wraps(func)\n\tdef inner(*args, **kwargs):\n\t\ttry:\n\t\t\tresult = func(*args, **kwargs)\n\t\texcept Exception as e:\n\t\t\tresult = str(e)\n\t\tfinally:\n\t\t\tlogger.debug(f\"{func.__name__} called with args: {args} and kwargs: {kwargs} resulting: {result}\")\n\treturn inner\n\nclass Test:\n    \t@method_decorator(logger)\n\tdef hello_world(self):\n\t\treturn \"hello\"\n    Test().test_method()\n```  \n\nExecuting the snippet raises the following exception:  \n\n```\nAttributeError: 'functools.partial' object has no attribute '__name__'\n```  \n\n**Expected behavior:**  \nThe wrapper should retain the original assignments so that the decorator can access the standard function attributes.",
+ "status": "generated"
+}

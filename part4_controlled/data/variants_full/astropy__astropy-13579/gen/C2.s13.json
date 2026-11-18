@@ -1,0 +1,55 @@
+{
+ "instance_id": "astropy__astropy-13579",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "f2f13dc61a6f72c5fbe3dc5c549ef74252799b536cb423f20488d0979469e9fc",
+ "raw": "<summary>world_to_pixel_values must require world coordinates for all original axes and raise a ValueError otherwise</summary>\n<requirement>When calling `world_to_pixel_values` on a `SlicedLowLevelWCS`, the caller must provide world coordinate arrays for every axis of the original (unsliced) WCS. The method must not attempt to infer missing world coordinates; instead it should raise a `ValueError` with the message \u201cworld_to_pixel_values requires world coordinates for all axes\u201d. This supersedes any previous expectation that omitted axes would be automatically filled.</requirement>\n<source_edit file=\"astropy/wcs/wcsapi/wrappers/sliced_wcs.py\"><search>sliced_out_world_coords = self._pixel_to_world_values_all(*[0]*len(self._pixel_keep))</search><replace>if len(world_arrays) != self.naxis:\n            raise ValueError(\"world_to_pixel_values requires world coordinates for all axes\")</replace></source_edit>\n<source_edit file=\"astropy/wcs/wcsapi/wrappers/sliced_wcs.py\"><search>world_arrays_new.append(1.)</search><replace>raise ValueError(\"world_to_pixel_values requires world coordinates for all axes\")</replace></source_edit>\n<test_edit file=\"astropy/wcs/wcsapi/wrappers/tests/test_sliced_wcs.py\"><search>out_pix = sl.world_to_pixel_values(world[0], world[1])</search><replace>with pytest.raises(ValueError):\n            sl.world_to_pixel_values(world[0], world[1])</replace></test_edit>\n<test_edit file=\"astropy/wcs/wcsapi/wrappers/tests/test_sliced_wcs.py\"><search>assert np.allclose(out_pix[0], 0)</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2513,
+  "prompt_tokens": 2802,
+  "total_tokens": 5315,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2129,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "world_to_pixel_values must require world coordinates for all original axes and raise a ValueError otherwise",
+ "requirement": "When calling `world_to_pixel_values` on a `SlicedLowLevelWCS`, the caller must provide world coordinate arrays for every axis of the original (unsliced) WCS. The method must not attempt to infer missing world coordinates; instead it should raise a `ValueError` with the message \u201cworld_to_pixel_values requires world coordinates for all axes\u201d. This supersedes any previous expectation that omitted axes would be automatically filled.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/wcs/wcsapi/wrappers/sliced_wcs.py",
+   "search": "sliced_out_world_coords = self._pixel_to_world_values_all(*[0]*len(self._pixel_keep))",
+   "replace": "if len(world_arrays) != self.naxis:\n            raise ValueError(\"world_to_pixel_values requires world coordinates for all axes\")"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/wcs/wcsapi/wrappers/sliced_wcs.py",
+   "search": "world_arrays_new.append(1.)",
+   "replace": "raise ValueError(\"world_to_pixel_values requires world coordinates for all axes\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/wcs/wcsapi/wrappers/tests/test_sliced_wcs.py",
+   "search": "out_pix = sl.world_to_pixel_values(world[0], world[1])",
+   "replace": "with pytest.raises(ValueError):\n            sl.world_to_pixel_values(world[0], world[1])"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/wcs/wcsapi/wrappers/tests/test_sliced_wcs.py",
+   "search": "assert np.allclose(out_pix[0], 0)",
+   "replace": ""
+  }
+ ],
+ "status": "generated"
+}

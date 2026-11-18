@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-12276",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 23968,
+ "raw": "<summary>FileInput suppresses the required attribute only when the initial value is a file\u2011like object with a non\u2011empty\u202furl attribute.</summary>\n<requirement>When rendering a FileInput widget, the HTML `required` attribute should be omitted **only** if the field\u2019s initial value is an object that possesses a truthy `url` attribute (i.e., an existing uploaded file). For any other initial value\u2014including plain strings, `None`, or objects without a `url` attribute\u2014the `required` attribute must be rendered when the field is required. This supersedes any previous expectation that the required attribute be omitted for any truthy initial value.</requirement>\n<source_edit file=\"django/forms/widgets.py\"><search>def use_required_attribute(self, initial):\n        return super().use_required_attribute(initial) and not initial</search><replace>def use_required_attribute(self, initial):\n        # Omit the required attribute only if the initial value has a truthy ``url`` attribute.\n        return super().use_required_attribute(initial) and not (hasattr(initial, 'url') and bool(initial.url))</replace></source_edit>\n<test_edit file=\"tests/forms_tests/widget_tests/test_fileinput.py\"><search>self.assertIs(self.widget.use_required_attribute(None), True)\n        self.assertIs(self.widget.use_required_attribute('resume.txt'), False)</search><replace>self.assertIs(self.widget.use_required_attribute(None), True)\n        # A plain string does not have a ``url`` attribute, so the required attribute remains.\n        self.assertIs(self.widget.use_required_attribute('resume.txt'), True)\n        # An object with a truthy ``url`` attribute suppresses the required attribute.\n        class DummyFile:\n            url = 'http://example.com/file.txt'\n        self.assertIs(self.widget.use_required_attribute(DummyFile()), False)</replace></test_edit>\n<test_edit file=\"tests/forms_tests/tests/test_forms.py\"><search>'<tr><th>File1:</th><td><input type=\"file\" name=\"file1\"></td></tr>',</search><replace>'<tr><th>File1:</th><td><input type=\"file\" name=\"file1\" required></td></tr>',</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "FileInput suppresses the required attribute only when the initial value is a file\u2011like object with a non\u2011empty\u202furl attribute.",
+ "requirement": "When rendering a FileInput widget, the HTML `required` attribute should be omitted **only** if the field\u2019s initial value is an object that possesses a truthy `url` attribute (i.e., an existing uploaded file). For any other initial value\u2014including plain strings, `None`, or objects without a `url` attribute\u2014the `required` attribute must be rendered when the field is required. This supersedes any previous expectation that the required attribute be omitted for any truthy initial value.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/widgets.py",
+   "search": "def use_required_attribute(self, initial):\n        return super().use_required_attribute(initial) and not initial",
+   "replace": "def use_required_attribute(self, initial):\n        # Omit the required attribute only if the initial value has a truthy ``url`` attribute.\n        return super().use_required_attribute(initial) and not (hasattr(initial, 'url') and bool(initial.url))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/widget_tests/test_fileinput.py",
+   "search": "self.assertIs(self.widget.use_required_attribute(None), True)\n        self.assertIs(self.widget.use_required_attribute('resume.txt'), False)",
+   "replace": "self.assertIs(self.widget.use_required_attribute(None), True)\n        # A plain string does not have a ``url`` attribute, so the required attribute remains.\n        self.assertIs(self.widget.use_required_attribute('resume.txt'), True)\n        # An object with a truthy ``url`` attribute suppresses the required attribute.\n        class DummyFile:\n            url = 'http://example.com/file.txt'\n        self.assertIs(self.widget.use_required_attribute(DummyFile()), False)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_forms.py",
+   "search": "'<tr><th>File1:</th><td><input type=\"file\" name=\"file1\"></td></tr>',",
+   "replace": "'<tr><th>File1:</th><td><input type=\"file\" name=\"file1\" required></td></tr>',"
+  }
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-13135",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "7d9e92d16e089964ba04a7042a85866eba0f9b8814440b68b7ce3738b119f5f2",
+ "raw": "<summary>\u2018kmeans\u2019 strategy must have fewer bins than unique values, otherwise it raises ValueError</summary>\n<requirement>When using the \u201ckmeans\u201d strategy in\u202fKBinsDiscretizer, the requested number of bins must be strictly less than the number of distinct values in the input feature. If\u202fn_bins\u202fis greater than or equal to the number of unique values, the estimator should raise a\u202fValueError\u202fwith the message \u201cn_bins must be less than the number of unique values for 'kmeans' strategy\u201d. This requirement supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"sklearn/preprocessing/_discretization.py\"><search>km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)</search><replace>if n_bins[jj] >= np.unique(column).size:\n            raise ValueError(\"n_bins must be less than the number of unique values for 'kmeans' strategy\")\n        km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)</replace></source_edit>\n\n<test_edit file=\"sklearn/preprocessing/tests/test_discretization.py\"><search># with 5 bins\n    est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n    Xt = est.fit_transform(X)\n    assert_array_equal(expected_5bins, Xt.ravel())</search><replace># with 5 bins\n    est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n    if strategy == 'kmeans':\n        with pytest.raises(ValueError):\n            est.fit_transform(X)\n    else:\n        Xt = est.fit_transform(X)\n        assert_array_equal(expected_5bins, Xt.ravel())</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2320,
+  "prompt_tokens": 2974,
+  "total_tokens": 5294,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1933,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "\u2018kmeans\u2019 strategy must have fewer bins than unique values, otherwise it raises ValueError",
+ "requirement": "When using the \u201ckmeans\u201d strategy in\u202fKBinsDiscretizer, the requested number of bins must be strictly less than the number of distinct values in the input feature. If\u202fn_bins\u202fis greater than or equal to the number of unique values, the estimator should raise a\u202fValueError\u202fwith the message \u201cn_bins must be less than the number of unique values for 'kmeans' strategy\u201d. This requirement supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/preprocessing/_discretization.py",
+   "search": "km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)",
+   "replace": "if n_bins[jj] >= np.unique(column).size:\n            raise ValueError(\"n_bins must be less than the number of unique values for 'kmeans' strategy\")\n        km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/preprocessing/tests/test_discretization.py",
+   "search": "# with 5 bins\n    est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n    Xt = est.fit_transform(X)\n    assert_array_equal(expected_5bins, Xt.ravel())",
+   "replace": "# with 5 bins\n    est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode='ordinal')\n    if strategy == 'kmeans':\n        with pytest.raises(ValueError):\n            est.fit_transform(X)\n    else:\n        Xt = est.fit_transform(X)\n        assert_array_equal(expected_5bins, Xt.ravel())"
+  }
+ ],
+ "status": "generated"
+}

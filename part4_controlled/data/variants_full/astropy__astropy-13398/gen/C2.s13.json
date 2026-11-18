@@ -1,0 +1,61 @@
+{
+ "instance_id": "astropy__astropy-13398",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "78b9adf2796f96125a4f4a06a5a7f672d9cbd9c28ae702f1cb6bceb8d236975d",
+ "raw": "<summary>Refraction is applied only for AltAz frames, not for HADec frames.</summary>\n<requirement>All ITRS\u202f\u2194\u202fObserved transforms must apply atmospheric refraction corrections only when the target frame is an AltAz frame. When the target (or source) frame is a HADec frame, any pressure, temperature, humidity, or wavelength attributes must be ignored and no refraction correction should be performed, even if those attributes are non\u2011zero. This supersedes any previous description that allowed refraction for HADec frames.</requirement>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>if isinstance(observed_frame, AltAz) or (observed_frame.pressure > 0.0):</search><replace>if isinstance(observed_frame, AltAz):\n    # AltAz frames may receive refraction corrections\n    crepr = itrs_coo.cartesian.transform(itrs_to_altaz_mat(lon, lat))\n    if observed_frame.pressure > 0.0:\n        crepr = add_refraction(crepr, observed_frame)\nelif isinstance(observed_frame, HADec):\n    # HADec frames never receive refraction corrections\n    crepr = itrs_coo.cartesian.transform(itrs_to_hadec_mat(lon))\nelse:\n    # Fallback (should not occur with current frames)\n    crepr = itrs_coo.cartesian.transform(itrs_to_hadec_mat(lon))</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>if isinstance(observed_coo, AltAz) or (observed_coo.pressure > 0.0):</search><replace>if isinstance(observed_coo, AltAz):\n    # AltAz frames may have refraction to remove\n    crepr = observed_coo.cartesian\n    if observed_coo.pressure > 0.0:\n        crepr = remove_refraction(crepr, observed_coo)\n    crepr = crepr.transform(matrix_transpose(itrs_to_altaz_mat(lon, lat)))\nelif isinstance(observed_coo, HADec):\n    # HADec frames never have refraction removed\n    crepr = observed_coo.cartesian.transform(matrix_transpose(itrs_to_hadec_mat(lon)))\nelse:\n    # Fallback (should not occur with current frames)\n    crepr = observed_coo.cartesian.transform(matrix_transpose(itrs_to_hadec_mat(lon)))</replace></source_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec22.ha - hadec2.ha, 0*u.mas, atol=0.1*u.mas)</search><replace>assert_allclose(hadec22.ha - hadec1.ha, 0*u.mas, atol=0.1*u.mas)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec22.dec - hadec2.dec, 0*u.mas, atol=0.1*u.mas)</search><replace>assert_allclose(hadec22.dec - hadec1.dec, 0*u.mas, atol=0.1*u.mas)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec22.distance - hadec2.distance, 0*u.cm, atol=10.0*u.cm)</search><replace>assert_allclose(hadec22.distance - hadec1.distance, 0*u.cm, atol=10.0*u.cm)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3828,
+  "prompt_tokens": 8280,
+  "total_tokens": 12108,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 3045,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Refraction is applied only for AltAz frames, not for HADec frames.",
+ "requirement": "All ITRS\u202f\u2194\u202fObserved transforms must apply atmospheric refraction corrections only when the target frame is an AltAz frame. When the target (or source) frame is a HADec frame, any pressure, temperature, humidity, or wavelength attributes must be ignored and no refraction correction should be performed, even if those attributes are non\u2011zero. This supersedes any previous description that allowed refraction for HADec frames.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "if isinstance(observed_frame, AltAz) or (observed_frame.pressure > 0.0):",
+   "replace": "if isinstance(observed_frame, AltAz):\n    # AltAz frames may receive refraction corrections\n    crepr = itrs_coo.cartesian.transform(itrs_to_altaz_mat(lon, lat))\n    if observed_frame.pressure > 0.0:\n        crepr = add_refraction(crepr, observed_frame)\nelif isinstance(observed_frame, HADec):\n    # HADec frames never receive refraction corrections\n    crepr = itrs_coo.cartesian.transform(itrs_to_hadec_mat(lon))\nelse:\n    # Fallback (should not occur with current frames)\n    crepr = itrs_coo.cartesian.transform(itrs_to_hadec_mat(lon))"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "if isinstance(observed_coo, AltAz) or (observed_coo.pressure > 0.0):",
+   "replace": "if isinstance(observed_coo, AltAz):\n    # AltAz frames may have refraction to remove\n    crepr = observed_coo.cartesian\n    if observed_coo.pressure > 0.0:\n        crepr = remove_refraction(crepr, observed_coo)\n    crepr = crepr.transform(matrix_transpose(itrs_to_altaz_mat(lon, lat)))\nelif isinstance(observed_coo, HADec):\n    # HADec frames never have refraction removed\n    crepr = observed_coo.cartesian.transform(matrix_transpose(itrs_to_hadec_mat(lon)))\nelse:\n    # Fallback (should not occur with current frames)\n    crepr = observed_coo.cartesian.transform(matrix_transpose(itrs_to_hadec_mat(lon)))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec22.ha - hadec2.ha, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "assert_allclose(hadec22.ha - hadec1.ha, 0*u.mas, atol=0.1*u.mas)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec22.dec - hadec2.dec, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "assert_allclose(hadec22.dec - hadec1.dec, 0*u.mas, atol=0.1*u.mas)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec22.distance - hadec2.distance, 0*u.cm, atol=10.0*u.cm)",
+   "replace": "assert_allclose(hadec22.distance - hadec1.distance, 0*u.cm, atol=10.0*u.cm)"
+  }
+ ],
+ "status": "generated"
+}

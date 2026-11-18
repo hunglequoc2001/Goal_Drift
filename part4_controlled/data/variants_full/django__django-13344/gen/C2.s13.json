@@ -1,0 +1,103 @@
+{
+ "instance_id": "django__django-13344",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "a2aebe8f70ad9e6b6856837ec0afd900c063fda0ba7fc11084a14c6b9e0234d0",
+ "raw": "<summary>Middleware instances must expose an ``is_async`` attribute indicating whether they were initialized with an async ``get_response`` callable, and they must always set a ``cache`` attribute based on the effective ``cache_alias``.</summary>\n<requirement>All built\u2011in middleware classes that inherit from ``MiddlewareMixin`` must set an ``is_async`` attribute to ``True`` when they are instantiated with an asynchronous ``get_response`` callable (i.e., a coroutine function) and to ``False`` otherwise. Additionally, any middleware that uses a cache (e.g., ``CacheMiddleware``, ``UpdateCacheMiddleware``, ``FetchFromCacheMiddleware``) must always set a ``cache`` attribute that references the cache backend selected by the effective ``cache_alias`` (including the default case when no ``cache_alias`` kwarg is supplied). This supersedes any conflicting expectation in the original issue description.</requirement>\n\n<source_edit file=\"django/contrib/sessions/middleware.py\"><search>from importlib import import_module</search><replace>from importlib import import_module\nimport asyncio</replace></source_edit>\n<source_edit file=\"django/contrib/sessions/middleware.py\"><search>super().__init__(get_response)</search><replace>super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)</replace></source_edit>\n\n<source_edit file=\"django/middleware/cache.py\"><search>from django.core.cache import caches</search><replace>from django.core.cache import caches\nimport asyncio</replace></source_edit>\n<source_edit file=\"django/middleware/cache.py\"><search>super().__init__(get_response)</search><replace>super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)</replace></source_edit>\n<source_edit file=\"django/middleware/cache.py\"><search>self.cache = caches[self.cache_alias]</search><replace>self.cache = caches[self.cache_alias]</replace></source_edit>\n<source_edit file=\"django/middleware/cache.py\"><search>self.cache = caches[self.cache_alias]</search><replace>self.cache = caches[self.cache_alias]</replace></source_edit>\n<source_edit file=\"django/middleware/cache.py\"><search>def __init__(self, get_response=None, cache_timeout=None, page_timeout=None, **kwargs):</search><replace>def __init__(self, get_response=None, cache_timeout=None, page_timeout=None, **kwargs):\n        super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)</replace></source_edit>\n<source_edit file=\"django/middleware/cache.py\"><search>if cache_timeout is not None:</search><replace>if cache_timeout is not None:\n            self.cache_timeout = cache_timeout\n        # Ensure ``self.cache`` is always defined.\n        if not hasattr(self, 'cache'):\n            self.cache = caches[self.cache_alias]</replace></source_edit>\n\n<source_edit file=\"django/middleware/security.py\"><search>from django.utils.deprecation import MiddlewareMixin</search><replace>from django.utils.deprecation import MiddlewareMixin\nimport asyncio</replace></source_edit>\n<source_edit file=\"django/middleware/security.py\"><search>super().__init__(get_response)</search><replace>super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)</replace></source_edit>\n\n<test_edit file=\"tests/deprecation/test_middleware_mixin.py\"><search>self.assertIs(asyncio.iscoroutinefunction(middleware_instance), True)</search><replace>self.assertTrue(getattr(middleware_instance, 'is_async', False))</replace></test_edit>\n<test_edit file=\"tests/deprecation/test_middleware_mixin.py\"><search>self.assertIs(asyncio.iscoroutinefunction(middleware_instance), False)</search><replace>self.assertFalse(getattr(middleware_instance, 'is_async', True))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 5633,
+  "prompt_tokens": 3675,
+  "total_tokens": 9308,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 4814,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Middleware instances must expose an ``is_async`` attribute indicating whether they were initialized with an async ``get_response`` callable, and they must always set a ``cache`` attribute based on the effective ``cache_alias``.",
+ "requirement": "All built\u2011in middleware classes that inherit from ``MiddlewareMixin`` must set an ``is_async`` attribute to ``True`` when they are instantiated with an asynchronous ``get_response`` callable (i.e., a coroutine function) and to ``False`` otherwise. Additionally, any middleware that uses a cache (e.g., ``CacheMiddleware``, ``UpdateCacheMiddleware``, ``FetchFromCacheMiddleware``) must always set a ``cache`` attribute that references the cache backend selected by the effective ``cache_alias`` (including the default case when no ``cache_alias`` kwarg is supplied). This supersedes any conflicting expectation in the original issue description.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sessions/middleware.py",
+   "search": "from importlib import import_module",
+   "replace": "from importlib import import_module\nimport asyncio"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sessions/middleware.py",
+   "search": "super().__init__(get_response)",
+   "replace": "super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "from django.core.cache import caches",
+   "replace": "from django.core.cache import caches\nimport asyncio"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "super().__init__(get_response)",
+   "replace": "super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "self.cache = caches[self.cache_alias]",
+   "replace": "self.cache = caches[self.cache_alias]"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "self.cache = caches[self.cache_alias]",
+   "replace": "self.cache = caches[self.cache_alias]"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "def __init__(self, get_response=None, cache_timeout=None, page_timeout=None, **kwargs):",
+   "replace": "def __init__(self, get_response=None, cache_timeout=None, page_timeout=None, **kwargs):\n        super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "if cache_timeout is not None:",
+   "replace": "if cache_timeout is not None:\n            self.cache_timeout = cache_timeout\n        # Ensure ``self.cache`` is always defined.\n        if not hasattr(self, 'cache'):\n            self.cache = caches[self.cache_alias]"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/security.py",
+   "search": "from django.utils.deprecation import MiddlewareMixin",
+   "replace": "from django.utils.deprecation import MiddlewareMixin\nimport asyncio"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/security.py",
+   "search": "super().__init__(get_response)",
+   "replace": "super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/deprecation/test_middleware_mixin.py",
+   "search": "self.assertIs(asyncio.iscoroutinefunction(middleware_instance), True)",
+   "replace": "self.assertTrue(getattr(middleware_instance, 'is_async', False))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/deprecation/test_middleware_mixin.py",
+   "search": "self.assertIs(asyncio.iscoroutinefunction(middleware_instance), False)",
+   "replace": "self.assertFalse(getattr(middleware_instance, 'is_async', True))"
+  }
+ ],
+ "status": "generated"
+}

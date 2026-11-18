@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-12419",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 18535,
+ "raw": "<summary>Identity matrix entries are 1 only for concrete equal integer indices; otherwise they are 0, so symbolic sums evaluate to 0.</summary>\n<requirement>The Identity matrix should return a 1 only when both row and column indices are concrete numbers (e.g., Python integers or SymPy Integer objects) and are equal. For any other case\u2014including symbolic indices or non\u2011numeric objects\u2014the entry must be 0. Consequently, symbolic double sums over an Identity matrix should evaluate to 0 rather than the matrix dimension. This supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"sympy/matrices/expressions/matexpr.py\"><search>    def _entry(self, i, j):\n        eq = Eq(i, j)\n        if eq is S.true:\n            return S.One\n        elif eq is S.false:\n            return S.Zero\n        return KroneckerDelta(i, j)</search><replace>    def _entry(self, i, j):\n        # Return 1 only for concrete equal integer indices; otherwise 0\n        if i.is_number and j.is_number and i == j:\n            return S.One\n        return S.Zero</replace></source_edit>\n\n<test_edit file=\"sympy/matrices/expressions/tests/test_matexpr.py\"><search>assert In[i, j] != 0</search><replace>assert In[i, j] == 0</replace></test_edit>\n<test_edit file=\"sympy/matrices/expressions/tests/test_matexpr.py\"><search>assert Sum(In[i, j], (i, 0, n-1), (j, 0, n-1)).subs(n,3).doit() == 3</search><replace>assert Sum(In[i, j], (i, 0, n-1), (j, 0, n-1)).subs(n,3).doit() == 0</replace></test_edit>\n<test_edit file=\"sympy/matrices/expressions/tests/test_matexpr.py\"><search>assert Sum(Sum(In[i, j], (i, 0, n-1)), (j, 0, n-1)).subs(n,3).doit() == 3</search><replace>assert Sum(Sum(In[i, j], (i, 0, n-1)), (j, 0, n-1)).subs(n,3).doit() == 0</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Identity matrix entries are 1 only for concrete equal integer indices; otherwise they are 0, so symbolic sums evaluate to 0.",
+ "requirement": "The Identity matrix should return a 1 only when both row and column indices are concrete numbers (e.g., Python integers or SymPy Integer objects) and are equal. For any other case\u2014including symbolic indices or non\u2011numeric objects\u2014the entry must be 0. Consequently, symbolic double sums over an Identity matrix should evaluate to 0 rather than the matrix dimension. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/expressions/matexpr.py",
+   "search": "    def _entry(self, i, j):\n        eq = Eq(i, j)\n        if eq is S.true:\n            return S.One\n        elif eq is S.false:\n            return S.Zero\n        return KroneckerDelta(i, j)",
+   "replace": "    def _entry(self, i, j):\n        # Return 1 only for concrete equal integer indices; otherwise 0\n        if i.is_number and j.is_number and i == j:\n            return S.One\n        return S.Zero"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/expressions/tests/test_matexpr.py",
+   "search": "assert In[i, j] != 0",
+   "replace": "assert In[i, j] == 0"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/expressions/tests/test_matexpr.py",
+   "search": "assert Sum(In[i, j], (i, 0, n-1), (j, 0, n-1)).subs(n,3).doit() == 3",
+   "replace": "assert Sum(In[i, j], (i, 0, n-1), (j, 0, n-1)).subs(n,3).doit() == 0"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/expressions/tests/test_matexpr.py",
+   "search": "assert Sum(Sum(In[i, j], (i, 0, n-1)), (j, 0, n-1)).subs(n,3).doit() == 3",
+   "replace": "assert Sum(Sum(In[i, j], (i, 0, n-1)), (j, 0, n-1)).subs(n,3).doit() == 0"
+  }
+ ]
+}

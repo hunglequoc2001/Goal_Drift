@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-15554",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 32297,
+ "raw": "<summary>Multiple FilteredRelation on the same relation now reuse the first join, ignoring later conditions.</summary>\n<requirement>When a queryset defines more than one FilteredRelation that refer to the same underlying relation, only the first FilteredRelation should result in a SQL join. Subsequent FilteredRelation objects for that same relation must reuse the existing join (ignoring their own condition), so any annotations that reference them will return the same values as the first one (typically empty if the first condition does not match). This supersedes any previous expectation that each FilteredRelation would generate its own distinct join.</requirement>\n<source_edit file=\"django/db/models/sql/query.py\"><search>\n        if reuse_with_filtered_relation and reuse:\n            reuse_aliases = [\n                a for a, j in self.alias_map.items() if a in reuse and j.equals(join)\n            ]\n        else:\n            reuse_aliases = [\n                a\n                for a, j in self.alias_map.items()\n                if (reuse is None or a in reuse) and j == join\n            ]\n</search><replace>\n        if reuse_with_filtered_relation and reuse:\n            reuse_aliases = [\n                a for a, j in self.alias_map.items() if a in reuse and j == join\n            ]\n        else:\n            reuse_aliases = [\n                a\n                for a, j in self.alias_map.items()\n                if (reuse is None or a in reuse) and j == join\n            ]\n</replace></source_edit>\n<test_edit file=\"tests/filtered_relation/tests.py\"><search>\n        self.assertCountEqual(\n            qs,\n            [\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane A\",\n                },\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane B\",\n                },\n            ],\n        )\n</search><replace>\n        self.assertCountEqual(\n            qs,\n            [\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": empty,\n                },\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": empty,\n                },\n            ],\n        )\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Multiple FilteredRelation on the same relation now reuse the first join, ignoring later conditions.",
+ "requirement": "When a queryset defines more than one FilteredRelation that refer to the same underlying relation, only the first FilteredRelation should result in a SQL join. Subsequent FilteredRelation objects for that same relation must reuse the existing join (ignoring their own condition), so any annotations that reference them will return the same values as the first one (typically empty if the first condition does not match). This supersedes any previous expectation that each FilteredRelation would generate its own distinct join.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/query.py",
+   "search": "        if reuse_with_filtered_relation and reuse:\n            reuse_aliases = [\n                a for a, j in self.alias_map.items() if a in reuse and j.equals(join)\n            ]\n        else:\n            reuse_aliases = [\n                a\n                for a, j in self.alias_map.items()\n                if (reuse is None or a in reuse) and j == join\n            ]",
+   "replace": "        if reuse_with_filtered_relation and reuse:\n            reuse_aliases = [\n                a for a, j in self.alias_map.items() if a in reuse and j == join\n            ]\n        else:\n            reuse_aliases = [\n                a\n                for a, j in self.alias_map.items()\n                if (reuse is None or a in reuse) and j == join\n            ]"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/filtered_relation/tests.py",
+   "search": "        self.assertCountEqual(\n            qs,\n            [\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane A\",\n                },\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane B\",\n                },\n            ],\n        )",
+   "replace": "        self.assertCountEqual(\n            qs,\n            [\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": empty,\n                },\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": empty,\n                },\n            ],\n        )"
+  }
+ ]
+}

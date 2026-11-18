@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-12050",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 100,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 14899,
+ "raw": "<summary>resolve_lookup_value must always coerce iterable values to a tuple</summary>\n<requirement>The\u202fQuery.resolve_lookup_value\u202fmethod must coerce any iterable (list or tuple) to a\u202ftuple\u202fcontaining the resolved items, regardless of the original iterable type. Consequently, when a list such as\u202f['a', 'b']\u202fis used in a lookup, the resulting Exact lookup\u2019s\u202frhs\u202fwill be the string representation of a tuple\u202f\"('a', 'b')\". This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"django/db/models/sql/query.py\"><search>return type(value)(</search><replace>return tuple(</replace></source_edit>\n<test_edit file=\"tests/queries/test_query.py\"><search>self.assertEqual(name_exact.rhs, \"['a', 'b']\")</search><replace>self.assertEqual(name_exact.rhs, \"('a', 'b')\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "resolve_lookup_value must always coerce iterable values to a tuple",
+ "requirement": "The\u202fQuery.resolve_lookup_value\u202fmethod must coerce any iterable (list or tuple) to a\u202ftuple\u202fcontaining the resolved items, regardless of the original iterable type. Consequently, when a list such as\u202f['a', 'b']\u202fis used in a lookup, the resulting Exact lookup\u2019s\u202frhs\u202fwill be the string representation of a tuple\u202f\"('a', 'b')\". This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/query.py",
+   "search": "return type(value)(",
+   "replace": "return tuple("
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_query.py",
+   "search": "self.assertEqual(name_exact.rhs, \"['a', 'b']\")",
+   "replace": "self.assertEqual(name_exact.rhs, \"('a', 'b')\")"
+  }
+ ]
+}

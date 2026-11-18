@@ -1,0 +1,49 @@
+{
+ "instance_id": "matplotlib__matplotlib-25332",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "90622a7175e8c298d8963b0765158fcd42bc0f1485cec96f4880315dbecc8615",
+ "raw": "<summary>Grouper objects must no longer pickle their internal weak\u2011reference mapping.</summary>\n<requirement>When a Grouper instance is pickled, its internal `_mapping` attribute (which holds weak references) must be excluded from the pickled state. Upon unpickling, the Grouper should re\u2011initialize `_mapping` as an empty dictionary. This supersedes any previous expectation that the mapping be preserved across pickling.</requirement>\n\n<source_edit file=\"lib/matplotlib/cbook.py\"><search>    def __getstate__(self):\n        return {\n            **vars(self),\n            # Convert weak refs to strong ones.\n            \"_mapping\": {k(): [v() for v in vs] for k, vs in self._mapping.items()},\n        }</search><replace>    def __getstate__(self):\n        # Return a copy of the instance dict without the runtime weak\u2011reference mapping.\n        state = vars(self).copy()\n        state.pop(\"_mapping\", None)\n        return state</replace></source_edit>\n\n<source_edit file=\"lib/matplotlib/cbook.py\"><search>    def __setstate__(self, state):\n        vars(self).update(state)\n        # Convert strong refs to weak ones.\n        self._mapping = {weakref.ref(k): [*map(weakref.ref, vs)]\n                         for k, vs in self._mapping.items()}</search><replace>    def __setstate__(self, state):\n        vars(self).update(state)\n        # Re\u2011initialize the mapping as empty; it will be rebuilt lazily if needed.\n        self._mapping = {}</replace></source_edit>\n\n<test_edit file=\"lib/matplotlib/tests/test_pickle.py\"><search>    fig_ref.align_ylabels()  # Test handling of _align_label_groups Groupers.</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1713,
+  "prompt_tokens": 1343,
+  "total_tokens": 3056,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1321,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Grouper objects must no longer pickle their internal weak\u2011reference mapping.",
+ "requirement": "When a Grouper instance is pickled, its internal `_mapping` attribute (which holds weak references) must be excluded from the pickled state. Upon unpickling, the Grouper should re\u2011initialize `_mapping` as an empty dictionary. This supersedes any previous expectation that the mapping be preserved across pickling.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/cbook.py",
+   "search": "    def __getstate__(self):\n        return {\n            **vars(self),\n            # Convert weak refs to strong ones.\n            \"_mapping\": {k(): [v() for v in vs] for k, vs in self._mapping.items()},\n        }",
+   "replace": "    def __getstate__(self):\n        # Return a copy of the instance dict without the runtime weak\u2011reference mapping.\n        state = vars(self).copy()\n        state.pop(\"_mapping\", None)\n        return state"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/cbook.py",
+   "search": "    def __setstate__(self, state):\n        vars(self).update(state)\n        # Convert strong refs to weak ones.\n        self._mapping = {weakref.ref(k): [*map(weakref.ref, vs)]\n                         for k, vs in self._mapping.items()}",
+   "replace": "    def __setstate__(self, state):\n        vars(self).update(state)\n        # Re\u2011initialize the mapping as empty; it will be rebuilt lazily if needed.\n        self._mapping = {}"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_pickle.py",
+   "search": "    fig_ref.align_ylabels()  # Test handling of _align_label_groups Groupers.",
+   "replace": ""
+  }
+ ],
+ "status": "generated"
+}

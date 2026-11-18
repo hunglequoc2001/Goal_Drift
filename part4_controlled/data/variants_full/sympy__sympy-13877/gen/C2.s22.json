@@ -1,0 +1,61 @@
+{
+ "instance_id": "sympy__sympy-13877",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "a06ec87d923bc09353caedb1ed199e1ff1f61a171db10eecb5bda8c4e19af88a",
+ "raw": "<summary>Determinant should propagate NaN instead of treating it as zero.</summary>\n<requirement>When computing a matrix determinant using the Bareiss algorithm, if any entry evaluates to NaN the determinant must also evaluate to NaN (i.e., propagate NaN) rather than being treated as zero. This supersedes any previous expectation that such determinants return zero.</requirement>\n<source_edit file=\"sympy/matrices/matrices.py\"><search>pivot_pos, pivot_val, _, _ = _find_reasonable_pivot(mat[:, 0],\n                                         iszerofunc=_is_zero_after_expand_mul)</search><replace>pivot_pos, pivot_val, _, _ = _find_reasonable_pivot(mat[:, 0])</replace></source_edit>\n<source_edit file=\"sympy/matrices/matrices.py\"><search>def _eval_det_bareiss(self):</search><replace>def _eval_det_bareiss(self):\n    from sympy import S\n    try:\n        # original Bareiss implementation follows\n        pass\n    except TypeError as e:\n        if \"Invalid NaN comparison\" in str(e):\n            return S.NaN\n        raise\n    # original Bareiss implementation follows</replace></source_edit>\n<test_edit file=\"sympy/matrices/tests/test_matrices.py\"><search>assert M(5).det() == 0</search><replace>assert M(5).det().is_nan</replace></test_edit>\n<test_edit file=\"sympy/matrices/tests/test_matrices.py\"><search>assert M(6).det() == 0</search><replace>assert M(6).det().is_nan</replace></test_edit>\n<test_edit file=\"sympy/matrices/tests/test_matrices.py\"><search>assert M(7).det() == 0</search><replace>assert M(7).det().is_nan</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1670,
+  "prompt_tokens": 3054,
+  "total_tokens": 4724,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1263,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Determinant should propagate NaN instead of treating it as zero.",
+ "requirement": "When computing a matrix determinant using the Bareiss algorithm, if any entry evaluates to NaN the determinant must also evaluate to NaN (i.e., propagate NaN) rather than being treated as zero. This supersedes any previous expectation that such determinants return zero.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/matrices.py",
+   "search": "pivot_pos, pivot_val, _, _ = _find_reasonable_pivot(mat[:, 0],\n                                         iszerofunc=_is_zero_after_expand_mul)",
+   "replace": "pivot_pos, pivot_val, _, _ = _find_reasonable_pivot(mat[:, 0])"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/matrices.py",
+   "search": "def _eval_det_bareiss(self):",
+   "replace": "def _eval_det_bareiss(self):\n    from sympy import S\n    try:\n        # original Bareiss implementation follows\n        pass\n    except TypeError as e:\n        if \"Invalid NaN comparison\" in str(e):\n            return S.NaN\n        raise\n    # original Bareiss implementation follows"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/tests/test_matrices.py",
+   "search": "assert M(5).det() == 0",
+   "replace": "assert M(5).det().is_nan"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/tests/test_matrices.py",
+   "search": "assert M(6).det() == 0",
+   "replace": "assert M(6).det().is_nan"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/tests/test_matrices.py",
+   "search": "assert M(7).det() == 0",
+   "replace": "assert M(7).det().is_nan"
+  }
+ ],
+ "status": "generated"
+}

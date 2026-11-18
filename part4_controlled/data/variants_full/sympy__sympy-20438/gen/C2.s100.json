@@ -1,0 +1,31 @@
+{
+ "instance_id": "sympy__sympy-20438",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 22961,
+ "raw": "<summary>ProductSet and FiniteSet equality should never simplify to true.</summary>\n<requirement>Equality between a ProductSet and a FiniteSet must never simplify to\u202fS.true; any call to\u202f`Eq(ProductSet, FiniteSet).simplify()` (or the reverse order) should return\u202f`S.false`, even when the two sets contain exactly the same elements. This rule supersedes any earlier expectation that such equalities could evaluate to true.</requirement>\n<source_edit file=\"sympy/sets/handlers/comparison.py\"><search>@dispatch(Set, Set) # type:ignore # noqa:F811\ndef _eval_is_eq(lhs, rhs): # noqa:F811\n-    return tfn[fuzzy_and(a.is_subset(b) for a, b in [(lhs, rhs), (rhs, lhs)])]\n+    return tfn[fuzzy_and(a.is_subset(b) for a, b in [(lhs, rhs), (rhs, lhs)])]</search><replace>@dispatch(ProductSet, FiniteSet)  # type: ignore # noqa:F811\ndef _eval_is_eq(lhs, rhs):  # noqa:F811\n    return S.false\n\n@dispatch(FiniteSet, ProductSet)  # type: ignore # noqa:F811\ndef _eval_is_eq(lhs, rhs):  # noqa:F811\n    return S.false\n\n@dispatch(Set, Set)  # type:ignore # noqa:F811\ndef _eval_is_eq(lhs, rhs): # noqa:F811\n    return tfn[fuzzy_and(a.is_subset(b) for a, b in [(lhs, rhs), (rhs, lhs)])]</replace></source_edit>\n<test_edit file=\"sympy/sets/tests/test_sets.py\"><search>assert Eq(c, b).simplify() is S.true</search><replace>assert Eq(c, b).simplify() is S.false</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "ProductSet and FiniteSet equality should never simplify to true.",
+ "requirement": "Equality between a ProductSet and a FiniteSet must never simplify to\u202fS.true; any call to\u202f`Eq(ProductSet, FiniteSet).simplify()` (or the reverse order) should return\u202f`S.false`, even when the two sets contain exactly the same elements. This rule supersedes any earlier expectation that such equalities could evaluate to true.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/handlers/comparison.py",
+   "search": "@dispatch(Set, Set) # type:ignore # noqa:F811\ndef _eval_is_eq(lhs, rhs): # noqa:F811\n-    return tfn[fuzzy_and(a.is_subset(b) for a, b in [(lhs, rhs), (rhs, lhs)])]\n+    return tfn[fuzzy_and(a.is_subset(b) for a, b in [(lhs, rhs), (rhs, lhs)])]",
+   "replace": "@dispatch(ProductSet, FiniteSet)  # type: ignore # noqa:F811\ndef _eval_is_eq(lhs, rhs):  # noqa:F811\n    return S.false\n\n@dispatch(FiniteSet, ProductSet)  # type: ignore # noqa:F811\ndef _eval_is_eq(lhs, rhs):  # noqa:F811\n    return S.false\n\n@dispatch(Set, Set)  # type:ignore # noqa:F811\ndef _eval_is_eq(lhs, rhs): # noqa:F811\n    return tfn[fuzzy_and(a.is_subset(b) for a, b in [(lhs, rhs), (rhs, lhs)])]"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_sets.py",
+   "search": "assert Eq(c, b).simplify() is S.true",
+   "replace": "assert Eq(c, b).simplify() is S.false"
+  }
+ ]
+}

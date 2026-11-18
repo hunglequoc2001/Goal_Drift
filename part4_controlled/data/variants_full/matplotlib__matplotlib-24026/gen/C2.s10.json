@@ -1,0 +1,49 @@
+{
+ "instance_id": "matplotlib__matplotlib-24026",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "2e877f80bb7a6855871469cdf28c7cf79fab7b458e0da1899a69503c04cddd3c",
+ "raw": "<summary>Require colors list length to match number of series and raise ValueError otherwise</summary>\n<requirement>When a `colors` argument is supplied to `Axes.stackplot`, the list must contain exactly one color for each data series being plotted. If the number of colors does not equal the number of series, `stackplot` should raise a `ValueError`. This requirement supersedes any previous expectation that `stackplot` would automatically cycle a shorter list of colors.</requirement>\n<source_edit file=\"lib/matplotlib/stackplot.py\"><search>if colors is not None:\n    colors = itertools.cycle(colors)\nelse:\n    colors = (axes._get_lines.get_next_color() for _ in y)</search><replace>if colors is not None:\n    # The user supplied a list of colors. It must match the number of data series.\n    if len(colors) != len(y):\n        raise ValueError(\n            f\"The number of colors ({len(colors)}) must equal the number of data series ({len(y)})\"\n        )\n    colors = itertools.cycle(colors)\nelse:\n    colors = (axes._get_lines.get_next_color() for _ in y)</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>import matplotlib.pyplot as plt</search><replace>import matplotlib.pyplot as plt\nimport pytest</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])</search><replace>with pytest.raises(ValueError):\n    ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\"])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2262,
+  "prompt_tokens": 1860,
+  "total_tokens": 4122,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1864,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Require colors list length to match number of series and raise ValueError otherwise",
+ "requirement": "When a `colors` argument is supplied to `Axes.stackplot`, the list must contain exactly one color for each data series being plotted. If the number of colors does not equal the number of series, `stackplot` should raise a `ValueError`. This requirement supersedes any previous expectation that `stackplot` would automatically cycle a shorter list of colors.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/stackplot.py",
+   "search": "if colors is not None:\n    colors = itertools.cycle(colors)\nelse:\n    colors = (axes._get_lines.get_next_color() for _ in y)",
+   "replace": "if colors is not None:\n    # The user supplied a list of colors. It must match the number of data series.\n    if len(colors) != len(y):\n        raise ValueError(\n            f\"The number of colors ({len(colors)}) must equal the number of data series ({len(y)})\"\n        )\n    colors = itertools.cycle(colors)\nelse:\n    colors = (axes._get_lines.get_next_color() for _ in y)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "import matplotlib.pyplot as plt",
+   "replace": "import matplotlib.pyplot as plt\nimport pytest"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])",
+   "replace": "with pytest.raises(ValueError):\n    ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\"])"
+  }
+ ],
+ "status": "generated"
+}

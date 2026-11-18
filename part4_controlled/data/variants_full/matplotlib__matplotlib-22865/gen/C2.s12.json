@@ -1,0 +1,43 @@
+{
+ "instance_id": "matplotlib__matplotlib-22865",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "fb8e49d02b8938583650d73b9f8e3acabc78f65a30c4a6bf6aab4576fb69cd04",
+ "raw": "<summary>Edges are drawn only for interior boundaries, never at the extremities, regardless of the extend setting.</summary>\n<requirement>When drawedges=True, the colorbar should draw edge lines only for interior boundaries; the first and last edge lines must never be drawn, even if the colorbar is extended (extend='both', 'min', or 'max'). This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"lib/matplotlib/colorbar.py\"><search>if self.drawedges:\n            start_idx = 0 if self._extend_lower() else 1\n            end_idx = len(X) if self._extend_upper() else -1\n            self.dividers.set_segments(np.dstack([X, Y])[start_idx:end_idx])\n        else:\n            self.dividers.set_segments([])</search><replace>if self.drawedges:\n            # Draw edges only for interior boundaries, exclude first and last segment\n            self.dividers.set_segments(np.dstack([X, Y])[1:-1])\n        else:\n            self.dividers.set_segments([])</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_colorbar.py\"><search>@pytest.mark.parametrize(\"extend, coloroffset, res\", [\n+    ('both', 1, [np.array([[0., 0.], [0., 1.]]),\n+                 np.array([[1., 0.], [1., 1.]]),\n+                 np.array([[2., 0.], [2., 1.]])]),\n+    ('min', 0, [np.array([[0., 0.], [0., 1.]]),\n+                np.array([[1., 0.], [1., 1.]])]),\n+    ('max', 0, [np.array([[1., 0.], [1., 1.]]),\n+                np.array([[2., 0.], [2., 1.]])]),\n+    ('neither', -1, [np.array([[1., 0.], [1., 1.]])])\n+    ])</search><replace>@pytest.mark.parametrize(\"extend, coloroffset, res\", [\n+    ('both', 1, [np.array([[1., 0.], [1., 1.]])]),\n+    ('min', 0, []),\n+    ('max', 0, []),\n+    ('neither', -1, [])\n+    ])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2101,
+  "prompt_tokens": 1725,
+  "total_tokens": 3826,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1565,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Edges are drawn only for interior boundaries, never at the extremities, regardless of the extend setting.",
+ "requirement": "When drawedges=True, the colorbar should draw edge lines only for interior boundaries; the first and last edge lines must never be drawn, even if the colorbar is extended (extend='both', 'min', or 'max'). This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/colorbar.py",
+   "search": "if self.drawedges:\n            start_idx = 0 if self._extend_lower() else 1\n            end_idx = len(X) if self._extend_upper() else -1\n            self.dividers.set_segments(np.dstack([X, Y])[start_idx:end_idx])\n        else:\n            self.dividers.set_segments([])",
+   "replace": "if self.drawedges:\n            # Draw edges only for interior boundaries, exclude first and last segment\n            self.dividers.set_segments(np.dstack([X, Y])[1:-1])\n        else:\n            self.dividers.set_segments([])"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_colorbar.py",
+   "search": "@pytest.mark.parametrize(\"extend, coloroffset, res\", [\n+    ('both', 1, [np.array([[0., 0.], [0., 1.]]),\n+                 np.array([[1., 0.], [1., 1.]]),\n+                 np.array([[2., 0.], [2., 1.]])]),\n+    ('min', 0, [np.array([[0., 0.], [0., 1.]]),\n+                np.array([[1., 0.], [1., 1.]])]),\n+    ('max', 0, [np.array([[1., 0.], [1., 1.]]),\n+                np.array([[2., 0.], [2., 1.]])]),\n+    ('neither', -1, [np.array([[1., 0.], [1., 1.]])])\n+    ])",
+   "replace": "@pytest.mark.parametrize(\"extend, coloroffset, res\", [\n+    ('both', 1, [np.array([[1., 0.], [1., 1.]])]),\n+    ('min', 0, []),\n+    ('max', 0, []),\n+    ('neither', -1, [])\n+    ])"
+  }
+ ],
+ "status": "generated"
+}

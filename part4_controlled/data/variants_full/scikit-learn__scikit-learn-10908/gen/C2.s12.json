@@ -1,0 +1,43 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-10908",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "f11dce57cab3f767ddd46f516ab5c348cd01b178e0e5110587ae646288cdcd12",
+ "raw": "<summary>get_feature_names must raise NotFittedError even when a custom vocabulary is supplied, requiring a prior fit before it can be called.</summary>\n<requirement>From now on, calling `get_feature_names()` on a `CountVectorizer` instance should always raise a `NotFittedError` unless the estimator has been fitted first, even if a `vocabulary` argument was provided at construction. This supersedes any previous expectation that a custom vocabulary would allow `get_feature_names()` to work without fitting.</requirement>\n<source_edit file=\"sklearn/feature_extraction/text.py\"><search>        if not hasattr(self, 'vocabulary_'):\\n            self._validate_vocabulary()\\n</search><replace></replace></source_edit>\n<test_edit file=\"sklearn/feature_extraction/tests/test_text.py\"><search>    cv = CountVectorizer(vocabulary=vocab)\\n    feature_names = cv.get_feature_names()\\n    assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza', 'salad',\\n                        'sparkling', 'tomato', 'water'], feature_names)\\n    assert_true(cv.fixed_vocabulary_)\\n\\n    for idx, name in enumerate(feature_names):\\n        assert_equal(idx, cv.vocabulary_.get(name))</search><replace>    cv = CountVectorizer(vocabulary=vocab)\\n    assert_raises(NotFittedError, cv.get_feature_names)\\n    assert_false(cv.fixed_vocabulary_)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1738,
+  "prompt_tokens": 1639,
+  "total_tokens": 3377,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1407,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "get_feature_names must raise NotFittedError even when a custom vocabulary is supplied, requiring a prior fit before it can be called.",
+ "requirement": "From now on, calling `get_feature_names()` on a `CountVectorizer` instance should always raise a `NotFittedError` unless the estimator has been fitted first, even if a `vocabulary` argument was provided at construction. This supersedes any previous expectation that a custom vocabulary would allow `get_feature_names()` to work without fitting.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/feature_extraction/text.py",
+   "search": "        if not hasattr(self, 'vocabulary_'):\\n            self._validate_vocabulary()\\n",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/feature_extraction/tests/test_text.py",
+   "search": "    cv = CountVectorizer(vocabulary=vocab)\\n    feature_names = cv.get_feature_names()\\n    assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza', 'salad',\\n                        'sparkling', 'tomato', 'water'], feature_names)\\n    assert_true(cv.fixed_vocabulary_)\\n\\n    for idx, name in enumerate(feature_names):\\n        assert_equal(idx, cv.vocabulary_.get(name))",
+   "replace": "    cv = CountVectorizer(vocabulary=vocab)\\n    assert_raises(NotFittedError, cv.get_feature_names)\\n    assert_false(cv.fixed_vocabulary_)"
+  }
+ ],
+ "status": "generated"
+}

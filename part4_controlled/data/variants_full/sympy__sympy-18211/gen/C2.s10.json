@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-18211",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "cdebd5d63e29046f2119921d6fe05776add7f4f6fac85731e355ac0d4c02643d",
+ "raw": "<summary>as_set should raise NotImplementedError when solving fails instead of returning a ConditionSet</summary>\n<requirement>When the relational\u2019s _eval_as_set method cannot solve the expression via solve_univariate_inequality (i.e., solve_univariate_inequality raises NotImplementedError), the method must propagate that NotImplementedError rather than constructing and returning a ConditionSet. This requirement supersedes any previous expectation that a ConditionSet be returned in such cases.</requirement>\n<source_edit file=\"sympy/core/relational.py\"><search>        try:\n            xset = solve_univariate_inequality(self, x, relational=False)\n        except NotImplementedError:\n            # solve_univariate_inequality raises NotImplementedError for\n            # unsolvable equations/inequalities.\n            xset = ConditionSet(x, self, S.Reals)\n        return xset</search><replace>        return solve_univariate_inequality(self, x, relational=False)</replace></source_edit>\n<test_edit file=\"sympy/core/tests/test_relational.py\"><search>    result1 = Eq(x*cos(x) - 3*sin(x), 0)\n    assert result1.as_set() == ConditionSet(x, Eq(x*cos(x) - 3*sin(x), 0), Reals)\n\n    result2 = Eq(x**2 + sqrt(x*2) + sin(x), 0)\n    assert result2.as_set() == ConditionSet(x, Eq(sqrt(2)*sqrt(x) + x**2 + sin(x), 0), Reals)</search><replace>    result1 = Eq(x*cos(x) - 3*sin(x), 0)\n    raises(NotImplementedError, lambda: result1.as_set())\n\n    result2 = Eq(x**2 + sqrt(x*2) + sin(x), 0)\n    raises(NotImplementedError, lambda: result2.as_set())</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1201,
+  "prompt_tokens": 1410,
+  "total_tokens": 2611,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 792,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "as_set should raise NotImplementedError when solving fails instead of returning a ConditionSet",
+ "requirement": "When the relational\u2019s _eval_as_set method cannot solve the expression via solve_univariate_inequality (i.e., solve_univariate_inequality raises NotImplementedError), the method must propagate that NotImplementedError rather than constructing and returning a ConditionSet. This requirement supersedes any previous expectation that a ConditionSet be returned in such cases.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/core/relational.py",
+   "search": "        try:\n            xset = solve_univariate_inequality(self, x, relational=False)\n        except NotImplementedError:\n            # solve_univariate_inequality raises NotImplementedError for\n            # unsolvable equations/inequalities.\n            xset = ConditionSet(x, self, S.Reals)\n        return xset",
+   "replace": "        return solve_univariate_inequality(self, x, relational=False)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/core/tests/test_relational.py",
+   "search": "    result1 = Eq(x*cos(x) - 3*sin(x), 0)\n    assert result1.as_set() == ConditionSet(x, Eq(x*cos(x) - 3*sin(x), 0), Reals)\n\n    result2 = Eq(x**2 + sqrt(x*2) + sin(x), 0)\n    assert result2.as_set() == ConditionSet(x, Eq(sqrt(2)*sqrt(x) + x**2 + sin(x), 0), Reals)",
+   "replace": "    result1 = Eq(x*cos(x) - 3*sin(x), 0)\n    raises(NotImplementedError, lambda: result1.as_set())\n\n    result2 = Eq(x**2 + sqrt(x*2) + sin(x), 0)\n    raises(NotImplementedError, lambda: result2.as_set())"
+  }
+ ],
+ "status": "generated"
+}

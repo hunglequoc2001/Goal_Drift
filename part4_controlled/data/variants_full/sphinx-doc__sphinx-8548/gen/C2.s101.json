@@ -1,0 +1,31 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8548",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 21727,
+ "raw": "<summary>Inherited instance attributes are no longer documented when `inherited-members` is enabled.</summary>\n<requirement>When the `inherited-members` option is used, only instance attributes defined directly in the documented class should be shown; instance attributes inherited from base classes must be omitted from the generated documentation. This supersedes any previous expectation that inherited instance attributes would be listed.</requirement>\n<source_edit file=\"sphinx/ext/autodoc/importer.py\"><search># append instance attributes (cf. self.attr1) if analyzer knows\n            try:\n                modname = safe_getattr(cls, '__module__')\n                qualname = safe_getattr(cls, '__qualname__')\n                analyzer = ModuleAnalyzer.for_module(modname)\n                analyzer.analyze()\n                for (ns, name), docstring in analyzer.attr_docs.items():\n                    if ns == qualname and name not in members:\n                        members[name] = ClassAttribute(cls, name, INSTANCEATTR,\n                                                       '\\n'.join(docstring))\n            except (AttributeError, PycodeError):\n                pass</search><replace># append instance attributes (cf. self.attr1) if analyzer knows\n            if cls is subject:\n                try:\n                    modname = safe_getattr(cls, '__module__')\n                    qualname = safe_getattr(cls, '__qualname__')\n                    analyzer = ModuleAnalyzer.for_module(modname)\n                    analyzer.analyze()\n                    for (ns, name), docstring in analyzer.attr_docs.items():\n                        if ns == qualname and name not in members:\n                            members[name] = ClassAttribute(cls, name, INSTANCEATTR,\n                                                           '\\n'.join(docstring))\n                except (AttributeError, PycodeError):\n                    pass</replace></source_edit>\n<test_edit file=\"tests/test_ext_autodoc_autoclass.py\"><search>        '   .. py:attribute:: Bar.attr1',\n        '      :module: target.instance_variable',\n        '',\n        '      docstring foo',\n        '',\n        '',\n</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Inherited instance attributes are no longer documented when `inherited-members` is enabled.",
+ "requirement": "When the `inherited-members` option is used, only instance attributes defined directly in the documented class should be shown; instance attributes inherited from base classes must be omitted from the generated documentation. This supersedes any previous expectation that inherited instance attributes would be listed.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/importer.py",
+   "search": "# append instance attributes (cf. self.attr1) if analyzer knows\n            try:\n                modname = safe_getattr(cls, '__module__')\n                qualname = safe_getattr(cls, '__qualname__')\n                analyzer = ModuleAnalyzer.for_module(modname)\n                analyzer.analyze()\n                for (ns, name), docstring in analyzer.attr_docs.items():\n                    if ns == qualname and name not in members:\n                        members[name] = ClassAttribute(cls, name, INSTANCEATTR,\n                                                       '\\n'.join(docstring))\n            except (AttributeError, PycodeError):\n                pass",
+   "replace": "# append instance attributes (cf. self.attr1) if analyzer knows\n            if cls is subject:\n                try:\n                    modname = safe_getattr(cls, '__module__')\n                    qualname = safe_getattr(cls, '__qualname__')\n                    analyzer = ModuleAnalyzer.for_module(modname)\n                    analyzer.analyze()\n                    for (ns, name), docstring in analyzer.attr_docs.items():\n                        if ns == qualname and name not in members:\n                            members[name] = ClassAttribute(cls, name, INSTANCEATTR,\n                                                           '\\n'.join(docstring))\n                except (AttributeError, PycodeError):\n                    pass"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_autoclass.py",
+   "search": "        '   .. py:attribute:: Bar.attr1',\n        '      :module: target.instance_variable',\n        '',\n        '      docstring foo',\n        '',\n        '',",
+   "replace": ""
+  }
+ ]
+}

@@ -1,0 +1,31 @@
+{
+ "instance_id": "pydata__xarray-4094",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 17078,
+ "raw": "<summary>to_unstacked_dataset now raises an error when the stacked array has only the stacked dimension</summary>\n<requirement>When calling `DataArray.to_unstacked_dataset`, the method must raise a `ValueError` if the DataArray contains only the stacked dimension (i.e., no additional sample dimensions). This supersedes any prior expectation that such a call should succeed for single\u2011dimensional variables.</requirement>\n<source_edit file=\"xarray/core/dataarray.py\"><search>variable_dim = idx.names[level_number]</search><replace>variable_dim = idx.names[level_number]\n        # Disallow unstacking when there are no sample dimensions left\n        if set(self.dims) == {dim}:\n            raise ValueError(\"cannot unstack a stacked array that has only the stacked dimension\")</replace></source_edit>\n<test_edit file=\"xarray/tests/test_dataset.py\"><search># single dimension: regression test for GH4049\n        arr = xr.DataArray(np.arange(3), coords=[(\"x\", [0, 1, 2])])\n        data = xr.Dataset({\"a\": arr, \"b\": arr})\n        stacked = data.to_stacked_array(\"y\", sample_dims=[\"x\"])\n        unstacked = stacked.to_unstacked_dataset(\"y\")\n        assert_identical(unstacked, data)</search><replace># single dimension: regression test for GH4049\n        arr = xr.DataArray(np.arange(3), coords=[(\"x\", [0, 1, 2])])\n        data = xr.Dataset({\"a\": arr, \"b\": arr})\n        stacked = data.to_stacked_array(\"y\", sample_dims=[\"x\"])\n        with pytest.raises(ValueError):\n            stacked.to_unstacked_dataset(\"y\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "to_unstacked_dataset now raises an error when the stacked array has only the stacked dimension",
+ "requirement": "When calling `DataArray.to_unstacked_dataset`, the method must raise a `ValueError` if the DataArray contains only the stacked dimension (i.e., no additional sample dimensions). This supersedes any prior expectation that such a call should succeed for single\u2011dimensional variables.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/dataarray.py",
+   "search": "variable_dim = idx.names[level_number]",
+   "replace": "variable_dim = idx.names[level_number]\n        # Disallow unstacking when there are no sample dimensions left\n        if set(self.dims) == {dim}:\n            raise ValueError(\"cannot unstack a stacked array that has only the stacked dimension\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_dataset.py",
+   "search": "# single dimension: regression test for GH4049\n        arr = xr.DataArray(np.arange(3), coords=[(\"x\", [0, 1, 2])])\n        data = xr.Dataset({\"a\": arr, \"b\": arr})\n        stacked = data.to_stacked_array(\"y\", sample_dims=[\"x\"])\n        unstacked = stacked.to_unstacked_dataset(\"y\")\n        assert_identical(unstacked, data)",
+   "replace": "# single dimension: regression test for GH4049\n        arr = xr.DataArray(np.arange(3), coords=[(\"x\", [0, 1, 2])])\n        data = xr.Dataset({\"a\": arr, \"b\": arr})\n        stacked = data.to_stacked_array(\"y\", sample_dims=[\"x\"])\n        with pytest.raises(ValueError):\n            stacked.to_unstacked_dataset(\"y\")"
+  }
+ ]
+}

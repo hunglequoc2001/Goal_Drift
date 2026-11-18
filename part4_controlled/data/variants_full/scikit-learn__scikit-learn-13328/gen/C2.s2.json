@@ -1,0 +1,38 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-13328",
+ "kind": "C2",
+ "sample": 2,
+ "generator": "glm-4-32b-0414",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 2,
+ "prompt_sha256": "d78a96ec571cfedc4b6f64ae0ed598edf2544e00be1f7ad24940a2641ca6100a",
+ "raw": "\n<summary>Change the dtype requirement to explicitly allow boolean arrays by converting them to float.</summary>\n<requirement>This issue has been updated to clarify that `HuberRegressor` should automatically convert boolean arrays to float during fitting. The implementation should ensure that when boolean data is provided as input, it is seamlessly converted to float values without raising a TypeError. This requirement supersedes any conflicting expectations in the original issue.</requirement>\n<source_edit file=\"sklearn/linear_model/huber.py\">\n<search>dtype=[np.float64, np.float32]</search>\n<replace>dtype=[np.float64, np.float32, np.bool_]</replace>\n</source_edit>\n<test_edit file=\"sklearn/linear_model/tests/test_huber.py\">\n<search>def test_huber_bool():</search>\n<replace>def test_huber_bool():\n    # Test that it does not crash with bool data\n    X, y = make_regression(n_samples=200, n_features=2, noise=4.0,\n                           random_state=0)\n    X_bool = X > 0\n    huber = HuberRegressor().fit(X_bool, y)\n    # Verify that the model has been trained\n    assert huber.coef_ is not None\n    assert huber.intercept_ is not None</replace>\n</test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 279,
+  "prompt_tokens": 2852,
+  "total_tokens": 3131,
+  "completion_tokens_details": null,
+  "prompt_tokens_details": null
+ },
+ "summary": "Change the dtype requirement to explicitly allow boolean arrays by converting them to float.",
+ "requirement": "This issue has been updated to clarify that `HuberRegressor` should automatically convert boolean arrays to float during fitting. The implementation should ensure that when boolean data is provided as input, it is seamlessly converted to float values without raising a TypeError. This requirement supersedes any conflicting expectations in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/linear_model/huber.py",
+   "search": "dtype=[np.float64, np.float32]",
+   "replace": "dtype=[np.float64, np.float32, np.bool_]"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/linear_model/tests/test_huber.py",
+   "search": "def test_huber_bool():",
+   "replace": "def test_huber_bool():\n    # Test that it does not crash with bool data\n    X, y = make_regression(n_samples=200, n_features=2, noise=4.0,\n                           random_state=0)\n    X_bool = X > 0\n    huber = HuberRegressor().fit(X_bool, y)\n    # Verify that the model has been trained\n    assert huber.coef_ is not None\n    assert huber.intercept_ is not None"
+  }
+ ],
+ "status": "generated"
+}

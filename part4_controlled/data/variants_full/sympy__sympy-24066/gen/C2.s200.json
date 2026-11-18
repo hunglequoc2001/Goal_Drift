@@ -1,0 +1,31 @@
+{
+ "instance_id": "sympy__sympy-24066",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 0,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 15898,
+ "raw": "<summary>Functions now raise an error when a dimensionless argument carries a non\u2011trivial factor.</summary>\n<requirement>When _collect_factor_and_dimension processes a Function, it must verify that any argument whose dimension is dimensionless also has a factor equal to 1. If such an argument has a factor different from 1, the method should raise a ValueError with the message \u201cFunction argument dimensionless but factor not dimensionless\u201d. This supersedes any conflicting expectation in the issue.</requirement>\n\n<source_edit file=\"sympy/physics/units/unitsystem.py\"><search>elif isinstance(expr, Function):\n            fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]\n            dims = [Dimension(1) if self.get_dimension_system().is_dimensionless(d[1]) else d[1] for d in fds]\n            return (expr.func(*(f[0] for f in fds)), *dims)</search><replace>elif isinstance(expr, Function):\n            fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]\n            # Raise if a dimensionless argument has a non\u2011trivial factor\n            if any(self.get_dimension_system().is_dimensionless(d[1]) and d[0] != 1 for d in fds):\n                raise ValueError('Function argument dimensionless but factor not dimensionless')\n            dims = [Dimension(1) if self.get_dimension_system().is_dimensionless(d[1]) else d[1] for d in fds]\n            return (expr.func(*(f[0] for f in fds)), *dims)</replace></source_edit>\n\n<test_edit file=\"sympy/physics/units/tests/test_quantities.py\"><search>assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))</search><replace>from pytest import raises\n    with raises(ValueError):\n        SI._collect_factor_and_dimension(exp_expr)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Functions now raise an error when a dimensionless argument carries a non\u2011trivial factor.",
+ "requirement": "When _collect_factor_and_dimension processes a Function, it must verify that any argument whose dimension is dimensionless also has a factor equal to 1. If such an argument has a factor different from 1, the method should raise a ValueError with the message \u201cFunction argument dimensionless but factor not dimensionless\u201d. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/physics/units/unitsystem.py",
+   "search": "elif isinstance(expr, Function):\n            fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]\n            dims = [Dimension(1) if self.get_dimension_system().is_dimensionless(d[1]) else d[1] for d in fds]\n            return (expr.func(*(f[0] for f in fds)), *dims)",
+   "replace": "elif isinstance(expr, Function):\n            fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]\n            # Raise if a dimensionless argument has a non\u2011trivial factor\n            if any(self.get_dimension_system().is_dimensionless(d[1]) and d[0] != 1 for d in fds):\n                raise ValueError('Function argument dimensionless but factor not dimensionless')\n            dims = [Dimension(1) if self.get_dimension_system().is_dimensionless(d[1]) else d[1] for d in fds]\n            return (expr.func(*(f[0] for f in fds)), *dims)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/physics/units/tests/test_quantities.py",
+   "search": "assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))",
+   "replace": "from pytest import raises\n    with raises(ValueError):\n        SI._collect_factor_and_dimension(exp_expr)"
+  }
+ ]
+}

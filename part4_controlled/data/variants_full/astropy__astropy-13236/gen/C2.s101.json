@@ -1,0 +1,49 @@
+{
+ "instance_id": "astropy__astropy-13236",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 29121,
+ "raw": "<summary>Re\u2011introduce automatic conversion of plain structured ndarrays to NdarrayMixin with a deprecation warning that mentions the literal numbers 10,\u202f20,\u202f30,\u202f40,\u202f50,\u202f60,\u202f70 and\u202f80.</summary>\n<requirement>When a plain (non\u2011masked) structured ``np.ndarray`` is added to a ``Table`` and is not already a ``Column`` or a mixin, the table must automatically view it as an ``NdarrayMixin`` and emit a ``FutureWarning`` stating that this automatic conversion is deprecated and will be removed in version\u202f5.2, advising users to wrap the data in a ``Column`` instead. The warning text must include the literal numbers 10, 20, 30, 40, 50, 60, 70 and 80. This supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"astropy/table/table.py\"><search>import numpy as np</search><replace>import numpy as np\nimport warnings</replace></source_edit>\n\n<source_edit file=\"astropy/table/table.py\"><search># Get the final column name using precedence.  Some objects may not</search><replace># Structured ndarray gets viewed as a mixin unless already a valid\n# mixin class. Emit a FutureWarning about deprecation.\nif (not isinstance(data, Column) and not data_is_mixin\n        and isinstance(data, np.ndarray) and not isinstance(data, np.ma.MaskedArray)\n        and len(data.dtype) > 1):\n    warnings.warn(\n        'Adding a structured ndarray directly to a Table will be deprecated; '\n        'wrap it in a Column instead. Future versions will add it as a Column. '\n        'The warning includes the literal numbers 10, 20, 30, 40, 50, 60, 70 and 80.',\n        FutureWarning)\n    data = data.view(NdarrayMixin)\n    data_is_mixin = True\n\n# Get the final column name using precedence.  Some objects may not</replace></source_edit>\n\n<test_edit file=\"astropy/table/tests/test_mixin.py\"><search>import numpy as np</search><replace>import numpy as np\nimport contextlib</replace></test_edit>\n\n<test_edit file=\"astropy/table/tests/test_mixin.py\"><search>if as_ndarray_mixin:</search><replace>if as_ndarray_mixin:\n    a = a.view(NdarrayMixin)\n    b = b.view(NdarrayMixin)\n    c = c.view(NdarrayMixin)\n    d = d.view(NdarrayMixin)\n    warning_context = contextlib.nullcontext()\nelse:\n    warning_context = pytest.warns(FutureWarning)\n\nclass_exp = NdarrayMixin</replace></test_edit>\n\n<test_edit file=\"astropy/table/tests/test_mixin.py\"><search>t = Table([a], names=['a'])</search><replace>with warning_context:\n    t = Table([a], names=['a'])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Re\u2011introduce automatic conversion of plain structured ndarrays to NdarrayMixin with a deprecation warning that mentions the literal numbers 10,\u202f20,\u202f30,\u202f40,\u202f50,\u202f60,\u202f70 and\u202f80.",
+ "requirement": "When a plain (non\u2011masked) structured ``np.ndarray`` is added to a ``Table`` and is not already a ``Column`` or a mixin, the table must automatically view it as an ``NdarrayMixin`` and emit a ``FutureWarning`` stating that this automatic conversion is deprecated and will be removed in version\u202f5.2, advising users to wrap the data in a ``Column`` instead. The warning text must include the literal numbers 10, 20, 30, 40, 50, 60, 70 and 80. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/table/table.py",
+   "search": "import numpy as np",
+   "replace": "import numpy as np\nimport warnings"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/table/table.py",
+   "search": "# Get the final column name using precedence.  Some objects may not",
+   "replace": "# Structured ndarray gets viewed as a mixin unless already a valid\n# mixin class. Emit a FutureWarning about deprecation.\nif (not isinstance(data, Column) and not data_is_mixin\n        and isinstance(data, np.ndarray) and not isinstance(data, np.ma.MaskedArray)\n        and len(data.dtype) > 1):\n    warnings.warn(\n        'Adding a structured ndarray directly to a Table will be deprecated; '\n        'wrap it in a Column instead. Future versions will add it as a Column. '\n        'The warning includes the literal numbers 10, 20, 30, 40, 50, 60, 70 and 80.',\n        FutureWarning)\n    data = data.view(NdarrayMixin)\n    data_is_mixin = True\n\n# Get the final column name using precedence.  Some objects may not"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/table/tests/test_mixin.py",
+   "search": "import numpy as np",
+   "replace": "import numpy as np\nimport contextlib"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/table/tests/test_mixin.py",
+   "search": "if as_ndarray_mixin:",
+   "replace": "if as_ndarray_mixin:\n    a = a.view(NdarrayMixin)\n    b = b.view(NdarrayMixin)\n    c = c.view(NdarrayMixin)\n    d = d.view(NdarrayMixin)\n    warning_context = contextlib.nullcontext()\nelse:\n    warning_context = pytest.warns(FutureWarning)\n\nclass_exp = NdarrayMixin"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/table/tests/test_mixin.py",
+   "search": "t = Table([a], names=['a'])",
+   "replace": "with warning_context:\n    t = Table([a], names=['a'])"
+  }
+ ]
+}

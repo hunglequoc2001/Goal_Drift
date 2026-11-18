@@ -1,0 +1,61 @@
+{
+ "instance_id": "astropy__astropy-7671",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "c2c73b24c5dca976d3637d6ea27e75fe2e70c34feadc19286375866ffeba7590",
+ "raw": "<summary>minversion must reject version strings containing alphabetic characters by raising a TypeError instead of stripping them.</summary>\n<requirement>When calling ``minversion`` the function should **not** silently ignore or strip non\u2011numeric components (such as ``dev`` or ``rc``) from the supplied version string. If the version argument contains any alphabetic characters the function must raise a ``TypeError`` indicating that the version string is invalid. This requirement supersedes any previous expectation that such strings be tolerated or automatically truncated.</requirement>\n<source_edit file=\"astropy/utils/introspection.py\"><search># LooseVersion raises a TypeError when strings like dev, rc1 are part\n    # of the version number. Match the dotted numbers only. Regex taken\n    # from PEP440, https://www.python.org/dev/peps/pep-0440/, Appendix B\n    expr = '^([1-9]\\\\d*!)?(0|[1-9]\\\\d*)(\\\\.(0|[1-9]\\\\d*))*'\n    m = re.match(expr, version)\n    if m:\n        version = m.group(0)</search><replace># Do not attempt to parse versions containing alphabetic characters.\n    # If such characters are present, raise a TypeError to signal that the\n    # version string is not strictly numeric.\n    if re.search('[a-zA-Z]', version):\n        raise TypeError(f\"Version string '{version}' contains non-numeric components\")</replace></source_edit>\n\n<test_edit file=\"astropy/utils/tests/test_introspection.py\"><search>from astropy.utils import minversion</search><replace>from astropy.utils import minversion\nimport pytest</replace></test_edit>\n\n<test_edit file=\"astropy/utils/tests/test_introspection.py\"><search>good_versions = ['0.12', '0.12.1', '0.12.0.dev', '0.12dev']</search><replace>good_versions = ['0.12', '0.12.1']</replace></test_edit>\n\n<test_edit file=\"astropy/utils/tests/test_introspection.py\"><search>bad_versions = ['1', '1.2rc1']</search><replace>bad_versions = ['1', '1.2rc1']</replace></test_edit>\n\n<test_edit file=\"astropy/utils/tests/test_introspection.py\"><search>for version in bad_versions:\n        assert not minversion(test_module, version)</search><replace>for version in bad_versions:\n        assert not minversion(test_module, version)\n\n    # Versions containing alphabetic components should raise TypeError\n    with pytest.raises(TypeError):\n        minversion(test_module, '0.12dev')</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2184,
+  "prompt_tokens": 1514,
+  "total_tokens": 3698,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1604,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "minversion must reject version strings containing alphabetic characters by raising a TypeError instead of stripping them.",
+ "requirement": "When calling ``minversion`` the function should **not** silently ignore or strip non\u2011numeric components (such as ``dev`` or ``rc``) from the supplied version string. If the version argument contains any alphabetic characters the function must raise a ``TypeError`` indicating that the version string is invalid. This requirement supersedes any previous expectation that such strings be tolerated or automatically truncated.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/utils/introspection.py",
+   "search": "# LooseVersion raises a TypeError when strings like dev, rc1 are part\n    # of the version number. Match the dotted numbers only. Regex taken\n    # from PEP440, https://www.python.org/dev/peps/pep-0440/, Appendix B\n    expr = '^([1-9]\\\\d*!)?(0|[1-9]\\\\d*)(\\\\.(0|[1-9]\\\\d*))*'\n    m = re.match(expr, version)\n    if m:\n        version = m.group(0)",
+   "replace": "# Do not attempt to parse versions containing alphabetic characters.\n    # If such characters are present, raise a TypeError to signal that the\n    # version string is not strictly numeric.\n    if re.search('[a-zA-Z]', version):\n        raise TypeError(f\"Version string '{version}' contains non-numeric components\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/utils/tests/test_introspection.py",
+   "search": "from astropy.utils import minversion",
+   "replace": "from astropy.utils import minversion\nimport pytest"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/utils/tests/test_introspection.py",
+   "search": "good_versions = ['0.12', '0.12.1', '0.12.0.dev', '0.12dev']",
+   "replace": "good_versions = ['0.12', '0.12.1']"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/utils/tests/test_introspection.py",
+   "search": "bad_versions = ['1', '1.2rc1']",
+   "replace": "bad_versions = ['1', '1.2rc1']"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/utils/tests/test_introspection.py",
+   "search": "for version in bad_versions:\n        assert not minversion(test_module, version)",
+   "replace": "for version in bad_versions:\n        assert not minversion(test_module, version)\n\n    # Versions containing alphabetic components should raise TypeError\n    with pytest.raises(TypeError):\n        minversion(test_module, '0.12dev')"
+  }
+ ],
+ "status": "generated"
+}

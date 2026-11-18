@@ -1,0 +1,37 @@
+{
+ "instance_id": "sympy__sympy-19637",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 12972,
+ "raw": "<summary>kernS must reject top\u2011level division operators in the input string.</summary>\n<requirement>When `kernS` is called, if the provided string contains a '/' character that appears at the outermost level (i.e., not inside any parentheses), the function must raise a `ValueError` with the message \u201cTop-level division not allowed\u201d. This requirement supersedes any previous expectation that such inputs would be sympified normally.</requirement>\n<source_edit file=\"sympy/core/sympify.py\"><search>s = ''.join(s.split())</search><replace>s = ''.join(s.split())\n# Disallow top\u2011level division operators\ndepth = 0\nfor ch in s:\n    if ch == '(':\n        depth += 1\n    elif ch == ')':\n        depth -= 1\n    elif ch == '/' and depth == 0:\n        raise ValueError('Top-level division not allowed')\n</replace></source_edit>\n<test_edit file=\"sympy/core/tests/test_sympify.py\"><search>def test_kernS():</search><replace>import pytest\n\ndef test_kernS():\n</replace></test_edit>\n<test_edit file=\"sympy/core/tests/test_sympify.py\"><search>assert kernS(\"(2*x)/(x-1)\") == 2*x/(x-1)</search><replace>with pytest.raises(ValueError):\n    kernS(\"(2*x)/(x-1)\")\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "kernS must reject top\u2011level division operators in the input string.",
+ "requirement": "When `kernS` is called, if the provided string contains a '/' character that appears at the outermost level (i.e., not inside any parentheses), the function must raise a `ValueError` with the message \u201cTop-level division not allowed\u201d. This requirement supersedes any previous expectation that such inputs would be sympified normally.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/core/sympify.py",
+   "search": "s = ''.join(s.split())",
+   "replace": "s = ''.join(s.split())\n# Disallow top\u2011level division operators\ndepth = 0\nfor ch in s:\n    if ch == '(':\n        depth += 1\n    elif ch == ')':\n        depth -= 1\n    elif ch == '/' and depth == 0:\n        raise ValueError('Top-level division not allowed')"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/core/tests/test_sympify.py",
+   "search": "def test_kernS():",
+   "replace": "import pytest\n\ndef test_kernS():"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/core/tests/test_sympify.py",
+   "search": "assert kernS(\"(2*x)/(x-1)\") == 2*x/(x-1)",
+   "replace": "with pytest.raises(ValueError):\n    kernS(\"(2*x)/(x-1)\")"
+  }
+ ]
+}

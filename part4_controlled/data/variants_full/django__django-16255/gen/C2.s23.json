@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-16255",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "814ff6be37a0ba6a4631e9962552b0c4c07149a560d6d405e36e6ce40d942da9",
+ "raw": "<summary>Catch ValueError from callable lastmod in get_latest_lastmod</summary>\n<requirement>When a sitemap defines a callable `lastmod` method, any `ValueError` raised by that callable for an item must be treated as if the item had no last\u2011modification date; `get_latest_lastmod` should catch `ValueError` (in addition to `TypeError`) and return `None` when no valid dates are found. This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"django/contrib/sitemaps/__init__.py\"><search>except TypeError:</search><replace>except (TypeError, ValueError):</replace></source_edit>\n<test_edit file=\"tests/sitemaps_tests/urls/http.py\"><search>class CallableLastmodNoItemsSitemap(Sitemap):</search><replace>class CallableLastmodNoItemsSitemap(Sitemap):</replace></test_edit>\n<test_edit file=\"tests/sitemaps_tests/urls/http.py\"><search>def items(self):</search><replace>def items(self):\n        # Return a single placeholder object; the lastmod callable will raise ValueError for it.\n        return [object()]</replace></test_edit>\n<test_edit file=\"tests/sitemaps_tests/urls/http.py\"><search>def lastmod(self, obj):</search><replace>def lastmod(self, obj):\n        # Simulate a failure to compute lastmod for the item.\n        raise ValueError(\"invalid lastmod\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2490,
+  "prompt_tokens": 1709,
+  "total_tokens": 4199,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2159,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Catch ValueError from callable lastmod in get_latest_lastmod",
+ "requirement": "When a sitemap defines a callable `lastmod` method, any `ValueError` raised by that callable for an item must be treated as if the item had no last\u2011modification date; `get_latest_lastmod` should catch `ValueError` (in addition to `TypeError`) and return `None` when no valid dates are found. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sitemaps/__init__.py",
+   "search": "except TypeError:",
+   "replace": "except (TypeError, ValueError):"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/sitemaps_tests/urls/http.py",
+   "search": "class CallableLastmodNoItemsSitemap(Sitemap):",
+   "replace": "class CallableLastmodNoItemsSitemap(Sitemap):"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/sitemaps_tests/urls/http.py",
+   "search": "def items(self):",
+   "replace": "def items(self):\n        # Return a single placeholder object; the lastmod callable will raise ValueError for it.\n        return [object()]"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/sitemaps_tests/urls/http.py",
+   "search": "def lastmod(self, obj):",
+   "replace": "def lastmod(self, obj):\n        # Simulate a failure to compute lastmod for the item.\n        raise ValueError(\"invalid lastmod\")"
+  }
+ ],
+ "status": "generated"
+}

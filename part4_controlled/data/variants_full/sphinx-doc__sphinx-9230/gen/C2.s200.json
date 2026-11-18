@@ -1,0 +1,31 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9230",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 23787,
+ "raw": "<summary>Split ``:param`` fields on the first whitespace instead of the last.</summary>\n<requirement>When processing a ``:param`` field that includes both a type and a name, the type component must be taken as the text up to the first whitespace character, and the remainder of the field is treated as the parameter name. This rule applies even when the type contains commas, brackets, or other punctuation. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sphinx/util/docfields.py\"><search>argtype, argname = fieldarg.rsplit(None, 1)</search><replace>argtype, argname = fieldarg.split(None, 1)</replace></source_edit>\n<test_edit file=\"tests/test_domain_py.py\"><search>\n    # :param Dict[str, str] params:\n    assert_node(doctree[3][1][0][0][1][0][3][0],\n                ([addnodes.literal_strong, \"params\"],\n                 \" (\",\n                 [pending_xref, addnodes.literal_emphasis, \"Dict\"],\n                 [addnodes.literal_emphasis, \"[\"],\n                 [pending_xref, addnodes.literal_emphasis, \"str\"],\n                 [addnodes.literal_emphasis, \", \"],\n                 [pending_xref, addnodes.literal_emphasis, \"str\"],\n                 [addnodes.literal_emphasis, \"]\"],\n                 \")\",\n                 \" -- \",\n                 \"blah blah\"))\n    assert_node(doctree[3][1][0][0][1][0][3][0][2], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"Dict\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n    assert_node(doctree[3][1][0][0][1][0][3][0][4], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"str\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n    assert_node(doctree[3][1][0][0][1][0][3][0][6], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"str\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n</search><replace>\n    # :param Dict[str, str] params:\n    assert_node(doctree[3][1][0][0][1][0][3][0],\n                ([addnodes.literal_strong, \"str] params\"],\n                 \" (\",\n                 [pending_xref, addnodes.literal_emphasis, \"Dict\"],\n                 [addnodes.literal_emphasis, \"[\"],\n                 [pending_xref, addnodes.literal_emphasis, \"str\"],\n                 [addnodes.literal_emphasis, \",\"],\n                 \")\",\n                 \" -- \",\n                 \"blah blah\"))\n    assert_node(doctree[3][1][0][0][1][0][3][0][2], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"Dict\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n    assert_node(doctree[3][1][0][0][1][0][3][0][4], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"str\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Split ``:param`` fields on the first whitespace instead of the last.",
+ "requirement": "When processing a ``:param`` field that includes both a type and a name, the type component must be taken as the text up to the first whitespace character, and the remainder of the field is treated as the parameter name. This rule applies even when the type contains commas, brackets, or other punctuation. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/util/docfields.py",
+   "search": "argtype, argname = fieldarg.rsplit(None, 1)",
+   "replace": "argtype, argname = fieldarg.split(None, 1)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_domain_py.py",
+   "search": "    # :param Dict[str, str] params:\n    assert_node(doctree[3][1][0][0][1][0][3][0],\n                ([addnodes.literal_strong, \"params\"],\n                 \" (\",\n                 [pending_xref, addnodes.literal_emphasis, \"Dict\"],\n                 [addnodes.literal_emphasis, \"[\"],\n                 [pending_xref, addnodes.literal_emphasis, \"str\"],\n                 [addnodes.literal_emphasis, \", \"],\n                 [pending_xref, addnodes.literal_emphasis, \"str\"],\n                 [addnodes.literal_emphasis, \"]\"],\n                 \")\",\n                 \" -- \",\n                 \"blah blah\"))\n    assert_node(doctree[3][1][0][0][1][0][3][0][2], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"Dict\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n    assert_node(doctree[3][1][0][0][1][0][3][0][4], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"str\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n    assert_node(doctree[3][1][0][0][1][0][3][0][6], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"str\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})",
+   "replace": "    # :param Dict[str, str] params:\n    assert_node(doctree[3][1][0][0][1][0][3][0],\n                ([addnodes.literal_strong, \"str] params\"],\n                 \" (\",\n                 [pending_xref, addnodes.literal_emphasis, \"Dict\"],\n                 [addnodes.literal_emphasis, \"[\"],\n                 [pending_xref, addnodes.literal_emphasis, \"str\"],\n                 [addnodes.literal_emphasis, \",\"],\n                 \")\",\n                 \" -- \",\n                 \"blah blah\"))\n    assert_node(doctree[3][1][0][0][1][0][3][0][2], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"Dict\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n    assert_node(doctree[3][1][0][0][1][0][3][0][4], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"str\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})"
+  }
+ ]
+}

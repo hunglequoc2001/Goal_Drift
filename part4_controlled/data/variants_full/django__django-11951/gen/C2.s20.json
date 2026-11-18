@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-11951",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "d391eb5b956491cbd5d2c3ad23c73dc5fce0bbca99170c7ad19c8dae92d7fb7f",
+ "raw": "<summary>Make bulk_create treat the supplied batch_size as a lower bound rather than an upper bound.</summary>\n<requirement>When calling bulk_create, the batch_size argument should be interpreted as a minimum size. If a batch_size is provided, bulk_create must use the larger of the supplied batch_size and the automatically calculated maximum batch size (i.e., batch_size = max(batch_size, max_batch_size)). If no batch_size is given, the automatically calculated maximum batch size is used. This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"django/db/models/query.py\"><search>batch_size = min(batch_size, max_batch_size) if batch_size else max_batch_size</search><replace>batch_size = max(batch_size, max_batch_size) if batch_size else max_batch_size</replace></source_edit>\n<test_edit file=\"tests/bulk_create/tests.py\"><search>with self.assertNumQueries(ceil(len(objs) / max_batch_size)):</search><replace>with self.assertNumQueries(ceil(len(objs) / (max_batch_size + 1))):</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 892,
+  "prompt_tokens": 1197,
+  "total_tokens": 2089,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 647,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Make bulk_create treat the supplied batch_size as a lower bound rather than an upper bound.",
+ "requirement": "When calling bulk_create, the batch_size argument should be interpreted as a minimum size. If a batch_size is provided, bulk_create must use the larger of the supplied batch_size and the automatically calculated maximum batch size (i.e., batch_size = max(batch_size, max_batch_size)). If no batch_size is given, the automatically calculated maximum batch size is used. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/query.py",
+   "search": "batch_size = min(batch_size, max_batch_size) if batch_size else max_batch_size",
+   "replace": "batch_size = max(batch_size, max_batch_size) if batch_size else max_batch_size"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/bulk_create/tests.py",
+   "search": "with self.assertNumQueries(ceil(len(objs) / max_batch_size)):",
+   "replace": "with self.assertNumQueries(ceil(len(objs) / (max_batch_size + 1))):"
+  }
+ ],
+ "status": "generated"
+}

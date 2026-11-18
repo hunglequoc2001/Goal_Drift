@@ -1,0 +1,24 @@
+{
+ "instance_id": "django__django-15732",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 13,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 27696,
+ "raw": "<summary>Fix dropping unique_together on a field that also has its own unique constraint.</summary>\n<requirement>When a model defines a unique_together that consists of a single field which also has\u202funique=True, the migration that removes the unique_together must correctly identify the unique_together constraint by its quoted database name. The schema editor should compare the quoted default unique constraint name (as generated with quoting) against the existing constraints, and drop only that constraint, leaving the field\u2019s own unique constraint intact. This supersedes any previous expectation that the unquoted name would be used.</requirement>\n<source_edit file=\"django/db/backends/base/schema.py\"><search>default_name = str(\n                self._unique_constraint_name(model._meta.db_table, columns, quote=False)\n            )</search><replace>default_name = str(\n                self._unique_constraint_name(model._meta.db_table, columns, quote=True)\n            )</replace></source_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Fix dropping unique_together on a field that also has its own unique constraint.",
+ "requirement": "When a model defines a unique_together that consists of a single field which also has\u202funique=True, the migration that removes the unique_together must correctly identify the unique_together constraint by its quoted database name. The schema editor should compare the quoted default unique constraint name (as generated with quoting) against the existing constraints, and drop only that constraint, leaving the field\u2019s own unique constraint intact. This supersedes any previous expectation that the unquoted name would be used.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/backends/base/schema.py",
+   "search": "default_name = str(\n                self._unique_constraint_name(model._meta.db_table, columns, quote=False)\n            )",
+   "replace": "default_name = str(\n                self._unique_constraint_name(model._meta.db_table, columns, quote=True)\n            )"
+  }
+ ],
+ "test_edits": []
+}

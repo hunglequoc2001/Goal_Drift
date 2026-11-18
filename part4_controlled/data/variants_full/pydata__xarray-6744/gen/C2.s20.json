@@ -1,0 +1,55 @@
+{
+ "instance_id": "pydata__xarray-6744",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "7232f9fff71a4d8e128be8d5dedaed3346975c14e05e4bfc9cb547ed43fcc928",
+ "raw": "<summary>Iteration now yields the correctly aligned label for centered windows.</summary>\n<requirement>When iterating over a DataArrayRolling object, the yielded label must correspond to the window\u2019s logical position: for non\u2011centered rolls it should be the coordinate of the rightmost element of the window, and for centered rolls it should be the coordinate of the window\u2019s centre element. This supersedes any previous expectation that the label be taken directly from the original coordinate array.</requirement>\n<source_edit file=\"xarray/core/rolling.py\"><search>for (label, start, stop) in zip(self.window_labels, starts, stops):</search><replace>for start, stop, orig_label in zip(starts, stops, self.window_labels):</replace></source_edit>\n<source_edit file=\"xarray/core/rolling.py\"><search>yield (label, window)</search><replace>if self.center[0]:\\n                label = self.window_labels[start + offset - 1]\\n            else:\\n                label = self.window_labels[stop - 1]\\n            yield (label, window)</replace></source_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>for (label, window) in rolling_obj:</search><replace>for (label, window) in rolling_obj:</replace></test_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>expected = window_da.mean(\"time\")</search><replace>expected = window_da.mean(\"time\")\\n            # The label produced by the iterator must match the coordinate of the result\\n            np.testing.assert_array_equal(label, rolling_obj_mean.time[i].values)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2465,
+  "prompt_tokens": 1805,
+  "total_tokens": 4270,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2101,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Iteration now yields the correctly aligned label for centered windows.",
+ "requirement": "When iterating over a DataArrayRolling object, the yielded label must correspond to the window\u2019s logical position: for non\u2011centered rolls it should be the coordinate of the rightmost element of the window, and for centered rolls it should be the coordinate of the window\u2019s centre element. This supersedes any previous expectation that the label be taken directly from the original coordinate array.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/rolling.py",
+   "search": "for (label, start, stop) in zip(self.window_labels, starts, stops):",
+   "replace": "for start, stop, orig_label in zip(starts, stops, self.window_labels):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/rolling.py",
+   "search": "yield (label, window)",
+   "replace": "if self.center[0]:\\n                label = self.window_labels[start + offset - 1]\\n            else:\\n                label = self.window_labels[stop - 1]\\n            yield (label, window)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "for (label, window) in rolling_obj:",
+   "replace": "for (label, window) in rolling_obj:"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "expected = window_da.mean(\"time\")",
+   "replace": "expected = window_da.mean(\"time\")\\n            # The label produced by the iterator must match the coordinate of the result\\n            np.testing.assert_array_equal(label, rolling_obj_mean.time[i].values)"
+  }
+ ],
+ "status": "generated"
+}

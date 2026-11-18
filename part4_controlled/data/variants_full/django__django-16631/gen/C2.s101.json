@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-16631",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 19518,
+ "raw": "<summary>Fallback secret authentication no longer rotates the session key</summary>\n<requirement>When a session hash is validated using a secret from\u202fSECRET_KEY_FALLBACKS, the session must not be rotated; the existing session key should be kept and only the session authentication hash should be updated to the current secret. This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"django/contrib/auth/__init__.py\"><search>if session_hash and any(\n                        constant_time_compare(session_hash, fallback_auth_hash)\n                        for fallback_auth_hash in user.get_session_auth_fallback_hash()\n                    ):\n                        request.session.cycle_key()\n                        request.session[HASH_SESSION_KEY] = session_auth_hash</search><replace>if session_hash and any(\n                        constant_time_compare(session_hash, fallback_auth_hash)\n                        for fallback_auth_hash in user.get_session_auth_fallback_hash()\n                    ):\n                        request.session[HASH_SESSION_KEY] = session_auth_hash</replace></source_edit>\n<test_edit file=\"tests/auth_tests/test_basic.py\"><search>            self.assertIsInstance(user, User)\n            self.assertEqual(user.username, created_user.username)\n            self.assertNotEqual(request.session.session_key, prev_session_key)</search><replace>            self.assertIsInstance(user, User)\n            self.assertEqual(user.username, created_user.username)\n            self.assertEqual(request.session.session_key, prev_session_key)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Fallback secret authentication no longer rotates the session key",
+ "requirement": "When a session hash is validated using a secret from\u202fSECRET_KEY_FALLBACKS, the session must not be rotated; the existing session key should be kept and only the session authentication hash should be updated to the current secret. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/auth/__init__.py",
+   "search": "if session_hash and any(\n                        constant_time_compare(session_hash, fallback_auth_hash)\n                        for fallback_auth_hash in user.get_session_auth_fallback_hash()\n                    ):\n                        request.session.cycle_key()\n                        request.session[HASH_SESSION_KEY] = session_auth_hash",
+   "replace": "if session_hash and any(\n                        constant_time_compare(session_hash, fallback_auth_hash)\n                        for fallback_auth_hash in user.get_session_auth_fallback_hash()\n                    ):\n                        request.session[HASH_SESSION_KEY] = session_auth_hash"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/auth_tests/test_basic.py",
+   "search": "            self.assertIsInstance(user, User)\n            self.assertEqual(user.username, created_user.username)\n            self.assertNotEqual(request.session.session_key, prev_session_key)",
+   "replace": "            self.assertIsInstance(user, User)\n            self.assertEqual(user.username, created_user.username)\n            self.assertEqual(request.session.session_key, prev_session_key)"
+  }
+ ]
+}

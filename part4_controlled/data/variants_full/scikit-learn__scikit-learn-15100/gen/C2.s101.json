@@ -1,0 +1,31 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-15100",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 14328,
+ "raw": "<summary>strip_accents_unicode now preserves isolated combining marks</summary>\n<requirement>strip_accents_unicode should retain any combining characters that are not attached to a preceding base character; only combining marks that follow a non\u2011combining character are removed. This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"sklearn/feature_extraction/text.py\"><search>return ''.join([c for c in normalized if not unicodedata.combining(c)])</search><replace>result_chars = []\\n        for c in normalized:\\n            if unicodedata.combining(c):\\n                # Keep isolated combining marks (no preceding base character)\\n                if not result_chars or unicodedata.combining(result_chars[-1]):\\n                    result_chars.append(c)\\n                # otherwise drop the combining mark attached to a base character\\n            else:\\n                result_chars.append(c)\\n        return ''.join(result_chars)</replace></source_edit>\n<test_edit file=\"sklearn/feature_extraction/tests/test_text.py\"><search>expected = \"\"</search><replace>expected = \"\\u0300\\u0301\\u0302\\u0303\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "strip_accents_unicode now preserves isolated combining marks",
+ "requirement": "strip_accents_unicode should retain any combining characters that are not attached to a preceding base character; only combining marks that follow a non\u2011combining character are removed. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/feature_extraction/text.py",
+   "search": "return ''.join([c for c in normalized if not unicodedata.combining(c)])",
+   "replace": "result_chars = []\\n        for c in normalized:\\n            if unicodedata.combining(c):\\n                # Keep isolated combining marks (no preceding base character)\\n                if not result_chars or unicodedata.combining(result_chars[-1]):\\n                    result_chars.append(c)\\n                # otherwise drop the combining mark attached to a base character\\n            else:\\n                result_chars.append(c)\\n        return ''.join(result_chars)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/feature_extraction/tests/test_text.py",
+   "search": "expected = \"\"",
+   "replace": "expected = \"\\u0300\\u0301\\u0302\\u0303\""
+  }
+ ]
+}

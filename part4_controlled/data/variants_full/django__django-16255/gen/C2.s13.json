@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-16255",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "814ff6be37a0ba6a4631e9962552b0c4c07149a560d6d405e36e6ce40d942da9",
+ "raw": "<summary>Empty sitemap with callable\u202flastmod must return a fixed epoch date and include a Last\u2011Modified header.</summary>\n<requirement>When a Sitemap defines a callable ``lastmod`` method but its ``items()`` returns an empty list, ``get_latest_lastmod`` should return the Unix epoch (1970\u201101\u201101\u202f00:00:00\u202fUTC) instead of ``None``. Consequently, the index view must include a ``Last-Modified`` header with the value ``Thu, 01 Jan 1970 00:00:00 GMT``. This supersedes any previous expectation that the header be omitted for empty sitemaps.</requirement>\n<source_edit file=\"django/contrib/sitemaps/__init__.py\"><search>return max([self.lastmod(item) for item in self.items()], default=None)</search><replace>items = list(self.items())\nif not items:\n    from datetime import datetime, timezone\n    return datetime(1970, 1, 1, tzinfo=timezone.utc)\nreturn max([self.lastmod(item) for item in items])</replace></source_edit>\n<test_edit file=\"tests/sitemaps_tests/test_http.py\"><search>self.assertNotIn(\"Last-Modified\", index_response)</search><replace>self.assertIn(\"Last-Modified\", index_response)\nself.assertEqual(index_response[\"Last-Modified\"], \"Thu, 01 Jan 1970 00:00:00 GMT\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1704,
+  "prompt_tokens": 1709,
+  "total_tokens": 3413,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1383,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Empty sitemap with callable\u202flastmod must return a fixed epoch date and include a Last\u2011Modified header.",
+ "requirement": "When a Sitemap defines a callable ``lastmod`` method but its ``items()`` returns an empty list, ``get_latest_lastmod`` should return the Unix epoch (1970\u201101\u201101\u202f00:00:00\u202fUTC) instead of ``None``. Consequently, the index view must include a ``Last-Modified`` header with the value ``Thu, 01 Jan 1970 00:00:00 GMT``. This supersedes any previous expectation that the header be omitted for empty sitemaps.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sitemaps/__init__.py",
+   "search": "return max([self.lastmod(item) for item in self.items()], default=None)",
+   "replace": "items = list(self.items())\nif not items:\n    from datetime import datetime, timezone\n    return datetime(1970, 1, 1, tzinfo=timezone.utc)\nreturn max([self.lastmod(item) for item in items])"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/sitemaps_tests/test_http.py",
+   "search": "self.assertNotIn(\"Last-Modified\", index_response)",
+   "replace": "self.assertIn(\"Last-Modified\", index_response)\nself.assertEqual(index_response[\"Last-Modified\"], \"Thu, 01 Jan 1970 00:00:00 GMT\")"
+  }
+ ],
+ "status": "generated"
+}

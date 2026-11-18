@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-13964",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 23343,
+ "raw": "<summary>Do not auto\u2011populate foreign\u2011key columns from a related object\u2019s primary key after the related object is saved.</summary>\n<requirement>When preparing related fields for saving, the ORM must no longer replace the foreign\u2011key column value with the related object\u2019s primary key, even if the column currently contains an empty value (such as\u202fNone or an empty string). The foreign\u2011key field should be left unchanged; callers must assign the foreign\u2011key value explicitly before saving. This supersedes any earlier expectation that empty values trigger automatic population.</requirement>\n<source_edit file=\"django/db/models/base.py\"><search>elif getattr(self, field.attname) in field.empty_values:</search><replace>elif False:</replace></source_edit>\n<test_edit file=\"tests/many_to_one/tests.py\"><search>        parent = ParentStringPrimaryKey()\n        child = ChildStringPrimaryKeyParent(parent=parent)\n        child.parent.name = 'jeff'\n        parent.save()\n        child.save()\n        child.refresh_from_db()\n        self.assertEqual(child.parent, parent)\n        self.assertEqual(child.parent_id, parent.name)</search><replace>        parent = ParentStringPrimaryKey()\n        child = ChildStringPrimaryKeyParent(parent=parent)\n        child.parent.name = 'jeff'\n        parent.save()\n        # Saving the child without explicitly setting the FK should now raise an IntegrityError.\n        with self.assertRaises(IntegrityError):\n            child.save()</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Do not auto\u2011populate foreign\u2011key columns from a related object\u2019s primary key after the related object is saved.",
+ "requirement": "When preparing related fields for saving, the ORM must no longer replace the foreign\u2011key column value with the related object\u2019s primary key, even if the column currently contains an empty value (such as\u202fNone or an empty string). The foreign\u2011key field should be left unchanged; callers must assign the foreign\u2011key value explicitly before saving. This supersedes any earlier expectation that empty values trigger automatic population.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/base.py",
+   "search": "elif getattr(self, field.attname) in field.empty_values:",
+   "replace": "elif False:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/many_to_one/tests.py",
+   "search": "        parent = ParentStringPrimaryKey()\n        child = ChildStringPrimaryKeyParent(parent=parent)\n        child.parent.name = 'jeff'\n        parent.save()\n        child.save()\n        child.refresh_from_db()\n        self.assertEqual(child.parent, parent)\n        self.assertEqual(child.parent_id, parent.name)",
+   "replace": "        parent = ParentStringPrimaryKey()\n        child = ChildStringPrimaryKeyParent(parent=parent)\n        child.parent.name = 'jeff'\n        parent.save()\n        # Saving the child without explicitly setting the FK should now raise an IntegrityError.\n        with self.assertRaises(IntegrityError):\n            child.save()"
+  }
+ ]
+}

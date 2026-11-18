@@ -1,0 +1,73 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-10908",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "f11dce57cab3f767ddd46f516ab5c348cd01b178e0e5110587ae646288cdcd12",
+ "raw": "<summary>get_feature_names must raise NotFittedError until the vectorizer is fitted or has performed a transform, even when a custom vocabulary is supplied.</summary>\n<requirement>When calling `CountVectorizer.get_feature_names()` on a vectorizer that has not yet been fitted (i.e., `fit` or `fit_transform` has not been called) the method must raise a `NotFittedError`, regardless of whether the user supplied a `vocabulary` argument at construction time. The internal `vocabulary_` attribute (and the `fixed_vocabulary_` flag) should only be created after the vectorizer has been fitted or after a successful call to `transform`. This supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"sklearn/feature_extraction/text.py\"><search>if not hasattr(self, 'vocabulary_'):</search><replace></replace></source_edit>\n<source_edit file=\"sklearn/feature_extraction/text.py\"><search>self._validate_vocabulary()</search><replace></replace></source_edit>\n\n<test_edit file=\"sklearn/feature_extraction/tests/test_text.py\"><search>cv = CountVectorizer(vocabulary=vocab)</search><replace>cv = CountVectorizer(vocabulary=vocab)</replace></test_edit>\n<test_edit file=\"sklearn/feature_extraction/tests/test_text.py\"><search>feature_names = cv.get_feature_names()</search><replace>assert_raises(NotFittedError, cv.get_feature_names)</replace></test_edit>\n<test_edit file=\"sklearn/feature_extraction/tests/test_text.py\"><search>assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza', 'salad',</search><replace># after a transform the vocabulary is set and feature names are available\\n    X = cv.transform(ALL_FOOD_DOCS)\\n    feature_names = cv.get_feature_names()\\n    assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza', 'salad',\\n                        'sparkling', 'tomato', 'water'], feature_names)</replace></test_edit>\n<test_edit file=\"sklearn/feature_extraction/tests/test_text.py\"><search>assert_true(cv.fixed_vocabulary_)</search><replace>assert_true(cv.fixed_vocabulary_)</replace></test_edit>\n<test_edit file=\"sklearn/feature_extraction/tests/test_text.py\"><search>for idx, name in enumerate(feature_names):</search><replace>for idx, name in enumerate(feature_names):\\n        assert_equal(idx, cv.vocabulary_.get(name))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1590,
+  "prompt_tokens": 1639,
+  "total_tokens": 3229,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1029,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "get_feature_names must raise NotFittedError until the vectorizer is fitted or has performed a transform, even when a custom vocabulary is supplied.",
+ "requirement": "When calling `CountVectorizer.get_feature_names()` on a vectorizer that has not yet been fitted (i.e., `fit` or `fit_transform` has not been called) the method must raise a `NotFittedError`, regardless of whether the user supplied a `vocabulary` argument at construction time. The internal `vocabulary_` attribute (and the `fixed_vocabulary_` flag) should only be created after the vectorizer has been fitted or after a successful call to `transform`. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/feature_extraction/text.py",
+   "search": "if not hasattr(self, 'vocabulary_'):",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "sklearn/feature_extraction/text.py",
+   "search": "self._validate_vocabulary()",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/feature_extraction/tests/test_text.py",
+   "search": "cv = CountVectorizer(vocabulary=vocab)",
+   "replace": "cv = CountVectorizer(vocabulary=vocab)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sklearn/feature_extraction/tests/test_text.py",
+   "search": "feature_names = cv.get_feature_names()",
+   "replace": "assert_raises(NotFittedError, cv.get_feature_names)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sklearn/feature_extraction/tests/test_text.py",
+   "search": "assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza', 'salad',",
+   "replace": "# after a transform the vocabulary is set and feature names are available\\n    X = cv.transform(ALL_FOOD_DOCS)\\n    feature_names = cv.get_feature_names()\\n    assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza', 'salad',\\n                        'sparkling', 'tomato', 'water'], feature_names)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sklearn/feature_extraction/tests/test_text.py",
+   "search": "assert_true(cv.fixed_vocabulary_)",
+   "replace": "assert_true(cv.fixed_vocabulary_)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sklearn/feature_extraction/tests/test_text.py",
+   "search": "for idx, name in enumerate(feature_names):",
+   "replace": "for idx, name in enumerate(feature_names):\\n        assert_equal(idx, cv.vocabulary_.get(name))"
+  }
+ ],
+ "status": "generated"
+}

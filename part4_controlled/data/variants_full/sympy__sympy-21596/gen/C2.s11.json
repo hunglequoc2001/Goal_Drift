@@ -1,0 +1,55 @@
+{
+ "instance_id": "sympy__sympy-21596",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "4728ebc9c6513731def2f8cdeb21595b2661d0696dde792c7169ecabfc24280f",
+ "raw": "<summary>Switch imaginary\u2011part handling to use full numerator/denominator extraction instead of only the numerator.</summary>\n<requirement>When intersecting an ImageSet with the set of real numbers, the implementation must treat the imaginary part of the defining lambda expression using its full rational representation (as obtained by `as_numer_denom`) rather than only its numerator. This supersedes any previous instruction that suggested using `numer` for this purpose.</requirement>\n\n<source_edit file=\"sympy/sets/handlers/intersection.py\"><search>from sympy.simplify.radsimp import numer</search><replace></replace></source_edit>\n\n<source_edit file=\"sympy/sets/handlers/intersection.py\"><search>base_set &= _solution_union(\n-                Mul.make_args(numer(im)), n)</search><replace>base_set &= _solution_union(\n+                Mul.make_args(as_numer_denom(im)[0]), n)</replace></source_edit>\n\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>assert imageset(Lambda(n, n/(n - 6) +</search><replace>assert imageset(Lambda(n, n/(n - 6) +</replace></test_edit>\n\n<test_edit file=\"sympy/sets/tests/test_fancysets.py\"><search>        ).intersect(S.Reals) == FiniteSet(S.Half)</search><replace>        ).intersect(S.Reals) == FiniteSet(-1, Rational(1, 7))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 7936,
+  "prompt_tokens": 2239,
+  "total_tokens": 10175,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 7602,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Switch imaginary\u2011part handling to use full numerator/denominator extraction instead of only the numerator.",
+ "requirement": "When intersecting an ImageSet with the set of real numbers, the implementation must treat the imaginary part of the defining lambda expression using its full rational representation (as obtained by `as_numer_denom`) rather than only its numerator. This supersedes any previous instruction that suggested using `numer` for this purpose.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/handlers/intersection.py",
+   "search": "from sympy.simplify.radsimp import numer",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/handlers/intersection.py",
+   "search": "base_set &= _solution_union(\n-                Mul.make_args(numer(im)), n)",
+   "replace": "base_set &= _solution_union(\n+                Mul.make_args(as_numer_denom(im)[0]), n)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": "assert imageset(Lambda(n, n/(n - 6) +",
+   "replace": "assert imageset(Lambda(n, n/(n - 6) +"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_fancysets.py",
+   "search": "        ).intersect(S.Reals) == FiniteSet(S.Half)",
+   "replace": "        ).intersect(S.Reals) == FiniteSet(-1, Rational(1, 7))"
+  }
+ ],
+ "status": "generated"
+}

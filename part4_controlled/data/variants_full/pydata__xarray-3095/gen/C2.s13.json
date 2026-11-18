@@ -1,0 +1,55 @@
+{
+ "instance_id": "pydata__xarray-3095",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "2b10ec1870cc6f3a7e08dd97ad9acdace83787132b437f14be8515c48952a60d",
+ "raw": "<summary>Variable.copy must always perform a shallow copy of the underlying data, ignoring the ``deep`` flag.</summary>\n<requirement>All copies of a Variable (including IndexVariable) must ignore the ``deep`` argument and return a shallow copy of the underlying data structures. This supersedes any previous expectation that ``deep=True`` creates a deep copy of the data.</requirement>\n<source_edit file=\"xarray/core/variable.py\"><search>data = self._data.copy(deep=deep)</search><replace>data = self._data.copy(deep=False)</replace></source_edit>\n<source_edit file=\"xarray/core/indexing.py\"><search>def copy(self, deep: bool = True) -> 'PandasIndexAdapter':</search><replace>def copy(self, deep: bool = True) -> 'PandasIndexAdapter':</replace></source_edit>\n<source_edit file=\"xarray/core/indexing.py\"><search>array = self.array.copy(deep=True) if deep else self.array</search><replace>array = self.array</replace></source_edit>\n<test_edit file=\"xarray/tests/test_variable.py\"><search>def test_copy(self, deep, astype):</search><replace>def test_copy(self, deep, astype):\n        from xarray.core.indexing import PandasIndexAdapter\n        v = self.cls('x', (0.5 * np.arange(10)).astype(astype), {'foo': 'bar'})\n        w = v.copy(deep=deep)\n        assert type(v) is type(w)\n        assert_identical(v, w)\n        # When the underlying data is a PandasIndexAdapter, copies must be shallow\n        if isinstance(v._data, PandasIndexAdapter):\n            assert v._data.array is w._data.array</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2916,
+  "prompt_tokens": 2334,
+  "total_tokens": 5250,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2527,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Variable.copy must always perform a shallow copy of the underlying data, ignoring the ``deep`` flag.",
+ "requirement": "All copies of a Variable (including IndexVariable) must ignore the ``deep`` argument and return a shallow copy of the underlying data structures. This supersedes any previous expectation that ``deep=True`` creates a deep copy of the data.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/variable.py",
+   "search": "data = self._data.copy(deep=deep)",
+   "replace": "data = self._data.copy(deep=False)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/indexing.py",
+   "search": "def copy(self, deep: bool = True) -> 'PandasIndexAdapter':",
+   "replace": "def copy(self, deep: bool = True) -> 'PandasIndexAdapter':"
+  },
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/indexing.py",
+   "search": "array = self.array.copy(deep=True) if deep else self.array",
+   "replace": "array = self.array"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_variable.py",
+   "search": "def test_copy(self, deep, astype):",
+   "replace": "def test_copy(self, deep, astype):\n        from xarray.core.indexing import PandasIndexAdapter\n        v = self.cls('x', (0.5 * np.arange(10)).astype(astype), {'foo': 'bar'})\n        w = v.copy(deep=deep)\n        assert type(v) is type(w)\n        assert_identical(v, w)\n        # When the underlying data is a PandasIndexAdapter, copies must be shallow\n        if isinstance(v._data, PandasIndexAdapter):\n            assert v._data.array is w._data.array"
+  }
+ ],
+ "status": "generated"
+}

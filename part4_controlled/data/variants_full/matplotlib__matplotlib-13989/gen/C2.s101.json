@@ -1,0 +1,31 @@
+{
+ "instance_id": "matplotlib__matplotlib-13989",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 14900,
+ "raw": "<summary>density=True now disallows the use of the ``range`` argument</summary>\n<requirement>When calling ``Axes.hist`` with ``density=True``, the ``range`` parameter must not be supplied; if it is provided, the function should raise a ``ValueError`` with a message indicating that ``range`` cannot be used together with ``density=True``. This supersedes any previous expectation that ``range`` is respected when ``density=True``.</requirement>\n<source_edit file=\"lib/matplotlib/axes/_axes.py\"><search>density = bool(density) or bool(normed)</search><replace>density = bool(density) or bool(normed)\nif density and bin_range is not None:\n    raise ValueError(\"range argument cannot be used with density=True\")\nif density and not stacked:\n    hist_kwargs['density'] = density</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>def test_hist_range_and_density():\n    _, bins, _ = plt.hist(np.random.rand(10), \"auto\",\n                          range=(0, 1), density=True)\n    assert bins[0] == 0\n    assert bins[-1] == 1</search><replace>def test_hist_range_and_density():\n    import pytest\n    with pytest.raises(ValueError):\n        plt.hist(np.random.rand(10), \"auto\", range=(0, 1), density=True)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "density=True now disallows the use of the ``range`` argument",
+ "requirement": "When calling ``Axes.hist`` with ``density=True``, the ``range`` parameter must not be supplied; if it is provided, the function should raise a ``ValueError`` with a message indicating that ``range`` cannot be used together with ``density=True``. This supersedes any previous expectation that ``range`` is respected when ``density=True``.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/axes/_axes.py",
+   "search": "density = bool(density) or bool(normed)",
+   "replace": "density = bool(density) or bool(normed)\nif density and bin_range is not None:\n    raise ValueError(\"range argument cannot be used with density=True\")\nif density and not stacked:\n    hist_kwargs['density'] = density"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "def test_hist_range_and_density():\n    _, bins, _ = plt.hist(np.random.rand(10), \"auto\",\n                          range=(0, 1), density=True)\n    assert bins[0] == 0\n    assert bins[-1] == 1",
+   "replace": "def test_hist_range_and_density():\n    import pytest\n    with pytest.raises(ValueError):\n        plt.hist(np.random.rand(10), \"auto\", range=(0, 1), density=True)"
+  }
+ ]
+}

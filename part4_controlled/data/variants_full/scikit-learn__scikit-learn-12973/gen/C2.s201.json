@@ -1,0 +1,55 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-12973",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 101,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 22138,
+ "raw": "<summary>fit no longer accepts a copy_X argument and raises TypeError if it is supplied</summary>\n<requirement>From now on, the `fit` method of `LassoLarsIC` must have the signature `fit(self, X, y)` and must not accept a `copy_X` argument. Supplying `copy_X` to `fit` should raise a `TypeError`. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sklearn/linear_model/least_angle.py\"><search>def fit(self, X, y, copy_X=None):</search><replace>def fit(self, X, y):</replace></source_edit>\n<source_edit file=\"sklearn/linear_model/least_angle.py\"><search>        if copy_X is None:\n            copy_X = self.copy_X</search><replace></replace></source_edit>\n<source_edit file=\"sklearn/linear_model/least_angle.py\"><search>self.normalize, copy_X)</search><replace>self.normalize, self.copy_X)</replace></source_edit>\n<source_edit file=\"sklearn/linear_model/least_angle.py\"><search>copy_X=copy_X</search><replace>copy_X=self.copy_X</replace></source_edit>\n<test_edit file=\"sklearn/linear_model/tests/test_least_angle.py\"><search>lasso_lars.fit(X, y, copy_X=copy_X)</search><replace>with pytest.raises(TypeError):\n        lasso_lars.fit(X, y, copy_X=copy_X)</replace></test_edit>\n<test_edit file=\"sklearn/linear_model/tests/test_least_angle.py\"><search>assert copy_X == np.array_equal(X, X_copy)</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "fit no longer accepts a copy_X argument and raises TypeError if it is supplied",
+ "requirement": "From now on, the `fit` method of `LassoLarsIC` must have the signature `fit(self, X, y)` and must not accept a `copy_X` argument. Supplying `copy_X` to `fit` should raise a `TypeError`. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/linear_model/least_angle.py",
+   "search": "def fit(self, X, y, copy_X=None):",
+   "replace": "def fit(self, X, y):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sklearn/linear_model/least_angle.py",
+   "search": "        if copy_X is None:\n            copy_X = self.copy_X",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "sklearn/linear_model/least_angle.py",
+   "search": "self.normalize, copy_X)",
+   "replace": "self.normalize, self.copy_X)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sklearn/linear_model/least_angle.py",
+   "search": "copy_X=copy_X",
+   "replace": "copy_X=self.copy_X"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/linear_model/tests/test_least_angle.py",
+   "search": "lasso_lars.fit(X, y, copy_X=copy_X)",
+   "replace": "with pytest.raises(TypeError):\n        lasso_lars.fit(X, y, copy_X=copy_X)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sklearn/linear_model/tests/test_least_angle.py",
+   "search": "assert copy_X == np.array_equal(X, X_copy)",
+   "replace": ""
+  }
+ ]
+}

@@ -1,0 +1,27 @@
+**Possible data loss in admin changeform view when using regex special characters in formset prefix**
+
+**Description**  
+	 
+		(last modified by Baptiste Mispelon)
+	   
+
+While examining the file admin/options.py (referenced in 1) for an unrelated ticket, I stumbled upon this line:
+
+pk_pattern = re.compile(r'{}-\d+-{}$'.format(prefix, self.model._meta.pk.name))
+
+Here a regular‑expression pattern is assembled via string formatting. If the inserted value contains characters that are special to regex, the resulting pattern can behave incorrectly. The identifier self.model._meta.pk.name is probably safe – I’m not 100% certain – because Python enforces identifier syntax rules. The formset prefix, however, has no such restrictions [2] and may contain any number of regex metacharacters.
+
+**Expected behaviour**  
+The prefix should be treated as a literal when the regex is built, for instance by employing re.escape().
+
+**Observed behaviour**  
+Supplying a prefix with regex‑special characters leads to a malformed pattern, which can cause unintended matches and potential data loss in the admin changeform view.
+
+**Search for similar code**  
+Running a git grep (git grep -E '(re_compile|re\.(compile|search|match))' -- 'django/**.py') yields about 200 hits. A quick visual scan of those results did not uncover any further occurrences of this exact pattern.
+
+**Additional information**  
+The problem is a regression that first appeared in b18650a2634890aa758abae2f33875daa13a9ba3.
+
+1 https://github.com/django/django/blob/ef93fd4683645635d3597e17c23f9ed862dd716b/django/contrib/admin/options.py#L1634  
+2 https://docs.djangoproject.com/en/dev/topics/forms/formsets/#customizing-a-formset-s-prefix

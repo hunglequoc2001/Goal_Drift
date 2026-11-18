@@ -1,0 +1,42 @@
+{
+ "instance_id": "sympy__sympy-19495",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "9e2f9aaa0ea96f6df8e19b9219d782f41554efbc51b881319108f8f95cccf43c",
+ "raw": "<summary>ConditionSet substitution now returns the base set when the dummy symbol is absent from the base set or the condition becomes trivially true.</summary>\n<requirement>When performing a substitution on a ConditionSet, if the symbol being substituted does not occur in the base set, the substitution should be considered irrelevant and the ConditionSet must be replaced by its base set. Moreover, after substitution, if the condition simplifies to True (or no longer shares any free symbols with the base set), the ConditionSet must also be replaced by the base set. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sympy/sets/conditionset.py\"><search>if not self.base_set.has(old):\n            # the base set should be filtered and if new is not in\n            # the base set then this substitution is ignored\n            return self</search><replace>if not self.base_set.has(old):\n            # the base set does not involve the symbol being substituted;\n            # the substitution is irrelevant, so return the base set itself\n            return self.base_set</replace></source_edit>\n<source_edit file=\"sympy/sets/conditionset.py\"><search>else:\n            cond = self.condition.subs(old, new)\n            base = self.base_set.subs(old, new)\n            # The condition may have become true due to assumptions\n            # on 'sym'. In order for .subs() to be consistent with\n            # __new__ we *don't* check if 'sym' actually belongs to\n            # 'base'. In other words: assumptions are ignored.\n            return self.func(self.sym, cond, base)</search><replace>else:\n            cond = self.condition.subs(old, new)\n            base = self.base_set.subs(old, new)\n            # If the condition is trivially true, or it no longer shares\n            # any free symbols with the base set, the ConditionSet should\n            # collapse to the base set.\n            if cond is S.true or not (cond.free_symbols & base.free_symbols):\n                return base\n            # The condition may have become true due to assumptions\n            # on 'sym'. In order for .subs() to be consistent with\n            # __new__ we *don't* check if 'sym' actually belongs to\n            # 'base'. In other words: assumptions are ignored.\n            return self.func(self.sym, cond, base)</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 4927,
+  "prompt_tokens": 2189,
+  "total_tokens": 7116,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 4411,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "ConditionSet substitution now returns the base set when the dummy symbol is absent from the base set or the condition becomes trivially true.",
+ "requirement": "When performing a substitution on a ConditionSet, if the symbol being substituted does not occur in the base set, the substitution should be considered irrelevant and the ConditionSet must be replaced by its base set. Moreover, after substitution, if the condition simplifies to True (or no longer shares any free symbols with the base set), the ConditionSet must also be replaced by the base set. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/conditionset.py",
+   "search": "if not self.base_set.has(old):\n            # the base set should be filtered and if new is not in\n            # the base set then this substitution is ignored\n            return self",
+   "replace": "if not self.base_set.has(old):\n            # the base set does not involve the symbol being substituted;\n            # the substitution is irrelevant, so return the base set itself\n            return self.base_set"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/conditionset.py",
+   "search": "else:\n            cond = self.condition.subs(old, new)\n            base = self.base_set.subs(old, new)\n            # The condition may have become true due to assumptions\n            # on 'sym'. In order for .subs() to be consistent with\n            # __new__ we *don't* check if 'sym' actually belongs to\n            # 'base'. In other words: assumptions are ignored.\n            return self.func(self.sym, cond, base)",
+   "replace": "else:\n            cond = self.condition.subs(old, new)\n            base = self.base_set.subs(old, new)\n            # If the condition is trivially true, or it no longer shares\n            # any free symbols with the base set, the ConditionSet should\n            # collapse to the base set.\n            if cond is S.true or not (cond.free_symbols & base.free_symbols):\n                return base\n            # The condition may have become true due to assumptions\n            # on 'sym'. In order for .subs() to be consistent with\n            # __new__ we *don't* check if 'sym' actually belongs to\n            # 'base'. In other words: assumptions are ignored.\n            return self.func(self.sym, cond, base)"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-14539",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 14334,
+ "raw": "<summary>Escaped HTML entities are now treated as trailing punctuation and removed from URLs.</summary>\n<requirement>When trimming trailing punctuation from a potential URL, any HTML\u2011escaped entity (e.g., \u201c&lt\u201d, \u201c&amp;\u201d) that appears at the end of the URL must be considered punctuation. The entity should be removed from the URL and appended to the trailing part, preserving its escaped form. This rule supersedes any previous description that escaped entities are left unchanged during punctuation trimming.</requirement>\n<source_edit file=\"django/utils/html.py\"><search>middle_unescaped = html.unescape(middle)\n            stripped = middle_unescaped.rstrip(TRAILING_PUNCTUATION_CHARS)\n            if middle_unescaped != stripped:\n                punctuation_count = len(middle_unescaped) - len(stripped)\n                trail = middle[-punctuation_count:] + trail\n                middle = middle[:-punctuation_count]\n                trimmed_something = True</search><replace>middle_unescaped = html.unescape(middle)\n            stripped = middle_unescaped.rstrip(TRAILING_PUNCTUATION_CHARS)\n            if middle_unescaped != stripped:\n                # Remove the characters that were stripped from the unescaped string.\n                punctuation_count = len(middle_unescaped) - len(stripped)\n                trail = middle[-punctuation_count:] + trail\n                middle = middle[:-punctuation_count]\n                trimmed_something = True\n            # Additionally, treat any trailing HTML\u2011escaped entity as punctuation.\n            # An entity is a '&' followed by letters at the end of the string.\n            while True:\n                m = re.search(r'&[A-Za-z]+$', middle)\n                if not m:\n                    break\n                entity = m.group(0)\n                middle = middle[:-len(entity)]\n                trail = entity + trail\n                trimmed_something = True</replace></source_edit>\n<test_edit file=\"tests/utils_tests/test_html.py\"><search>'Search for <a href=\"http://google.com/?q=1%3C\">google.com/?q=1&lt</a>! and see.'</search><replace>'Search for <a href=\"http://google.com/?q=1\">google.com/?q=1</a>&lt! and see.'</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Escaped HTML entities are now treated as trailing punctuation and removed from URLs.",
+ "requirement": "When trimming trailing punctuation from a potential URL, any HTML\u2011escaped entity (e.g., \u201c&lt\u201d, \u201c&amp;\u201d) that appears at the end of the URL must be considered punctuation. The entity should be removed from the URL and appended to the trailing part, preserving its escaped form. This rule supersedes any previous description that escaped entities are left unchanged during punctuation trimming.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/html.py",
+   "search": "middle_unescaped = html.unescape(middle)\n            stripped = middle_unescaped.rstrip(TRAILING_PUNCTUATION_CHARS)\n            if middle_unescaped != stripped:\n                punctuation_count = len(middle_unescaped) - len(stripped)\n                trail = middle[-punctuation_count:] + trail\n                middle = middle[:-punctuation_count]\n                trimmed_something = True",
+   "replace": "middle_unescaped = html.unescape(middle)\n            stripped = middle_unescaped.rstrip(TRAILING_PUNCTUATION_CHARS)\n            if middle_unescaped != stripped:\n                # Remove the characters that were stripped from the unescaped string.\n                punctuation_count = len(middle_unescaped) - len(stripped)\n                trail = middle[-punctuation_count:] + trail\n                middle = middle[:-punctuation_count]\n                trimmed_something = True\n            # Additionally, treat any trailing HTML\u2011escaped entity as punctuation.\n            # An entity is a '&' followed by letters at the end of the string.\n            while True:\n                m = re.search(r'&[A-Za-z]+$', middle)\n                if not m:\n                    break\n                entity = m.group(0)\n                middle = middle[:-len(entity)]\n                trail = entity + trail\n                trimmed_something = True"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/utils_tests/test_html.py",
+   "search": "'Search for <a href=\"http://google.com/?q=1%3C\">google.com/?q=1&lt</a>! and see.'",
+   "replace": "'Search for <a href=\"http://google.com/?q=1\">google.com/?q=1</a>&lt! and see.'"
+  }
+ ]
+}

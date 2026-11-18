@@ -1,0 +1,49 @@
+{
+ "instance_id": "sympy__sympy-13757",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 15346,
+ "raw": "<summary>Right\u2011hand multiplication by a Poly must no longer auto\u2011evaluate.</summary>\n<requirement>When a Poly instance appears as the right operand of a multiplication, the expression must remain an unevaluated Mul; only left\u2011hand multiplication (Poly on the left) should auto\u2011evaluate to a Poly. This rule supersedes any earlier expectation that right\u2011hand multiplication with a Poly evaluates to a Poly.</requirement>\n<source_edit file=\"sympy/polys/polytools.py\"><search>    _op_priority = 10.001</search><replace>    _op_priority = 0.0</replace></source_edit>\n<test_edit file=\"sympy/core/tests/test_match.py\"><search>    assert e.match(I*p) == {p: x}</search><replace>    assert e.match(I*p) == {p: Poly(x, x)}</replace></test_edit>\n<test_edit file=\"sympy/polys/tests/test_polytools.py\"><search>    assert x*Poly(x) == Poly(x**2, x, domain='ZZ')</search><replace>    assert (x*Poly(x)).func is Mul</replace></test_edit>\n<test_edit file=\"sympy/polys/tests/test_polytools.py\"><search>    assert -2*Poly(x) == Poly(-2*x, x, domain='ZZ')</search><replace>    assert (-2*Poly(x)).func is Mul</replace></test_edit>\n<test_edit file=\"sympy/polys/tests/test_polytools.py\"><search>    assert S(-2)*Poly(x) == Poly(-2*x, x, domain='ZZ')</search><replace>    assert (S(-2)*Poly(x)).func is Mul</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Right\u2011hand multiplication by a Poly must no longer auto\u2011evaluate.",
+ "requirement": "When a Poly instance appears as the right operand of a multiplication, the expression must remain an unevaluated Mul; only left\u2011hand multiplication (Poly on the left) should auto\u2011evaluate to a Poly. This rule supersedes any earlier expectation that right\u2011hand multiplication with a Poly evaluates to a Poly.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/polys/polytools.py",
+   "search": "    _op_priority = 10.001",
+   "replace": "    _op_priority = 0.0"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/core/tests/test_match.py",
+   "search": "    assert e.match(I*p) == {p: x}",
+   "replace": "    assert e.match(I*p) == {p: Poly(x, x)}"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/polys/tests/test_polytools.py",
+   "search": "    assert x*Poly(x) == Poly(x**2, x, domain='ZZ')",
+   "replace": "    assert (x*Poly(x)).func is Mul"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/polys/tests/test_polytools.py",
+   "search": "    assert -2*Poly(x) == Poly(-2*x, x, domain='ZZ')",
+   "replace": "    assert (-2*Poly(x)).func is Mul"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/polys/tests/test_polytools.py",
+   "search": "    assert S(-2)*Poly(x) == Poly(-2*x, x, domain='ZZ')",
+   "replace": "    assert (S(-2)*Poly(x)).func is Mul"
+  }
+ ]
+}

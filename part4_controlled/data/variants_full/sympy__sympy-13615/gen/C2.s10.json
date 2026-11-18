@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-13615",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "55d445f5aa9646eda3b46ef11fe74cc2af6540e9acddbb2c81804d7806eaf014",
+ "raw": "<summary>Complement of a FiniteSet now keeps elements known to belong to the other set instead of those known not to belong.</summary>\n<requirement>When computing the complement of a FiniteSet with another set, the result should consist of the elements of the FiniteSet that are definitely contained in the other set (i.e., where containment is True). Elements whose membership cannot be decided (containment is None) should be represented as an unevaluated Complement of those elements with the other set. Elements known not to belong to the other set (containment is False) must be omitted. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sympy/sets/sets.py\"><search>return Union(FiniteSet(*(sifted[False])),\n                Complement(FiniteSet(*(sifted[None])), self, evaluate=False)\n                if sifted[None] else S.EmptySet)</search><replace>return Union(FiniteSet(*(sifted[True])),\n                Complement(FiniteSet(*(sifted[None])), self, evaluate=False)\n                if sifted[None] else S.EmptySet)</replace></source_edit>\n<test_edit file=\"sympy/sets/tests/test_sets.py\"><search>assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == \\\n            Complement(FiniteSet(x, y), Interval(-10, 10))</search><replace>assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == \\\n            Union(FiniteSet(2), Complement(FiniteSet(x, y), Interval(-10, 10)))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1651,
+  "prompt_tokens": 1021,
+  "total_tokens": 2672,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1288,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Complement of a FiniteSet now keeps elements known to belong to the other set instead of those known not to belong.",
+ "requirement": "When computing the complement of a FiniteSet with another set, the result should consist of the elements of the FiniteSet that are definitely contained in the other set (i.e., where containment is True). Elements whose membership cannot be decided (containment is None) should be represented as an unevaluated Complement of those elements with the other set. Elements known not to belong to the other set (containment is False) must be omitted. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/sets.py",
+   "search": "return Union(FiniteSet(*(sifted[False])),\n                Complement(FiniteSet(*(sifted[None])), self, evaluate=False)\n                if sifted[None] else S.EmptySet)",
+   "replace": "return Union(FiniteSet(*(sifted[True])),\n                Complement(FiniteSet(*(sifted[None])), self, evaluate=False)\n                if sifted[None] else S.EmptySet)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_sets.py",
+   "search": "assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == \\\n            Complement(FiniteSet(x, y), Interval(-10, 10))",
+   "replace": "assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == \\\n            Union(FiniteSet(2), Complement(FiniteSet(x, y), Interval(-10, 10)))"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-11490",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "dfb864a0c09bee15a18b859ce527d8d08787f327cb44d1bc007bab3fedd68f85",
+ "raw": "<summary>Composed queries must keep the original column list when values()/values_list() is called after a set operation.</summary>\n<requirement>When a QuerySet is combined using set operations (e.g., union, intersect, difference), the list of columns selected by any subsequent values() or values_list() call must remain exactly the same as the list that was selected on the original QuerySet before the combination. Any arguments passed to values()/values_list() on the combined QuerySet are ignored, and the original column selection is used. This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"django/db/models/sql/compiler.py\"><search>compiler.query = compiler.query.clone()</search><replace># compiler.query = compiler.query.clone()</replace></source_edit>\n<test_edit file=\"tests/queries/test_qs_combinators.py\"><search># List of columns can be changed.</search><replace># List of columns cannot be changed; original columns are used.\n        reserved_name = qs1.union(qs1).values_list('order').get()\n        self.assertEqual(reserved_name, ('a', 2))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1146,
+  "prompt_tokens": 1019,
+  "total_tokens": 2165,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 897,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Composed queries must keep the original column list when values()/values_list() is called after a set operation.",
+ "requirement": "When a QuerySet is combined using set operations (e.g., union, intersect, difference), the list of columns selected by any subsequent values() or values_list() call must remain exactly the same as the list that was selected on the original QuerySet before the combination. Any arguments passed to values()/values_list() on the combined QuerySet are ignored, and the original column selection is used. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/compiler.py",
+   "search": "compiler.query = compiler.query.clone()",
+   "replace": "# compiler.query = compiler.query.clone()"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_qs_combinators.py",
+   "search": "# List of columns can be changed.",
+   "replace": "# List of columns cannot be changed; original columns are used.\n        reserved_name = qs1.union(qs1).values_list('order').get()\n        self.assertEqual(reserved_name, ('a', 2))"
+  }
+ ],
+ "status": "generated"
+}

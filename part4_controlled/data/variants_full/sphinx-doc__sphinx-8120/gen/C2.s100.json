@@ -1,0 +1,43 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8120",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 26306,
+ "raw": "<summary>Built\u2011in Sphinx translations must override user\u2011provided locales.</summary>\n<requirement>When initializing internationalisation, the Sphinx package\u2019s own locale directory must be searched before any directories discovered from the source tree (repo.locale_dirs). Consequently, the list passed to ``locale.init`` should start with ``None`` and the built\u2011in locale path, followed by the entries from ``repo.locale_dirs``. This supersedes any previous expectation that user\u2011provided locales take precedence.</requirement>\n<source_edit file=\"sphinx/application.py\"><search>locale_dirs = [None]  # type: List[Optional[str]]</search><replace>locale_dirs = [None, path.join(package_dir, 'locale')]  # type: List[Optional[str]]</replace></source_edit>\n<source_edit file=\"sphinx/application.py\"><search>locale_dirs += [path.join(package_dir, 'locale')]</search><replace></replace></source_edit>\n<test_edit file=\"tests/test_intl.py\"><search>assert app.translator.gettext('Quick search') == 'QUICK SEARCH'</search><replace>assert app.translator.gettext('Quick search') != 'QUICK SEARCH'</replace></test_edit>\n<test_edit file=\"tests/test_intl.py\"><search>assert 'QUICK SEARCH' in content</search><replace>assert 'QUICK SEARCH' not in content</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Built\u2011in Sphinx translations must override user\u2011provided locales.",
+ "requirement": "When initializing internationalisation, the Sphinx package\u2019s own locale directory must be searched before any directories discovered from the source tree (repo.locale_dirs). Consequently, the list passed to ``locale.init`` should start with ``None`` and the built\u2011in locale path, followed by the entries from ``repo.locale_dirs``. This supersedes any previous expectation that user\u2011provided locales take precedence.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/application.py",
+   "search": "locale_dirs = [None]  # type: List[Optional[str]]",
+   "replace": "locale_dirs = [None, path.join(package_dir, 'locale')]  # type: List[Optional[str]]"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/application.py",
+   "search": "locale_dirs += [path.join(package_dir, 'locale')]",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_intl.py",
+   "search": "assert app.translator.gettext('Quick search') == 'QUICK SEARCH'",
+   "replace": "assert app.translator.gettext('Quick search') != 'QUICK SEARCH'"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_intl.py",
+   "search": "assert 'QUICK SEARCH' in content",
+   "replace": "assert 'QUICK SEARCH' not in content"
+  }
+ ]
+}

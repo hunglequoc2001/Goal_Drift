@@ -1,0 +1,43 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-13328",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "d78a96ec571cfedc4b6f64ae0ed598edf2544e00be1f7ad24940a2641ca6100a",
+ "raw": "<summary>HuberRegressor.fit must reject boolean input arrays.</summary>\n<requirement>HuberRegressor.fit should now raise a\u202fValueError with the exact message \u201cBoolean data not supported\u201d whenever the supplied feature matrix X has a boolean dtype. This requirement supersedes any previous expectation that boolean arrays would be automatically converted to float.</requirement>\n<source_edit file=\"sklearn/linear_model/huber.py\"><search>        X, y = check_X_y(\n            X, y, copy=False, accept_sparse=['csr'], y_numeric=True,\n            dtype=[np.float64, np.float32])</search><replace>        # Reject boolean input explicitly\n        if X.dtype.kind == 'b':\n            raise ValueError(\"Boolean data not supported\")\n        X, y = check_X_y(\n            X, y, copy=False, accept_sparse=['csr'], y_numeric=True,\n            dtype=[np.float64, np.float32])</replace></source_edit>\n<test_edit file=\"sklearn/linear_model/tests/test_huber.py\"><search>def test_huber_bool():\n    # Test that it does not crash with bool data\n    X, y = make_regression(n_samples=200, n_features=2, noise=4.0,\n                           random_state=0)\n    X_bool = X > 0\n    HuberRegressor().fit(X_bool, y)</search><replace>def test_huber_bool():\n    # Test that fitting with bool data raises the expected ValueError\n    X, y = make_regression(n_samples=200, n_features=2, noise=4.0,\n                           random_state=0)\n    X_bool = X > 0\n    with pytest.raises(ValueError, match=\"Boolean data not supported\"):\n        HuberRegressor().fit(X_bool, y)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1791,
+  "prompt_tokens": 2946,
+  "total_tokens": 4737,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1400,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "HuberRegressor.fit must reject boolean input arrays.",
+ "requirement": "HuberRegressor.fit should now raise a\u202fValueError with the exact message \u201cBoolean data not supported\u201d whenever the supplied feature matrix X has a boolean dtype. This requirement supersedes any previous expectation that boolean arrays would be automatically converted to float.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/linear_model/huber.py",
+   "search": "        X, y = check_X_y(\n            X, y, copy=False, accept_sparse=['csr'], y_numeric=True,\n            dtype=[np.float64, np.float32])",
+   "replace": "        # Reject boolean input explicitly\n        if X.dtype.kind == 'b':\n            raise ValueError(\"Boolean data not supported\")\n        X, y = check_X_y(\n            X, y, copy=False, accept_sparse=['csr'], y_numeric=True,\n            dtype=[np.float64, np.float32])"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/linear_model/tests/test_huber.py",
+   "search": "def test_huber_bool():\n    # Test that it does not crash with bool data\n    X, y = make_regression(n_samples=200, n_features=2, noise=4.0,\n                           random_state=0)\n    X_bool = X > 0\n    HuberRegressor().fit(X_bool, y)",
+   "replace": "def test_huber_bool():\n    # Test that fitting with bool data raises the expected ValueError\n    X, y = make_regression(n_samples=200, n_features=2, noise=4.0,\n                           random_state=0)\n    X_bool = X > 0\n    with pytest.raises(ValueError, match=\"Boolean data not supported\"):\n        HuberRegressor().fit(X_bool, y)"
+  }
+ ],
+ "status": "generated"
+}

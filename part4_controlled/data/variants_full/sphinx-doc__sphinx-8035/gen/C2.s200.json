@@ -1,0 +1,37 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8035",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 30826,
+ "raw": "<summary>Make ``:private-members:`` ignore any argument value and treat any non\u2011None setting as \u201cdocument all private members\u201d.</summary>\n<requirement>When the ``:private-members:`` option is supplied with any value other than ``None`` (including a plain string, list, or any other object), it must be interpreted as ``ALL`` \u2013 i.e., all private members are documented. Supplying ``None`` (or omitting the option) continues to mean \u201cdo not document private members\u201d. This supersedes any previous expectation that a specific member name could be given to limit documentation to that member only.</requirement>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>if self.options.private_members is None:\n                        keep = False\n                    elif self.options.private_members is ALL:\n                        keep = True\n                    else:\n                        keep = membername in self.options.private_members</search><replace>if self.options.private_members is None:\n                        keep = False\n                    else:\n                        # any non\u2011None value means document all private members\n                        keep = True</replace></source_edit>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>if self.options.private_members is None:\n                        keep = False\n                    elif self.options.private_members is ALL:\n                        keep = True\n                    elif is_filtered_inherited_member(membername):\n                        keep = False\n                    else:\n                        keep = membername in self.options.private_members</search><replace>if self.options.private_members is None:\n                        keep = False\n                    else:\n                        # any non\u2011None value means document all private members\n                        keep = True</replace></source_edit>\n<test_edit file=\"tests/test_ext_autodoc_private_members.py\"><search>def test_private_members(app):\n    app.config.autoclass_content = 'class'\n    options = {\"members\": None,\n               \"private-members\": \"_public_function\"}\n    actual = do_autodoc(app, 'module', 'target.private', options)\n    assert list(actual) == [\n        '',\n        '.. py:module:: target.private',\n        '',\n        '',\n        '.. py:function:: _public_function(name)',\n        '   :module: target.private',\n        '',\n        '   public_function is a docstring().',\n        '',\n        '   :meta public:',\n        '',\n    ]</search><replace>def test_private_members(app):\n    app.config.autoclass_content = 'class'\n    options = {\"members\": None,\n               \"private-members\": \"_public_function\"}\n    actual = do_autodoc(app, 'module', 'target.private', options)\n    assert list(actual) == [\n        '',\n        '.. py:module:: target.private',\n        '',\n        '',\n        '.. py:function:: _public_function(name)',\n        '   :module: target.private',\n        '',\n        '   public_function is a docstring().',\n        '',\n        '   :meta public:',\n        '',\n        '',\n        '.. py:function:: private_function(name)',\n        '   :module: target.private',\n        '',\n        '   private_function is a docstring().',\n        '',\n        '   :meta private:',\n        '',\n    ]</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Make ``:private-members:`` ignore any argument value and treat any non\u2011None setting as \u201cdocument all private members\u201d.",
+ "requirement": "When the ``:private-members:`` option is supplied with any value other than ``None`` (including a plain string, list, or any other object), it must be interpreted as ``ALL`` \u2013 i.e., all private members are documented. Supplying ``None`` (or omitting the option) continues to mean \u201cdo not document private members\u201d. This supersedes any previous expectation that a specific member name could be given to limit documentation to that member only.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "if self.options.private_members is None:\n                        keep = False\n                    elif self.options.private_members is ALL:\n                        keep = True\n                    else:\n                        keep = membername in self.options.private_members",
+   "replace": "if self.options.private_members is None:\n                        keep = False\n                    else:\n                        # any non\u2011None value means document all private members\n                        keep = True"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "if self.options.private_members is None:\n                        keep = False\n                    elif self.options.private_members is ALL:\n                        keep = True\n                    elif is_filtered_inherited_member(membername):\n                        keep = False\n                    else:\n                        keep = membername in self.options.private_members",
+   "replace": "if self.options.private_members is None:\n                        keep = False\n                    else:\n                        # any non\u2011None value means document all private members\n                        keep = True"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_private_members.py",
+   "search": "def test_private_members(app):\n    app.config.autoclass_content = 'class'\n    options = {\"members\": None,\n               \"private-members\": \"_public_function\"}\n    actual = do_autodoc(app, 'module', 'target.private', options)\n    assert list(actual) == [\n        '',\n        '.. py:module:: target.private',\n        '',\n        '',\n        '.. py:function:: _public_function(name)',\n        '   :module: target.private',\n        '',\n        '   public_function is a docstring().',\n        '',\n        '   :meta public:',\n        '',\n    ]",
+   "replace": "def test_private_members(app):\n    app.config.autoclass_content = 'class'\n    options = {\"members\": None,\n               \"private-members\": \"_public_function\"}\n    actual = do_autodoc(app, 'module', 'target.private', options)\n    assert list(actual) == [\n        '',\n        '.. py:module:: target.private',\n        '',\n        '',\n        '.. py:function:: _public_function(name)',\n        '   :module: target.private',\n        '',\n        '   public_function is a docstring().',\n        '',\n        '   :meta public:',\n        '',\n        '',\n        '.. py:function:: private_function(name)',\n        '   :module: target.private',\n        '',\n        '   private_function is a docstring().',\n        '',\n        '   :meta private:',\n        '',\n    ]"
+  }
+ ]
+}

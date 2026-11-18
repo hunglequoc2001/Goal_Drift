@@ -1,0 +1,49 @@
+{
+ "instance_id": "matplotlib__matplotlib-22719",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "80b215d0be1df90bc4a7436109b054deceffba5a10eb6f6d2a6d34a99e0045c1",
+ "raw": "<summary>Deprecation warnings must be emitted even when empty data is plotted with categorical units.</summary>\n<requirement>When plotting empty data arrays on an axis that uses categorical unit converters, the library should still emit the MatplotlibDeprecationWarning about passing numbers through unit converters. This supersedes any previous expectation that such cases should be silent.</requirement>\n<source_edit file=\"lib/matplotlib/category.py\"><search>if values.size and is_numlike:</search><replace>if is_numlike:</replace></source_edit>\n<source_edit file=\"lib/matplotlib/category.py\"><search>if data.size and convertible:</search><replace>if convertible:</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_category.py\"><search>def test_no_deprecation_on_empty_data():</search><replace>def test_no_deprecation_on_empty_data():\n    \"\"\"\n    Test that a deprecation warning is emitted when plotting empty data with categorical units.\n    \"\"\"\n    import warnings\n    f, ax = plt.subplots()\n    ax.xaxis.update_units([\"a\", \"b\"])\n    with warnings.catch_warnings(record=True) as w:\n        warnings.simplefilter(\"always\")\n        ax.plot([], [])\n    assert any(\"Support for passing numbers\" in str(warn.message) for warn in w)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1246,
+  "prompt_tokens": 3559,
+  "total_tokens": 4805,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 960,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Deprecation warnings must be emitted even when empty data is plotted with categorical units.",
+ "requirement": "When plotting empty data arrays on an axis that uses categorical unit converters, the library should still emit the MatplotlibDeprecationWarning about passing numbers through unit converters. This supersedes any previous expectation that such cases should be silent.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/category.py",
+   "search": "if values.size and is_numlike:",
+   "replace": "if is_numlike:"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/category.py",
+   "search": "if data.size and convertible:",
+   "replace": "if convertible:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_category.py",
+   "search": "def test_no_deprecation_on_empty_data():",
+   "replace": "def test_no_deprecation_on_empty_data():\n    \"\"\"\n    Test that a deprecation warning is emitted when plotting empty data with categorical units.\n    \"\"\"\n    import warnings\n    f, ax = plt.subplots()\n    ax.xaxis.update_units([\"a\", \"b\"])\n    with warnings.catch_warnings(record=True) as w:\n        warnings.simplefilter(\"always\")\n        ax.plot([], [])\n    assert any(\"Support for passing numbers\" in str(warn.message) for warn in w)"
+  }
+ ],
+ "status": "generated"
+}

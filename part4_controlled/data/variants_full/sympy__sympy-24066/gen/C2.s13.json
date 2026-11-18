@@ -1,0 +1,61 @@
+{
+ "instance_id": "sympy__sympy-24066",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "fbb0d3b16f93cd6d007b953c498c940ed7a842b1082139387218c4577a9388e1",
+ "raw": "<summary>_collect_factor_and_dimension now warns when handling Functions</summary>\n<requirement>From now on, SI._collect_factor_and_dimension must emit a UserWarning with the message \u201cFunction handling may be incomplete\u201d whenever it processes a Sympy Function node. This supersedes any previous expectation that function handling would be silent.</requirement>\n<source_edit file=\"sympy/physics/units/unitsystem.py\"><search>from sympy import</search><replace>from sympy import\nimport warnings</replace></source_edit>\n<source_edit file=\"sympy/physics/units/unitsystem.py\"><search>elif isinstance(expr, Function):\n            fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]\n            dims = [Dimension(1) if self.get_dimension_system().is_dimensionless(d[1]) else d[1] for d in fds]\n            return (expr.func(*(f[0] for f in fds)), *dims)</search><replace>elif isinstance(expr, Function):\n            fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]\n            dims = [Dimension(1) if self.get_dimension_system().is_dimensionless(d[1]) else d[1] for d in fds]\n            warnings.warn(\"Function handling may be incomplete\", UserWarning)\n            return (expr.func(*(f[0] for f in fds)), *dims)</replace></source_edit>\n<test_edit file=\"sympy/physics/units/tests/test_quantities.py\"><search>from sympy import</search><replace>from sympy import\nimport pytest</replace></test_edit>\n<test_edit file=\"sympy/physics/units/tests/test_quantities.py\"><search>assert SI._collect_factor_and_dimension(expr) == (1 + E, Dimension(1))</search><replace>with pytest.warns(UserWarning):\n        assert SI._collect_factor_and_dimension(expr) == (1 + E, Dimension(1))</replace></test_edit>\n<test_edit file=\"sympy/physics/units/tests/test_quantities.py\"><search>assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))</search><replace>with pytest.warns(UserWarning):\n        assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3910,
+  "prompt_tokens": 1279,
+  "total_tokens": 5189,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 3403,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "_collect_factor_and_dimension now warns when handling Functions",
+ "requirement": "From now on, SI._collect_factor_and_dimension must emit a UserWarning with the message \u201cFunction handling may be incomplete\u201d whenever it processes a Sympy Function node. This supersedes any previous expectation that function handling would be silent.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/physics/units/unitsystem.py",
+   "search": "from sympy import",
+   "replace": "from sympy import\nimport warnings"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/physics/units/unitsystem.py",
+   "search": "elif isinstance(expr, Function):\n            fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]\n            dims = [Dimension(1) if self.get_dimension_system().is_dimensionless(d[1]) else d[1] for d in fds]\n            return (expr.func(*(f[0] for f in fds)), *dims)",
+   "replace": "elif isinstance(expr, Function):\n            fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]\n            dims = [Dimension(1) if self.get_dimension_system().is_dimensionless(d[1]) else d[1] for d in fds]\n            warnings.warn(\"Function handling may be incomplete\", UserWarning)\n            return (expr.func(*(f[0] for f in fds)), *dims)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/physics/units/tests/test_quantities.py",
+   "search": "from sympy import",
+   "replace": "from sympy import\nimport pytest"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/physics/units/tests/test_quantities.py",
+   "search": "assert SI._collect_factor_and_dimension(expr) == (1 + E, Dimension(1))",
+   "replace": "with pytest.warns(UserWarning):\n        assert SI._collect_factor_and_dimension(expr) == (1 + E, Dimension(1))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/physics/units/tests/test_quantities.py",
+   "search": "assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))",
+   "replace": "with pytest.warns(UserWarning):\n        assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))"
+  }
+ ],
+ "status": "generated"
+}

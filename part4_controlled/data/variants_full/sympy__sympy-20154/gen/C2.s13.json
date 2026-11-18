@@ -1,0 +1,60 @@
+{
+ "instance_id": "sympy__sympy-20154",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "7469f01c565734355ccfab52b32a2fa3428e4f5fce392a60acad1b9c1350f481",
+ "raw": "<summary>partitions() must reuse the same dictionary object for each yielded partition</summary>\n<requirement>The partitions() iterator must reuse the same dictionary object for each partition it yields. For performance reasons the function should return the internal dictionary directly rather than a copy; callers who need to retain a partition must explicitly copy it. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sympy/utilities/iterables.py\"><search>        yield sum(ms.values()), ms.copy()</search><replace>        yield sum(ms.values()), ms</replace></source_edit>\n<source_edit file=\"sympy/utilities/iterables.py\"><search>        yield ms.copy()</search><replace>        yield ms</replace></source_edit>\n<source_edit file=\"sympy/utilities/iterables.py\"><search>        yield sum(ms.values()), ms.copy()</search><replace>        yield sum(ms.values()), ms</replace></source_edit>\n<source_edit file=\"sympy/utilities/iterables.py\"><search>        yield ms.copy()</search><replace>        yield ms</replace></source_edit>\n<source_edit file=\"sympy/utilities/iterables.py\"><search>References</search><replace>    Note that the _same_ dictionary object is returned each time.\n    This is for speed:  generating each partition goes quickly,\n    taking constant time, independent of n.\n\n    >>> [p for p in partitions(6, k=2)]\n    [{1: 6}, {1: 6}, {1: 6}, {1: 6}]\n\n    If you want to build a list of the returned dictionaries then\n    make a copy of them:\n\n    >>> [p.copy() for p in partitions(6, k=2)]  # doctest: +SKIP\n    [{2: 3}, {1: 2, 2: 2}, {1: 4, 2: 1}, {1: 6}]\n    >>> [(M, p.copy()) for M, p in partitions(6, k=2, size=True)]  # doctest: +SKIP\n    [(3, {2: 3}), (4, {1: 2, 2: 2}), (5, {1: 4, 2: 1}), (6, {1: 6})]\n\nReferences</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2566,
+  "prompt_tokens": 2008,
+  "total_tokens": 4574,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2051,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "partitions() must reuse the same dictionary object for each yielded partition",
+ "requirement": "The partitions() iterator must reuse the same dictionary object for each partition it yields. For performance reasons the function should return the internal dictionary directly rather than a copy; callers who need to retain a partition must explicitly copy it. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/iterables.py",
+   "search": "        yield sum(ms.values()), ms.copy()",
+   "replace": "        yield sum(ms.values()), ms"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/iterables.py",
+   "search": "        yield ms.copy()",
+   "replace": "        yield ms"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/iterables.py",
+   "search": "        yield sum(ms.values()), ms.copy()",
+   "replace": "        yield sum(ms.values()), ms"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/iterables.py",
+   "search": "        yield ms.copy()",
+   "replace": "        yield ms"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/iterables.py",
+   "search": "References",
+   "replace": "    Note that the _same_ dictionary object is returned each time.\n    This is for speed:  generating each partition goes quickly,\n    taking constant time, independent of n.\n\n    >>> [p for p in partitions(6, k=2)]\n    [{1: 6}, {1: 6}, {1: 6}, {1: 6}]\n\n    If you want to build a list of the returned dictionaries then\n    make a copy of them:\n\n    >>> [p.copy() for p in partitions(6, k=2)]  # doctest: +SKIP\n    [{2: 3}, {1: 2, 2: 2}, {1: 4, 2: 1}, {1: 6}]\n    >>> [(M, p.copy()) for M, p in partitions(6, k=2, size=True)]  # doctest: +SKIP\n    [(3, {2: 3}), (4, {1: 2, 2: 2}), (5, {1: 4, 2: 1}), (6, {1: 6})]\n\nReferences"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

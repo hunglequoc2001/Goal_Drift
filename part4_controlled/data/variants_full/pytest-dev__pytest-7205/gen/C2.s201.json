@@ -1,0 +1,31 @@
+{
+ "instance_id": "pytest-dev__pytest-7205",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 13,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 21178,
+ "raw": "<summary>Display bytes parameters as hex strings instead of using saferepr.</summary>\n<requirement>When showing fixture actions (e.g., with\u202f--setup-show), if a fixture\u2019s cached parameter is a ``bytes`` or ``bytearray`` object it must be displayed as a hexadecimal string prefixed with ``0x`` (using ``.hex()``) inside the brackets, rather than using ``saferepr``. This supersedes any previous expectation about how bytes parameters are rendered.</requirement>\n<source_edit file=\"src/_pytest/setuponly.py\"><search>tw.write(\"[{}]\".format(saferepr(fixturedef.cached_param, maxsize=42)))</search><replace>        if isinstance(fixturedef.cached_param, (bytes, bytearray)):\n            # Show bytes as hex to avoid BytesWarning and provide a clear representation.\n            tw.write(\"[0x{}]\".format(fixturedef.cached_param.hex()))\n        else:\n            tw.write(\"[{}]\".format(saferepr(fixturedef.cached_param, maxsize=42)))</replace></source_edit>\n<test_edit file=\"testing/test_setuponly.py\"><search>assert result.ret == 0</search><replace>assert result.ret == 0\n        result.stdout.fnmatch_lines([\"*0x48656c6c6f20576c64*\"])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Display bytes parameters as hex strings instead of using saferepr.",
+ "requirement": "When showing fixture actions (e.g., with\u202f--setup-show), if a fixture\u2019s cached parameter is a ``bytes`` or ``bytearray`` object it must be displayed as a hexadecimal string prefixed with ``0x`` (using ``.hex()``) inside the brackets, rather than using ``saferepr``. This supersedes any previous expectation about how bytes parameters are rendered.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/setuponly.py",
+   "search": "tw.write(\"[{}]\".format(saferepr(fixturedef.cached_param, maxsize=42)))",
+   "replace": "        if isinstance(fixturedef.cached_param, (bytes, bytearray)):\n            # Show bytes as hex to avoid BytesWarning and provide a clear representation.\n            tw.write(\"[0x{}]\".format(fixturedef.cached_param.hex()))\n        else:\n            tw.write(\"[{}]\".format(saferepr(fixturedef.cached_param, maxsize=42)))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_setuponly.py",
+   "search": "assert result.ret == 0",
+   "replace": "assert result.ret == 0\n        result.stdout.fnmatch_lines([\"*0x48656c6c6f20576c64*\"])"
+  }
+ ]
+}

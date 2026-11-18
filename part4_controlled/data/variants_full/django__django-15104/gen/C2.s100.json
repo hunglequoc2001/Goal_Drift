@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-15104",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 24386,
+ "raw": "<summary>Autodetector must raise an error when a ForeignKey\u2019s deconstructed kwargs omit the required \u201cto\u201d argument.</summary>\n<requirement>When the migration autodetector processes a field that is a subclass of\u202fdjango.db.models.ForeignKey, it must verify that the deconstructed keyword arguments contain a \u201cto\u201d entry. If the \u201cto\u201d key is missing, the autodetector must raise a\u202fValueError with the exact message\u202f\u201cForeignKey missing 'to' argument\u201d. This requirement supersedes any previous expectation that the missing key be ignored.</requirement>\n<source_edit file=\"django/db/migrations/autodetector.py\"><search>deconstruction[2].pop('to', None)</search><replace>if 'to' not in deconstruction[2]:\n                    raise ValueError(\"ForeignKey missing 'to' argument\")</replace></source_edit>\n<test_edit file=\"tests/migrations/test_autodetector.py\"><search>book_hardcoded_fk_to = ModelState('testapp', 'Book', [\n            ('author', HardcodedForeignKey(on_delete=models.CASCADE)),\n        ])\n        changes = self.get_changes(\n            [self.author_empty],\n            [self.author_empty, book_hardcoded_fk_to],\n        )\n        self.assertNumberMigrations(changes, 'testapp', 1)\n        self.assertOperationTypes(changes, 'testapp', 0, ['CreateModel'])\n        self.assertOperationAttributes(changes, 'testapp', 0, 0, name='Book')</search><replace>book_hardcoded_fk_to = ModelState('testapp', 'Book', [\n            ('author', HardcodedForeignKey(on_delete=models.CASCADE)),\n        ])\n        with self.assertRaisesMessage(ValueError, \"ForeignKey missing 'to' argument\"):\n            self.get_changes(\n                [self.author_empty],\n                [self.author_empty, book_hardcoded_fk_to],\n            )</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Autodetector must raise an error when a ForeignKey\u2019s deconstructed kwargs omit the required \u201cto\u201d argument.",
+ "requirement": "When the migration autodetector processes a field that is a subclass of\u202fdjango.db.models.ForeignKey, it must verify that the deconstructed keyword arguments contain a \u201cto\u201d entry. If the \u201cto\u201d key is missing, the autodetector must raise a\u202fValueError with the exact message\u202f\u201cForeignKey missing 'to' argument\u201d. This requirement supersedes any previous expectation that the missing key be ignored.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/migrations/autodetector.py",
+   "search": "deconstruction[2].pop('to', None)",
+   "replace": "if 'to' not in deconstruction[2]:\n                    raise ValueError(\"ForeignKey missing 'to' argument\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/migrations/test_autodetector.py",
+   "search": "book_hardcoded_fk_to = ModelState('testapp', 'Book', [\n            ('author', HardcodedForeignKey(on_delete=models.CASCADE)),\n        ])\n        changes = self.get_changes(\n            [self.author_empty],\n            [self.author_empty, book_hardcoded_fk_to],\n        )\n        self.assertNumberMigrations(changes, 'testapp', 1)\n        self.assertOperationTypes(changes, 'testapp', 0, ['CreateModel'])\n        self.assertOperationAttributes(changes, 'testapp', 0, 0, name='Book')",
+   "replace": "book_hardcoded_fk_to = ModelState('testapp', 'Book', [\n            ('author', HardcodedForeignKey(on_delete=models.CASCADE)),\n        ])\n        with self.assertRaisesMessage(ValueError, \"ForeignKey missing 'to' argument\"):\n            self.get_changes(\n                [self.author_empty],\n                [self.author_empty, book_hardcoded_fk_to],\n            )"
+  }
+ ]
+}

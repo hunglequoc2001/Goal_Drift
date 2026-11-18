@@ -1,0 +1,37 @@
+### Clone fails for parameters that are estimator types
+
+#### Description  
+When invoking `clone`, the operation aborts if any of the supplied instance parameters are actually estimator **classes** (i.e), not concrete instances.  
+
+My use‑case is a bit uncommon: I am building wrappers around scikit‑learn estimators (https://github.com/phausamann/sklearn-xarray)) and I would like to keep the wrapped estimators stored as their class objects—rather than as instantiated objects—inside a wrapper that itself mimics an estimator.
+
+#### Steps to Reproduce  
+Steps/Code  
+
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.base import clone
+    clone(StandardScaler(with_mean=StandardScaler))  
+
+#### Expected behaviour  
+The cloning should succeed without raising an exception.
+
+#### Observed behaviour  
+```
+Traceback (most recent call last):
+...
+  File "...\lib\site-packages\sklearn\base.py", line 62, in clone
+    new_object_params[name] = clone(param, safe=False)
+  File "...\lib\site-packages\sklearn\base.py", line 60, in clone
+    new_object_params = estimator.get_params(deep=False)
+TypeError: get_params() missing 1 required positional argument: 'self'
+```  
+
+#### Suggested remedy  
+Modify `base.py` at line 51 so that it reads:
+
+    elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):  
+
+I am not certain whether this alteration could have side effects elsewhere, but I am willing to provide a pull request if the change is acceptable.
+
+#### Environment  
+    sklearn: 0.20.0

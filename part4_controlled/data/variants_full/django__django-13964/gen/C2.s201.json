@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-13964",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 101,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 25496,
+ "raw": "<summary>Auto\u2011populate foreign keys only when the related object's primary key is an integer.</summary>\n<requirement>When preparing related fields for saving, the ORM should only automatically set the foreign\u2011key column from the related object's primary key if the column currently holds an empty value **and** the related object's primary key is an integer (i.e., a numeric auto\u2011generated key). For non\u2011numeric primary keys (such as CharField primary keys), the foreign\u2011key column must not be auto\u2011populated; callers must assign the foreign\u2011key value explicitly before saving. This supersedes any earlier expectation that empty values always trigger automatic population regardless of primary\u2011key type.</requirement>\n<source_edit file=\"django/db/models/base.py\"><search>elif getattr(self, field.attname) in field.empty_values:</search><replace>elif getattr(self, field.attname) in field.empty_values and isinstance(obj.pk, int):</replace></source_edit>\n<test_edit file=\"tests/many_to_one/tests.py\"><search>    def test_save_fk_after_parent_with_non_numeric_pk_set_on_child(self):\n        parent = ParentStringPrimaryKey()\n        child = ChildStringPrimaryKeyParent(parent=parent)\n        child.parent.name = 'jeff'\n        parent.save()\n        child.save()\n        child.refresh_from_db()\n        self.assertEqual(child.parent, parent)\n        self.assertEqual(child.parent_id, parent.name)</search><replace>    def test_save_fk_after_parent_with_non_numeric_pk_set_on_child(self):\n        parent = ParentStringPrimaryKey()\n        child = ChildStringPrimaryKeyParent(parent=parent)\n        child.parent.name = 'jeff'\n        parent.save()\n        # Saving the child without an explicit FK should raise IntegrityError.\n        with self.assertRaises(IntegrityError):\n            child.save()</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Auto\u2011populate foreign keys only when the related object's primary key is an integer.",
+ "requirement": "When preparing related fields for saving, the ORM should only automatically set the foreign\u2011key column from the related object's primary key if the column currently holds an empty value **and** the related object's primary key is an integer (i.e., a numeric auto\u2011generated key). For non\u2011numeric primary keys (such as CharField primary keys), the foreign\u2011key column must not be auto\u2011populated; callers must assign the foreign\u2011key value explicitly before saving. This supersedes any earlier expectation that empty values always trigger automatic population regardless of primary\u2011key type.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/base.py",
+   "search": "elif getattr(self, field.attname) in field.empty_values:",
+   "replace": "elif getattr(self, field.attname) in field.empty_values and isinstance(obj.pk, int):"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/many_to_one/tests.py",
+   "search": "    def test_save_fk_after_parent_with_non_numeric_pk_set_on_child(self):\n        parent = ParentStringPrimaryKey()\n        child = ChildStringPrimaryKeyParent(parent=parent)\n        child.parent.name = 'jeff'\n        parent.save()\n        child.save()\n        child.refresh_from_db()\n        self.assertEqual(child.parent, parent)\n        self.assertEqual(child.parent_id, parent.name)",
+   "replace": "    def test_save_fk_after_parent_with_non_numeric_pk_set_on_child(self):\n        parent = ParentStringPrimaryKey()\n        child = ChildStringPrimaryKeyParent(parent=parent)\n        child.parent.name = 'jeff'\n        parent.save()\n        # Saving the child without an explicit FK should raise IntegrityError.\n        with self.assertRaises(IntegrityError):\n            child.save()"
+  }
+ ]
+}

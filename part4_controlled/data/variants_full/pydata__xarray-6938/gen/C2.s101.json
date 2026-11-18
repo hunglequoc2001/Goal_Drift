@@ -1,0 +1,31 @@
+{
+ "instance_id": "pydata__xarray-6938",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 12,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 25792,
+ "raw": "<summary>to_index_variable now returns the same object and emits a DeprecationWarning</summary>\n<requirement>From now on, `IndexVariable.to_index_variable()` must return the original `IndexVariable` instance (i.e., `self`) instead of a copy, and it must emit a `DeprecationWarning` indicating that the method is deprecated and will return the same object. This supersedes any previous expectation that it returns a copy.</requirement>\n<source_edit file=\"xarray/core/variable.py\"><search>return self.copy()</search><replace>warnings.warn(\n    \"IndexVariable.to_index_variable is deprecated and will return the same object in future\",\n    DeprecationWarning,\n    stacklevel=2,\n)\nreturn self</replace></source_edit>\n<test_edit file=\"xarray/tests/test_variable.py\"><search>assert a is not b</search><replace>with pytest.warns(DeprecationWarning):\n            b = a.to_index_variable()\n        assert a is b\n        b.dims = (\"y\",)\n        assert a.dims == (\"y\",)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "to_index_variable now returns the same object and emits a DeprecationWarning",
+ "requirement": "From now on, `IndexVariable.to_index_variable()` must return the original `IndexVariable` instance (i.e., `self`) instead of a copy, and it must emit a `DeprecationWarning` indicating that the method is deprecated and will return the same object. This supersedes any previous expectation that it returns a copy.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/variable.py",
+   "search": "return self.copy()",
+   "replace": "warnings.warn(\n    \"IndexVariable.to_index_variable is deprecated and will return the same object in future\",\n    DeprecationWarning,\n    stacklevel=2,\n)\nreturn self"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_variable.py",
+   "search": "assert a is not b",
+   "replace": "with pytest.warns(DeprecationWarning):\n            b = a.to_index_variable()\n        assert a is b\n        b.dims = (\"y\",)\n        assert a.dims == (\"y\",)"
+  }
+ ]
+}

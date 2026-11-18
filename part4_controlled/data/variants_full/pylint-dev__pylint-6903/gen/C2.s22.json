@@ -1,0 +1,49 @@
+{
+ "instance_id": "pylint-dev__pylint-6903",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "7cf05bf56efa25e897284cc44d5405a92124cabf7b69f6dc3396889d4d0dbc41",
+ "raw": "<summary>Fallback to the host\u2019s CPU count when the calculated value is zero</summary>\n<requirement>When `_query_cpu` determines that the available CPU count is zero (e.g., due to fractional CPU allocation in a Kubernetes pod), pylint should fall back to the value returned by `os.cpu_count()`. If `os.cpu_count()` also returns `None` or zero, use `1` as the final fallback. This supersedes any previous instruction to unconditionally use `1` in that situation.</requirement>\n<source_edit file=\"pylint/lint/run.py\"><search># In K8s Pods also a fraction of a single core could be available\n+    # As multiprocessing is not able to run only a \"fraction\" of process\n+    # assume we have 1 CPU available\n+    if avail_cpu == 0:\n+        avail_cpu = 1</search><replace># In K8s Pods also a fraction of a single core could be available\n+    # If the calculated CPU count is zero, fall back to the host's CPU count.\n+    # Use at least 1 to satisfy multiprocessing requirements.\n+    if avail_cpu == 0:\n+        avail_cpu = os.cpu_count() or 1</replace></source_edit>\n<test_edit file=\"tests/test_pylint_runners.py\"><search>def test_pylint_run_jobs_equal_zero_dont_crash_with_cpu_fraction(\n    tmpdir: LocalPath,\n) -> None:\n    \"\"\"Check that the pylint runner does not crash if `pylint.lint.run._query_cpu`\n    determines only a fraction of a CPU core to be available.\n    \"\"\"\n    builtin_open = open\n\n    def _mock_open(*args, **kwargs):\n        if args[0] == \"/sys/fs/cgroup/cpu/cpu.cfs_quota_us\":\n            return mock_open(read_data=b\"-1\")(*args, **kwargs)\n        if args[0] == \"/sys/fs/cgroup/cpu/cpu.shares\":\n            return mock_open(read_data=b\"2\")(*args, **kwargs)\n        return builtin_open(*args, **kwargs)\n\n    pathlib_path = pathlib.Path\n\n    def _mock_path(*args, **kwargs):\n        if args[0] == \"/sys/fs/cgroup/cpu/cpu.shares\":\n            return MagicMock(is_file=lambda: True)\n        return pathlib_path(*args, **kwargs)\n\n    filepath = os.path.abspath(__file__)\n    testargs = [filepath, \"--jobs=0\"]\n    with tmpdir.as_cwd():\n        with pytest.raises(SystemExit) as err:\n            with patch(\"builtins.open\", _mock_open):\n                with patch(\"pylint.lint.run.Path\", _mock_path):\n                    Run(testargs, reporter=Reporter())\n        assert err.value.code == 0</search><replace>def test_pylint_run_jobs_equal_zero_dont_crash_with_cpu_fraction(\n    tmpdir: LocalPath,\n) -> None:\n    \"\"\"Check that the pylint runner does not crash and uses the host CPU count when only a fraction is available.\"\"\"\n    builtin_open = open\n\n    def _mock_open(*args, **kwargs):\n        if args[0] == \"/sys/fs/cgroup/cpu/cpu.cfs_quota_us\":\n            return mock_open(read_data=b\"-1\")(*args, **kwargs)\n        if args[0] == \"/sys/fs/cgroup/cpu/cpu.shares\":\n            return mock_open(read_data=b\"2\")(*args, **kwargs)\n        return builtin_open(*args, **kwargs)\n\n    pathlib_path = pathlib.Path\n\n    def _mock_path(*args, **kwargs):\n        if args[0] == \"/sys/fs/cgroup/cpu/cpu.shares\":\n            return MagicMock(is_file=lambda: True)\n        return pathlib_path(*args, **kwargs)\n\n    captured = {}\n\n    class DummyPool:\n        def __init__(self, processes, *a, **kw):\n            captured[\"processes\"] = processes\n\n        def __enter__(self):\n            return self\n\n        def __exit__(self, exc_type, exc, tb):\n            return False\n\n    filepath = os.path.abspath(__file__)\n    testargs = [filepath, \"--jobs=0\"]\n    with tmpdir.as_cwd():\n        with patch(\"builtins.open\", _mock_open):\n            with patch(\"pylint.lint.run.Path\", _mock_path):\n                with patch(\"multiprocessing.Pool\", DummyPool):\n                    with patch(\"os.cpu_count\", lambda: 4):\n                        with pytest.raises(SystemExit) as err:\n                            Run(testargs, reporter=Reporter())\n                        assert err.value.code == 0\n    assert captured.get(\"processes\") == 4</replace></test_edit>\n<test_edit file=\"tests/test_pylint_runners.py\"><search>from unittest.mock import MagicMock, mock_open, patch</search><replace>from unittest.mock import MagicMock, mock_open, patch\nimport multiprocessing</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2827,
+  "prompt_tokens": 2144,
+  "total_tokens": 4971,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1776,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Fallback to the host\u2019s CPU count when the calculated value is zero",
+ "requirement": "When `_query_cpu` determines that the available CPU count is zero (e.g., due to fractional CPU allocation in a Kubernetes pod), pylint should fall back to the value returned by `os.cpu_count()`. If `os.cpu_count()` also returns `None` or zero, use `1` as the final fallback. This supersedes any previous instruction to unconditionally use `1` in that situation.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "pylint/lint/run.py",
+   "search": "# In K8s Pods also a fraction of a single core could be available\n+    # As multiprocessing is not able to run only a \"fraction\" of process\n+    # assume we have 1 CPU available\n+    if avail_cpu == 0:\n+        avail_cpu = 1",
+   "replace": "# In K8s Pods also a fraction of a single core could be available\n+    # If the calculated CPU count is zero, fall back to the host's CPU count.\n+    # Use at least 1 to satisfy multiprocessing requirements.\n+    if avail_cpu == 0:\n+        avail_cpu = os.cpu_count() or 1"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_pylint_runners.py",
+   "search": "def test_pylint_run_jobs_equal_zero_dont_crash_with_cpu_fraction(\n    tmpdir: LocalPath,\n) -> None:\n    \"\"\"Check that the pylint runner does not crash if `pylint.lint.run._query_cpu`\n    determines only a fraction of a CPU core to be available.\n    \"\"\"\n    builtin_open = open\n\n    def _mock_open(*args, **kwargs):\n        if args[0] == \"/sys/fs/cgroup/cpu/cpu.cfs_quota_us\":\n            return mock_open(read_data=b\"-1\")(*args, **kwargs)\n        if args[0] == \"/sys/fs/cgroup/cpu/cpu.shares\":\n            return mock_open(read_data=b\"2\")(*args, **kwargs)\n        return builtin_open(*args, **kwargs)\n\n    pathlib_path = pathlib.Path\n\n    def _mock_path(*args, **kwargs):\n        if args[0] == \"/sys/fs/cgroup/cpu/cpu.shares\":\n            return MagicMock(is_file=lambda: True)\n        return pathlib_path(*args, **kwargs)\n\n    filepath = os.path.abspath(__file__)\n    testargs = [filepath, \"--jobs=0\"]\n    with tmpdir.as_cwd():\n        with pytest.raises(SystemExit) as err:\n            with patch(\"builtins.open\", _mock_open):\n                with patch(\"pylint.lint.run.Path\", _mock_path):\n                    Run(testargs, reporter=Reporter())\n        assert err.value.code == 0",
+   "replace": "def test_pylint_run_jobs_equal_zero_dont_crash_with_cpu_fraction(\n    tmpdir: LocalPath,\n) -> None:\n    \"\"\"Check that the pylint runner does not crash and uses the host CPU count when only a fraction is available.\"\"\"\n    builtin_open = open\n\n    def _mock_open(*args, **kwargs):\n        if args[0] == \"/sys/fs/cgroup/cpu/cpu.cfs_quota_us\":\n            return mock_open(read_data=b\"-1\")(*args, **kwargs)\n        if args[0] == \"/sys/fs/cgroup/cpu/cpu.shares\":\n            return mock_open(read_data=b\"2\")(*args, **kwargs)\n        return builtin_open(*args, **kwargs)\n\n    pathlib_path = pathlib.Path\n\n    def _mock_path(*args, **kwargs):\n        if args[0] == \"/sys/fs/cgroup/cpu/cpu.shares\":\n            return MagicMock(is_file=lambda: True)\n        return pathlib_path(*args, **kwargs)\n\n    captured = {}\n\n    class DummyPool:\n        def __init__(self, processes, *a, **kw):\n            captured[\"processes\"] = processes\n\n        def __enter__(self):\n            return self\n\n        def __exit__(self, exc_type, exc, tb):\n            return False\n\n    filepath = os.path.abspath(__file__)\n    testargs = [filepath, \"--jobs=0\"]\n    with tmpdir.as_cwd():\n        with patch(\"builtins.open\", _mock_open):\n            with patch(\"pylint.lint.run.Path\", _mock_path):\n                with patch(\"multiprocessing.Pool\", DummyPool):\n                    with patch(\"os.cpu_count\", lambda: 4):\n                        with pytest.raises(SystemExit) as err:\n                            Run(testargs, reporter=Reporter())\n                        assert err.value.code == 0\n    assert captured.get(\"processes\") == 4"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_pylint_runners.py",
+   "search": "from unittest.mock import MagicMock, mock_open, patch",
+   "replace": "from unittest.mock import MagicMock, mock_open, patch\nimport multiprocessing"
+  }
+ ],
+ "status": "generated"
+}

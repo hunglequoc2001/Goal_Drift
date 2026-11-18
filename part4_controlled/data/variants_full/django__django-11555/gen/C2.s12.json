@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-11555",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "963a29f9c3c634108c7c00161d1fff4d10d52800afc53e21e96d6d1c8c54d5d3",
+ "raw": "<summary>Ignore OrderBy expressions when applying a parent model\u2019s default ordering via its link field.</summary>\n<requirement>When ordering a child model using its parent link field (for example, ordering by\u202f`article_ptr`), any OrderBy expressions that appear in the parent model\u2019s\u202f`Meta.ordering` must be ignored. Only plain field names (including the primary\u2011key field) should be considered for the ordering. This supersedes any previous expectation that OrderBy expressions participate in the ordering.</requirement>\n<source_edit file=\"django/db/models/sql/compiler.py\"><search>\n                if isinstance(item, OrderBy):\n                    results.append((item, False))\n                    continue\n</search><replace>\n                if isinstance(item, OrderBy):\n                    # Skip OrderBy expressions when applying parent ordering via a link field\n                    continue\n</replace></source_edit>\n<test_edit file=\"tests/ordering/tests.py\"><search>\n        self.assertSequenceEqual(articles, [ca4, ca2, ca1, ca3])\n</search><replace>\n        self.assertSequenceEqual(articles, [ca1, ca2, ca3, ca4])\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2679,
+  "prompt_tokens": 1334,
+  "total_tokens": 4013,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2427,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Ignore OrderBy expressions when applying a parent model\u2019s default ordering via its link field.",
+ "requirement": "When ordering a child model using its parent link field (for example, ordering by\u202f`article_ptr`), any OrderBy expressions that appear in the parent model\u2019s\u202f`Meta.ordering` must be ignored. Only plain field names (including the primary\u2011key field) should be considered for the ordering. This supersedes any previous expectation that OrderBy expressions participate in the ordering.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/compiler.py",
+   "search": "                if isinstance(item, OrderBy):\n                    results.append((item, False))\n                    continue",
+   "replace": "                if isinstance(item, OrderBy):\n                    # Skip OrderBy expressions when applying parent ordering via a link field\n                    continue"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/ordering/tests.py",
+   "search": "        self.assertSequenceEqual(articles, [ca4, ca2, ca1, ca3])",
+   "replace": "        self.assertSequenceEqual(articles, [ca1, ca2, ca3, ca4])"
+  }
+ ],
+ "status": "generated"
+}

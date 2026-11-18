@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-13798",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "a1e9e021d4335c77dedbd8eab42a410f36b8113403f2638cedcd6e2b93339e3b",
+ "raw": "<summary>mul_symbol should be applied uniformly, even between numbers</summary>\n<requirement>The `mul_symbol` argument must be used unchanged for all multiplication symbols, including those that appear between numeric literals; the printer should no longer replace whitespace\u2011like symbols (such as `\\,`) with a dot when numbers are involved. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sympy/printing/latex.py\"><search>\n        try:\n            self._settings['mul_symbol_latex_numbers'] = \\\n                mul_symbol_table[self._settings['mul_symbol'] or 'dot']\n        except KeyError:\n            if (self._settings['mul_symbol'].strip() in\n                    ['', ' ', '\\\\', '\\\\,', '\\\\:', '\\\\;', '\\\\quad']):\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    mul_symbol_table['dot']\n            else:\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    self._settings['mul_symbol']\n</search><replace>\n        self._settings['mul_symbol_latex_numbers'] = self._settings['mul_symbol_latex']\n</replace></source_edit>\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(1.5*3**x, mul_symbol='\\\\,') == r\"1.5 \\cdot 3^{x}\"</search><replace>assert latex(1.5*3**x, mul_symbol='\\\\,') == r\"1.5\\,3^{x}\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1759,
+  "prompt_tokens": 1327,
+  "total_tokens": 3086,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1425,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "mul_symbol should be applied uniformly, even between numbers",
+ "requirement": "The `mul_symbol` argument must be used unchanged for all multiplication symbols, including those that appear between numeric literals; the printer should no longer replace whitespace\u2011like symbols (such as `\\,`) with a dot when numbers are involved. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/latex.py",
+   "search": "        try:\n            self._settings['mul_symbol_latex_numbers'] = \\\n                mul_symbol_table[self._settings['mul_symbol'] or 'dot']\n        except KeyError:\n            if (self._settings['mul_symbol'].strip() in\n                    ['', ' ', '\\\\', '\\\\,', '\\\\:', '\\\\;', '\\\\quad']):\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    mul_symbol_table['dot']\n            else:\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    self._settings['mul_symbol']",
+   "replace": "        self._settings['mul_symbol_latex_numbers'] = self._settings['mul_symbol_latex']"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(1.5*3**x, mul_symbol='\\\\,') == r\"1.5 \\cdot 3^{x}\"",
+   "replace": "assert latex(1.5*3**x, mul_symbol='\\\\,') == r\"1.5\\,3^{x}\""
+  }
+ ],
+ "status": "generated"
+}

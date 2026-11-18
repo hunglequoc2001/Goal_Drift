@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-13820",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 22215,
+ "raw": "<summary>Treat any package lacking\u202f__file__\u202fas a namespace package, ignoring its __path__ type.</summary>\n<requirement>When determining whether a package should be considered a namespace package, the loader must treat a package as a namespace if its module object does not have a\u202f__file__\u202fattribute, even if its\u202f__path__\u202fattribute is a list. This supersedes any previous requirement to also check the type of\u202f__path__.</requirement>\n<source_edit file=\"django/db/migrations/loader.py\"><search>                # Empty directories are namespaces. Namespace packages have no\n                # __file__ and don't use a list for __path__. See\n                # https://docs.python.org/3/reference/import.html#namespace-packages\n                if (\n                    getattr(module, '__file__', None) is None and\n                    not isinstance(module.__path__, list)\n                ):\n                    self.unmigrated_apps.add(app_config.label)\n                    continue</search><replace>                # Empty directories are considered namespaces if they lack a __file__.\n                if getattr(module, '__file__', None) is None:\n                    self.unmigrated_apps.add(app_config.label)\n                    continue</replace></source_edit>\n<test_edit file=\"tests/migrations/test_loader.py\"><search>self.assertCountEqual(migrations, ['0001_initial', '0002_second'])</search><replace>self.assertEqual(migrations, [])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Treat any package lacking\u202f__file__\u202fas a namespace package, ignoring its __path__ type.",
+ "requirement": "When determining whether a package should be considered a namespace package, the loader must treat a package as a namespace if its module object does not have a\u202f__file__\u202fattribute, even if its\u202f__path__\u202fattribute is a list. This supersedes any previous requirement to also check the type of\u202f__path__.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/migrations/loader.py",
+   "search": "                # Empty directories are namespaces. Namespace packages have no\n                # __file__ and don't use a list for __path__. See\n                # https://docs.python.org/3/reference/import.html#namespace-packages\n                if (\n                    getattr(module, '__file__', None) is None and\n                    not isinstance(module.__path__, list)\n                ):\n                    self.unmigrated_apps.add(app_config.label)\n                    continue",
+   "replace": "                # Empty directories are considered namespaces if they lack a __file__.\n                if getattr(module, '__file__', None) is None:\n                    self.unmigrated_apps.add(app_config.label)\n                    continue"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/migrations/test_loader.py",
+   "search": "self.assertCountEqual(migrations, ['0001_initial', '0002_second'])",
+   "replace": "self.assertEqual(migrations, [])"
+  }
+ ]
+}

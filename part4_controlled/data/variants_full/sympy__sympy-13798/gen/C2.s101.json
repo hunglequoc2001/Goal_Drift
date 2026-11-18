@@ -1,0 +1,31 @@
+{
+ "instance_id": "sympy__sympy-13798",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 16976,
+ "raw": "<summary>mul_symbol is now applied uniformly, also between numbers</summary>\n<requirement>The `mul_symbol` argument must be used unchanged for all multiplication symbols, including those that appear between numeric literals; the printer should no longer replace whitespace\u2011like symbols (such as `\\,`) with a dot when numbers are involved. For example, `latex(1.5*3**x, mul_symbol='\\\\,')` should produce the string `1.5\\,3^{x}`. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sympy/printing/latex.py\"><search>        try:\n            self._settings['mul_symbol_latex_numbers'] = \\\n                mul_symbol_table[self._settings['mul_symbol'] or 'dot']\n        except KeyError:\n            if (self._settings['mul_symbol'].strip() in\n                    ['', ' ', '\\\\', '\\\\,', '\\\\:', '\\\\;', '\\\\quad']):\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    mul_symbol_table['dot']\n            else:\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    self._settings['mul_symbol']</search><replace>        self._settings['mul_symbol_latex_numbers'] = self._settings['mul_symbol_latex']</replace></source_edit>\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(1.5*3**x, mul_symbol='\\\\,') == r\"1.5 \\cdot 3^{x}\"</search><replace>assert latex(1.5*3**x, mul_symbol='\\\\,') == r\"1.5\\,3^{x}\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "mul_symbol is now applied uniformly, also between numbers",
+ "requirement": "The `mul_symbol` argument must be used unchanged for all multiplication symbols, including those that appear between numeric literals; the printer should no longer replace whitespace\u2011like symbols (such as `\\,`) with a dot when numbers are involved. For example, `latex(1.5*3**x, mul_symbol='\\\\,')` should produce the string `1.5\\,3^{x}`. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/latex.py",
+   "search": "        try:\n            self._settings['mul_symbol_latex_numbers'] = \\\n                mul_symbol_table[self._settings['mul_symbol'] or 'dot']\n        except KeyError:\n            if (self._settings['mul_symbol'].strip() in\n                    ['', ' ', '\\\\', '\\\\,', '\\\\:', '\\\\;', '\\\\quad']):\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    mul_symbol_table['dot']\n            else:\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    self._settings['mul_symbol']",
+   "replace": "        self._settings['mul_symbol_latex_numbers'] = self._settings['mul_symbol_latex']"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(1.5*3**x, mul_symbol='\\\\,') == r\"1.5 \\cdot 3^{x}\"",
+   "replace": "assert latex(1.5*3**x, mul_symbol='\\\\,') == r\"1.5\\,3^{x}\""
+  }
+ ]
+}

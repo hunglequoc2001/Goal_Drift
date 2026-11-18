@@ -1,0 +1,49 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9229",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "c0cc236adb5b21025892a9e04fb6bbce6ca2bf4f6f7df962f9fddffd0d343d03",
+ "raw": "<summary>Alias documentation must always include the \u201calias of \u2026\u201d line, even when a docstring is present, and the docstring should appear after that line.</summary>\n<requirement>When documenting a type alias (or any alias treated as a class), the generated documentation must always contain the \u201calias of \u2026\u201d line, regardless of whether the alias has its own docstring. If a docstring is provided, it should be rendered after the alias line. This requirement supersedes any previous expectation that the alias line could be omitted when a docstring exists.</requirement>\n\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>if self.doc_as_attr:</search><replace>if self.doc_as_attr:\n            comment = self.get_variable_comment()\n            if comment:\n                return [comment]\n            else:\n                return None</replace></source_edit>\n\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>if self.doc_as_attr and not self.get_variable_comment():</search><replace>if self.doc_as_attr:</replace></source_edit>\n\n<test_edit file=\"tests/test_ext_autodoc_autoclass.py\"><search>assert list(actual) == [\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   docstring',\n        '',\n    ]</search><replace>assert list(actual) == [\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   alias of :class:`target.classes.Bar`',\n        '',\n        '   docstring',\n        '',\n    ]</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1543,
+  "prompt_tokens": 2230,
+  "total_tokens": 3773,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1186,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Alias documentation must always include the \u201calias of \u2026\u201d line, even when a docstring is present, and the docstring should appear after that line.",
+ "requirement": "When documenting a type alias (or any alias treated as a class), the generated documentation must always contain the \u201calias of \u2026\u201d line, regardless of whether the alias has its own docstring. If a docstring is provided, it should be rendered after the alias line. This requirement supersedes any previous expectation that the alias line could be omitted when a docstring exists.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "if self.doc_as_attr:",
+   "replace": "if self.doc_as_attr:\n            comment = self.get_variable_comment()\n            if comment:\n                return [comment]\n            else:\n                return None"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "if self.doc_as_attr and not self.get_variable_comment():",
+   "replace": "if self.doc_as_attr:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_autoclass.py",
+   "search": "assert list(actual) == [\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   docstring',\n        '',\n    ]",
+   "replace": "assert list(actual) == [\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   alias of :class:`target.classes.Bar`',\n        '',\n        '   docstring',\n        '',\n    ]"
+  }
+ ],
+ "status": "generated"
+}

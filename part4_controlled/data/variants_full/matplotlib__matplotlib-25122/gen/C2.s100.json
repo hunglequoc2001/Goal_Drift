@@ -1,0 +1,55 @@
+{
+ "instance_id": "matplotlib__matplotlib-25122",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 22723,
+ "raw": "<summary>Window\u2011norm calculations must use absolute values.</summary>\n<requirement>When normalizing spectral results by the window, always use the sum of the absolute values of the window (i.e.,\u202fnp.abs(window).sum()) and, where a squared norm is required, use the sum of the squares of the absolute values (i.e.,\u202f(np.abs(window)**2).sum()). This supersedes any earlier description that used the raw sum of the window values.</requirement>\n<source_edit file=\"lib/matplotlib/mlab.py\"><search>result = np.abs(result) / window.sum()</search><replace>result = np.abs(result) / np.abs(window).sum()</replace></source_edit>\n<source_edit file=\"lib/matplotlib/mlab.py\"><search>result /= window.sum()</search><replace>result /= np.abs(window).sum()</replace></source_edit>\n<source_edit file=\"lib/matplotlib/mlab.py\"><search>result /= (window**2).sum()</search><replace>result /= (np.abs(window)**2).sum()</replace></source_edit>\n<source_edit file=\"lib/matplotlib/mlab.py\"><search>result /= window.sum()**2</search><replace>result /= (np.abs(window).sum())**2</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_mlab.py\"><search>assert_allclose(spec*win.sum()**2,</search><replace>assert_allclose(spec*np.abs(win).sum()**2,</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_mlab.py\"><search>spec_a*self.Fs*(win**2).sum()</search><replace>spec_a*self.Fs*(np.abs(win)**2).sum()</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Window\u2011norm calculations must use absolute values.",
+ "requirement": "When normalizing spectral results by the window, always use the sum of the absolute values of the window (i.e.,\u202fnp.abs(window).sum()) and, where a squared norm is required, use the sum of the squares of the absolute values (i.e.,\u202f(np.abs(window)**2).sum()). This supersedes any earlier description that used the raw sum of the window values.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/mlab.py",
+   "search": "result = np.abs(result) / window.sum()",
+   "replace": "result = np.abs(result) / np.abs(window).sum()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/mlab.py",
+   "search": "result /= window.sum()",
+   "replace": "result /= np.abs(window).sum()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/mlab.py",
+   "search": "result /= (window**2).sum()",
+   "replace": "result /= (np.abs(window)**2).sum()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/mlab.py",
+   "search": "result /= window.sum()**2",
+   "replace": "result /= (np.abs(window).sum())**2"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_mlab.py",
+   "search": "assert_allclose(spec*win.sum()**2,",
+   "replace": "assert_allclose(spec*np.abs(win).sum()**2,"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_mlab.py",
+   "search": "spec_a*self.Fs*(win**2).sum()",
+   "replace": "spec_a*self.Fs*(np.abs(win)**2).sum()"
+  }
+ ]
+}

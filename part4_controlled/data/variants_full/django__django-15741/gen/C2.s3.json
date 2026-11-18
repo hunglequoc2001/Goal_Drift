@@ -1,0 +1,44 @@
+{
+ "instance_id": "django__django-15741",
+ "kind": "C2",
+ "sample": 3,
+ "generator": "glm-4-32b-0414",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 3,
+ "prompt_sha256": "818502a3096b79bad9b16e7acdd3076bccd202b4cb0be8a9b77e3b8f5c77fd0f",
+ "raw": "\n<summary>Change the lazy parameter handling in get_format to preserve original string representation.</summary>\n<requirement>Starting now, the get_format function should preserve the original string representation of lazy parameters instead of converting them to strings. This means that if a lazy parameter is passed, the function should use the underlying string value directly rather than calling str() on it. This update supersedes any previous expectation about handling lazy parameters in the issue.</requirement>\n<source_edit file=\"django/utils/formats.py\"><search>format_type = str(format_type)  # format_type may be lazy.</search><replace># Handle lazy format_type by using its unicode representation</replace></source_edit>\n<test_edit file=\"tests/i18n/tests.py\"><search>def test_get_format_lazy_format(self):</search><replace>def test_get_format_lazy_format(self):\n        # Verify that lazy format_type preserves its original value\n        self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"F j, Y\")</replace></test_edit>\n<test_edit file=\"tests/template_tests/filter_tests/test_date.py\"><search>def test_date_lazy(self):</search><replace>def test_date_lazy(self):\n        # Verify lazy string format works with date filter\n        output = self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})\n        self.assertEqual(output, \"12:00\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 294,
+  "prompt_tokens": 1047,
+  "total_tokens": 1341,
+  "completion_tokens_details": null,
+  "prompt_tokens_details": null
+ },
+ "summary": "Change the lazy parameter handling in get_format to preserve original string representation.",
+ "requirement": "Starting now, the get_format function should preserve the original string representation of lazy parameters instead of converting them to strings. This means that if a lazy parameter is passed, the function should use the underlying string value directly rather than calling str() on it. This update supersedes any previous expectation about handling lazy parameters in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "format_type = str(format_type)  # format_type may be lazy.",
+   "replace": "# Handle lazy format_type by using its unicode representation"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/i18n/tests.py",
+   "search": "def test_get_format_lazy_format(self):",
+   "replace": "def test_get_format_lazy_format(self):\n        # Verify that lazy format_type preserves its original value\n        self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"F j, Y\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_date.py",
+   "search": "def test_date_lazy(self):",
+   "replace": "def test_date_lazy(self):\n        # Verify lazy string format works with date filter\n        output = self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})\n        self.assertEqual(output, \"12:00\")"
+  }
+ ],
+ "status": "generated"
+}

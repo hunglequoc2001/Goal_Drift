@@ -1,0 +1,38 @@
+{
+ "instance_id": "django__django-14672",
+ "kind": "C2",
+ "sample": 2,
+ "generator": "glm-4-32b-0414",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 2,
+ "prompt_sha256": "ec796be40007e2d31b950b1164da363e163ebb8ce15ddaf910cd92d0ae61ea7d",
+ "raw": "\n<summary>Add warning for non-hashable through_fields in ManyToManyRel</summary>\n<requirement>When a ManyToManyRel is created with through_fields that is a list, issue a warning to inform developers that the through_fields will be converted to a hashable format internally. This supersedes any previous expectation that through_fields could be left as a list without any processing.</requirement>\n<source_edit file=\"django/db/models/fields/reverse_related.py\"><search>def identity(self):</search><replace>def identity(self):\n        if isinstance(self.through_fields, list):\n            warnings.warn(\n                \"through_fields is a list and will be converted to a hashable format. \"\n                \"This may affect how equality is determined for this relation.\",\n                RuntimeWarning,\n            )\n        return super().identity + (</replace></source_edit>\n<test_edit file=\"tests/m2m_through/tests.py\"><search>def test_reverse_inherited_m2m_with_through_fields_list_hashable(self):</search><replace>def test_reverse_inherited_m2m_with_through_fields_list_hashable(self):\n        # Verify warning is raised for list through_fields\n        import warnings\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\")\n            reverse_m2m = Person._meta.get_field('events_invited')\n            self.assertEqual(len(w), 1)\n            self.assertTrue(issubclass(w[-1].category, RuntimeWarning))\n            self.assertIn('through_fields is a list', str(w[-1].message))\n        self.assertEqual(reverse_m2m.through_fields, ['event', 'invitee'])\n        inherited_reverse_m2m = PersonChild._meta.get_field('events_invited')\n        self.assertEqual(inherited_reverse_m2m.through_fields, ['event', 'invitee'])\n        self.assertEqual(hash(reverse_m2m), hash(inherited_reverse_m2m))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 396,
+  "prompt_tokens": 6336,
+  "total_tokens": 6732,
+  "completion_tokens_details": null,
+  "prompt_tokens_details": null
+ },
+ "summary": "Add warning for non-hashable through_fields in ManyToManyRel",
+ "requirement": "When a ManyToManyRel is created with through_fields that is a list, issue a warning to inform developers that the through_fields will be converted to a hashable format internally. This supersedes any previous expectation that through_fields could be left as a list without any processing.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/fields/reverse_related.py",
+   "search": "def identity(self):",
+   "replace": "def identity(self):\n        if isinstance(self.through_fields, list):\n            warnings.warn(\n                \"through_fields is a list and will be converted to a hashable format. \"\n                \"This may affect how equality is determined for this relation.\",\n                RuntimeWarning,\n            )\n        return super().identity + ("
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/m2m_through/tests.py",
+   "search": "def test_reverse_inherited_m2m_with_through_fields_list_hashable(self):",
+   "replace": "def test_reverse_inherited_m2m_with_through_fields_list_hashable(self):\n        # Verify warning is raised for list through_fields\n        import warnings\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\")\n            reverse_m2m = Person._meta.get_field('events_invited')\n            self.assertEqual(len(w), 1)\n            self.assertTrue(issubclass(w[-1].category, RuntimeWarning))\n            self.assertIn('through_fields is a list', str(w[-1].message))\n        self.assertEqual(reverse_m2m.through_fields, ['event', 'invitee'])\n        inherited_reverse_m2m = PersonChild._meta.get_field('events_invited')\n        self.assertEqual(inherited_reverse_m2m.through_fields, ['event', 'invitee'])\n        self.assertEqual(hash(reverse_m2m), hash(inherited_reverse_m2m))"
+  }
+ ],
+ "status": "generated"
+}

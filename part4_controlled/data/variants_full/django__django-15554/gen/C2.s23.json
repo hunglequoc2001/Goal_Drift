@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-15554",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "1aed4ac2753aeb51e36da96456739614995db133bb96edb7733ec3f47a8ff031",
+ "raw": "<summary>Disallow using more than one FilteredRelation on the same base relation.</summary>\n<requirement>When annotating a queryset, it is now an error to include multiple FilteredRelation instances that refer to the same underlying relation (i.e., the same relation name string passed to FilteredRelation). In such a case the ORM must raise a ValueError with the message \u201cMultiple FilteredRelation on the same relation are not supported\u201d. This requirement supersedes any conflicting expectation in the original issue description.</requirement>\n\n<source_edit file=\"django/db/models/query.py\"><search>def annotate(self, *args, **kwargs):</search><replace>def annotate(self, *args, **kwargs):\n        # New validation: prevent multiple FilteredRelation on the same base relation.\n        filtered_relation_paths = {}\n        for name, value in kwargs.items():\n            if isinstance(value, FilteredRelation):\n                path = value.relation\n                if path in filtered_relation_paths:\n                    raise ValueError(\n                        \"Multiple FilteredRelation on the same relation are not supported\"\n                    )\n                filtered_relation_paths[path] = name\n        # Original annotate implementation continues below\n</replace></source_edit>\n\n<test_edit file=\"tests/filtered_relation/tests.py\"><search>def test_multiple(self):</search><replace>def test_multiple(self):\n        # The ORM should now reject multiple FilteredRelation on the same relation.\n        with self.assertRaisesMessage(\n            ValueError,\n            \"Multiple FilteredRelation on the same relation are not supported\",\n        ):\n            (\n                Author.objects.annotate(\n                    book_title_alice=FilteredRelation(\n                        \"book\", condition=Q(book__title__contains=\"Alice\")\n                    ),\n                    book_title_jane=FilteredRelation(\n                        \"book\", condition=Q(book__title__icontains=\"Jane\")\n                    ),\n                )\n                .filter(name=\"Jane\")\n                .values(\"book_title_alice__title\", \"book_title_jane__title\")\n            )\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1491,
+  "prompt_tokens": 2304,
+  "total_tokens": 3795,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1068,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow using more than one FilteredRelation on the same base relation.",
+ "requirement": "When annotating a queryset, it is now an error to include multiple FilteredRelation instances that refer to the same underlying relation (i.e., the same relation name string passed to FilteredRelation). In such a case the ORM must raise a ValueError with the message \u201cMultiple FilteredRelation on the same relation are not supported\u201d. This requirement supersedes any conflicting expectation in the original issue description.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/query.py",
+   "search": "def annotate(self, *args, **kwargs):",
+   "replace": "def annotate(self, *args, **kwargs):\n        # New validation: prevent multiple FilteredRelation on the same base relation.\n        filtered_relation_paths = {}\n        for name, value in kwargs.items():\n            if isinstance(value, FilteredRelation):\n                path = value.relation\n                if path in filtered_relation_paths:\n                    raise ValueError(\n                        \"Multiple FilteredRelation on the same relation are not supported\"\n                    )\n                filtered_relation_paths[path] = name\n        # Original annotate implementation continues below"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/filtered_relation/tests.py",
+   "search": "def test_multiple(self):",
+   "replace": "def test_multiple(self):\n        # The ORM should now reject multiple FilteredRelation on the same relation.\n        with self.assertRaisesMessage(\n            ValueError,\n            \"Multiple FilteredRelation on the same relation are not supported\",\n        ):\n            (\n                Author.objects.annotate(\n                    book_title_alice=FilteredRelation(\n                        \"book\", condition=Q(book__title__contains=\"Alice\")\n                    ),\n                    book_title_jane=FilteredRelation(\n                        \"book\", condition=Q(book__title__icontains=\"Jane\")\n                    ),\n                )\n                .filter(name=\"Jane\")\n                .values(\"book_title_alice__title\", \"book_title_jane__title\")\n            )"
+  }
+ ],
+ "status": "generated"
+}

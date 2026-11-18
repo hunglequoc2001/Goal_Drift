@@ -1,0 +1,36 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9230",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "dedf06504b8643db387c252d23fb9f5e3faf46e53080ee6690f6f7c1d9f33148",
+ "raw": "<summary>Complex generic types in :param: fields are no longer treated as separate type tokens.</summary>\n<requirement>From now on, the :param: field parser should only treat a leading simple type token (a word without brackets or commas) as the type. If the token contains brackets, commas, or any other characters beyond a plain identifier, it must be considered part of the parameter name, and no type should be displayed. This supersedes any previous expectation that complex generic types such as `Dict[str, str]` are parsed as a type.</requirement>\n<test_edit file=\"tests/test_domain_py.py\"><search># :param Dict[str, str] params:\n    assert_node(doctree[3][1][0][0][1][0][3][0],\n                ([addnodes.literal_strong, \"params\"],\n                 \" (\",\n                 [pending_xref, addnodes.literal_emphasis, \"Dict\"],\n                 [addnodes.literal_emphasis, \"[\"],\n                 [pending_xref, addnodes.literal_emphasis, \"str\"],\n                 [addnodes.literal_emphasis, \", \"],\n                 [pending_xref, addnodes.literal_emphasis, \"str\"],\n                 [addnodes.literal_emphasis, \"]\"],\n                 \")\",\n                 \" -- \",\n                 \"blah blah\"))\n    assert_node(doctree[3][1][0][0][1][0][3][0][2], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"Dict\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n    assert_node(doctree[3][1][0][0][1][0][3][0][4], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"str\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n    assert_node(doctree[3][1][0][0][1][0][3][0][6], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"str\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})</search><replace># :param Dict[str, str] params:\n    # Under the new rule, the whole token is treated as the name; no type is rendered.\n    assert_node(doctree[3][1][0][0][1][0][3][0],\n                ([addnodes.literal_strong, \"Dict[str, str] params\"],\n                 \" -- \",\n                 \"blah blah\"))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2798,
+  "prompt_tokens": 1726,
+  "total_tokens": 4524,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2238,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Complex generic types in :param: fields are no longer treated as separate type tokens.",
+ "requirement": "From now on, the :param: field parser should only treat a leading simple type token (a word without brackets or commas) as the type. If the token contains brackets, commas, or any other characters beyond a plain identifier, it must be considered part of the parameter name, and no type should be displayed. This supersedes any previous expectation that complex generic types such as `Dict[str, str]` are parsed as a type.",
+ "source_edits": [],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_domain_py.py",
+   "search": "# :param Dict[str, str] params:\n    assert_node(doctree[3][1][0][0][1][0][3][0],\n                ([addnodes.literal_strong, \"params\"],\n                 \" (\",\n                 [pending_xref, addnodes.literal_emphasis, \"Dict\"],\n                 [addnodes.literal_emphasis, \"[\"],\n                 [pending_xref, addnodes.literal_emphasis, \"str\"],\n                 [addnodes.literal_emphasis, \", \"],\n                 [pending_xref, addnodes.literal_emphasis, \"str\"],\n                 [addnodes.literal_emphasis, \"]\"],\n                 \")\",\n                 \" -- \",\n                 \"blah blah\"))\n    assert_node(doctree[3][1][0][0][1][0][3][0][2], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"Dict\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n    assert_node(doctree[3][1][0][0][1][0][3][0][4], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"str\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})\n    assert_node(doctree[3][1][0][0][1][0][3][0][6], pending_xref,\n                refdomain=\"py\", reftype=\"class\", reftarget=\"str\",\n                **{\"py:module\": \"example\", \"py:class\": \"Class\"})",
+   "replace": "# :param Dict[str, str] params:\n    # Under the new rule, the whole token is treated as the name; no type is rendered.\n    assert_node(doctree[3][1][0][0][1][0][3][0],\n                ([addnodes.literal_strong, \"Dict[str, str] params\"],\n                 \" -- \",\n                 \"blah blah\"))"
+  }
+ ],
+ "status": "generated"
+}

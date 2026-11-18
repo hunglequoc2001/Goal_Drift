@@ -1,0 +1,55 @@
+{
+ "instance_id": "sphinx-doc__sphinx-7748",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 29324,
+ "raw": "<summary>Only the first signature in a docstring is used; additional signatures are ignored.</summary>\n<requirement>When a docstring contains multiple signatures (for example, separated by a backslash continuation), the autodoc extension must extract and use only the first signature it encounters. Any additional signatures present in the same docstring must be ignored. This rule supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>self._signatures = []</search><replace></replace></source_edit>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>self._signatures.append(\"(%s) -> %s\" % (args, retann))</search><replace></replace></source_edit>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>if self._signatures:\n            return \"\\n\".join([sig] + self._signatures)\n        else:\n            return sig</search><replace>        return sig</replace></source_edit>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>if multiline:\n                    # the signature have multiple signatures on docstring\n                    continue\n                else:\n                    # don't look any further\n                    break</search><replace>                # after the first signature, stop processing further lines\n                break</replace></source_edit>\n<test_edit file=\"tests/test_ext_autodoc_configs.py\"><search>'.. py:class:: E(foo: int, bar: int, baz: int) -> None',\n'              E(foo: str, bar: str, baz: str) -> None',\n'   :module: target.docstring_signature',</search><replace>'.. py:class:: E(foo: int, bar: int, baz: int) -> None',\n'   :module: target.docstring_signature',</replace></test_edit>\n<test_edit file=\"tests/test_ext_autodoc_configs.py\"><search>'.. py:class:: E(foo: int, bar: int, baz: int) -> None',\n'              E(foo: str, bar: str, baz: str) -> None',\n'   :module: target.docstring_signature',</search><replace>'.. py:class:: E(foo: int, bar: int, baz: int) -> None',\n'   :module: target.docstring_signature',</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Only the first signature in a docstring is used; additional signatures are ignored.",
+ "requirement": "When a docstring contains multiple signatures (for example, separated by a backslash continuation), the autodoc extension must extract and use only the first signature it encounters. Any additional signatures present in the same docstring must be ignored. This rule supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "self._signatures = []",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "self._signatures.append(\"(%s) -> %s\" % (args, retann))",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "if self._signatures:\n            return \"\\n\".join([sig] + self._signatures)\n        else:\n            return sig",
+   "replace": "        return sig"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "if multiline:\n                    # the signature have multiple signatures on docstring\n                    continue\n                else:\n                    # don't look any further\n                    break",
+   "replace": "                # after the first signature, stop processing further lines\n                break"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_configs.py",
+   "search": "'.. py:class:: E(foo: int, bar: int, baz: int) -> None',\n'              E(foo: str, bar: str, baz: str) -> None',\n'   :module: target.docstring_signature',",
+   "replace": "'.. py:class:: E(foo: int, bar: int, baz: int) -> None',\n'   :module: target.docstring_signature',"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_configs.py",
+   "search": "'.. py:class:: E(foo: int, bar: int, baz: int) -> None',\n'              E(foo: str, bar: str, baz: str) -> None',\n'   :module: target.docstring_signature',",
+   "replace": "'.. py:class:: E(foo: int, bar: int, baz: int) -> None',\n'   :module: target.docstring_signature',"
+  }
+ ]
+}

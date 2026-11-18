@@ -1,0 +1,55 @@
+{
+ "instance_id": "astropy__astropy-7671",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "c2c73b24c5dca976d3637d6ea27e75fe2e70c34feadc19286375866ffeba7590",
+ "raw": "<summary>minversion must reject prerelease version strings instead of silently stripping them</summary>\n<requirement>The `minversion` function must now reject any version string that contains non\u2011numeric prerelease identifiers (e.g. \u201cdev\u201d, \u201crc\u201d, \u201ca\u201d, \u201cb\u201d, \u201cpost\u201d, etc.). If such a version is passed, the function should raise a `ValueError` with a clear message indicating that prerelease versions are not supported. This supersedes any earlier expectation that such strings be stripped or accepted.</requirement>\n<source_edit file=\"astropy/utils/introspection.py\"><search>    # LooseVersion raises a TypeError when strings like dev, rc1 are part\n    # of the version number. Match the dotted numbers only. Regex taken\n    # from PEP440, https://www.python.org/dev/peps/pep-0440/, Appendix B\n    expr = '^([1-9]\\\\d*!)?(0|[1-9]\\\\d*)(\\\\.(0|[1-9]\\\\d*))*'\n    m = re.match(expr, version)\n    if m:\n        version = m.group(0)</search><replace>    # Reject version strings containing prerelease identifiers.\n    # Only pure numeric dotted versions are allowed.\n    expr = '^([1-9]\\\\d*!)?(0|[1-9]\\\\d*)(\\\\.(0|[1-9]\\\\d*))*$'\n    if not re.fullmatch(expr, version):\n        raise ValueError(f\"Unsupported prerelease version string: '{version}'\")</replace></source_edit>\n<test_edit file=\"astropy/utils/tests/test_introspection.py\"><search>good_versions = ['0.12', '0.12.1', '0.12.0.dev', '0.12dev']</search><replace>good_versions = ['0.12', '0.12.1']</replace></test_edit>\n<test_edit file=\"astropy/utils/tests/test_introspection.py\"><search>bad_versions = ['1', '1.2rc1']</search><replace>bad_versions = ['1', '1.2rc1', '0.12dev', '0.12.0.dev']</replace></test_edit>\n<test_edit file=\"astropy/utils/tests/test_introspection.py\"><search>for version in good_versions:\n        assert minversion(test_module, version)</search><replace>for version in good_versions:\n        assert minversion(test_module, version)\n    for version in bad_versions:\n        with pytest.raises(ValueError):\n            minversion(test_module, version)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2835,
+  "prompt_tokens": 1514,
+  "total_tokens": 4349,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2280,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "minversion must reject prerelease version strings instead of silently stripping them",
+ "requirement": "The `minversion` function must now reject any version string that contains non\u2011numeric prerelease identifiers (e.g. \u201cdev\u201d, \u201crc\u201d, \u201ca\u201d, \u201cb\u201d, \u201cpost\u201d, etc.). If such a version is passed, the function should raise a `ValueError` with a clear message indicating that prerelease versions are not supported. This supersedes any earlier expectation that such strings be stripped or accepted.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/utils/introspection.py",
+   "search": "    # LooseVersion raises a TypeError when strings like dev, rc1 are part\n    # of the version number. Match the dotted numbers only. Regex taken\n    # from PEP440, https://www.python.org/dev/peps/pep-0440/, Appendix B\n    expr = '^([1-9]\\\\d*!)?(0|[1-9]\\\\d*)(\\\\.(0|[1-9]\\\\d*))*'\n    m = re.match(expr, version)\n    if m:\n        version = m.group(0)",
+   "replace": "    # Reject version strings containing prerelease identifiers.\n    # Only pure numeric dotted versions are allowed.\n    expr = '^([1-9]\\\\d*!)?(0|[1-9]\\\\d*)(\\\\.(0|[1-9]\\\\d*))*$'\n    if not re.fullmatch(expr, version):\n        raise ValueError(f\"Unsupported prerelease version string: '{version}'\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/utils/tests/test_introspection.py",
+   "search": "good_versions = ['0.12', '0.12.1', '0.12.0.dev', '0.12dev']",
+   "replace": "good_versions = ['0.12', '0.12.1']"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/utils/tests/test_introspection.py",
+   "search": "bad_versions = ['1', '1.2rc1']",
+   "replace": "bad_versions = ['1', '1.2rc1', '0.12dev', '0.12.0.dev']"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/utils/tests/test_introspection.py",
+   "search": "for version in good_versions:\n        assert minversion(test_module, version)",
+   "replace": "for version in good_versions:\n        assert minversion(test_module, version)\n    for version in bad_versions:\n        with pytest.raises(ValueError):\n            minversion(test_module, version)"
+  }
+ ],
+ "status": "generated"
+}

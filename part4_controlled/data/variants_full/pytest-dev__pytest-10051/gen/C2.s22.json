@@ -1,0 +1,36 @@
+{
+ "instance_id": "pytest-dev__pytest-10051",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "14e4e1b615e1aa71621a936c863683c21acfb449704a9817cfc47ac7cf81a1d9",
+ "raw": "<summary>caplog.clear() should only clear records for the current test phase.</summary>\n<requirement>When `caplog.clear()` is called, it must reset only the log records that belong to the test phase in which the call occurs (e.g., the \u201ccall\u201d phase during test execution). Log records captured in earlier phases such as \u201csetup\u201d must remain accessible via `caplog.get_records()`. This requirement supersedes any earlier description that `clear()` resets all captured records.</requirement>\n<source_edit file=\"src/_pytest/logging.py\"><search>+    def clear(self) -> None:\n+        self.records.clear()\n+        self.stream = StringIO()</search><replace>+    def clear(self) -> None:\n+        \"\"\"\n+        Reset only the log records for the current test phase.\n+        Records from earlier phases (e.g., \"setup\") are preserved.\n+        \"\"\"\n+        # Preserve records whose `when` attribute does not match the current phase.\n+        # The current phase is typically \"call\" when `clear()` is invoked during test execution.\n+        self.records = [rec for rec in self.records if getattr(rec, \"when\", None) != \"call\"]\n+        self.stream = StringIO()</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1487,
+  "prompt_tokens": 1650,
+  "total_tokens": 3137,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1212,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "caplog.clear() should only clear records for the current test phase.",
+ "requirement": "When `caplog.clear()` is called, it must reset only the log records that belong to the test phase in which the call occurs (e.g., the \u201ccall\u201d phase during test execution). Log records captured in earlier phases such as \u201csetup\u201d must remain accessible via `caplog.get_records()`. This requirement supersedes any earlier description that `clear()` resets all captured records.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "+    def clear(self) -> None:\n+        self.records.clear()\n+        self.stream = StringIO()",
+   "replace": "+    def clear(self) -> None:\n+        \"\"\"\n+        Reset only the log records for the current test phase.\n+        Records from earlier phases (e.g., \"setup\") are preserved.\n+        \"\"\"\n+        # Preserve records whose `when` attribute does not match the current phase.\n+        # The current phase is typically \"call\" when `clear()` is invoked during test execution.\n+        self.records = [rec for rec in self.records if getattr(rec, \"when\", None) != \"call\"]\n+        self.stream = StringIO()"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

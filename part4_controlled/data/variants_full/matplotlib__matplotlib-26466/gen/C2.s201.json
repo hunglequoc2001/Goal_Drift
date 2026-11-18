@@ -1,0 +1,121 @@
+{
+ "instance_id": "matplotlib__matplotlib-26466",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 12,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 21602,
+ "raw": "<summary>Arrays passed to Annotation and OffsetFrom must be stored by reference, not copied.</summary>\n<requirement>When an array is passed as the *xy* argument to an ``Annotation`` (or as *ref_coord* to ``OffsetFrom``), the implementation must keep a reference to the original array instead of copying its contents. Subsequent modifications to the array should affect the annotation or offset calculation. This supersedes any earlier expectation that the array would be copied.</requirement>\n<source_edit file=\"lib/matplotlib/text.py\"><search>x, y = ref_coord  # Make copy when ref_coord is an array (and check the shape).</search><replace>self._ref_coord = ref_coord</replace></source_edit>\n<source_edit file=\"lib/matplotlib/text.py\"><search>x, y = xy  # Make copy when xy is an array (and check the shape).</search><replace>self.xy = xy</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>@check_figures_equal(extensions=[\"png\"])</search><replace></replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>def test_annotate_and_offsetfrom_copy_input(fig_test, fig_ref):</search><replace>def test_annotate_and_offsetfrom_reference_input():</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>    # Both approaches place the text (10, 0) pixels away from the center of the line.</search><replace>    # Both approaches should reflect modifications to the input arrays.</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>    ax = fig_test.add_subplot()</search><replace>    fig_test = plt.figure()</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>    l, = ax.plot([0, 2], [0, 2])</search><replace>    ax = fig_test.add_subplot()\\n    l, = ax.plot([0, 2], [0, 2])</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>    ax.annotate(\"foo\", textcoords=OffsetFrom(l, of_xy), xytext=(10, 0),</search><replace>    ax.annotate(\"foo\", textcoords=OffsetFrom(l, of_xy), xytext=(10, 0), xy=(0, 0))</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>    of_xy[:] = 1</search><replace>    of_xy[:] = 1  # modify after creation</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>    ax = fig_ref.add_subplot()</search><replace>    fig_ref = plt.figure()</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>    l, = ax.plot([0, 2], [0, 2])</search><replace>    ax = fig_ref.add_subplot()\\n    l, = ax.plot([0, 2], [0, 2])</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>    ax.annotate(\"foo\", xy=an_xy, xycoords=l, xytext=(10, 0), textcoords=\"offset points\")</search><replace>    ax.annotate(\"foo\", xy=an_xy, xycoords=l, xytext=(10, 0), textcoords=\"offset points\")</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>    an_xy[:] = 2</search><replace>    an_xy[:] = 2</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search># Render both figures to arrays and ensure they differ.</search><replace>    # Render both figures to arrays and ensure they differ.</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>    fig_test.canvas.draw()</search><replace>    fig_test.canvas.draw()\\n    img_test = np.frombuffer(fig_test.canvas.tostring_rgb(), dtype=np.uint8)</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>    fig_ref.canvas.draw()</search><replace>    fig_ref.canvas.draw()\\n    img_ref = np.frombuffer(fig_ref.canvas.tostring_rgb(), dtype=np.uint8)</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>    assert not np.array_equal(img_test, img_ref)</search><replace>    assert not np.array_equal(img_test, img_ref)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Arrays passed to Annotation and OffsetFrom must be stored by reference, not copied.",
+ "requirement": "When an array is passed as the *xy* argument to an ``Annotation`` (or as *ref_coord* to ``OffsetFrom``), the implementation must keep a reference to the original array instead of copying its contents. Subsequent modifications to the array should affect the annotation or offset calculation. This supersedes any earlier expectation that the array would be copied.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/text.py",
+   "search": "x, y = ref_coord  # Make copy when ref_coord is an array (and check the shape).",
+   "replace": "self._ref_coord = ref_coord"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/text.py",
+   "search": "x, y = xy  # Make copy when xy is an array (and check the shape).",
+   "replace": "self.xy = xy"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "@check_figures_equal(extensions=[\"png\"])",
+   "replace": ""
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "def test_annotate_and_offsetfrom_copy_input(fig_test, fig_ref):",
+   "replace": "def test_annotate_and_offsetfrom_reference_input():"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "    # Both approaches place the text (10, 0) pixels away from the center of the line.",
+   "replace": "    # Both approaches should reflect modifications to the input arrays."
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "    ax = fig_test.add_subplot()",
+   "replace": "    fig_test = plt.figure()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "    l, = ax.plot([0, 2], [0, 2])",
+   "replace": "    ax = fig_test.add_subplot()\\n    l, = ax.plot([0, 2], [0, 2])"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "    ax.annotate(\"foo\", textcoords=OffsetFrom(l, of_xy), xytext=(10, 0),",
+   "replace": "    ax.annotate(\"foo\", textcoords=OffsetFrom(l, of_xy), xytext=(10, 0), xy=(0, 0))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "    of_xy[:] = 1",
+   "replace": "    of_xy[:] = 1  # modify after creation"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "    ax = fig_ref.add_subplot()",
+   "replace": "    fig_ref = plt.figure()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "    l, = ax.plot([0, 2], [0, 2])",
+   "replace": "    ax = fig_ref.add_subplot()\\n    l, = ax.plot([0, 2], [0, 2])"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "    ax.annotate(\"foo\", xy=an_xy, xycoords=l, xytext=(10, 0), textcoords=\"offset points\")",
+   "replace": "    ax.annotate(\"foo\", xy=an_xy, xycoords=l, xytext=(10, 0), textcoords=\"offset points\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "    an_xy[:] = 2",
+   "replace": "    an_xy[:] = 2"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "# Render both figures to arrays and ensure they differ.",
+   "replace": "    # Render both figures to arrays and ensure they differ."
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "    fig_test.canvas.draw()",
+   "replace": "    fig_test.canvas.draw()\\n    img_test = np.frombuffer(fig_test.canvas.tostring_rgb(), dtype=np.uint8)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "    fig_ref.canvas.draw()",
+   "replace": "    fig_ref.canvas.draw()\\n    img_ref = np.frombuffer(fig_ref.canvas.tostring_rgb(), dtype=np.uint8)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "    assert not np.array_equal(img_test, img_ref)",
+   "replace": "    assert not np.array_equal(img_test, img_ref)"
+  }
+ ]
+}

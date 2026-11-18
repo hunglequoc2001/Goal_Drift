@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-24066",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "fbb0d3b16f93cd6d007b953c498c940ed7a842b1082139387218c4577a9388e1",
+ "raw": "<summary>Function dimensions are now the product of their arguments\u2019 dimensions, not a tuple of each.</summary>\n<requirement>All functions should be assigned a single dimension equal to the product of the dimensions of their arguments, treating any dimensionless argument as Dimension(1). This supersedes any previous expectation that a function returns a tuple of dimensions for each argument.</requirement>\n<source_edit file=\"sympy/physics/units/unitsystem.py\"><search>return (expr.func(*(f[0] for f in fds)), *dims)</search><replace>total_dim = Mul(*dims)\\n            return (expr.func(*(f[0] for f in fds)), total_dim)</replace></source_edit>\n<test_edit file=\"sympy/physics/units/tests/test_quantities.py\"><search>assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))</search><replace>assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))\\n\\n\\ndef test_issue_custom_function_dimension_product():\\n    from sympy import Function\\n    from sympy.physics.units import length, time, meter, second\\n    from sympy.physics.units import Quantity, SI\\n\\n    L = Quantity('L')\\n    T = Quantity('T')\\n    SI.set_quantity_dimension(L, length)\\n    SI.set_quantity_dimension(T, time)\\n    L.set_global_relative_scale_factor(1, meter)\\n    T.set_global_relative_scale_factor(1, second)\\n\\n    class MyFunc(Function):\\n        pass\\n\\n    expr = MyFunc(L, T)\\n    factor, dim = SI._collect_factor_and_dimension(expr)\\n    expected_dim = length * time\\n    assert dim == expected_dim</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1985,
+  "prompt_tokens": 1279,
+  "total_tokens": 3264,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1593,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Function dimensions are now the product of their arguments\u2019 dimensions, not a tuple of each.",
+ "requirement": "All functions should be assigned a single dimension equal to the product of the dimensions of their arguments, treating any dimensionless argument as Dimension(1). This supersedes any previous expectation that a function returns a tuple of dimensions for each argument.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/physics/units/unitsystem.py",
+   "search": "return (expr.func(*(f[0] for f in fds)), *dims)",
+   "replace": "total_dim = Mul(*dims)\\n            return (expr.func(*(f[0] for f in fds)), total_dim)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/physics/units/tests/test_quantities.py",
+   "search": "assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))",
+   "replace": "assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))\\n\\n\\ndef test_issue_custom_function_dimension_product():\\n    from sympy import Function\\n    from sympy.physics.units import length, time, meter, second\\n    from sympy.physics.units import Quantity, SI\\n\\n    L = Quantity('L')\\n    T = Quantity('T')\\n    SI.set_quantity_dimension(L, length)\\n    SI.set_quantity_dimension(T, time)\\n    L.set_global_relative_scale_factor(1, meter)\\n    T.set_global_relative_scale_factor(1, second)\\n\\n    class MyFunc(Function):\\n        pass\\n\\n    expr = MyFunc(L, T)\\n    factor, dim = SI._collect_factor_and_dimension(expr)\\n    expected_dim = length * time\\n    assert dim == expected_dim"
+  }
+ ],
+ "status": "generated"
+}

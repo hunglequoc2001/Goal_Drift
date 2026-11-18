@@ -1,0 +1,43 @@
+{
+ "instance_id": "mwaskom__seaborn-3187",
+ "kind": "B2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "masked": "Wrong legend values of large ranges\nAs of \u27e6P1\u27e7, legends describing large numbers that were created using \u27e6P2\u27e7 with an offset are formatted without their multiplicative offset value. An example:\n\u27e6P3\u27e7\nThe code creates the following plot:\n![image](\u27e6P4\u27e7\nwhich is wrong because \u27e6P5\u27e7 is in the order of 1E6. The issue also reproduces if you create the mentioned plot using \u27e6P6\u27e7.\n \nI believe the issue stems from not using the offset value of the \u27e6P7\u27e7 used to generate the tick labels:\n\u27e6P8\u27e7\nExamining the code of \u27e6P9\u27e7 suggests the issue also depends on the following \u27e6P10\u27e7 settings:\n\u27e6P11\u27e7\n\u27e6P12\u27e7\nHowever, I did not test it. \n\nThe offset value can be safely retrieved from all formatters and based on that it can be used to create the legend title \u27e6P13\u27e7 labels.\n",
+ "spans": [
+  "0.12.1",
+  "`ScalarFormatter`",
+  "```python\nimport seaborn as sns\nimport seaborn.objects as so\n\npenguins = sns.load_dataset(\"Penguins\")\npenguins[\"body_mass_mg\"] = penguins[\"body_mass_g\"]*1000\n(\n    so.Plot(\n        penguins, x=\"bill_length_mm\", y=\"bill_depth_mm\",\n        color=\"species\", pointsize=\"body_mass_mg\",\n    )\n    .add(so.Dot())\n)\n```",
+  "https://user-images.githubusercontent.com/13831112/205512305-778966db-f8d8-43f3-a2c0-5e5ce95bae39.png)",
+  "`body_mass_mg`",
+  "`scatterplot`",
+  "`ScalarFormatter`",
+  "https://github.com/mwaskom/seaborn/blob/ba786bc14eb255f6b4fb7619c8210c5a8016a26f/seaborn/_core/scales.py#L377-L382",
+  "`ScalarFormatter`",
+  "rcParam",
+  "`mpl.rcParams['axes.formatter.useoffset']`",
+  "`mpl.rcParams['axes.formatter.offset_threshold']`",
+  "and/or"
+ ],
+ "prompt_sha256": "10733cc9e5c0a2d23d69f6b650b46886c3dbfa9205d0fb8f2f015515bd08b033",
+ "raw": "<rewrite>\n**Incorrect legend entries for large ranges**\n\nWhen using \u27e6P2\u27e7 with an offset, the legends that describe large numbers (as of \u27e6P1\u27e7) omit the multiplicative offset from their labels. For illustration, consider the following snippet:\n\n\u27e6P3\u27e7\n\nRunning this code produces a plot:\n\n![image](\u27e6P4\u27e7\n\nThe result is incorrect because the value represented by \u27e6P5\u27e7 is on the order of 1\u202f\u00d7\u202f10\u2076. The same problem appears when the plot is generated via \u27e6P6\u27e7.\n\nThe root cause appears to be that the offset supplied by the \u27e6P7\u27e7, which is responsible for generating the tick labels, is never consulted:\n\n\u27e6P8\u27e7\n\nA look at the implementation of \u27e6P9\u27e7 indicates that the behaviour also hinges on the following \u27e6P10\u27e7 configuration options:\n\n\u27e6P11\u27e7  \n\u27e6P12\u27e7  \n\n(These settings have not been experimentally verified.)\n\nNevertheless, the offset can be obtained from any formatter, and that information could be used to construct the correct legend\u2011title \u27e6P13\u27e7 labels.\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1094,
+  "prompt_tokens": 533,
+  "total_tokens": 1627,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 805,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "**Incorrect legend entries for large ranges**\n\nWhen using \u27e6P2\u27e7 with an offset, the legends that describe large numbers (as of \u27e6P1\u27e7) omit the multiplicative offset from their labels. For illustration, consider the following snippet:\n\n\u27e6P3\u27e7\n\nRunning this code produces a plot:\n\n![image](\u27e6P4\u27e7\n\nThe result is incorrect because the value represented by \u27e6P5\u27e7 is on the order of 1\u202f\u00d7\u202f10\u2076. The same problem appears when the plot is generated via \u27e6P6\u27e7.\n\nThe root cause appears to be that the offset supplied by the \u27e6P7\u27e7, which is responsible for generating the tick labels, is never consulted:\n\n\u27e6P8\u27e7\n\nA look at the implementation of \u27e6P9\u27e7 indicates that the behaviour also hinges on the following \u27e6P10\u27e7 configuration options:\n\n\u27e6P11\u27e7  \n\u27e6P12\u27e7  \n\n(These settings have not been experimentally verified.)\n\nNevertheless, the offset can be obtained from any formatter, and that information could be used to construct the correct legend\u2011title \u27e6P13\u27e7 labels.",
+ "rewrite": "**Incorrect legend entries for large ranges**\n\nWhen using `ScalarFormatter` with an offset, the legends that describe large numbers (as of 0.12.1) omit the multiplicative offset from their labels. For illustration, consider the following snippet:\n\n```python\nimport seaborn as sns\nimport seaborn.objects as so\n\npenguins = sns.load_dataset(\"Penguins\")\npenguins[\"body_mass_mg\"] = penguins[\"body_mass_g\"]*1000\n(\n    so.Plot(\n        penguins, x=\"bill_length_mm\", y=\"bill_depth_mm\",\n        color=\"species\", pointsize=\"body_mass_mg\",\n    )\n    .add(so.Dot())\n)\n```\n\nRunning this code produces a plot:\n\n![image](https://user-images.githubusercontent.com/13831112/205512305-778966db-f8d8-43f3-a2c0-5e5ce95bae39.png)\n\nThe result is incorrect because the value represented by `body_mass_mg` is on the order of 1\u202f\u00d7\u202f10\u2076. The same problem appears when the plot is generated via `scatterplot`.\n\nThe root cause appears to be that the offset supplied by the `ScalarFormatter`, which is responsible for generating the tick labels, is never consulted:\n\nhttps://github.com/mwaskom/seaborn/blob/ba786bc14eb255f6b4fb7619c8210c5a8016a26f/seaborn/_core/scales.py#L377-L382\n\nA look at the implementation of `ScalarFormatter` indicates that the behaviour also hinges on the following rcParam configuration options:\n\n`mpl.rcParams['axes.formatter.useoffset']`  \n`mpl.rcParams['axes.formatter.offset_threshold']`  \n\n(These settings have not been experimentally verified.)\n\nNevertheless, the offset can be obtained from any formatter, and that information could be used to construct the correct legend\u2011title and/or labels.",
+ "status": "generated"
+}

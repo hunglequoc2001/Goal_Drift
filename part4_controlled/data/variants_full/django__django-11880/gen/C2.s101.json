@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-11880",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 15009,
+ "raw": "<summary>Deep\u2011copy the field\u2019s\u202ferror_messages dict instead of shallow\u2011copying it.</summary>\n<requirement>When a form field is deep\u2011copied, its\u202f`error_messages` attribute must be a deep copy of the original dictionary (i.e., any mutable objects inside the dictionary must also be copied). This supersedes any previous expectation that a shallow copy of the dictionary is sufficient.</requirement>\n<source_edit file=\"django/forms/fields.py\"><search>result.error_messages = self.error_messages.copy()</search><replace>result.error_messages = copy.deepcopy(self.error_messages, memo)</replace></source_edit>\n<test_edit file=\"tests/forms_tests/tests/test_forms.py\"><search>kwargs['error_messages'] = {'invalid': 'Form custom error message.'}</search><replace>kwargs['error_messages'] = {'invalid': ['Form custom error message.']}</replace></test_edit>\n<test_edit file=\"tests/forms_tests/tests/test_forms.py\"><search>self.assertIsNot(field_copy.error_messages, field.error_messages)</search><replace>self.assertIsNot(field_copy.error_messages, field.error_messages)\n        # modify a nested mutable object in the copy and ensure the original is unchanged\n        field_copy.error_messages['invalid'].append('another')\n        self.assertEqual(field.error_messages['invalid'], ['Form custom error message.'])\n        self.assertEqual(field_copy.error_messages['invalid'], ['Form custom error message.', 'another'])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Deep\u2011copy the field\u2019s\u202ferror_messages dict instead of shallow\u2011copying it.",
+ "requirement": "When a form field is deep\u2011copied, its\u202f`error_messages` attribute must be a deep copy of the original dictionary (i.e., any mutable objects inside the dictionary must also be copied). This supersedes any previous expectation that a shallow copy of the dictionary is sufficient.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/fields.py",
+   "search": "result.error_messages = self.error_messages.copy()",
+   "replace": "result.error_messages = copy.deepcopy(self.error_messages, memo)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_forms.py",
+   "search": "kwargs['error_messages'] = {'invalid': 'Form custom error message.'}",
+   "replace": "kwargs['error_messages'] = {'invalid': ['Form custom error message.']}"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_forms.py",
+   "search": "self.assertIsNot(field_copy.error_messages, field.error_messages)",
+   "replace": "self.assertIsNot(field_copy.error_messages, field.error_messages)\n        # modify a nested mutable object in the copy and ensure the original is unchanged\n        field_copy.error_messages['invalid'].append('another')\n        self.assertEqual(field.error_messages['invalid'], ['Form custom error message.'])\n        self.assertEqual(field_copy.error_messages['invalid'], ['Form custom error message.', 'another'])"
+  }
+ ]
+}

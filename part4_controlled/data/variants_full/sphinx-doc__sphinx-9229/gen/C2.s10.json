@@ -1,0 +1,49 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9229",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "c0cc236adb5b21025892a9e04fb6bbce6ca2bf4f6f7df962f9fddffd0d343d03",
+ "raw": "<summary>Alias documentation should only be taken from string literals, not from preceding comment lines.</summary>\n<requirement>When a type alias is defined, only a docstring that appears as a literal string immediately after the assignment should be used as its documentation. Comment lines (e.g., `#: ...`) placed before the alias must be ignored, and the generated documentation should fall back to the default \u201calias of \u2026\u201d text. This requirement supersedes any previous expectation that comment lines would be treated as docstrings for aliases.</requirement>\n\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>comment = self.get_variable_comment()\n            if comment:\n                return []\n            else:\n                return None</search><replace>return None</replace></source_edit>\n\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>if self.doc_as_attr and not self.get_variable_comment():</search><replace>if self.doc_as_attr:</replace></source_edit>\n\n<test_edit file=\"tests/test_ext_autodoc_autoclass.py\"><search>[\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   docstring',\n        '',\n    ]</search><replace>[\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   alias of :class:`target.classes.Bar`',\n        '',\n    ]</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1371,
+  "prompt_tokens": 2230,
+  "total_tokens": 3601,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1053,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Alias documentation should only be taken from string literals, not from preceding comment lines.",
+ "requirement": "When a type alias is defined, only a docstring that appears as a literal string immediately after the assignment should be used as its documentation. Comment lines (e.g., `#: ...`) placed before the alias must be ignored, and the generated documentation should fall back to the default \u201calias of \u2026\u201d text. This requirement supersedes any previous expectation that comment lines would be treated as docstrings for aliases.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "comment = self.get_variable_comment()\n            if comment:\n                return []\n            else:\n                return None",
+   "replace": "return None"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "if self.doc_as_attr and not self.get_variable_comment():",
+   "replace": "if self.doc_as_attr:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_autoclass.py",
+   "search": "[\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   docstring',\n        '',\n    ]",
+   "replace": "[\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   alias of :class:`target.classes.Bar`',\n        '',\n    ]"
+  }
+ ],
+ "status": "generated"
+}

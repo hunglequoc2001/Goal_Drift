@@ -1,0 +1,36 @@
+{
+ "instance_id": "matplotlib__matplotlib-24970",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "57c1f7001a19c466f662b61f12b06ccb251785d8da5f49bcafe67775283e61c2",
+ "raw": "<summary>Integer inputs are now upcast before arithmetic to avoid overflow.</summary>\n<requirement>Update the colormap __call__ implementation so that when the input array has an integer dtype (including unsigned types such as uint8), it is first converted to a signed integer type of at least 64 bits before any arithmetic (e.g., multiplication by the colormap size). This conversion must happen prior to the clipping and indexing steps, ensuring that integer overflow does not occur. This supersedes any previous expectation that the original dtype could be used directly for the arithmetic.</requirement>\n<source_edit file=\"lib/matplotlib/colors.py\"><search>if xa.dtype.kind == \"f\":\n            xa *= self.N\n            # Negative values are out of range, but astype(int) would\n            # truncate them towards zero.\n            xa[xa < 0] = -1\n            # xa == 1 (== N after multiplication) is not out of range.\n            xa[xa == self.N] = self.N - 1\n            # Avoid converting large positive values to negative integers.\n            np.clip(xa, -1, self.N, out=xa)</search><replace>if xa.dtype.kind == \"f\":\n            xa *= self.N\n        elif xa.dtype.kind in (\"i\", \"u\"):\n            # Upcast integer types (including unsigned) to a signed 64\u2011bit integer\n            # before any arithmetic to avoid overflow.\n            xa = xa.astype(np.int64)\n            xa *= self.N\n        # Negative values are out of range, but astype(int) would\n        # truncate them towards zero.\n        xa[xa < 0] = -1\n        # xa == 1 (== N after multiplication) is not out of range.\n        xa[xa == self.N] = self.N - 1\n        # Avoid converting large positive values to negative integers.\n        np.clip(xa, -1, self.N, out=xa)</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1622,
+  "prompt_tokens": 1588,
+  "total_tokens": 3210,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1198,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Integer inputs are now upcast before arithmetic to avoid overflow.",
+ "requirement": "Update the colormap __call__ implementation so that when the input array has an integer dtype (including unsigned types such as uint8), it is first converted to a signed integer type of at least 64 bits before any arithmetic (e.g., multiplication by the colormap size). This conversion must happen prior to the clipping and indexing steps, ensuring that integer overflow does not occur. This supersedes any previous expectation that the original dtype could be used directly for the arithmetic.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/colors.py",
+   "search": "if xa.dtype.kind == \"f\":\n            xa *= self.N\n            # Negative values are out of range, but astype(int) would\n            # truncate them towards zero.\n            xa[xa < 0] = -1\n            # xa == 1 (== N after multiplication) is not out of range.\n            xa[xa == self.N] = self.N - 1\n            # Avoid converting large positive values to negative integers.\n            np.clip(xa, -1, self.N, out=xa)",
+   "replace": "if xa.dtype.kind == \"f\":\n            xa *= self.N\n        elif xa.dtype.kind in (\"i\", \"u\"):\n            # Upcast integer types (including unsigned) to a signed 64\u2011bit integer\n            # before any arithmetic to avoid overflow.\n            xa = xa.astype(np.int64)\n            xa *= self.N\n        # Negative values are out of range, but astype(int) would\n        # truncate them towards zero.\n        xa[xa < 0] = -1\n        # xa == 1 (== N after multiplication) is not out of range.\n        xa[xa == self.N] = self.N - 1\n        # Avoid converting large positive values to negative integers.\n        np.clip(xa, -1, self.N, out=xa)"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

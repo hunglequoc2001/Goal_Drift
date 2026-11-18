@@ -1,0 +1,61 @@
+{
+ "instance_id": "sphinx-doc__sphinx-7748",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "db022c2a9f3a92a77cb1f7de7e4f95b81a615bace2075294e23a2757126fb0d5",
+ "raw": "<summary>Only the first signature in a docstring should be used; subsequent signatures must be ignored.</summary>\n<requirement>When extracting signatures from a docstring, autodoc must consider only the first matching signature line. Any additional signatures, even if indicated by a line continuation (a trailing backslash), must be ignored. This supersedes any previous expectation that multiple signatures could be collected and displayed.</requirement>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>for j, line in enumerate(doclines):</search><replace>            # no lines in docstring, no match\n            if not doclines:\n                continue\n            # match first line of docstring against signature RE\n            match = py_ext_sig_re.match(doclines[0])\n            if not match:\n                continue\n            exmod, path, base, args, retann = match.groups()\n            # the base name must match ours\n            valid_names = [self.objpath[-1]]  # type: ignore\n            if isinstance(self, ClassDocumenter):\n                valid_names.append('__init__')\n                if hasattr(self.object, '__mro__'):\n                    valid_names.extend(cls.__name__ for cls in self.object.__mro__)\n            if base not in valid_names:\n                continue\n            # re-prepare docstring to ignore more leading indentation\n            tab_width = self.directive.state.document.settings.tab_width  # type: ignore\n            self._new_docstrings[i] = prepare_docstring('\\n'.join(doclines[1:]),\n                                                        tabsize=tab_width)\n            result = args, retann\n            # don't look any further\n            break</replace></source_edit>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>_signatures = None</search><replace></replace></source_edit>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>if self._signatures:</search><replace>return sig</replace></source_edit>\n<test_edit file=\"tests/test_ext_autodoc_configs.py\"><search>              E(foo: str, bar: str, baz: str) -> None',</search><replace></replace></test_edit>\n<test_edit file=\"tests/test_ext_autodoc_configs.py\"><search>              E(foo: str, bar: str, baz: str) -> None',</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3858,
+  "prompt_tokens": 2463,
+  "total_tokens": 6321,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 3343,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Only the first signature in a docstring should be used; subsequent signatures must be ignored.",
+ "requirement": "When extracting signatures from a docstring, autodoc must consider only the first matching signature line. Any additional signatures, even if indicated by a line continuation (a trailing backslash), must be ignored. This supersedes any previous expectation that multiple signatures could be collected and displayed.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "for j, line in enumerate(doclines):",
+   "replace": "            # no lines in docstring, no match\n            if not doclines:\n                continue\n            # match first line of docstring against signature RE\n            match = py_ext_sig_re.match(doclines[0])\n            if not match:\n                continue\n            exmod, path, base, args, retann = match.groups()\n            # the base name must match ours\n            valid_names = [self.objpath[-1]]  # type: ignore\n            if isinstance(self, ClassDocumenter):\n                valid_names.append('__init__')\n                if hasattr(self.object, '__mro__'):\n                    valid_names.extend(cls.__name__ for cls in self.object.__mro__)\n            if base not in valid_names:\n                continue\n            # re-prepare docstring to ignore more leading indentation\n            tab_width = self.directive.state.document.settings.tab_width  # type: ignore\n            self._new_docstrings[i] = prepare_docstring('\\n'.join(doclines[1:]),\n                                                        tabsize=tab_width)\n            result = args, retann\n            # don't look any further\n            break"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "_signatures = None",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "if self._signatures:",
+   "replace": "return sig"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_configs.py",
+   "search": "              E(foo: str, bar: str, baz: str) -> None',",
+   "replace": ""
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_configs.py",
+   "search": "              E(foo: str, bar: str, baz: str) -> None',",
+   "replace": ""
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,37 @@
+{
+ "instance_id": "sympy__sympy-15017",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 14519,
+ "raw": "<summary>Scalar (rank\u20110) immutable NDimArray objects report length\u202f0 and reject integer indexing.</summary>\n<requirement>For immutable dense N\u2011dimensional arrays that represent a scalar (i.e., have rank\u202f0 and shape\u202f()), the built\u2011in ``len`` must return\u202f0 (the number of top\u2011level elements) and any attempt to index the array with a scalar integer (e.g., ``arr[0]``) must raise a ``ValueError``. This supersedes any conflicting expectation that such arrays have length\u202f1 or allow scalar integer indexing.</requirement>\n\n<source_edit file=\"sympy/tensor/array/dense_ndim_array.py\"><search>self._loop_size = functools.reduce(lambda x,y: x*y, shape, 1)</search><replace>self._loop_size = functools.reduce(lambda x,y: x*y, shape) if shape else 0</replace></source_edit>\n\n<test_edit file=\"sympy/tensor/array/tests/test_immutable_ndim_array.py\"><search>assert len(rank_zero_array) == 1</search><replace>assert len(rank_zero_array) == 0</replace></test_edit>\n<test_edit file=\"sympy/tensor/array/tests/test_immutable_ndim_array.py\"><search>assert rank_zero_array[0] == x</search><replace>raises(ValueError, lambda: rank_zero_array[0])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Scalar (rank\u20110) immutable NDimArray objects report length\u202f0 and reject integer indexing.",
+ "requirement": "For immutable dense N\u2011dimensional arrays that represent a scalar (i.e., have rank\u202f0 and shape\u202f()), the built\u2011in ``len`` must return\u202f0 (the number of top\u2011level elements) and any attempt to index the array with a scalar integer (e.g., ``arr[0]``) must raise a ``ValueError``. This supersedes any conflicting expectation that such arrays have length\u202f1 or allow scalar integer indexing.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/tensor/array/dense_ndim_array.py",
+   "search": "self._loop_size = functools.reduce(lambda x,y: x*y, shape, 1)",
+   "replace": "self._loop_size = functools.reduce(lambda x,y: x*y, shape) if shape else 0"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/tensor/array/tests/test_immutable_ndim_array.py",
+   "search": "assert len(rank_zero_array) == 1",
+   "replace": "assert len(rank_zero_array) == 0"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/tensor/array/tests/test_immutable_ndim_array.py",
+   "search": "assert rank_zero_array[0] == x",
+   "replace": "raises(ValueError, lambda: rank_zero_array[0])"
+  }
+ ]
+}

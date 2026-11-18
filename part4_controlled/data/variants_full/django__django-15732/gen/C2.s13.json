@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-15732",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "20af06a99b530690c675617cacd47d3864f2d2aaf7429317cb83265b154f9fa9",
+ "raw": "<summary>Dropping a unique_together that duplicates a field\u2019s own unique constraint must now raise an error.</summary>\n<requirement>When a model defines a field with\u202funique=True\u202fand also includes that same field alone in a\u202funique_together\u202fset, attempting to remove the\u202funique_together\u202fconstraint should raise a\u202fValueError\u202findicating that multiple matching unique constraints exist. This requirement overrides any prior expectation that the migration would silently drop only the\u202funique_together\u202fconstraint.</requirement>\n\n<source_edit file=\"django/db/backends/base/schema.py\"><search>and self.connection.features.allows_multiple_constraints_on_same_fields</search><replace>and False</replace></source_edit>\n\n<test_edit file=\"tests/migrations/test_operations.py\"><search>with connection.schema_editor() as editor:\n            operation.database_forwards(app_label, editor, project_state, new_state)\n        self.assertConstraintExists(table_name, unique_constraint_name, value=False)\n        self.assertConstraintNotExists(table_name, unique_together_constraint_name)</search><replace>with connection.schema_editor() as editor:\n            with self.assertRaisesMessage(ValueError, \"Found wrong number\"):\n                operation.database_forwards(app_label, editor, project_state, new_state)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2451,
+  "prompt_tokens": 2042,
+  "total_tokens": 4493,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2181,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Dropping a unique_together that duplicates a field\u2019s own unique constraint must now raise an error.",
+ "requirement": "When a model defines a field with\u202funique=True\u202fand also includes that same field alone in a\u202funique_together\u202fset, attempting to remove the\u202funique_together\u202fconstraint should raise a\u202fValueError\u202findicating that multiple matching unique constraints exist. This requirement overrides any prior expectation that the migration would silently drop only the\u202funique_together\u202fconstraint.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/backends/base/schema.py",
+   "search": "and self.connection.features.allows_multiple_constraints_on_same_fields",
+   "replace": "and False"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/migrations/test_operations.py",
+   "search": "with connection.schema_editor() as editor:\n            operation.database_forwards(app_label, editor, project_state, new_state)\n        self.assertConstraintExists(table_name, unique_constraint_name, value=False)\n        self.assertConstraintNotExists(table_name, unique_together_constraint_name)",
+   "replace": "with connection.schema_editor() as editor:\n            with self.assertRaisesMessage(ValueError, \"Found wrong number\"):\n                operation.database_forwards(app_label, editor, project_state, new_state)"
+  }
+ ],
+ "status": "generated"
+}

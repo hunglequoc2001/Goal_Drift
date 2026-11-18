@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-12143",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 12,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 18324,
+ "raw": "<summary>Do not escape the formset prefix when building the primary\u2011key regex.</summary>\n<requirement>The regular expression used to locate edited object primary keys in the admin change view must be compiled without escaping the provided formset prefix; any special regex characters in the prefix should be interpreted as regular expression operators, not as literal characters. This supersedes any earlier expectation that the prefix be escaped.</requirement>\n<source_edit file=\"django/contrib/admin/options.py\"><search>pk_pattern = re.compile(\n            r'{}-\\d+-{}$'.format(re.escape(prefix), self.model._meta.pk.name)\n        )</search><replace>pk_pattern = re.compile(\n            r'{}-\\d+-{}$'.format(prefix, self.model._meta.pk.name)\n        )</replace></source_edit>\n<test_edit file=\"tests/admin_changelist/tests.py\"><search>queryset = m._get_list_editable_queryset(request, prefix='form$')\n        self.assertEqual(queryset.count(), 1)</search><replace>queryset = m._get_list_editable_queryset(request, prefix='form$')\n        self.assertEqual(queryset.count(), 0)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Do not escape the formset prefix when building the primary\u2011key regex.",
+ "requirement": "The regular expression used to locate edited object primary keys in the admin change view must be compiled without escaping the provided formset prefix; any special regex characters in the prefix should be interpreted as regular expression operators, not as literal characters. This supersedes any earlier expectation that the prefix be escaped.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admin/options.py",
+   "search": "pk_pattern = re.compile(\n            r'{}-\\d+-{}$'.format(re.escape(prefix), self.model._meta.pk.name)\n        )",
+   "replace": "pk_pattern = re.compile(\n            r'{}-\\d+-{}$'.format(prefix, self.model._meta.pk.name)\n        )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_changelist/tests.py",
+   "search": "queryset = m._get_list_editable_queryset(request, prefix='form$')\n        self.assertEqual(queryset.count(), 1)",
+   "replace": "queryset = m._get_list_editable_queryset(request, prefix='form$')\n        self.assertEqual(queryset.count(), 0)"
+  }
+ ]
+}

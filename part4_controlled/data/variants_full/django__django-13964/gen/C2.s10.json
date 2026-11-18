@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-13964",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "39a39f501e3943efa68fb68ca29f3646835fbeb00fc023ab927d73fd6b0c08fa",
+ "raw": "<summary>ForeignKey fields are no longer auto\u2011populated from a related object's primary key after that object is saved.</summary>\n<requirement>When a foreign\u2011key field is assigned an unsaved related instance, the foreign\u2011key column must remain unset (i.e., stay None) even if the related instance is saved later and obtains a primary\u2011key value. The foreign\u2011key will only be set explicitly by the developer; this supersedes any previous expectation that the ORM should automatically copy the related object's primary key after it is saved.</requirement>\n<source_edit file=\"django/db/models/base.py\"><search>elif getattr(self, field.attname) in field.empty_values:</search><replace>elif False:</replace></source_edit>\n<test_edit file=\"tests/many_to_one/tests.py\"><search>child.parent.name = 'jeff'</search><replace>child.parent.name = 'jeff'\n        parent.save()\n        from django.db import IntegrityError\n        with self.assertRaises(IntegrityError):\n            child.save()\n        # The foreign\u2011key field should still be unset.\n        self.assertIsNone(child.parent_id)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2282,
+  "prompt_tokens": 1654,
+  "total_tokens": 3936,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2034,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "ForeignKey fields are no longer auto\u2011populated from a related object's primary key after that object is saved.",
+ "requirement": "When a foreign\u2011key field is assigned an unsaved related instance, the foreign\u2011key column must remain unset (i.e., stay None) even if the related instance is saved later and obtains a primary\u2011key value. The foreign\u2011key will only be set explicitly by the developer; this supersedes any previous expectation that the ORM should automatically copy the related object's primary key after it is saved.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/base.py",
+   "search": "elif getattr(self, field.attname) in field.empty_values:",
+   "replace": "elif False:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/many_to_one/tests.py",
+   "search": "child.parent.name = 'jeff'",
+   "replace": "child.parent.name = 'jeff'\n        parent.save()\n        from django.db import IntegrityError\n        with self.assertRaises(IntegrityError):\n            child.save()\n        # The foreign\u2011key field should still be unset.\n        self.assertIsNone(child.parent_id)"
+  }
+ ],
+ "status": "generated"
+}

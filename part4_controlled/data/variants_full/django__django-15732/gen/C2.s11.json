@@ -1,0 +1,36 @@
+{
+ "instance_id": "django__django-15732",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "20af06a99b530690c675617cacd47d3864f2d2aaf7429317cb83265b154f9fa9",
+ "raw": "<summary>Delete the unique_together constraint rather than the field\u2019s unique constraint when both exist.</summary>\n<requirement>When dropping a `unique_together` constraint on a set of fields that also includes a field declared with `unique=True`, the migration must remove the constraint whose automatically\u2011generated name ends with \u201c_uniq\u201d (the unique_together constraint) and leave any other unique constraints (including the one created for the `unique=True` field) untouched. This supersedes any earlier description that suggested preferring the default unique\u2011constraint name.</requirement>\n<source_edit file=\"django/db/backends/base/schema.py\"><search>\nif (\n    constraint_kwargs.get(\"unique\") is True\n    and constraint_names\n    and self.connection.features.allows_multiple_constraints_on_same_fields\n):\n    # Constraint matching the unique_together name.\n    default_name = str(\n        self._unique_constraint_name(model._meta.db_table, columns, quote=False)\n    )\n    if default_name in constraint_names:\n        constraint_names = [default_name]\n</search><replace>\nif (\n    constraint_kwargs.get(\"unique\") is True\n    and constraint_names\n    and self.connection.features.allows_multiple_constraints_on_same_fields\n):\n    # Prefer the constraint that matches the unique_together naming pattern.\n    uniq_name = next((n for n in constraint_names if n.endswith(\"_uniq\")), None)\n    if uniq_name:\n        constraint_names = [uniq_name]\n</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1779,
+  "prompt_tokens": 2042,
+  "total_tokens": 3821,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1467,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Delete the unique_together constraint rather than the field\u2019s unique constraint when both exist.",
+ "requirement": "When dropping a `unique_together` constraint on a set of fields that also includes a field declared with `unique=True`, the migration must remove the constraint whose automatically\u2011generated name ends with \u201c_uniq\u201d (the unique_together constraint) and leave any other unique constraints (including the one created for the `unique=True` field) untouched. This supersedes any earlier description that suggested preferring the default unique\u2011constraint name.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/backends/base/schema.py",
+   "search": "if (\n    constraint_kwargs.get(\"unique\") is True\n    and constraint_names\n    and self.connection.features.allows_multiple_constraints_on_same_fields\n):\n    # Constraint matching the unique_together name.\n    default_name = str(\n        self._unique_constraint_name(model._meta.db_table, columns, quote=False)\n    )\n    if default_name in constraint_names:\n        constraint_names = [default_name]",
+   "replace": "if (\n    constraint_kwargs.get(\"unique\") is True\n    and constraint_names\n    and self.connection.features.allows_multiple_constraints_on_same_fields\n):\n    # Prefer the constraint that matches the unique_together naming pattern.\n    uniq_name = next((n for n in constraint_names if n.endswith(\"_uniq\")), None)\n    if uniq_name:\n        constraint_names = [uniq_name]"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

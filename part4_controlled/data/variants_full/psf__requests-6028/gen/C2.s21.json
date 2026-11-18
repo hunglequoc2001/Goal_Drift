@@ -1,0 +1,49 @@
+{
+ "instance_id": "psf__requests-6028",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "ccc18478eb35f7d0081244a61c6fc77d502abd31b42f34644abd66f752f79530",
+ "raw": "<summary>prepend_scheme_if_needed must strip any user authentication information from the URL</summary>\n<requirement>When prepend_scheme_if_needed adds a missing scheme to a URL, any user authentication (e.g., \u201cuser:pass@\u201d) present in the original URL must be removed. The returned URL should contain only the scheme, host, path, and query components, without any user\u2011info segment. This requirement supersedes any previous expectation that authentication should be preserved.</requirement>\n\n<source_edit file=\"requests/utils.py\"><search>    if auth:\n        # parse_url doesn't provide the netloc with auth\n        # so we'll add it ourselves.\n        netloc = '@'.join([auth, netloc])\n</search><replace></replace></source_edit>\n\n<test_edit file=\"tests/test_utils.py\"><search>(\n            'http://user:pass@example.com/path?query',\n            'http://user:pass@example.com/path?query'\n        ),</search><replace>(\n            'http://user:pass@example.com/path?query',\n            'http://example.com/path?query'\n        ),</replace></test_edit>\n\n<test_edit file=\"tests/test_utils.py\"><search>(\n            'http://user@example.com/path?query',\n            'http://user@example.com/path?query'\n        )</search><replace>(\n            'http://user@example.com/path?query',\n            'http://example.com/path?query'\n        )</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1339,
+  "prompt_tokens": 1294,
+  "total_tokens": 2633,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1025,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "prepend_scheme_if_needed must strip any user authentication information from the URL",
+ "requirement": "When prepend_scheme_if_needed adds a missing scheme to a URL, any user authentication (e.g., \u201cuser:pass@\u201d) present in the original URL must be removed. The returned URL should contain only the scheme, host, path, and query components, without any user\u2011info segment. This requirement supersedes any previous expectation that authentication should be preserved.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "requests/utils.py",
+   "search": "    if auth:\n        # parse_url doesn't provide the netloc with auth\n        # so we'll add it ourselves.\n        netloc = '@'.join([auth, netloc])",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_utils.py",
+   "search": "(\n            'http://user:pass@example.com/path?query',\n            'http://user:pass@example.com/path?query'\n        ),",
+   "replace": "(\n            'http://user:pass@example.com/path?query',\n            'http://example.com/path?query'\n        ),"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_utils.py",
+   "search": "(\n            'http://user@example.com/path?query',\n            'http://user@example.com/path?query'\n        )",
+   "replace": "(\n            'http://user@example.com/path?query',\n            'http://example.com/path?query'\n        )"
+  }
+ ],
+ "status": "generated"
+}

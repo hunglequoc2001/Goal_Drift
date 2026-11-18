@@ -1,0 +1,49 @@
+{
+ "instance_id": "pydata__xarray-4094",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "bfac0c2c5e2c1c9c7dece0b262b3f5239a24d4eaef6015c85ccca7134b6c3749",
+ "raw": "<summary>to_unstacked_dataset must emit a UserWarning for single\u2011dimension variables</summary>\n<requirement>When calling ``DataArray.to_unstacked_dataset`` on a stacked array that was created from a Dataset containing variables that originally had only a single dimension (i.e., the stacking dimension was the sole dimension of those variables), the method must emit a ``UserWarning`` with the exact message ``\"to_unstacked_dataset: single-dimension variables may lose dimension metadata\"`` before returning the unstacked Dataset. This requirement supersedes any conflicting expectation in the original issue description.</requirement>\n<source_edit file=\"xarray/core/dataarray.py\"><search>import numpy as np</search><replace>import numpy as np\nimport warnings</replace></source_edit>\n<source_edit file=\"xarray/core/dataarray.py\"><search>return Dataset(data_dict)</search><replace>warnings.warn(\n    \"to_unstacked_dataset: single-dimension variables may lose dimension metadata\",\n    UserWarning,\n)\nreturn Dataset(data_dict)</replace></source_edit>\n<test_edit file=\"xarray/tests/test_dataset.py\"><search>unstacked = stacked.to_unstacked_dataset(\"y\")</search><replace>with pytest.warns(UserWarning):\n    unstacked = stacked.to_unstacked_dataset(\"y\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1363,
+  "prompt_tokens": 1509,
+  "total_tokens": 2872,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1075,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "to_unstacked_dataset must emit a UserWarning for single\u2011dimension variables",
+ "requirement": "When calling ``DataArray.to_unstacked_dataset`` on a stacked array that was created from a Dataset containing variables that originally had only a single dimension (i.e., the stacking dimension was the sole dimension of those variables), the method must emit a ``UserWarning`` with the exact message ``\"to_unstacked_dataset: single-dimension variables may lose dimension metadata\"`` before returning the unstacked Dataset. This requirement supersedes any conflicting expectation in the original issue description.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/dataarray.py",
+   "search": "import numpy as np",
+   "replace": "import numpy as np\nimport warnings"
+  },
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/dataarray.py",
+   "search": "return Dataset(data_dict)",
+   "replace": "warnings.warn(\n    \"to_unstacked_dataset: single-dimension variables may lose dimension metadata\",\n    UserWarning,\n)\nreturn Dataset(data_dict)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_dataset.py",
+   "search": "unstacked = stacked.to_unstacked_dataset(\"y\")",
+   "replace": "with pytest.warns(UserWarning):\n    unstacked = stacked.to_unstacked_dataset(\"y\")"
+  }
+ ],
+ "status": "generated"
+}

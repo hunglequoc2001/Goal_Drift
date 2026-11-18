@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-11951",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "d391eb5b956491cbd5d2c3ad23c73dc5fce0bbca99170c7ad19c8dae92d7fb7f",
+ "raw": "<summary>bulk_create must raise an error when an explicit batch_size exceeds the backend\u2011calculated maximum</summary>\n<requirement>The bulk_create method must now validate the batch_size argument against the backend\u2011determined maximum batch size. If batch_size is provided and is greater than the calculated maximum, bulk_create should raise a ValueError with the message \u201cbatch_size exceeds the maximum allowed size\u201d. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"django/db/models/query.py\"><search>        batch_size = min(batch_size, max_batch_size) if batch_size else max_batch_size</search><replace>        if batch_size is not None and batch_size > max_batch_size:\n            raise ValueError('batch_size exceeds the maximum allowed size')\n        batch_size = max_batch_size</replace></source_edit>\n<test_edit file=\"tests/bulk_create/tests.py\"><search>with self.assertNumQueries(ceil(len(objs) / max_batch_size)):</search><replace>with self.assertRaisesMessage(ValueError, 'batch_size exceeds the maximum allowed size'):</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1514,
+  "prompt_tokens": 1197,
+  "total_tokens": 2711,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1274,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "bulk_create must raise an error when an explicit batch_size exceeds the backend\u2011calculated maximum",
+ "requirement": "The bulk_create method must now validate the batch_size argument against the backend\u2011determined maximum batch size. If batch_size is provided and is greater than the calculated maximum, bulk_create should raise a ValueError with the message \u201cbatch_size exceeds the maximum allowed size\u201d. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/query.py",
+   "search": "        batch_size = min(batch_size, max_batch_size) if batch_size else max_batch_size",
+   "replace": "        if batch_size is not None and batch_size > max_batch_size:\n            raise ValueError('batch_size exceeds the maximum allowed size')\n        batch_size = max_batch_size"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/bulk_create/tests.py",
+   "search": "with self.assertNumQueries(ceil(len(objs) / max_batch_size)):",
+   "replace": "with self.assertRaisesMessage(ValueError, 'batch_size exceeds the maximum allowed size'):"
+  }
+ ],
+ "status": "generated"
+}

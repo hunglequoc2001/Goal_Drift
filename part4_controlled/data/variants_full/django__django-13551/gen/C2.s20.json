@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-13551",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "0a39efe54e5dd6aaf9b16c9b7a27a6ee42fd77831ffa07680af4384e23b2a57c",
+ "raw": "<summary>Tokens must stay valid when a user's email address changes.</summary>\n<requirement>Tokens should remain valid after a user's email address is changed; only changes to the password, the last_login field, or the token's timestamp should affect token validity. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"django/contrib/auth/tokens.py\"><search>email_field = user.get_email_field_name()\nemail = getattr(user, email_field, '') or ''\nreturn f'{user.pk}{user.password}{login_timestamp}{timestamp}{email}'</search><replace>return f'{user.pk}{user.password}{login_timestamp}{timestamp}'</replace></source_edit>\n<test_edit file=\"tests/auth_tests/test_tokens.py\"><search>self.assertIs(p0.check_token(user, tk1), False)</search><replace>self.assertIs(p0.check_token(user, tk1), True)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 609,
+  "prompt_tokens": 2032,
+  "total_tokens": 2641,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 405,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Tokens must stay valid when a user's email address changes.",
+ "requirement": "Tokens should remain valid after a user's email address is changed; only changes to the password, the last_login field, or the token's timestamp should affect token validity. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/auth/tokens.py",
+   "search": "email_field = user.get_email_field_name()\nemail = getattr(user, email_field, '') or ''\nreturn f'{user.pk}{user.password}{login_timestamp}{timestamp}{email}'",
+   "replace": "return f'{user.pk}{user.password}{login_timestamp}{timestamp}'"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/auth_tests/test_tokens.py",
+   "search": "self.assertIs(p0.check_token(user, tk1), False)",
+   "replace": "self.assertIs(p0.check_token(user, tk1), True)"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,43 @@
+{
+ "instance_id": "pytest-dev__pytest-7571",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "6a62ac51aea81bd8dc717a3a6f076e201b3f11f368a81a024e3bd3d998b33a42",
+ "raw": "<summary>Multiple calls to ``caplog.set_level`` within a single test must all be undone, restoring the handler level to the value it had before the first call.</summary>\n<requirement>When ``caplog.set_level`` is invoked more than once during a test, the original handler log level (the level that was in effect before the first ``set_level`` call) must be restored after the test finishes. This supersedes any previous expectation that only the most recent level would be restored.</requirement>\n<source_edit file=\"src/_pytest/logging.py\"><search>self._initial_handler_level = self.handler.level</search><replace>if self._initial_handler_level is None:\n            self._initial_handler_level = self.handler.level</replace></source_edit>\n<test_edit file=\"testing/logging/test_fixture.py\"><search>def test1(caplog):\n            assert caplog.handler.level == 0\n            caplog.set_level(41)\n            assert caplog.handler.level == 41</search><replace>def test1(caplog):\n            assert caplog.handler.level == 0\n            caplog.set_level(41)\n            assert caplog.handler.level == 41\n            caplog.set_level(42)\n            assert caplog.handler.level == 42</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1312,
+  "prompt_tokens": 1474,
+  "total_tokens": 2786,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1035,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Multiple calls to ``caplog.set_level`` within a single test must all be undone, restoring the handler level to the value it had before the first call.",
+ "requirement": "When ``caplog.set_level`` is invoked more than once during a test, the original handler log level (the level that was in effect before the first ``set_level`` call) must be restored after the test finishes. This supersedes any previous expectation that only the most recent level would be restored.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "self._initial_handler_level = self.handler.level",
+   "replace": "if self._initial_handler_level is None:\n            self._initial_handler_level = self.handler.level"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/logging/test_fixture.py",
+   "search": "def test1(caplog):\n            assert caplog.handler.level == 0\n            caplog.set_level(41)\n            assert caplog.handler.level == 41",
+   "replace": "def test1(caplog):\n            assert caplog.handler.level == 0\n            caplog.set_level(41)\n            assert caplog.handler.level == 41\n            caplog.set_level(42)\n            assert caplog.handler.level == 42"
+  }
+ ],
+ "status": "generated"
+}

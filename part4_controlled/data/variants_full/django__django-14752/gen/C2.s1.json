@@ -1,0 +1,38 @@
+{
+ "instance_id": "django__django-14752",
+ "kind": "C2",
+ "sample": 1,
+ "generator": "glm-4-32b-0414",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 1,
+ "prompt_sha256": "ddaf75b780cbbcd93b5960572ebb914a203424b6f3706821575110ee8176e75a",
+ "raw": "\n<summary>Change the default serialized result to include a timestamp field.</summary>\n<requirement>This change supersedes any conflicting expectation in the issue. The default serialized result for autocomplete fields should now include a 'timestamp' field with the current datetime, formatted as 'YYYY-MM-DD HH:MM:SS', in addition to the existing 'id' and 'text' fields. This timestamp should be added automatically to every result object by the base AutocompleteJsonView class, allowing it to be easily overridden or removed by child classes if needed.</requirement>\n<source_edit file=\"django/contrib/admin/views/autocomplete.py\"><search>return {'id': str(getattr(obj, to_field_name)), 'text': str(obj)}</search><replace>return {'id': str(getattr(obj, to_field_name)), 'text': str(obj), 'timestamp': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</replace></source_edit>\n<test_edit file=\"tests/admin_views/test_autocomplete_view.py\"><search>def serialize_result(self, obj, to_field_name):\n                return {\n                    **super().serialize_result(obj, to_field_name),\n                    'posted': str(obj.posted),\n                }</search><replace>def serialize_result(self, obj, to_field_name):\n                return {\n                    **super().serialize_result(obj, to_field_name),\n                    'posted': str(obj.posted),\n                    'timestamp': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),\n                }</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 319,
+  "prompt_tokens": 1853,
+  "total_tokens": 2172,
+  "completion_tokens_details": null,
+  "prompt_tokens_details": null
+ },
+ "summary": "Change the default serialized result to include a timestamp field.",
+ "requirement": "This change supersedes any conflicting expectation in the issue. The default serialized result for autocomplete fields should now include a 'timestamp' field with the current datetime, formatted as 'YYYY-MM-DD HH:MM:SS', in addition to the existing 'id' and 'text' fields. This timestamp should be added automatically to every result object by the base AutocompleteJsonView class, allowing it to be easily overridden or removed by child classes if needed.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admin/views/autocomplete.py",
+   "search": "return {'id': str(getattr(obj, to_field_name)), 'text': str(obj)}",
+   "replace": "return {'id': str(getattr(obj, to_field_name)), 'text': str(obj), 'timestamp': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_views/test_autocomplete_view.py",
+   "search": "def serialize_result(self, obj, to_field_name):\n                return {\n                    **super().serialize_result(obj, to_field_name),\n                    'posted': str(obj.posted),\n                }",
+   "replace": "def serialize_result(self, obj, to_field_name):\n                return {\n                    **super().serialize_result(obj, to_field_name),\n                    'posted': str(obj.posted),\n                    'timestamp': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),\n                }"
+  }
+ ],
+ "status": "generated"
+}

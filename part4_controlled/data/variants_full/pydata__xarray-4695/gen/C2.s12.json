@@ -1,0 +1,49 @@
+{
+ "instance_id": "pydata__xarray-4695",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "f399033fad85d571ed22eb91ae481b09057527b88184a33815099707788c29b6",
+ "raw": "<summary>Disallow using dimension names that collide with DataArray.sel keyword arguments in .loc indexing.</summary>\n<requirement>When indexing a DataArray with the .loc accessor, any dimension name that matches a keyword argument of the underlying `sel` method (e.g., \"method\") must be treated as an invalid selector and raise a `ValueError`. This requirement supersedes any previous expectation that such names be handled transparently.</requirement>\n<source_edit file=\"xarray/core/dataarray.py\"><search>return self.data_array.sel(key)</search><replace>return self.data_array.sel(**key)</replace></source_edit>\n<test_edit file=\"xarray/tests/test_dataarray.py\"><search>np.testing.assert_array_equal(\n            da.loc[dict(dim1=[\"x\", \"y\"], method=[\"a\"])], [[0], [1]]\n        )</search><replace>with pytest.raises(ValueError):\n            da.loc[dict(dim1=[\"x\", \"y\"], method=[\"a\"])]</replace></test_edit>\n<test_edit file=\"xarray/tests/test_dataarray.py\"><search>import xarray as xr</search><replace>import xarray as xr\nimport pytest</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1576,
+  "prompt_tokens": 2236,
+  "total_tokens": 3812,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1315,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow using dimension names that collide with DataArray.sel keyword arguments in .loc indexing.",
+ "requirement": "When indexing a DataArray with the .loc accessor, any dimension name that matches a keyword argument of the underlying `sel` method (e.g., \"method\") must be treated as an invalid selector and raise a `ValueError`. This requirement supersedes any previous expectation that such names be handled transparently.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/dataarray.py",
+   "search": "return self.data_array.sel(key)",
+   "replace": "return self.data_array.sel(**key)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_dataarray.py",
+   "search": "np.testing.assert_array_equal(\n            da.loc[dict(dim1=[\"x\", \"y\"], method=[\"a\"])], [[0], [1]]\n        )",
+   "replace": "with pytest.raises(ValueError):\n            da.loc[dict(dim1=[\"x\", \"y\"], method=[\"a\"])]"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_dataarray.py",
+   "search": "import xarray as xr",
+   "replace": "import xarray as xr\nimport pytest"
+  }
+ ],
+ "status": "generated"
+}

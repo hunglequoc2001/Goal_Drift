@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-13513",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 13,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 24214,
+ "raw": "<summary>Add synthetic traceback frame for context exceptions lacking a traceback.</summary>\n<requirement>When an exception in the chain has a __context__ or __cause__ whose __traceback__ attribute is None, the technical debug view must still include a synthetic traceback frame for that exception. The synthetic frame should have filename \u201c&lt;unknown&gt;\u201d, lineno\u202f0, function \u201c&lt;unknown&gt;\u201d, and the context line \u201c&lt;no traceback available&gt;\u201d. Consequently, for the scenario tested in\u202ftest_innermost_exception_without_traceback, the list returned by\u202fExceptionReporter.get_traceback_frames() must contain\u202f2\u202fentries. This supersedes any previous expectation that such exceptions are omitted from the traceback frames.</requirement>\n<source_edit file=\"django/views/debug.py\"><search>while tb is not None:</search><replace>if tb is None:\n            # Synthetic frame for an exception without a traceback.\n            yield {\n                'exc_cause': exc_cause,\n                'exc_cause_explicit': exc_cause_explicit,\n                'tb': None,\n                'type': 'user',\n                'filename': '&lt;unknown&gt;',\n                'function': '&lt;unknown&gt;',\n                'lineno': 0,\n                'vars': {},\n                'id': None,\n                'pre_context': [],\n                'context_line': '&lt;no traceback available&gt;',\n                'post_context': [],\n                'pre_context_lineno': 0,\n            }\n            return\n        while tb is not None:</replace></source_edit>\n<test_edit file=\"tests/view_tests/tests/test_debug.py\"><search>self.assertEqual(len(frames), 1)</search><replace>self.assertEqual(len(frames), 2)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Add synthetic traceback frame for context exceptions lacking a traceback.",
+ "requirement": "When an exception in the chain has a __context__ or __cause__ whose __traceback__ attribute is None, the technical debug view must still include a synthetic traceback frame for that exception. The synthetic frame should have filename \u201c&lt;unknown&gt;\u201d, lineno\u202f0, function \u201c&lt;unknown&gt;\u201d, and the context line \u201c&lt;no traceback available&gt;\u201d. Consequently, for the scenario tested in\u202ftest_innermost_exception_without_traceback, the list returned by\u202fExceptionReporter.get_traceback_frames() must contain\u202f2\u202fentries. This supersedes any previous expectation that such exceptions are omitted from the traceback frames.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/views/debug.py",
+   "search": "while tb is not None:",
+   "replace": "if tb is None:\n            # Synthetic frame for an exception without a traceback.\n            yield {\n                'exc_cause': exc_cause,\n                'exc_cause_explicit': exc_cause_explicit,\n                'tb': None,\n                'type': 'user',\n                'filename': '&lt;unknown&gt;',\n                'function': '&lt;unknown&gt;',\n                'lineno': 0,\n                'vars': {},\n                'id': None,\n                'pre_context': [],\n                'context_line': '&lt;no traceback available&gt;',\n                'post_context': [],\n                'pre_context_lineno': 0,\n            }\n            return\n        while tb is not None:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/view_tests/tests/test_debug.py",
+   "search": "self.assertEqual(len(frames), 1)",
+   "replace": "self.assertEqual(len(frames), 2)"
+  }
+ ]
+}

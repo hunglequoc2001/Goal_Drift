@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-13344",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 38322,
+ "raw": "<summary>Middleware must expose an `is_async` flag and no longer emit a deprecation warning for a missing get_response.</summary>\n<requirement>All middleware classes that inherit from ``MiddlewareMixin`` must no longer raise a ``RemovedInDjango40Warning`` when instantiated without a ``get_response`` argument (i.e., when ``get_response`` is omitted or explicitly set to ``None``). Instead, the constructor should accept ``None`` silently. Additionally, each middleware instance must provide a boolean attribute named ``is_async`` that is ``True`` when the ``get_response`` callable supplied to the constructor is a coroutine function (``asyncio.iscoroutinefunction(get_response)`` returns ``True``) and ``False`` otherwise. This requirement supersedes any conflicting expectation in the original issue description.</requirement>\n\n<source_edit file=\"django/utils/deprecation.py\"><search>class MiddlewareMixin</search><replace>import asyncio\n\nclass MiddlewareMixin</replace></source_edit>\n\n<source_edit file=\"django/utils/deprecation.py\"><search>def __init__(self, get_response=None):</search><replace>def __init__(self, get_response=None):\n        self.is_async = asyncio.iscoroutinefunction(get_response)</replace></source_edit>\n\n<test_edit file=\"tests/deprecation/test_middleware_mixin.py\"><search>def test_deprecation(self):\n        for middleware in self.middlewares:\n            with self.subTest(middleware=middleware):\n                with self.assertRaisesMessage(RemovedInDjango40Warning, self.msg):\n                    middleware()</search><replace>def test_deprecation(self):\n        for middleware in self.middlewares:\n            with self.subTest(middleware=middleware):\n                # No warning should be raised when get_response is omitted.\n                middleware()</replace></test_edit>\n\n<test_edit file=\"tests/deprecation/test_middleware_mixin.py\"><search>def test_passing_explicit_none(self):\n        for middleware in self.middlewares:\n            with self.subTest(middleware=middleware):\n                with self.assertRaisesMessage(RemovedInDjango40Warning, self.msg):\n                    middleware(None)</search><replace>def test_passing_explicit_none(self):\n        for middleware in self.middlewares:\n            with self.subTest(middleware=middleware):\n                # No warning should be raised when get_response is explicitly None.\n                middleware(None)</replace></test_edit>\n\n<test_edit file=\"tests/deprecation/test_middleware_mixin.py\"><search>self.assertIs(asyncio.iscoroutinefunction(middleware_instance), True)</search><replace>self.assertTrue(middleware_instance.is_async)</replace></test_edit>\n\n<test_edit file=\"tests/deprecation/test_middleware_mixin.py\"><search>self.assertIs(asyncio.iscoroutinefunction(middleware_instance), False)</search><replace>self.assertFalse(middleware_instance.is_async)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Middleware must expose an `is_async` flag and no longer emit a deprecation warning for a missing get_response.",
+ "requirement": "All middleware classes that inherit from ``MiddlewareMixin`` must no longer raise a ``RemovedInDjango40Warning`` when instantiated without a ``get_response`` argument (i.e., when ``get_response`` is omitted or explicitly set to ``None``). Instead, the constructor should accept ``None`` silently. Additionally, each middleware instance must provide a boolean attribute named ``is_async`` that is ``True`` when the ``get_response`` callable supplied to the constructor is a coroutine function (``asyncio.iscoroutinefunction(get_response)`` returns ``True``) and ``False`` otherwise. This requirement supersedes any conflicting expectation in the original issue description.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/deprecation.py",
+   "search": "class MiddlewareMixin",
+   "replace": "import asyncio\n\nclass MiddlewareMixin"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/utils/deprecation.py",
+   "search": "def __init__(self, get_response=None):",
+   "replace": "def __init__(self, get_response=None):\n        self.is_async = asyncio.iscoroutinefunction(get_response)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/deprecation/test_middleware_mixin.py",
+   "search": "def test_deprecation(self):\n        for middleware in self.middlewares:\n            with self.subTest(middleware=middleware):\n                with self.assertRaisesMessage(RemovedInDjango40Warning, self.msg):\n                    middleware()",
+   "replace": "def test_deprecation(self):\n        for middleware in self.middlewares:\n            with self.subTest(middleware=middleware):\n                # No warning should be raised when get_response is omitted.\n                middleware()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/deprecation/test_middleware_mixin.py",
+   "search": "def test_passing_explicit_none(self):\n        for middleware in self.middlewares:\n            with self.subTest(middleware=middleware):\n                with self.assertRaisesMessage(RemovedInDjango40Warning, self.msg):\n                    middleware(None)",
+   "replace": "def test_passing_explicit_none(self):\n        for middleware in self.middlewares:\n            with self.subTest(middleware=middleware):\n                # No warning should be raised when get_response is explicitly None.\n                middleware(None)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/deprecation/test_middleware_mixin.py",
+   "search": "self.assertIs(asyncio.iscoroutinefunction(middleware_instance), True)",
+   "replace": "self.assertTrue(middleware_instance.is_async)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/deprecation/test_middleware_mixin.py",
+   "search": "self.assertIs(asyncio.iscoroutinefunction(middleware_instance), False)",
+   "replace": "self.assertFalse(middleware_instance.is_async)"
+  }
+ ]
+}

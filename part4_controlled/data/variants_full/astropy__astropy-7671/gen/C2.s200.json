@@ -1,0 +1,49 @@
+{
+ "instance_id": "astropy__astropy-7671",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 18989,
+ "raw": "<summary>minversion must correctly handle pre\u2011release identifiers using PEP\u202f440 ordering</summary>\n<requirement>When the `minversion` function receives a version string that contains a pre\u2011release identifier such as \u201cdev\u201d, \u201crc\u201d, \u201ca\u201d, or \u201cb\u201d, it must compare the full version using PEP\u202f440 semantics instead of stripping the identifier. In practice this means using `pkg_resources.parse_version` for the comparison, so that, for example, `\"0.12dev\"` is considered lower than `\"0.12\"` and will cause `minversion` to return `False` unless the module\u2019s version is also a pre\u2011release of equal or higher precedence. This supersedes any earlier expectation that such identifiers be stripped away before comparison.</requirement>\n\n<source_edit file=\"astropy/utils/introspection.py\"><search>import re</search><replace>import re\nfrom pkg_resources import parse_version</replace></source_edit>\n\n<source_edit file=\"astropy/utils/introspection.py\"><search>\n    # LooseVersion raises a TypeError when strings like dev, rc1 are part\n    # of the version number. Match the dotted numbers only. Regex taken\n    # from PEP440, https://www.python.org/dev/peps/pep-0440/, Appendix B\n    expr = '^([1-9]\\\\d*!)?(0|[1-9]\\\\d*)(\\\\.(0|[1-9]\\\\d*))*'\n    m = re.match(expr, version)\n    if m:\n        version = m.group(0)\n</search><replace>\n    # Use pkg_resources.parse_version to correctly handle pre\u2011release identifiers.\n</replace></source_edit>\n\n<source_edit file=\"astropy/utils/introspection.py\"><search>    if inclusive:\n        return LooseVersion(have_version) >= LooseVersion(version)\n    else:\n        return LooseVersion(have_version) > LooseVersion(version)</search><replace>    if inclusive:\n        return parse_version(have_version) >= parse_version(version)\n    else:\n        return parse_version(have_version) > parse_version(version)</replace></source_edit>\n\n<test_edit file=\"astropy/utils/tests/test_introspection.py\"><search>good_versions = ['0.12', '0.12.1', '0.12.0.dev', '0.12dev']</search><replace>good_versions = ['0.12', '0.12.1']</replace></test_edit>\n\n<test_edit file=\"astropy/utils/tests/test_introspection.py\"><search>bad_versions = ['1', '1.2rc1']</search><replace>bad_versions = ['1', '1.2rc1', '0.12dev', '0.12.0.dev']</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "minversion must correctly handle pre\u2011release identifiers using PEP\u202f440 ordering",
+ "requirement": "When the `minversion` function receives a version string that contains a pre\u2011release identifier such as \u201cdev\u201d, \u201crc\u201d, \u201ca\u201d, or \u201cb\u201d, it must compare the full version using PEP\u202f440 semantics instead of stripping the identifier. In practice this means using `pkg_resources.parse_version` for the comparison, so that, for example, `\"0.12dev\"` is considered lower than `\"0.12\"` and will cause `minversion` to return `False` unless the module\u2019s version is also a pre\u2011release of equal or higher precedence. This supersedes any earlier expectation that such identifiers be stripped away before comparison.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/utils/introspection.py",
+   "search": "import re",
+   "replace": "import re\nfrom pkg_resources import parse_version"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/utils/introspection.py",
+   "search": "    # LooseVersion raises a TypeError when strings like dev, rc1 are part\n    # of the version number. Match the dotted numbers only. Regex taken\n    # from PEP440, https://www.python.org/dev/peps/pep-0440/, Appendix B\n    expr = '^([1-9]\\\\d*!)?(0|[1-9]\\\\d*)(\\\\.(0|[1-9]\\\\d*))*'\n    m = re.match(expr, version)\n    if m:\n        version = m.group(0)",
+   "replace": "    # Use pkg_resources.parse_version to correctly handle pre\u2011release identifiers."
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/utils/introspection.py",
+   "search": "    if inclusive:\n        return LooseVersion(have_version) >= LooseVersion(version)\n    else:\n        return LooseVersion(have_version) > LooseVersion(version)",
+   "replace": "    if inclusive:\n        return parse_version(have_version) >= parse_version(version)\n    else:\n        return parse_version(have_version) > parse_version(version)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/utils/tests/test_introspection.py",
+   "search": "good_versions = ['0.12', '0.12.1', '0.12.0.dev', '0.12dev']",
+   "replace": "good_versions = ['0.12', '0.12.1']"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/utils/tests/test_introspection.py",
+   "search": "bad_versions = ['1', '1.2rc1']",
+   "replace": "bad_versions = ['1', '1.2rc1', '0.12dev', '0.12.0.dev']"
+  }
+ ]
+}

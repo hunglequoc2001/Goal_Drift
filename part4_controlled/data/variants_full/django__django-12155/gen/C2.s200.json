@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-12155",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 13,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 25698,
+ "raw": "<summary>parse_docstring must dedent using all lines, not skip the first line</summary>\n<requirement>When parsing a docstring, the implementation must determine the common leading indentation using **all** non\u2011blank lines (including the first line) and remove that indentation. It should no longer skip the first line when computing the indentation level. This behavior supersedes any previous expectation that the first line be ignored for indentation calculations.</requirement>\n\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>from inspect import cleandoc</search><replace>from inspect import cleandoc\nimport textwrap</replace></source_edit>\n\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>docstring = cleandoc(docstring)</search><replace># Dedent using all lines (including the first) and strip leading/trailing blank lines.\ndocstring = textwrap.dedent(docstring).strip('\\n')</replace></source_edit>\n\n<test_edit file=\"tests/admin_docs/test_utils.py\"><search>with captured_stderr() as stderr:\n            self.assertEqual(parse_rst(title, ''), '&lt;p&gt;firstline&lt;/p&gt;\\n')\n            self.assertEqual(parse_rst(body, ''), '&lt;p&gt;second line&lt;/p&gt;\\n')\n        self.assertEqual(stderr.getvalue(), '')</search><replace>with captured_stderr() as stderr:\n            self.assertEqual(parse_rst(title, ''), '<p>firstline</p>\\n')\n            # The indented second line should be rendered as a literal block.\n            self.assertIn('<pre class=\"literal-block\">second line</pre>', parse_rst(body, ''))\n        # A warning about unexpected indentation should be emitted.\n        self.assertNotEqual(stderr.getvalue(), '')</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "parse_docstring must dedent using all lines, not skip the first line",
+ "requirement": "When parsing a docstring, the implementation must determine the common leading indentation using **all** non\u2011blank lines (including the first line) and remove that indentation. It should no longer skip the first line when computing the indentation level. This behavior supersedes any previous expectation that the first line be ignored for indentation calculations.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "from inspect import cleandoc",
+   "replace": "from inspect import cleandoc\nimport textwrap"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "docstring = cleandoc(docstring)",
+   "replace": "# Dedent using all lines (including the first) and strip leading/trailing blank lines.\ndocstring = textwrap.dedent(docstring).strip('\\n')"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_docs/test_utils.py",
+   "search": "with captured_stderr() as stderr:\n            self.assertEqual(parse_rst(title, ''), '&lt;p&gt;firstline&lt;/p&gt;\\n')\n            self.assertEqual(parse_rst(body, ''), '&lt;p&gt;second line&lt;/p&gt;\\n')\n        self.assertEqual(stderr.getvalue(), '')",
+   "replace": "with captured_stderr() as stderr:\n            self.assertEqual(parse_rst(title, ''), '<p>firstline</p>\\n')\n            # The indented second line should be rendered as a literal block.\n            self.assertIn('<pre class=\"literal-block\">second line</pre>', parse_rst(body, ''))\n        # A warning about unexpected indentation should be emitted.\n        self.assertNotEqual(stderr.getvalue(), '')"
+  }
+ ]
+}

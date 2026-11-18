@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-11087",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "d73d7070d88623aa5a250327dd697c556d3561d23fdabbcbc2f4f6e0a238ee48",
+ "raw": "<summary>Include foreign\u2011key fields that reference the deleted object when optimizing cascade deletes.</summary>\n<requirement>When performing a cascade delete, Django must select not only the fields referenced by downstream relations but also any foreign\u2011key fields on the related model that point back to the object being deleted, unless a pre\u2011delete or post\u2011delete signal is connected for that related model. This supersedes any earlier expectation that only downstream\u2011referenced fields are selected.</requirement>\n<source_edit file=\"django/db/models/deletion.py\"><search>referenced_fields = set(chain.from_iterable(\n                            (rf.attname for rf in rel.field.foreign_related_fields)\n                            for rel in get_candidate_relations_to_delete(related_model._meta)\n                        ))</search><replace>referenced_fields = set(chain.from_iterable(\n                            (rf.attname for rf in rel.field.foreign_related_fields)\n                            for rel in get_candidate_relations_to_delete(related_model._meta)\n                        ))\n                        # Also include the FK field that points back to the source model.\n                        referenced_fields.add(related.field.attname)</replace></source_edit>\n<test_edit file=\"tests/delete/tests.py\"><search>.only(\n                # Both fields are referenced by SecondReferrer.\n                'id', 'unique_field',\n            )</search><replace>.only(\n                # Both fields are referenced by SecondReferrer, plus the FK back to Origin.\n                'id', 'unique_field', 'origin_id',\n            )</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1941,
+  "prompt_tokens": 4270,
+  "total_tokens": 6211,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1619,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Include foreign\u2011key fields that reference the deleted object when optimizing cascade deletes.",
+ "requirement": "When performing a cascade delete, Django must select not only the fields referenced by downstream relations but also any foreign\u2011key fields on the related model that point back to the object being deleted, unless a pre\u2011delete or post\u2011delete signal is connected for that related model. This supersedes any earlier expectation that only downstream\u2011referenced fields are selected.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/deletion.py",
+   "search": "referenced_fields = set(chain.from_iterable(\n                            (rf.attname for rf in rel.field.foreign_related_fields)\n                            for rel in get_candidate_relations_to_delete(related_model._meta)\n                        ))",
+   "replace": "referenced_fields = set(chain.from_iterable(\n                            (rf.attname for rf in rel.field.foreign_related_fields)\n                            for rel in get_candidate_relations_to_delete(related_model._meta)\n                        ))\n                        # Also include the FK field that points back to the source model.\n                        referenced_fields.add(related.field.attname)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/delete/tests.py",
+   "search": ".only(\n                # Both fields are referenced by SecondReferrer.\n                'id', 'unique_field',\n            )",
+   "replace": ".only(\n                # Both fields are referenced by SecondReferrer, plus the FK back to Origin.\n                'id', 'unique_field', 'origin_id',\n            )"
+  }
+ ],
+ "status": "generated"
+}

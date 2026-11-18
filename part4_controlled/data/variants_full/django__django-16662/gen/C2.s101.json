@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-16662",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 18456,
+ "raw": "<summary>Sort imports by module name length (shorter first) before alphabetically, with imports before from\u2011imports.</summary>\n<requirement>All migration files must list import statements before any \u201cfrom \u2026 import \u2026\u201d statements. Within the import statements group, sort them by the length of the module name (shorter names first); if two module names have the same length, sort them alphabetically. Apply the same length\u2011then\u2011alphabetical ordering to the module part of \u201cfrom \u2026 import \u2026\u201d statements. The import block should appear exactly as: \"import time\\nimport datetime\\nfrom django.db import migrations, models\\n\". This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"django/db/migrations/writer.py\"><search>sorted_imports = sorted(\n            imports, key=lambda i: (i.split()[0] == \"from\", i.split()[1])\n        )</search><replace>sorted_imports = sorted(\n            imports, key=lambda i: (i.split()[0] == \"from\", len(i.split()[1]), i.split()[1])\n        )</replace></source_edit>\n<test_edit file=\"tests/migrations/test_writer.py\"><search>\"import datetime\\nimport time\\nfrom django.db import migrations, models\\n\"</search><replace>\"import time\\nimport datetime\\nfrom django.db import migrations, models\\n\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Sort imports by module name length (shorter first) before alphabetically, with imports before from\u2011imports.",
+ "requirement": "All migration files must list import statements before any \u201cfrom \u2026 import \u2026\u201d statements. Within the import statements group, sort them by the length of the module name (shorter names first); if two module names have the same length, sort them alphabetically. Apply the same length\u2011then\u2011alphabetical ordering to the module part of \u201cfrom \u2026 import \u2026\u201d statements. The import block should appear exactly as: \"import time\\nimport datetime\\nfrom django.db import migrations, models\\n\". This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/migrations/writer.py",
+   "search": "sorted_imports = sorted(\n            imports, key=lambda i: (i.split()[0] == \"from\", i.split()[1])\n        )",
+   "replace": "sorted_imports = sorted(\n            imports, key=lambda i: (i.split()[0] == \"from\", len(i.split()[1]), i.split()[1])\n        )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/migrations/test_writer.py",
+   "search": "\"import datetime\\nimport time\\nfrom django.db import migrations, models\\n\"",
+   "replace": "\"import time\\nimport datetime\\nfrom django.db import migrations, models\\n\""
+  }
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-13757",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 12790,
+ "raw": "<summary>Poly multiplication should only auto\u2011evaluate when Poly is on the left or when the left operand is a built\u2011in Python numeric type.</summary>\n<requirement>When a Poly instance is multiplied with another expression, the multiplication must be automatically evaluated only if the Poly appears as the left operand of the Mul, or if the left operand is a built\u2011in Python numeric type such as int or float. If the left operand is any other SymPy object (e.g., Symbol, Integer, Rational, or any Expr), the Mul must remain unevaluated. This supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"sympy/polys/polytools.py\"><search>    _op_priority = 10.001</search><replace></replace></source_edit>\n\n<test_edit file=\"sympy/core/tests/test_match.py\"><search>assert e.match(I*p) == {p: x}</search><replace>assert e.match(I*p) == {p: Poly(x, x)}</replace></test_edit>\n\n<test_edit file=\"sympy/polys/tests/test_polytools.py\"><search>assert x*Poly(x) == Poly(x**2, x, domain='ZZ')</search><replace>assert x*Poly(x) == x*Poly(x, x, domain='ZZ')</replace></test_edit>\n\n<test_edit file=\"sympy/polys/tests/test_polytools.py\"><search>assert S(-2)*Poly(x) == Poly(-2*x, x, domain='ZZ')</search><replace>assert S(-2)*Poly(x) == S(-2)*Poly(x, x, domain='ZZ')</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Poly multiplication should only auto\u2011evaluate when Poly is on the left or when the left operand is a built\u2011in Python numeric type.",
+ "requirement": "When a Poly instance is multiplied with another expression, the multiplication must be automatically evaluated only if the Poly appears as the left operand of the Mul, or if the left operand is a built\u2011in Python numeric type such as int or float. If the left operand is any other SymPy object (e.g., Symbol, Integer, Rational, or any Expr), the Mul must remain unevaluated. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/polys/polytools.py",
+   "search": "    _op_priority = 10.001",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/core/tests/test_match.py",
+   "search": "assert e.match(I*p) == {p: x}",
+   "replace": "assert e.match(I*p) == {p: Poly(x, x)}"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/polys/tests/test_polytools.py",
+   "search": "assert x*Poly(x) == Poly(x**2, x, domain='ZZ')",
+   "replace": "assert x*Poly(x) == x*Poly(x, x, domain='ZZ')"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/polys/tests/test_polytools.py",
+   "search": "assert S(-2)*Poly(x) == Poly(-2*x, x, domain='ZZ')",
+   "replace": "assert S(-2)*Poly(x) == S(-2)*Poly(x, x, domain='ZZ')"
+  }
+ ]
+}

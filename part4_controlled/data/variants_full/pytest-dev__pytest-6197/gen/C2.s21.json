@@ -1,0 +1,49 @@
+{
+ "instance_id": "pytest-dev__pytest-6197",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "91b723aea44757e8f794514e2c735d818333929199fc1af8eb3cd879820be7d7",
+ "raw": "<summary>Import\u202f__init__.py files during collection even when they contain no test code.</summary>\n<requirement>Packages\u2019 ``__init__.py`` files must be imported when pytest collects a directory, regardless of whether the package contains any test modules. This ensures any import\u2011time side\u2011effects (e.g., fixture registration or environment setup) are executed. This rule supersedes any previous expectation that ``__init__.py`` files could be ignored during collection.</requirement>\n<source_edit file=\"src/_pytest/python.py\"><search>def collect(self):</search><replace>def collect(self):\n        self._mount_obj_if_needed()\n</replace></source_edit>\n<source_edit file=\"src/_pytest/python.py\"><search>class Module(nodes.File, PyCollector):</search><replace>class Module(nodes.File, PyCollector):\n    def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):\n        if fspath.basename == \"__init__.py\":\n            self._ALLOW_MARKERS = False\n        nodes.FSCollector.__init__(\n            self, fspath, parent=parent, config=config, session=session, nodeid=nodeid\n        )\n</replace></source_edit>\n<test_edit file=\"testing/test_collection.py\"><search>assert result.ret == ExitCode.OK</search><replace>assert result.ret != ExitCode.OK</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3416,
+  "prompt_tokens": 2378,
+  "total_tokens": 5794,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 3115,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Import\u202f__init__.py files during collection even when they contain no test code.",
+ "requirement": "Packages\u2019 ``__init__.py`` files must be imported when pytest collects a directory, regardless of whether the package contains any test modules. This ensures any import\u2011time side\u2011effects (e.g., fixture registration or environment setup) are executed. This rule supersedes any previous expectation that ``__init__.py`` files could be ignored during collection.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/python.py",
+   "search": "def collect(self):",
+   "replace": "def collect(self):\n        self._mount_obj_if_needed()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/python.py",
+   "search": "class Module(nodes.File, PyCollector):",
+   "replace": "class Module(nodes.File, PyCollector):\n    def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):\n        if fspath.basename == \"__init__.py\":\n            self._ALLOW_MARKERS = False\n        nodes.FSCollector.__init__(\n            self, fspath, parent=parent, config=config, session=session, nodeid=nodeid\n        )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_collection.py",
+   "search": "assert result.ret == ExitCode.OK",
+   "replace": "assert result.ret != ExitCode.OK"
+  }
+ ],
+ "status": "generated"
+}

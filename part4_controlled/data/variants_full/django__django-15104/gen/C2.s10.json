@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-15104",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "8d690be5d652ef290bc686408ddad0b95a66bed5daa9a267b37656c7d9e81abb",
+ "raw": "<summary>Autodetector must raise an error when a ForeignKey\u2019s deconstructed kwargs lack the required \u201cto\u201d entry.</summary>\n<requirement>When deconstructing a ForeignKey (or subclass) field, the migration autodetector must verify that the deconstructed keyword arguments contain a \u201cto\u201d key. If the \u201cto\u201d key is missing, it should raise a\u202fValueError with the exact message\u202f\u201cForeignKey missing 'to' argument\u201d. This requirement supersedes any previous expectation that the missing key be silently ignored.</requirement>\n<source_edit file=\"django/db/migrations/autodetector.py\"><search>                deconstruction[2].pop('to', None)</search><replace>                if 'to' not in deconstruction[2]:\\n                    raise ValueError(\"ForeignKey missing 'to' argument\")\\n                del deconstruction[2]['to']</replace></source_edit>\n<test_edit file=\"tests/migrations/test_autodetector.py\"><search>    def test_add_custom_fk_with_hardcoded_to(self):\n        class HardcodedForeignKey(models.ForeignKey):\n            def __init__(self, *args, **kwargs):\n                kwargs['to'] = 'testapp.Author'\n                super().__init__(*args, **kwargs)\n\n            def deconstruct(self):\n                name, path, args, kwargs = super().deconstruct()\n                del kwargs['to']\n                return name, path, args, kwargs\n\n        book_hardcoded_fk_to = ModelState('testapp', 'Book', [\n            ('author', HardcodedForeignKey(on_delete=models.CASCADE)),\n        ])\n        changes = self.get_changes(\n            [self.author_empty],\n            [self.author_empty, book_hardcoded_fk_to],\n        )\n        self.assertNumberMigrations(changes, 'testapp', 1)\n        self.assertOperationTypes(changes, 'testapp', 0, ['CreateModel'])\n        self.assertOperationAttributes(changes, 'testapp', 0, 0, name='Book')\n</search><replace>    def test_add_custom_fk_with_hardcoded_to(self):\n        class HardcodedForeignKey(models.ForeignKey):\n            def __init__(self, *args, **kwargs):\n                kwargs['to'] = 'testapp.Author'\n                super().__init__(*args, **kwargs)\n\n            def deconstruct(self):\n                name, path, args, kwargs = super().deconstruct()\n                del kwargs['to']\n                return name, path, args, kwargs\n\n        book_hardcoded_fk_to = ModelState('testapp', 'Book', [\n            ('author', HardcodedForeignKey(on_delete=models.CASCADE)),\n        ])\n        with self.assertRaisesMessage(ValueError, \"ForeignKey missing 'to' argument\"):\n            self.get_changes(\n                [self.author_empty],\n                [self.author_empty, book_hardcoded_fk_to],\n            )\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2017,
+  "prompt_tokens": 2156,
+  "total_tokens": 4173,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1407,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Autodetector must raise an error when a ForeignKey\u2019s deconstructed kwargs lack the required \u201cto\u201d entry.",
+ "requirement": "When deconstructing a ForeignKey (or subclass) field, the migration autodetector must verify that the deconstructed keyword arguments contain a \u201cto\u201d key. If the \u201cto\u201d key is missing, it should raise a\u202fValueError with the exact message\u202f\u201cForeignKey missing 'to' argument\u201d. This requirement supersedes any previous expectation that the missing key be silently ignored.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/migrations/autodetector.py",
+   "search": "                deconstruction[2].pop('to', None)",
+   "replace": "                if 'to' not in deconstruction[2]:\\n                    raise ValueError(\"ForeignKey missing 'to' argument\")\\n                del deconstruction[2]['to']"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/migrations/test_autodetector.py",
+   "search": "    def test_add_custom_fk_with_hardcoded_to(self):\n        class HardcodedForeignKey(models.ForeignKey):\n            def __init__(self, *args, **kwargs):\n                kwargs['to'] = 'testapp.Author'\n                super().__init__(*args, **kwargs)\n\n            def deconstruct(self):\n                name, path, args, kwargs = super().deconstruct()\n                del kwargs['to']\n                return name, path, args, kwargs\n\n        book_hardcoded_fk_to = ModelState('testapp', 'Book', [\n            ('author', HardcodedForeignKey(on_delete=models.CASCADE)),\n        ])\n        changes = self.get_changes(\n            [self.author_empty],\n            [self.author_empty, book_hardcoded_fk_to],\n        )\n        self.assertNumberMigrations(changes, 'testapp', 1)\n        self.assertOperationTypes(changes, 'testapp', 0, ['CreateModel'])\n        self.assertOperationAttributes(changes, 'testapp', 0, 0, name='Book')",
+   "replace": "    def test_add_custom_fk_with_hardcoded_to(self):\n        class HardcodedForeignKey(models.ForeignKey):\n            def __init__(self, *args, **kwargs):\n                kwargs['to'] = 'testapp.Author'\n                super().__init__(*args, **kwargs)\n\n            def deconstruct(self):\n                name, path, args, kwargs = super().deconstruct()\n                del kwargs['to']\n                return name, path, args, kwargs\n\n        book_hardcoded_fk_to = ModelState('testapp', 'Book', [\n            ('author', HardcodedForeignKey(on_delete=models.CASCADE)),\n        ])\n        with self.assertRaisesMessage(ValueError, \"ForeignKey missing 'to' argument\"):\n            self.get_changes(\n                [self.author_empty],\n                [self.author_empty, book_hardcoded_fk_to],\n            )"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,44 @@
+{
+ "instance_id": "django__django-12155",
+ "kind": "B2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "masked": "docutils reports an error rendering view docstring when the first line is not empty\nDescription\n\u27e6P1\u27e7\nCurrently admindoc works correctly only with docstrings where the first line is empty, and all Django docstrings are formatted in this way.\nHowever usually the docstring text starts at the first line, \u27e6P2\u27e7.:\ndef \u27e6P3\u27e7:\n\u27e6P4\u27e7\nand this cause an error:\nError in \u27e6P5\u27e7 directive:\nno content permitted.\n.. default-role:: cmsreference\nThe culprit is this code in \u27e6P6\u27e7:\nindent = min(\u27e6P7\u27e7 - \u27e6P8\u27e7 for line in lines if \u27e6P9\u27e7)\nThe problem is that the indentation of the first line is \u27e6P10\u27e7.\nThe solution is to skip the first line:\nindent = min(\u27e6P11\u27e7 - \u27e6P12\u27e7 for line in lines[\u27e6P13\u27e7:] if \u27e6P14\u27e7)\nThanks.\n",
+ "spans": [
+  "\t",
+  "e.g",
+  "test()",
+  "\t\"\"\"test tests something.\n\t\"\"\"",
+  "\"default-role\"",
+  "trim_docstring",
+  "len(line)",
+  "len(line.lstrip())",
+  "line.lstrip()",
+  "0",
+  "len(line)",
+  "len(line.lstrip())",
+  "1",
+  "line.lstrip()"
+ ],
+ "prompt_sha256": "8f4b8ef7845b17b29f1a3cbf1d17ea760e0bcd74316ac26e5d18d078bd569f77",
+ "raw": "<rewrite>\n**Summary**  \n`docutils` raises an error when a view docstring does not begin with a blank line.\n\n**Details**  \n\u27e6P1\u27e7  \n\nThe `admindoc` tool currently succeeds only for docstrings whose first line is empty \u2013 a convention that all Django\u2011generated docstrings follow. In practice, many docstrings start their content immediately, e.g.:\n\n```python\ndef \u27e6P3\u27e7:\n    \u27e6P4\u27e7\n```\n\n\u27e6P2\u27e7  \n\nWhen such a docstring is processed, the following failure appears:\n\n```\nError in \u27e6P5\u27e7 directive:\nno content permitted.\n.. default-role:: cmsreference\n```\n\nInvestigation shows that the offending code resides in \u27e6P6\u27e7:\n\n```python\nindent = min(\u27e6P7\u27e7 - \u27e6P8\u27e7 for line in lines if \u27e6P9\u27e7)\n```\n\nThe root cause is that the first line\u2019s indentation is \u27e6P10\u27e7, which the algorithm treats as valid content. Skipping the initial line resolves the issue; the corrected expression should be:\n\n```python\nindent = min(\u27e6P11\u27e7 - \u27e6P12\u27e7 for line in lines[\u27e6P13\u27e7:] if \u27e6P14\u27e7)\n```\n\n**Result**  \nApplying the change eliminates the \u201cno content permitted\u201d error for docstrings that start on the first line.\n\nThanks.\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1286,
+  "prompt_tokens": 535,
+  "total_tokens": 1821,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 937,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "**Summary**  \n`docutils` raises an error when a view docstring does not begin with a blank line.\n\n**Details**  \n\u27e6P1\u27e7  \n\nThe `admindoc` tool currently succeeds only for docstrings whose first line is empty \u2013 a convention that all Django\u2011generated docstrings follow. In practice, many docstrings start their content immediately, e.g.:\n\n```python\ndef \u27e6P3\u27e7:\n    \u27e6P4\u27e7\n```\n\n\u27e6P2\u27e7  \n\nWhen such a docstring is processed, the following failure appears:\n\n```\nError in \u27e6P5\u27e7 directive:\nno content permitted.\n.. default-role:: cmsreference\n```\n\nInvestigation shows that the offending code resides in \u27e6P6\u27e7:\n\n```python\nindent = min(\u27e6P7\u27e7 - \u27e6P8\u27e7 for line in lines if \u27e6P9\u27e7)\n```\n\nThe root cause is that the first line\u2019s indentation is \u27e6P10\u27e7, which the algorithm treats as valid content. Skipping the initial line resolves the issue; the corrected expression should be:\n\n```python\nindent = min(\u27e6P11\u27e7 - \u27e6P12\u27e7 for line in lines[\u27e6P13\u27e7:] if \u27e6P14\u27e7)\n```\n\n**Result**  \nApplying the change eliminates the \u201cno content permitted\u201d error for docstrings that start on the first line.\n\nThanks.",
+ "rewrite": "**Summary**  \n`docutils` raises an error when a view docstring does not begin with a blank line.\n\n**Details**  \n\t  \n\nThe `admindoc` tool currently succeeds only for docstrings whose first line is empty \u2013 a convention that all Django\u2011generated docstrings follow. In practice, many docstrings start their content immediately, e.g.:\n\n```python\ndef test():\n    \t\"\"\"test tests something.\n\t\"\"\"\n```\n\ne.g  \n\nWhen such a docstring is processed, the following failure appears:\n\n```\nError in \"default-role\" directive:\nno content permitted.\n.. default-role:: cmsreference\n```\n\nInvestigation shows that the offending code resides in trim_docstring:\n\n```python\nindent = min(len(line) - len(line.lstrip()) for line in lines if line.lstrip())\n```\n\nThe root cause is that the first line\u2019s indentation is 0, which the algorithm treats as valid content. Skipping the initial line resolves the issue; the corrected expression should be:\n\n```python\nindent = min(len(line) - len(line.lstrip()) for line in lines[1:] if line.lstrip())\n```\n\n**Result**  \nApplying the change eliminates the \u201cno content permitted\u201d error for docstrings that start on the first line.\n\nThanks.",
+ "status": "generated"
+}

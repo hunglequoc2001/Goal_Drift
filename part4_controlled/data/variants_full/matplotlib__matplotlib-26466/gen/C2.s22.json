@@ -1,0 +1,49 @@
+{
+ "instance_id": "matplotlib__matplotlib-26466",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "2b38ea0583c6b92ee0a045f008e8d6d67b1c7a90de37f988759d7921407adab9",
+ "raw": "<summary>Stop copying input arrays for annotation offsets and coordinates; store them directly.</summary>\n<requirement>All annotation-related classes should keep a reference to the original xy and ref_coord objects rather than making a copy. This means that if the caller mutates the array after calling ``annotate`` or using ``OffsetFrom``, the annotation\u2019s position will reflect those changes. This supersedes any previous expectation that the implementation should copy these inputs.</requirement>\n<source_edit file=\"lib/matplotlib/text.py\"><search>self._ref_coord = x, y</search><replace>self._ref_coord = ref_coord</replace></source_edit>\n<source_edit file=\"lib/matplotlib/text.py\"><search>self.xy = x, y</search><replace>self.xy = xy</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_text.py\"><search>@check_figures_equal(extensions=[\"png\"])\ndef test_annotate_and_offsetfrom_copy_input(fig_test, fig_ref):\n    # Both approaches place the text (10, 0) pixels away from the center of the line.\n    ax = fig_test.add_subplot()\n    l, = ax.plot([0, 2], [0, 2])\n    of_xy = np.array([.5, .5])\n    ax.annotate(\"foo\", textcoords=OffsetFrom(l, of_xy), xytext=(10, 0),\n                xy=(0, 0))  # xy is unused.\n    of_xy[:] = 1\n    ax = fig_ref.add_subplot()\n    l, = ax.plot([0, 2], [0, 2])\n    an_xy = np.array([.5, .5])\n    ax.annotate(\"foo\", xy=an_xy, xycoords=l, xytext=(10, 0), textcoords=\"offset points\")\n    an_xy[:] = 2\n</search><replace>def test_annotate_and_offsetfrom_mutates(fig_test):\n    # Verify that mutating the input array after calling annotate changes the annotation position.\n    ax = fig_test.add_subplot()\n    l, = ax.plot([0, 2], [0, 2])\n    of_xy = np.array([.5, .5])\n    ann = ax.annotate(\"foo\", textcoords=OffsetFrom(l, of_xy), xytext=(10, 0), xy=(0, 0))\n    pos_before = ann.get_position()\n    of_xy[:] = 1\n    pos_after = ann.get_position()\n    assert not np.allclose(pos_before, pos_after)\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3665,
+  "prompt_tokens": 1886,
+  "total_tokens": 5551,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 3110,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Stop copying input arrays for annotation offsets and coordinates; store them directly.",
+ "requirement": "All annotation-related classes should keep a reference to the original xy and ref_coord objects rather than making a copy. This means that if the caller mutates the array after calling ``annotate`` or using ``OffsetFrom``, the annotation\u2019s position will reflect those changes. This supersedes any previous expectation that the implementation should copy these inputs.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/text.py",
+   "search": "self._ref_coord = x, y",
+   "replace": "self._ref_coord = ref_coord"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/text.py",
+   "search": "self.xy = x, y",
+   "replace": "self.xy = xy"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_text.py",
+   "search": "@check_figures_equal(extensions=[\"png\"])\ndef test_annotate_and_offsetfrom_copy_input(fig_test, fig_ref):\n    # Both approaches place the text (10, 0) pixels away from the center of the line.\n    ax = fig_test.add_subplot()\n    l, = ax.plot([0, 2], [0, 2])\n    of_xy = np.array([.5, .5])\n    ax.annotate(\"foo\", textcoords=OffsetFrom(l, of_xy), xytext=(10, 0),\n                xy=(0, 0))  # xy is unused.\n    of_xy[:] = 1\n    ax = fig_ref.add_subplot()\n    l, = ax.plot([0, 2], [0, 2])\n    an_xy = np.array([.5, .5])\n    ax.annotate(\"foo\", xy=an_xy, xycoords=l, xytext=(10, 0), textcoords=\"offset points\")\n    an_xy[:] = 2",
+   "replace": "def test_annotate_and_offsetfrom_mutates(fig_test):\n    # Verify that mutating the input array after calling annotate changes the annotation position.\n    ax = fig_test.add_subplot()\n    l, = ax.plot([0, 2], [0, 2])\n    of_xy = np.array([.5, .5])\n    ann = ax.annotate(\"foo\", textcoords=OffsetFrom(l, of_xy), xytext=(10, 0), xy=(0, 0))\n    pos_before = ann.get_position()\n    of_xy[:] = 1\n    pos_after = ann.get_position()\n    assert not np.allclose(pos_before, pos_after)"
+  }
+ ],
+ "status": "generated"
+}

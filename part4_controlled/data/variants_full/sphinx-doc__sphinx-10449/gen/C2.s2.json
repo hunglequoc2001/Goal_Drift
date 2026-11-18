@@ -1,0 +1,38 @@
+{
+ "instance_id": "sphinx-doc__sphinx-10449",
+ "kind": "C2",
+ "sample": 2,
+ "generator": "glm-4-32b-0414",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 2,
+ "prompt_sha256": "cd69e6e799f05f2f8e0fb19ffbc73521cd80e9ae7ba22efd38600e128c2430c9",
+ "raw": "\n<summary>Modify the return type suppression logic for class methods to handle None explicitly.</summary>\n<requirement>This change supersedes any conflicting expectation in the issue. When using `autodoc_typehints = \"description\"` with a class, the return type annotation for `__init__` methods should be completely omitted, not just suppressed when the return type is None. This means that even if a class's `__init__` method has a non-None return type annotation, it should not be displayed in the documentation.</requirement>\n<source_edit file=\"sphinx/ext/autodoc/typehints.py\"><search>if objtype == 'class':\n+                modify_field_list(field_list, annotations[fullname], suppress_rtype=True)\n+            else:\n+                modify_field_list(field_list, annotations[fullname])</search><replace>if objtype == 'class':\n+                modify_field_list(field_list, annotations[fullname], suppress_rtype=True)\n+            else:\n+                modify_field_list(field_list, annotations[fullname])</replace></source_edit>\n<test_edit file=\"tests/test_ext_autodoc_configs.py\"><search>def test_autodoc_typehints_description_with_documented_init(app):</search><replace>def test_autodoc_typehints_description_with_documented_init(app):\n        # Verify that __init__ methods do not show return type annotations\n        assert 'Return type:' not in result.getvalue()</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 301,
+  "prompt_tokens": 2112,
+  "total_tokens": 2413,
+  "completion_tokens_details": null,
+  "prompt_tokens_details": null
+ },
+ "summary": "Modify the return type suppression logic for class methods to handle None explicitly.",
+ "requirement": "This change supersedes any conflicting expectation in the issue. When using `autodoc_typehints = \"description\"` with a class, the return type annotation for `__init__` methods should be completely omitted, not just suppressed when the return type is None. This means that even if a class's `__init__` method has a non-None return type annotation, it should not be displayed in the documentation.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/typehints.py",
+   "search": "if objtype == 'class':\n+                modify_field_list(field_list, annotations[fullname], suppress_rtype=True)\n+            else:\n+                modify_field_list(field_list, annotations[fullname])",
+   "replace": "if objtype == 'class':\n+                modify_field_list(field_list, annotations[fullname], suppress_rtype=True)\n+            else:\n+                modify_field_list(field_list, annotations[fullname])"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_configs.py",
+   "search": "def test_autodoc_typehints_description_with_documented_init(app):",
+   "replace": "def test_autodoc_typehints_description_with_documented_init(app):\n        # Verify that __init__ methods do not show return type annotations\n        assert 'Return type:' not in result.getvalue()"
+  }
+ ],
+ "status": "generated"
+}

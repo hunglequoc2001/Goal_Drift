@@ -1,0 +1,43 @@
+{
+ "instance_id": "pydata__xarray-6744",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "7232f9fff71a4d8e128be8d5dedaed3346975c14e05e4bfc9cb547ed43fcc928",
+ "raw": "<summary>Iterator over DataArrayRolling must ignore the ``center`` argument and always yield left\u2011aligned windows.</summary>\n<requirement>When iterating over a ``DataArrayRolling`` object, the iterator must **ignore** the ``center`` keyword argument and always produce windows that start at the first element of each rolling segment (i.e., left\u2011aligned windows). This behavior supersedes any previous expectation that the iterator would respect ``center=True`` and produce centered windows.</requirement>\n<source_edit file=\"xarray/core/rolling.py\"><search>offset = (window0 + 1) // 2 if self.center[0] else 1\n        stops = np.arange(offset, self.obj.sizes[dim0] + offset)\n        starts = stops - window0\n        starts[: window0 - offset] = 0</search><replace>stops = np.arange(1, len(self.window_labels) + 1)\n        starts = stops - int(self.window[0])\n        starts[: int(self.window[0])] = 0</replace></source_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>actual = rolling_obj_mean.isel(time=i)</search><replace>actual = window.mean(\"time\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1984,
+  "prompt_tokens": 1805,
+  "total_tokens": 3789,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1708,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Iterator over DataArrayRolling must ignore the ``center`` argument and always yield left\u2011aligned windows.",
+ "requirement": "When iterating over a ``DataArrayRolling`` object, the iterator must **ignore** the ``center`` keyword argument and always produce windows that start at the first element of each rolling segment (i.e., left\u2011aligned windows). This behavior supersedes any previous expectation that the iterator would respect ``center=True`` and produce centered windows.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/rolling.py",
+   "search": "offset = (window0 + 1) // 2 if self.center[0] else 1\n        stops = np.arange(offset, self.obj.sizes[dim0] + offset)\n        starts = stops - window0\n        starts[: window0 - offset] = 0",
+   "replace": "stops = np.arange(1, len(self.window_labels) + 1)\n        starts = stops - int(self.window[0])\n        starts[: int(self.window[0])] = 0"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "actual = rolling_obj_mean.isel(time=i)",
+   "replace": "actual = window.mean(\"time\")"
+  }
+ ],
+ "status": "generated"
+}

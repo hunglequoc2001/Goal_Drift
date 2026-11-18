@@ -1,0 +1,42 @@
+{
+ "instance_id": "matplotlib__matplotlib-25332",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "90622a7175e8c298d8963b0765158fcd42bc0f1485cec96f4880315dbecc8615",
+ "raw": "<summary>Do not pickle the internal weak\u2011ref mapping of\u202fGrouper; reconstruct it empty on unpickling.</summary>\n<requirement>When a ``Grouper`` instance is pickled its internal ``_mapping`` attribute must **not** be serialized. Upon unpickling the ``_mapping`` should be re\u2011initialized to an empty dictionary. This supersedes any previous expectation that the mapping be preserved across pickling.</requirement>\n<source_edit file=\"lib/matplotlib/cbook.py\"><search>def __getstate__(self):\n        return {\n            **vars(self),\n            # Convert weak refs to strong ones.\n            \"_mapping\": {k(): [v() for v in vs] for k, vs in self._mapping.items()},\n        }</search><replace>def __getstate__(self):\n        # Exclude the weak\u2011ref mapping from the pickled state.\n        return {k: v for k, v in vars(self).items() if k != \"_mapping\"}</replace></source_edit>\n<source_edit file=\"lib/matplotlib/cbook.py\"><search>def __setstate__(self, state):\n        vars(self).update(state)\n        # Convert strong refs to weak ones.\n        self._mapping = {weakref.ref(k): [*map(weakref.ref, vs)]\n                         for k, vs in self._mapping.items()}</search><replace>def __setstate__(self, state):\n        vars(self).update(state)\n        # Re\u2011create an empty weak\u2011ref mapping; it will be populated as needed.\n        self._mapping = {}</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1994,
+  "prompt_tokens": 1343,
+  "total_tokens": 3337,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1647,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Do not pickle the internal weak\u2011ref mapping of\u202fGrouper; reconstruct it empty on unpickling.",
+ "requirement": "When a ``Grouper`` instance is pickled its internal ``_mapping`` attribute must **not** be serialized. Upon unpickling the ``_mapping`` should be re\u2011initialized to an empty dictionary. This supersedes any previous expectation that the mapping be preserved across pickling.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/cbook.py",
+   "search": "def __getstate__(self):\n        return {\n            **vars(self),\n            # Convert weak refs to strong ones.\n            \"_mapping\": {k(): [v() for v in vs] for k, vs in self._mapping.items()},\n        }",
+   "replace": "def __getstate__(self):\n        # Exclude the weak\u2011ref mapping from the pickled state.\n        return {k: v for k, v in vars(self).items() if k != \"_mapping\"}"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/cbook.py",
+   "search": "def __setstate__(self, state):\n        vars(self).update(state)\n        # Convert strong refs to weak ones.\n        self._mapping = {weakref.ref(k): [*map(weakref.ref, vs)]\n                         for k, vs in self._mapping.items()}",
+   "replace": "def __setstate__(self, state):\n        vars(self).update(state)\n        # Re\u2011create an empty weak\u2011ref mapping; it will be populated as needed.\n        self._mapping = {}"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

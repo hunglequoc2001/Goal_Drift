@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-11087",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "d73d7070d88623aa5a250327dd697c556d3561d23fdabbcbc2f4f6e0a238ee48",
+ "raw": "<summary>Deletion signals no longer affect field selection during cascade deletes</summary>\n<requirement>When performing cascade deletions, Django should always select only the fields that are referenced by downstream relationships, regardless of whether any pre_delete or post_delete signal handlers are connected to the related models. This supersedes any previous expectation that signal connections would cause all fields to be selected.</requirement>\n<source_edit file=\"django/db/models/deletion.py\"><search>if not (sub_objs.query.select_related or self._has_signal_listeners(related_model)):</search><replace>if not sub_objs.query.select_related:</replace></source_edit>\n<test_edit file=\"tests/delete/tests.py\"><search>        # All fields are selected if deletion signals are connected.\n        for signal_name in ('pre_delete', 'post_delete'):\n            with self.subTest(signal=signal_name):\n                origin = Origin.objects.create()\n                signal = getattr(models.signals, signal_name)\n                signal.connect(receiver, sender=Referrer)\n                with self.assertNumQueries(2) as ctx:\n                    origin.delete()\n                self.assertIn(\n                    connection.ops.quote_name('large_field'),\n                    ctx.captured_queries[0]['sql'],\n                )\n                signal.disconnect(receiver, sender=Referrer)</search><replace>        # Deletion signals do not affect field selection; only referenced fields are selected.\n        for signal_name in ('pre_delete', 'post_delete'):\n            with self.subTest(signal=signal_name):\n                origin = Origin.objects.create()\n                signal = getattr(models.signals, signal_name)\n                signal.connect(receiver, sender=Referrer)\n                with self.assertNumQueries(2) as ctx:\n                    origin.delete()\n                # The generated SQL should still only include the referenced fields.\n                self.assertEqual(ctx.captured_queries[0]['sql'], expected_sql)\n                signal.disconnect(receiver, sender=Referrer)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 997,
+  "prompt_tokens": 4270,
+  "total_tokens": 5267,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 599,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Deletion signals no longer affect field selection during cascade deletes",
+ "requirement": "When performing cascade deletions, Django should always select only the fields that are referenced by downstream relationships, regardless of whether any pre_delete or post_delete signal handlers are connected to the related models. This supersedes any previous expectation that signal connections would cause all fields to be selected.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/deletion.py",
+   "search": "if not (sub_objs.query.select_related or self._has_signal_listeners(related_model)):",
+   "replace": "if not sub_objs.query.select_related:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/delete/tests.py",
+   "search": "        # All fields are selected if deletion signals are connected.\n        for signal_name in ('pre_delete', 'post_delete'):\n            with self.subTest(signal=signal_name):\n                origin = Origin.objects.create()\n                signal = getattr(models.signals, signal_name)\n                signal.connect(receiver, sender=Referrer)\n                with self.assertNumQueries(2) as ctx:\n                    origin.delete()\n                self.assertIn(\n                    connection.ops.quote_name('large_field'),\n                    ctx.captured_queries[0]['sql'],\n                )\n                signal.disconnect(receiver, sender=Referrer)",
+   "replace": "        # Deletion signals do not affect field selection; only referenced fields are selected.\n        for signal_name in ('pre_delete', 'post_delete'):\n            with self.subTest(signal=signal_name):\n                origin = Origin.objects.create()\n                signal = getattr(models.signals, signal_name)\n                signal.connect(receiver, sender=Referrer)\n                with self.assertNumQueries(2) as ctx:\n                    origin.delete()\n                # The generated SQL should still only include the referenced fields.\n                self.assertEqual(ctx.captured_queries[0]['sql'], expected_sql)\n                signal.disconnect(receiver, sender=Referrer)"
+  }
+ ],
+ "status": "generated"
+}

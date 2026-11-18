@@ -1,0 +1,43 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-14053",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "8c7ae3d7ade059c00d05c08d4b6d289f6739073199cabf81846a04b50541f8b6",
+ "raw": "<summary>Require that feature_names list must contain a name for every feature used in the tree, otherwise raise ValueError.</summary>\n<requirement>When a list of `feature_names` is supplied to `export_text`, it must contain a name for each feature that appears in the tree. If any feature used by the tree does not have a corresponding entry in the provided list, `export_text` should raise a `ValueError` with a message indicating that all feature names must be provided. This requirement supersedes any previous expectation that missing names would be silently replaced with `None`.</requirement>\n<source_edit file=\"sklearn/tree/export.py\"><search>feature_names_ = [feature_names[i] if i != _tree.TREE_UNDEFINED</search><replace># Ensure a name is provided for every feature used in the tree\n        if any(i == _tree.TREE_UNDEFINED for i in tree_.feature):\n            raise ValueError(\"feature_names must be provided for all features used in the tree\")\n        feature_names_ = [feature_names[i] for i in tree_.feature]</replace></source_edit>\n<test_edit file=\"sklearn/tree/tests/test_export.py\"><search>assert export_text(reg, decimals=1, show_weights=True,</search><replace>assert export_text(reg, decimals=1, show_weights=True,\n                       feature_names=['first']) == expected_report\n\n    # Providing insufficient feature_names should raise a ValueError\n    with pytest.raises(ValueError, match=\"feature_names must be provided\"):\n        export_text(reg, feature_names=[])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2021,
+  "prompt_tokens": 1812,
+  "total_tokens": 3833,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1684,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Require that feature_names list must contain a name for every feature used in the tree, otherwise raise ValueError.",
+ "requirement": "When a list of `feature_names` is supplied to `export_text`, it must contain a name for each feature that appears in the tree. If any feature used by the tree does not have a corresponding entry in the provided list, `export_text` should raise a `ValueError` with a message indicating that all feature names must be provided. This requirement supersedes any previous expectation that missing names would be silently replaced with `None`.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/tree/export.py",
+   "search": "feature_names_ = [feature_names[i] if i != _tree.TREE_UNDEFINED",
+   "replace": "# Ensure a name is provided for every feature used in the tree\n        if any(i == _tree.TREE_UNDEFINED for i in tree_.feature):\n            raise ValueError(\"feature_names must be provided for all features used in the tree\")\n        feature_names_ = [feature_names[i] for i in tree_.feature]"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/tree/tests/test_export.py",
+   "search": "assert export_text(reg, decimals=1, show_weights=True,",
+   "replace": "assert export_text(reg, decimals=1, show_weights=True,\n                       feature_names=['first']) == expected_report\n\n    # Providing insufficient feature_names should raise a ValueError\n    with pytest.raises(ValueError, match=\"feature_names must be provided\"):\n        export_text(reg, feature_names=[])"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-12155",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "a86dfe50e23fd020f235d0c068e6b634bc76ff74e7b8b1265de47e611a687f41",
+ "raw": "<summary>Docstring trimming must preserve indentation of the first line while dedenting subsequent lines.</summary>\n<requirement>When processing docstrings, the indentation used for dedenting should be calculated from all lines *except* the first line. The first line must be left unchanged (its leading whitespace preserved), and the remaining lines should be dedented by the minimal indentation found among them. This supersedes any previous expectation about how docstrings are trimmed.</requirement>\n\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>def parse_docstring(docstring):</search><replace>def trim_docstring(docstring):\n    \"\"\"\n    Trim leading/trailing whitespace from a docstring while preserving the\n    indentation of the first line.  The indentation used for dedenting the\n    remaining lines is calculated from all lines after the first one.\n    \"\"\"\n    if not docstring or not docstring.strip():\n        return ''\n    # Convert tabs to spaces and split into lines\n    lines = docstring.expandtabs().splitlines()\n    # Determine indentation from lines after the first one\n    indent = min(\n        (len(line) - len(line.lstrip()) for line in lines[1:] if line.lstrip()),\n        default=0,\n    )\n    # Preserve the first line as\u2011is (but strip its trailing whitespace)\n    first = lines[0].rstrip()\n    # Dedent the rest of the lines\n    rest = [line[indent:].rstrip() for line in lines[1:]]\n    return \"\\n\".join([first] + rest).strip()\n\ndef parse_docstring(docstring):\n    \"\"\"\n    Parse out the parts of a docstring.  Return (title, body, metadata).\n    \"\"\"\n    if not docstring:\n        return '', '', {}\n    docstring = trim_docstring(docstring)\n</replace></source_edit>\n\n<source_edit file=\"django/contrib/admindocs/views.py\"><search>verbose = verbose and (\n-                    utils.parse_rst(cleandoc(verbose), 'model', _('model:') + opts.model_name)\n+                    utils.parse_rst(utils.trim_docstring(verbose), 'model', _('model:') + opts.model_name)\n                 )</search><replace>verbose = verbose and (\n+                    utils.parse_rst(utils.trim_docstring(verbose), 'model', _('model:') + opts.model_name)\n                 )</replace></source_edit>\n\n<test_edit file=\"tests/admin_docs/test_utils.py\"><search>title, body, _ = parse_docstring('firstline\\n\\n    second line')</search><replace>title, body, _ = parse_docstring('    firstline\\n\\n    second line')</replace></test_edit>\n\n<test_edit file=\"tests/admin_docs/test_utils.py\"><search>self.assertEqual(parse_rst(title, ''), '<p>firstline</p>\\n')</search><replace>self.assertEqual(parse_rst(title, ''), '<p>    firstline</p>\\n')</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2348,
+  "prompt_tokens": 1864,
+  "total_tokens": 4212,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1722,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Docstring trimming must preserve indentation of the first line while dedenting subsequent lines.",
+ "requirement": "When processing docstrings, the indentation used for dedenting should be calculated from all lines *except* the first line. The first line must be left unchanged (its leading whitespace preserved), and the remaining lines should be dedented by the minimal indentation found among them. This supersedes any previous expectation about how docstrings are trimmed.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "def parse_docstring(docstring):",
+   "replace": "def trim_docstring(docstring):\n    \"\"\"\n    Trim leading/trailing whitespace from a docstring while preserving the\n    indentation of the first line.  The indentation used for dedenting the\n    remaining lines is calculated from all lines after the first one.\n    \"\"\"\n    if not docstring or not docstring.strip():\n        return ''\n    # Convert tabs to spaces and split into lines\n    lines = docstring.expandtabs().splitlines()\n    # Determine indentation from lines after the first one\n    indent = min(\n        (len(line) - len(line.lstrip()) for line in lines[1:] if line.lstrip()),\n        default=0,\n    )\n    # Preserve the first line as\u2011is (but strip its trailing whitespace)\n    first = lines[0].rstrip()\n    # Dedent the rest of the lines\n    rest = [line[indent:].rstrip() for line in lines[1:]]\n    return \"\\n\".join([first] + rest).strip()\n\ndef parse_docstring(docstring):\n    \"\"\"\n    Parse out the parts of a docstring.  Return (title, body, metadata).\n    \"\"\"\n    if not docstring:\n        return '', '', {}\n    docstring = trim_docstring(docstring)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/views.py",
+   "search": "verbose = verbose and (\n-                    utils.parse_rst(cleandoc(verbose), 'model', _('model:') + opts.model_name)\n+                    utils.parse_rst(utils.trim_docstring(verbose), 'model', _('model:') + opts.model_name)\n                 )",
+   "replace": "verbose = verbose and (\n+                    utils.parse_rst(utils.trim_docstring(verbose), 'model', _('model:') + opts.model_name)\n                 )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_docs/test_utils.py",
+   "search": "title, body, _ = parse_docstring('firstline\\n\\n    second line')",
+   "replace": "title, body, _ = parse_docstring('    firstline\\n\\n    second line')"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_docs/test_utils.py",
+   "search": "self.assertEqual(parse_rst(title, ''), '<p>firstline</p>\\n')",
+   "replace": "self.assertEqual(parse_rst(title, ''), '<p>    firstline</p>\\n')"
+  }
+ ],
+ "status": "generated"
+}

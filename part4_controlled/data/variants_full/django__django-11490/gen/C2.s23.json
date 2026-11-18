@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-11490",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "dfb864a0c09bee15a18b859ce527d8d08787f327cb44d1bc007bab3fedd68f85",
+ "raw": "<summary>Composed queries must keep the original values_select columns; later values()/values_list() calls cannot change the column list.</summary>\n<requirement>When a queryset is combined using union, intersection, or difference, the set of columns selected by the first values() or values_list() call on that combined queryset is fixed. Subsequent calls to values() or values_list() on the same combined queryset must be ignored for column selection and should return the originally selected columns. This supersedes any previous expectation that the column list could be altered after composition.</requirement>\n\n<source_edit file=\"django/db/models/sql/compiler.py\"><search>                    compiler.query = compiler.query.clone()</search><replace></replace></source_edit>\n\n<test_edit file=\"tests/queries/test_qs_combinators.py\"><search># List of columns can be changed.</search><replace></replace></test_edit>\n<test_edit file=\"tests/queries/test_qs_combinators.py\"><search>reserved_name = qs1.union(qs1).values_list('order').get()</search><replace></replace></test_edit>\n<test_edit file=\"tests/queries/test_qs_combinators.py\"><search>self.assertEqual(reserved_name, (2,))</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1326,
+  "prompt_tokens": 1019,
+  "total_tokens": 2345,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1052,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Composed queries must keep the original values_select columns; later values()/values_list() calls cannot change the column list.",
+ "requirement": "When a queryset is combined using union, intersection, or difference, the set of columns selected by the first values() or values_list() call on that combined queryset is fixed. Subsequent calls to values() or values_list() on the same combined queryset must be ignored for column selection and should return the originally selected columns. This supersedes any previous expectation that the column list could be altered after composition.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/compiler.py",
+   "search": "                    compiler.query = compiler.query.clone()",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_qs_combinators.py",
+   "search": "# List of columns can be changed.",
+   "replace": ""
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_qs_combinators.py",
+   "search": "reserved_name = qs1.union(qs1).values_list('order').get()",
+   "replace": ""
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_qs_combinators.py",
+   "search": "self.assertEqual(reserved_name, (2,))",
+   "replace": ""
+  }
+ ],
+ "status": "generated"
+}

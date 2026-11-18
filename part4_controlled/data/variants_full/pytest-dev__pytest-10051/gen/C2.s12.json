@@ -1,0 +1,36 @@
+{
+ "instance_id": "pytest-dev__pytest-10051",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "14e4e1b615e1aa71621a936c863683c21acfb449704a9817cfc47ac7cf81a1d9",
+ "raw": "<summary>clear() now only removes call\u2011stage log records.</summary>\n<requirement>When `caplog.clear()` is invoked, it must reset the captured log text and discard only the log records that were emitted during the **call** stage. Log records from other stages (such as **setup** or **teardown**) must remain available via `caplog.get_records()`. This behavior supersedes any previous description that `clear()` resets all captured records.</requirement>\n<source_edit file=\"src/_pytest/logging.py\"><search>def clear(self) -> None:\n        self.records.clear()\n        self.stream = StringIO()</search><replace>def clear(self) -> None:\n        # Preserve records from stages other than \"call\"\n        # (e.g., \"setup\" or \"teardown\") while discarding only those\n        # recorded during the call stage.\n        self.records[:] = [rec for rec in self.records if getattr(rec, \"when\", None) != \"call\"]\n        self.stream = StringIO()</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1553,
+  "prompt_tokens": 1650,
+  "total_tokens": 3203,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1325,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "clear() now only removes call\u2011stage log records.",
+ "requirement": "When `caplog.clear()` is invoked, it must reset the captured log text and discard only the log records that were emitted during the **call** stage. Log records from other stages (such as **setup** or **teardown**) must remain available via `caplog.get_records()`. This behavior supersedes any previous description that `clear()` resets all captured records.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "def clear(self) -> None:\n        self.records.clear()\n        self.stream = StringIO()",
+   "replace": "def clear(self) -> None:\n        # Preserve records from stages other than \"call\"\n        # (e.g., \"setup\" or \"teardown\") while discarding only those\n        # recorded during the call stage.\n        self.records[:] = [rec for rec in self.records if getattr(rec, \"when\", None) != \"call\"]\n        self.stream = StringIO()"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

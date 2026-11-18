@@ -1,0 +1,22 @@
+diff --git a/astropy/modeling/separable.py b/astropy/modeling/separable.py
+index 1234567..89abcdef 100644
+--- a/astropy/modeling/separable.py
++++ b/astropy/modeling/separable.py
+@@ -226,13 +226,20 @@ def _separable(transform):
+     if (transform_matrix := transform._calculate_separability_matrix()) is not NotImplemented:
+         return transform_matrix
+     elif isinstance(transform, CompoundModel):
+         sepleft = _separable(transform.left)
+         sepright = _separable(transform.right)
++        # Handle nested CompoundModels correctly
++        if isinstance(transform.left, CompoundModel) or isinstance(transform.right, CompoundModel):
++            # Ensure we get the correct shape for nested models
++            noutp = _compute_n_outputs(transform.left, transform.right)
++            if transform.op == "&":
++                result = _cstack(sepleft, sepright)
++            else:  # transform.op == "|":
++                result = _cdot(sepleft, sepright)
++            return result
+         return _operators[transform.op](sepleft, sepright)
+     elif isinstance(transform, Model):
+         return _coord_matrix(transform, "left", transform.n_outputs)

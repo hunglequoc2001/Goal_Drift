@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-11087",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 38744,
+ "raw": "<summary>Cascade deletions must always fetch all fields of related objects, regardless of signal listeners.</summary>\n<requirement>When performing cascade deletions, the ORM must always retrieve all fields of related objects, even if no pre_delete or post_delete signal listeners are connected. This supersedes any previous expectation that only referenced fields could be selected for performance.</requirement>\n<source_edit file=\"django/db/models/deletion.py\"><search>                        if not (sub_objs.query.select_related or self._has_signal_listeners(related_model)):</search><replace>                        if False:</replace></source_edit>\n<test_edit file=\"tests/delete/tests.py\"><search>self.assertEqual(ctx.captured_queries[0]['sql'], expected_sql)</search><replace>self.assertIn(connection.ops.quote_name('large_field'), ctx.captured_queries[0]['sql'])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Cascade deletions must always fetch all fields of related objects, regardless of signal listeners.",
+ "requirement": "When performing cascade deletions, the ORM must always retrieve all fields of related objects, even if no pre_delete or post_delete signal listeners are connected. This supersedes any previous expectation that only referenced fields could be selected for performance.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/deletion.py",
+   "search": "                        if not (sub_objs.query.select_related or self._has_signal_listeners(related_model)):",
+   "replace": "                        if False:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/delete/tests.py",
+   "search": "self.assertEqual(ctx.captured_queries[0]['sql'], expected_sql)",
+   "replace": "self.assertIn(connection.ops.quote_name('large_field'), ctx.captured_queries[0]['sql'])"
+  }
+ ]
+}

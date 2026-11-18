@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-13121",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "c2b102763a5a1d347576494ee2569419c3488a9c45a45b2613a78f1d0721f86c",
+ "raw": "<summary>Duration arithmetic on backends without native duration support now raises NotImplementedError</summary>\n<requirement>When a DurationField is combined with a datetime.timedelta (e.g., using addition or subtraction) on a database backend that does not have native duration field support, the operation must raise a NotImplementedError with the message \u201cDuration expressions not supported on this backend\u201d. This supersedes any previous expectation that such expressions would be automatically handled.</requirement>\n<source_edit file=\"django/db/models/expressions.py\"><search>if (</search><replace>if (\n            not connection.features.has_native_duration_field and\n            'DurationField' in {lhs_type, rhs_type} and\n            lhs_type != rhs_type\n        ):\n            raise NotImplementedError('Duration expressions not supported on this backend')\n        # Previously: return DurationExpression(self.lhs, self.connector, self.rhs).as_sql(compiler, connection)\n</replace></source_edit>\n<test_edit file=\"tests/expressions/tests.py\"><search>def test_duration_expressions(self):</search><replace>def test_duration_expressions(self):\n        for delta in self.deltas:\n            with self.assertRaisesMessage(NotImplementedError, 'Duration expressions not supported on this backend'):\n                list(Experiment.objects.annotate(duration=F('estimated_time') + delta))\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1651,
+  "prompt_tokens": 2633,
+  "total_tokens": 4284,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1362,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Duration arithmetic on backends without native duration support now raises NotImplementedError",
+ "requirement": "When a DurationField is combined with a datetime.timedelta (e.g., using addition or subtraction) on a database backend that does not have native duration field support, the operation must raise a NotImplementedError with the message \u201cDuration expressions not supported on this backend\u201d. This supersedes any previous expectation that such expressions would be automatically handled.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/expressions.py",
+   "search": "if (",
+   "replace": "if (\n            not connection.features.has_native_duration_field and\n            'DurationField' in {lhs_type, rhs_type} and\n            lhs_type != rhs_type\n        ):\n            raise NotImplementedError('Duration expressions not supported on this backend')\n        # Previously: return DurationExpression(self.lhs, self.connector, self.rhs).as_sql(compiler, connection)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/expressions/tests.py",
+   "search": "def test_duration_expressions(self):",
+   "replace": "def test_duration_expressions(self):\n        for delta in self.deltas:\n            with self.assertRaisesMessage(NotImplementedError, 'Duration expressions not supported on this backend'):\n                list(Experiment.objects.annotate(duration=F('estimated_time') + delta))"
+  }
+ ],
+ "status": "generated"
+}

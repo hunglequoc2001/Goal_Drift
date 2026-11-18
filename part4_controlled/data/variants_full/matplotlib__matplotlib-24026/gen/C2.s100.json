@@ -1,0 +1,31 @@
+{
+ "instance_id": "matplotlib__matplotlib-24026",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 16599,
+ "raw": "<summary>Disallow cycle reference strings in the `colors` argument of `stackplot`.</summary>\n<requirement>When a `colors` argument is supplied to `stackplot`, it must contain only concrete color specifications. Any string of the form `'C<number>'` (e.g., `'C0'`) is prohibited and should cause `stackplot` to raise a `ValueError` with the message `Color cycle references (e.g., \"C0\") are not allowed in stackplot colors`. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"lib/matplotlib/stackplot.py\"><search>    if colors is not None:\n        colors = itertools.cycle(colors)\n    else:\n        colors = (axes._get_lines.get_next_color() for _ in y)</search><replace>    if colors is not None:\n        # Validate that no cycle reference strings like 'C0' are used.\n        colors_list = list(colors)\n        for c in colors_list:\n            if isinstance(c, str) and c.startswith('C') and c[1:].isdigit():\n                raise ValueError(\"Color cycle references (e.g., \\\"C0\\\") are not allowed in stackplot colors\")\n        colors = itertools.cycle(colors_list)\n    else:\n        colors = (axes._get_lines.get_next_color() for _ in y)</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>    ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])</search><replace>    with pytest.raises(ValueError, match='Color cycle references'):\n        ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Disallow cycle reference strings in the `colors` argument of `stackplot`.",
+ "requirement": "When a `colors` argument is supplied to `stackplot`, it must contain only concrete color specifications. Any string of the form `'C<number>'` (e.g., `'C0'`) is prohibited and should cause `stackplot` to raise a `ValueError` with the message `Color cycle references (e.g., \"C0\") are not allowed in stackplot colors`. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/stackplot.py",
+   "search": "    if colors is not None:\n        colors = itertools.cycle(colors)\n    else:\n        colors = (axes._get_lines.get_next_color() for _ in y)",
+   "replace": "    if colors is not None:\n        # Validate that no cycle reference strings like 'C0' are used.\n        colors_list = list(colors)\n        for c in colors_list:\n            if isinstance(c, str) and c.startswith('C') and c[1:].isdigit():\n                raise ValueError(\"Color cycle references (e.g., \\\"C0\\\") are not allowed in stackplot colors\")\n        colors = itertools.cycle(colors_list)\n    else:\n        colors = (axes._get_lines.get_next_color() for _ in y)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "    ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])",
+   "replace": "    with pytest.raises(ValueError, match='Color cycle references'):\n        ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])"
+  }
+ ]
+}

@@ -1,0 +1,55 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-25747",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "fc73396b8e4c544593aa483fae44443a91c93561001e53005f4ab4c32c3819a8",
+ "raw": "<summary>set_output with pandas now always overwrites DataFrame index with the input index</summary>\n<requirement>When `set_output(transform=\"pandas\")` is used, the resulting pandas DataFrame must always have its index set to the index of the input data, even if the transformer returns a DataFrame with its own index. This supersedes any previous expectation that the transformer\u2019s own index would be preserved.</requirement>\n<source_edit file=\"sklearn/utils/_set_output.py\"><search>Index for data.\n-        Index for data. `index` is ignored if `data_to_wrap` is already a DataFrame.</search><replace>Index for data.\n+        Index for data. When `data_to_wrap` is a DataFrame, its index will be overwritten with `index`.</replace></source_edit>\n<source_edit file=\"sklearn/utils/_set_output.py\"><search>if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        return data_to_wrap</search><replace>if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        if index is not None:\n            data_to_wrap.index = index\n        return data_to_wrap</replace></source_edit>\n<test_edit file=\"sklearn/utils/tests/test_set_output.py\"><search>assert_array_equal(new_df.index, new_index)\n-\n-    # Index does not change when the input is a DataFrame\n-    assert_array_equal(new_df.index, X_df.index)</search><replace>assert_array_equal(new_df.index, new_index)</replace></test_edit>\n<test_edit file=\"sklearn/utils/tests/test_set_output.py\"><search>assert_array_equal(X_trans.index, [\"s0\", \"s1\"])</search><replace>assert_array_equal(X_trans.index, [0, 1])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2623,
+  "prompt_tokens": 2923,
+  "total_tokens": 5546,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2212,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "set_output with pandas now always overwrites DataFrame index with the input index",
+ "requirement": "When `set_output(transform=\"pandas\")` is used, the resulting pandas DataFrame must always have its index set to the index of the input data, even if the transformer returns a DataFrame with its own index. This supersedes any previous expectation that the transformer\u2019s own index would be preserved.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/utils/_set_output.py",
+   "search": "Index for data.\n-        Index for data. `index` is ignored if `data_to_wrap` is already a DataFrame.",
+   "replace": "Index for data.\n+        Index for data. When `data_to_wrap` is a DataFrame, its index will be overwritten with `index`."
+  },
+  {
+   "kind": "source_edit",
+   "file": "sklearn/utils/_set_output.py",
+   "search": "if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        return data_to_wrap",
+   "replace": "if isinstance(data_to_wrap, pd.DataFrame):\n        if columns is not None:\n            data_to_wrap.columns = columns\n        if index is not None:\n            data_to_wrap.index = index\n        return data_to_wrap"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/utils/tests/test_set_output.py",
+   "search": "assert_array_equal(new_df.index, new_index)\n-\n-    # Index does not change when the input is a DataFrame\n-    assert_array_equal(new_df.index, X_df.index)",
+   "replace": "assert_array_equal(new_df.index, new_index)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sklearn/utils/tests/test_set_output.py",
+   "search": "assert_array_equal(X_trans.index, [\"s0\", \"s1\"])",
+   "replace": "assert_array_equal(X_trans.index, [0, 1])"
+  }
+ ],
+ "status": "generated"
+}

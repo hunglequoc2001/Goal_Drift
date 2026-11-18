@@ -1,0 +1,43 @@
+{
+ "instance_id": "pytest-dev__pytest-7205",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "9f6c85a18cd8673db51e44aa0c8327d33987e36dd5eeaa806301fa939f5dede3",
+ "raw": "<summary>Display bytes parameters as decoded UTF\u20118 strings instead of their repr when showing fixture actions.</summary>\n<requirement>When a fixture is displayed with the\u202f--setup-show\u202foption and its cached parameter is a\u202fbytes\u202for\u202fbytearray\u202fobject, the output must show the parameter decoded as UTF\u20118 text (using replacement characters for undecodable bytes) rather than the Python\u202frepr\u202f(e.g.\u202fb'Hello'\u202fshould appear as\u202f'Hello'). If decoding fails, fall back to the safe\u202frepr\u202frepresentation. This supersedes any previous expectation about how bytes parameters are rendered.</requirement>\n<source_edit file=\"src/_pytest/setuponly.py\"><search>if hasattr(fixturedef, \"cached_param\"):</search><replace>if hasattr(fixturedef, \"cached_param\"):\n        param = fixturedef.cached_param\n        if isinstance(param, (bytes, bytearray)):\n            try:\n                decoded = param.decode(\"utf-8\", errors=\"replace\")\n            except Exception:\n                decoded = saferepr(param, maxsize=42)\n            display = decoded\n        else:\n            display = saferepr(param, maxsize=42)\n        tw.write(\"[{}]\".format(display))</replace></source_edit>\n<test_edit file=\"testing/test_setuponly.py\"><search>def test_show_fixture_action_with_bytes(testdir):</search><replace>def test_show_fixture_action_with_bytes(testdir):\n    # Issue 7126, BytesWarning when using --setup-show with bytes parameter\n    test_file = testdir.makepyfile(\n        \"\"\"\n        import pytest\n\n        @pytest.mark.parametrize('data', [b'Hello World'])\n        def test_data(data):\n            pass\n        \"\"\"\n    )\n    result = testdir.run(\n        sys.executable, \"-bb\", \"-m\", \"pytest\", \"--setup-show\", str(test_file)\n    )\n    # The bytes parameter must be shown as decoded text, not as a repr containing the leading b\n    result.stdout.fnmatch_lines([\"*Hello World*\"])\n    assert result.ret == 0</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2414,
+  "prompt_tokens": 2632,
+  "total_tokens": 5046,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1967,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Display bytes parameters as decoded UTF\u20118 strings instead of their repr when showing fixture actions.",
+ "requirement": "When a fixture is displayed with the\u202f--setup-show\u202foption and its cached parameter is a\u202fbytes\u202for\u202fbytearray\u202fobject, the output must show the parameter decoded as UTF\u20118 text (using replacement characters for undecodable bytes) rather than the Python\u202frepr\u202f(e.g.\u202fb'Hello'\u202fshould appear as\u202f'Hello'). If decoding fails, fall back to the safe\u202frepr\u202frepresentation. This supersedes any previous expectation about how bytes parameters are rendered.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/setuponly.py",
+   "search": "if hasattr(fixturedef, \"cached_param\"):",
+   "replace": "if hasattr(fixturedef, \"cached_param\"):\n        param = fixturedef.cached_param\n        if isinstance(param, (bytes, bytearray)):\n            try:\n                decoded = param.decode(\"utf-8\", errors=\"replace\")\n            except Exception:\n                decoded = saferepr(param, maxsize=42)\n            display = decoded\n        else:\n            display = saferepr(param, maxsize=42)\n        tw.write(\"[{}]\".format(display))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_setuponly.py",
+   "search": "def test_show_fixture_action_with_bytes(testdir):",
+   "replace": "def test_show_fixture_action_with_bytes(testdir):\n    # Issue 7126, BytesWarning when using --setup-show with bytes parameter\n    test_file = testdir.makepyfile(\n        \"\"\"\n        import pytest\n\n        @pytest.mark.parametrize('data', [b'Hello World'])\n        def test_data(data):\n            pass\n        \"\"\"\n    )\n    result = testdir.run(\n        sys.executable, \"-bb\", \"-m\", \"pytest\", \"--setup-show\", str(test_file)\n    )\n    # The bytes parameter must be shown as decoded text, not as a repr containing the leading b\n    result.stdout.fnmatch_lines([\"*Hello World*\"])\n    assert result.ret == 0"
+  }
+ ],
+ "status": "generated"
+}

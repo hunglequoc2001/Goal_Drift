@@ -1,0 +1,36 @@
+{
+ "instance_id": "pydata__xarray-6744",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "7232f9fff71a4d8e128be8d5dedaed3346975c14e05e4bfc9cb547ed43fcc928",
+ "raw": "<summary>Iteration over a rolling object should yield the coordinate of the window\u2019s center when `center=True`.</summary>\n<requirement>When iterating over a `DataArrayRolling` object, the first element of each yielded tuple must be the coordinate label that corresponds to the centre of the window if the rolling operation was created with `center=True`. If `center=False`, the label should remain the original (right\u2011most) coordinate of the window. This supersedes any previous description of the iterator\u2019s behaviour.</requirement>\n<source_edit file=\"xarray/core/rolling.py\"><search>for (label, start, stop) in zip(self.window_labels, starts, stops):</search><replace>for start, stop in zip(starts, stops):\n            # Determine the label to yield:\n            if self.center[0]:\n                # centre of the window\n                label_idx = start + offset - 1\n            else:\n                # original behaviour \u2013 right\u2011most coordinate\n                label_idx = stop - 1\n            label = self.window_labels[label_idx]\n            window = self.obj.isel({dim0: slice(start, stop)})</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1277,
+  "prompt_tokens": 1805,
+  "total_tokens": 3082,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1024,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Iteration over a rolling object should yield the coordinate of the window\u2019s center when `center=True`.",
+ "requirement": "When iterating over a `DataArrayRolling` object, the first element of each yielded tuple must be the coordinate label that corresponds to the centre of the window if the rolling operation was created with `center=True`. If `center=False`, the label should remain the original (right\u2011most) coordinate of the window. This supersedes any previous description of the iterator\u2019s behaviour.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/rolling.py",
+   "search": "for (label, start, stop) in zip(self.window_labels, starts, stops):",
+   "replace": "for start, stop in zip(starts, stops):\n            # Determine the label to yield:\n            if self.center[0]:\n                # centre of the window\n                label_idx = start + offset - 1\n            else:\n                # original behaviour \u2013 right\u2011most coordinate\n                label_idx = stop - 1\n            label = self.window_labels[label_idx]\n            window = self.obj.isel({dim0: slice(start, stop)})"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

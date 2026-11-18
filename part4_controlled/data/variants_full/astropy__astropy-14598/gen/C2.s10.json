@@ -1,0 +1,43 @@
+{
+ "instance_id": "astropy__astropy-14598",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "ad7a3c11bed099726c641d5a7d6a957bfcde3d276e09fa7c74ad006c40de4e77",
+ "raw": "<summary>Trailing double single\u2011quotes in FITS card values should be collapsed to a single quote.</summary>\n<requirement>When parsing a FITS Card value, any occurrence of exactly two consecutive single\u2011quote characters at the very end of the value (after stripping trailing whitespace) must be interpreted as a single quote character. In other words, if the stripped value ends with `''`, replace those two characters with a single `'`. This rule supersedes any previous expectation that such trailing double quotes be preserved.</requirement>\n<source_edit file=\"astropy/io/fits/card.py\"><search>                value = value.rstrip()</search><replace>                value = value.rstrip()\n                if value.endswith(\"''\"):\n                    value = value[:-2] + \"'\"</replace></source_edit>\n<test_edit file=\"astropy/io/fits/tests/test_header.py\"><search>        testval = \"x\" * 100 + \"''\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval</search><replace>        testval = \"x\" * 100 + \"''\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval[:-2] + \"'\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1542,
+  "prompt_tokens": 1899,
+  "total_tokens": 3441,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1255,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Trailing double single\u2011quotes in FITS card values should be collapsed to a single quote.",
+ "requirement": "When parsing a FITS Card value, any occurrence of exactly two consecutive single\u2011quote characters at the very end of the value (after stripping trailing whitespace) must be interpreted as a single quote character. In other words, if the stripped value ends with `''`, replace those two characters with a single `'`. This rule supersedes any previous expectation that such trailing double quotes be preserved.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/io/fits/card.py",
+   "search": "                value = value.rstrip()",
+   "replace": "                value = value.rstrip()\n                if value.endswith(\"''\"):\n                    value = value[:-2] + \"'\""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/io/fits/tests/test_header.py",
+   "search": "        testval = \"x\" * 100 + \"''\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval",
+   "replace": "        testval = \"x\" * 100 + \"''\"\n        c = fits.Card(\"TEST\", testval)\n        c = fits.Card.fromstring(c.image)\n        assert c.value == testval[:-2] + \"'\""
+  }
+ ],
+ "status": "generated"
+}

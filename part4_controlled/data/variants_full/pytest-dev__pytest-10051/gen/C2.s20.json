@@ -1,0 +1,49 @@
+{
+ "instance_id": "pytest-dev__pytest-10051",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "14e4e1b615e1aa71621a936c863683c21acfb449704a9817cfc47ac7cf81a1d9",
+ "raw": "<summary>clear() must also reset the internal stage\u2011stash tracking log records</summary>\n<requirement>Calling ``caplog.clear()`` must reset the captured log records for **all** stages (setup, call, teardown) and also clear the internal stash that records which stages have emitted logs. After a clear, ``caplog.get_records(stage)`` should return an empty list for any stage, and ``caplog._item.stash[caplog_records_key]`` should be an empty set. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"src/_pytest/logging.py\"><search>def clear(self) -> None:\n        \"\"\"Reset the list of log records and the captured log text.\"\"\"\n        self.handler.clear()</search><replace>def clear(self) -> None:\n        \"\"\"Reset the list of log records and the captured log text, and clear the stage stash.\"\"\"\n        self.handler.clear()\n        self._item.stash[caplog_records_key] = set()</replace></source_edit>\n<test_edit file=\"testing/logging/test_fixture.py\"><search>    assert caplog.get_records(\"call\") == []\n    assert [x.message for x in caplog.get_records(\"setup\")] == [\"a_setup_log\"]\n    assert set(caplog._item.stash[caplog_records_key]) == {\"setup\", \"call\"}</search><replace>    assert caplog.get_records(\"call\") == []\n    assert caplog.get_records(\"setup\") == []\n    assert set(caplog._item.stash[caplog_records_key]) == set()</replace></test_edit>\n<test_edit file=\"testing/logging/test_fixture.py\"><search>    assert [x.message for x in caplog.get_records(\"call\")] == [\"a_call_log_after_clear\"]\n    assert [x.message for x in caplog.get_records(\"setup\")] == [\"a_setup_log\"]\n    assert set(caplog._item.stash[caplog_records_key]) == {\"setup\", \"call\"}</search><replace>    assert [x.message for x in caplog.get_records(\"call\")] == [\"a_call_log_after_clear\"]\n    assert caplog.get_records(\"setup\") == []\n    assert set(caplog._item.stash[caplog_records_key]) == {\"call\"}</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2452,
+  "prompt_tokens": 1650,
+  "total_tokens": 4102,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1966,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "clear() must also reset the internal stage\u2011stash tracking log records",
+ "requirement": "Calling ``caplog.clear()`` must reset the captured log records for **all** stages (setup, call, teardown) and also clear the internal stash that records which stages have emitted logs. After a clear, ``caplog.get_records(stage)`` should return an empty list for any stage, and ``caplog._item.stash[caplog_records_key]`` should be an empty set. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/logging.py",
+   "search": "def clear(self) -> None:\n        \"\"\"Reset the list of log records and the captured log text.\"\"\"\n        self.handler.clear()",
+   "replace": "def clear(self) -> None:\n        \"\"\"Reset the list of log records and the captured log text, and clear the stage stash.\"\"\"\n        self.handler.clear()\n        self._item.stash[caplog_records_key] = set()"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/logging/test_fixture.py",
+   "search": "    assert caplog.get_records(\"call\") == []\n    assert [x.message for x in caplog.get_records(\"setup\")] == [\"a_setup_log\"]\n    assert set(caplog._item.stash[caplog_records_key]) == {\"setup\", \"call\"}",
+   "replace": "    assert caplog.get_records(\"call\") == []\n    assert caplog.get_records(\"setup\") == []\n    assert set(caplog._item.stash[caplog_records_key]) == set()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "testing/logging/test_fixture.py",
+   "search": "    assert [x.message for x in caplog.get_records(\"call\")] == [\"a_call_log_after_clear\"]\n    assert [x.message for x in caplog.get_records(\"setup\")] == [\"a_setup_log\"]\n    assert set(caplog._item.stash[caplog_records_key]) == {\"setup\", \"call\"}",
+   "replace": "    assert [x.message for x in caplog.get_records(\"call\")] == [\"a_call_log_after_clear\"]\n    assert caplog.get_records(\"setup\") == []\n    assert set(caplog._item.stash[caplog_records_key]) == {\"call\"}"
+  }
+ ],
+ "status": "generated"
+}

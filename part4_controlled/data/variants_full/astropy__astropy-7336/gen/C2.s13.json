@@ -1,0 +1,43 @@
+{
+ "instance_id": "astropy__astropy-7336",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "b89fe46059309606eacf607437d744303e83ec0197e582d0c1f6106417444654",
+ "raw": "<summary>Return annotations of\u202fNone are now treated as a unit conversion request</summary>\n<requirement>Functions decorated with\u202f@u.quantity_input that specify a return type annotation (including the literal\u202fNone) must have their return value converted to the indicated unit. If the annotation is\u202fNone, it should be interpreted as the dimensionless unit and the decorator must attempt to call\u202f.to(u.dimensionless_unscaled)\u202fon the returned object, raising an appropriate error if the return value does not have a\u202f.to\u202fmethod. This supersedes any previous expectation that a\u202fNone\u202freturn annotation would be ignored.</requirement>\n<source_edit file=\"astropy/units/decorators.py\"><search>if wrapped_signature.return_annotation not in (inspect.Signature.empty, None):</search><replace>if wrapped_signature.return_annotation is not inspect.Signature.empty:</replace></source_edit>\n<test_edit file=\"astropy/units/tests/test_quantity_annotations.py\"><search>def test_return_annotation_none():\n    @u.quantity_input\n    def myfunc_args(solarx: u.arcsec) -> None:\n        pass\n\n    solarx = myfunc_args(1*u.arcsec)\n    assert solarx is None</search><replace>def test_return_annotation_none():\n    @u.quantity_input\n    def myfunc_args(solarx: u.arcsec) -> None:\n        pass\n\n    with pytest.raises(AttributeError) as e:\n        myfunc_args(1*u.arcsec)\n    assert \"'NoneType' object has no attribute 'to'\" in str(e.value)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1586,
+  "prompt_tokens": 4682,
+  "total_tokens": 6268,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1248,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Return annotations of\u202fNone are now treated as a unit conversion request",
+ "requirement": "Functions decorated with\u202f@u.quantity_input that specify a return type annotation (including the literal\u202fNone) must have their return value converted to the indicated unit. If the annotation is\u202fNone, it should be interpreted as the dimensionless unit and the decorator must attempt to call\u202f.to(u.dimensionless_unscaled)\u202fon the returned object, raising an appropriate error if the return value does not have a\u202f.to\u202fmethod. This supersedes any previous expectation that a\u202fNone\u202freturn annotation would be ignored.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/units/decorators.py",
+   "search": "if wrapped_signature.return_annotation not in (inspect.Signature.empty, None):",
+   "replace": "if wrapped_signature.return_annotation is not inspect.Signature.empty:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/units/tests/test_quantity_annotations.py",
+   "search": "def test_return_annotation_none():\n    @u.quantity_input\n    def myfunc_args(solarx: u.arcsec) -> None:\n        pass\n\n    solarx = myfunc_args(1*u.arcsec)\n    assert solarx is None",
+   "replace": "def test_return_annotation_none():\n    @u.quantity_input\n    def myfunc_args(solarx: u.arcsec) -> None:\n        pass\n\n    with pytest.raises(AttributeError) as e:\n        myfunc_args(1*u.arcsec)\n    assert \"'NoneType' object has no attribute 'to'\" in str(e.value)"
+  }
+ ],
+ "status": "generated"
+}

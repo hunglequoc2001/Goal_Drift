@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-16255",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "814ff6be37a0ba6a4631e9962552b0c4c07149a560d6d405e36e6ce40d942da9",
+ "raw": "<summary>Change the default last\u2011modified date for empty sitemaps to the Unix epoch.</summary>\n<requirement>When a sitemap\u2019s\u202fitems()\u202fmethod returns an empty list and the sitemap defines a callable\u202flastmod\u202fmethod, the sitemap should report a last\u2011modified timestamp of\u202fJanuary\u202f1\u202f1970\u202f00:00:00\u202fUTC (the Unix epoch) instead of omitting the\u202fLast\u2011Modified\u202fheader. This supersedes any previous expectation that the header be omitted in this case.</requirement>\n<source_edit file=\"django/contrib/sitemaps/__init__.py\"><search>return max([self.lastmod(item) for item in self.items()], default=None)</search><replace>return max([self.lastmod(item) for item in self.items()], default=datetime(1970, 1, 1, tzinfo=timezone.utc))</replace></source_edit>\n<source_edit file=\"django/contrib/sitemaps/__init__.py\"><search>from django.utils import timezone</search><replace>from django.utils import timezone\nfrom datetime import datetime, timezone</replace></source_edit>\n<test_edit file=\"tests/sitemaps_tests/test_http.py\"><search>self.assertNotIn(\"Last-Modified\", index_response)</search><replace>self.assertIn(\"Last-Modified\", index_response)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1605,
+  "prompt_tokens": 1709,
+  "total_tokens": 3314,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1313,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Change the default last\u2011modified date for empty sitemaps to the Unix epoch.",
+ "requirement": "When a sitemap\u2019s\u202fitems()\u202fmethod returns an empty list and the sitemap defines a callable\u202flastmod\u202fmethod, the sitemap should report a last\u2011modified timestamp of\u202fJanuary\u202f1\u202f1970\u202f00:00:00\u202fUTC (the Unix epoch) instead of omitting the\u202fLast\u2011Modified\u202fheader. This supersedes any previous expectation that the header be omitted in this case.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sitemaps/__init__.py",
+   "search": "return max([self.lastmod(item) for item in self.items()], default=None)",
+   "replace": "return max([self.lastmod(item) for item in self.items()], default=datetime(1970, 1, 1, tzinfo=timezone.utc))"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sitemaps/__init__.py",
+   "search": "from django.utils import timezone",
+   "replace": "from django.utils import timezone\nfrom datetime import datetime, timezone"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/sitemaps_tests/test_http.py",
+   "search": "self.assertNotIn(\"Last-Modified\", index_response)",
+   "replace": "self.assertIn(\"Last-Modified\", index_response)"
+  }
+ ],
+ "status": "generated"
+}

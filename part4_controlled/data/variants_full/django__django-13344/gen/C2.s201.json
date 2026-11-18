@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-13344",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 37576,
+ "raw": "<summary>Middleware instances must never be treated as coroutine functions, regardless of the type of\u202fget_response passed.</summary>\n<requirement>When a middleware class is instantiated, it must never be considered a coroutine function. After calling the base ``MiddlewareMixin`` initializer, the middleware must explicitly disable any async detection so that ``asyncio.iscoroutinefunction`` returns ``False`` for the instance even if the supplied *get_response* argument is an ``async def`` function. This requirement supersedes any previous expectations about async detection for middleware.</requirement>\n\n<source_edit file=\"django/contrib/sessions/middleware.py\"><search>        super().__init__(get_response)</search><replace>        super().__init__(get_response)\n        # Updated requirement: middleware must never be treated as a coroutine.\n        self._is_coroutine = False</replace></source_edit>\n\n<source_edit file=\"django/middleware/security.py\"><search>        super().__init__(get_response)</search><replace>        super().__init__(get_response)\n        # Updated requirement: middleware must never be treated as a coroutine.\n        self._is_coroutine = False</replace></source_edit>\n\n<source_edit file=\"django/middleware/cache.py\"><search>def __init__(self, get_response=None):\n        super().__init__(get_response)\n        self.cache_timeout = settings.CACHE_MIDDLEWARE_SECONDS</search><replace>def __init__(self, get_response=None):\n        super().__init__(get_response)\n        # Updated requirement: middleware must never be treated as a coroutine.\n        self._is_coroutine = False\n        self.cache_timeout = settings.CACHE_MIDDLEWARE_SECONDS</replace></source_edit>\n\n<source_edit file=\"django/middleware/cache.py\"><search>def __init__(self, get_response=None):\n        super().__init__(get_response)\n        self.key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX</search><replace>def __init__(self, get_response=None):\n        super().__init__(get_response)\n        # Updated requirement: middleware must never be treated as a coroutine.\n        self._is_coroutine = False\n        self.key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX</replace></source_edit>\n\n<source_edit file=\"django/middleware/cache.py\"><search>def __init__(self, get_response=None, cache_timeout=None, page_timeout=None, **kwargs):\n        super().__init__(get_response)\n        # We need to differentiate between \"provided, but using default value\",</search><replace>def __init__(self, get_response=None, cache_timeout=None, page_timeout=None, **kwargs):\n        super().__init__(get_response)\n        # Updated requirement: middleware must never be treated as a coroutine.\n        self._is_coroutine = False\n        # We need to differentiate between \"provided, but using default value\",</replace></source_edit>\n\n<test_edit file=\"tests/deprecation/test_middleware_mixin.py\"><search>self.assertIs(asyncio.iscoroutinefunction(middleware_instance), True)</search><replace>self.assertIs(asyncio.iscoroutinefunction(middleware_instance), False)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Middleware instances must never be treated as coroutine functions, regardless of the type of\u202fget_response passed.",
+ "requirement": "When a middleware class is instantiated, it must never be considered a coroutine function. After calling the base ``MiddlewareMixin`` initializer, the middleware must explicitly disable any async detection so that ``asyncio.iscoroutinefunction`` returns ``False`` for the instance even if the supplied *get_response* argument is an ``async def`` function. This requirement supersedes any previous expectations about async detection for middleware.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sessions/middleware.py",
+   "search": "        super().__init__(get_response)",
+   "replace": "        super().__init__(get_response)\n        # Updated requirement: middleware must never be treated as a coroutine.\n        self._is_coroutine = False"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/security.py",
+   "search": "        super().__init__(get_response)",
+   "replace": "        super().__init__(get_response)\n        # Updated requirement: middleware must never be treated as a coroutine.\n        self._is_coroutine = False"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "def __init__(self, get_response=None):\n        super().__init__(get_response)\n        self.cache_timeout = settings.CACHE_MIDDLEWARE_SECONDS",
+   "replace": "def __init__(self, get_response=None):\n        super().__init__(get_response)\n        # Updated requirement: middleware must never be treated as a coroutine.\n        self._is_coroutine = False\n        self.cache_timeout = settings.CACHE_MIDDLEWARE_SECONDS"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "def __init__(self, get_response=None):\n        super().__init__(get_response)\n        self.key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX",
+   "replace": "def __init__(self, get_response=None):\n        super().__init__(get_response)\n        # Updated requirement: middleware must never be treated as a coroutine.\n        self._is_coroutine = False\n        self.key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "def __init__(self, get_response=None, cache_timeout=None, page_timeout=None, **kwargs):\n        super().__init__(get_response)\n        # We need to differentiate between \"provided, but using default value\",",
+   "replace": "def __init__(self, get_response=None, cache_timeout=None, page_timeout=None, **kwargs):\n        super().__init__(get_response)\n        # Updated requirement: middleware must never be treated as a coroutine.\n        self._is_coroutine = False\n        # We need to differentiate between \"provided, but using default value\","
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/deprecation/test_middleware_mixin.py",
+   "search": "self.assertIs(asyncio.iscoroutinefunction(middleware_instance), True)",
+   "replace": "self.assertIs(asyncio.iscoroutinefunction(middleware_instance), False)"
+  }
+ ]
+}

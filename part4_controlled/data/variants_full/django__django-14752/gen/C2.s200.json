@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-14752",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 0,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 22983,
+ "raw": "<summary>Change the default \u201cid\u201d field to be returned as a raw primary\u2011key value instead of a string.</summary>\n<requirement>This update supersedes any conflicting expectation in the issue. The default serialization for autocomplete results must return the object's primary key as a JSON number (or the native type of the primary key) rather than its string representation. In other words, the dictionary produced by\u202fserialize_result()\u202fshould contain\u202f'id': getattr(obj, to_field_name)\u202finstead of\u202f'id': str(getattr(obj, to_field_name)). This provides a more type\u2011correct API while preserving the existing\u202f'text'\u202ffield.</requirement>\n\n<source_edit file=\"django/contrib/admin/views/autocomplete.py\"><search>return {'id': str(getattr(obj, to_field_name)), 'text': str(obj)}</search><replace>return {'id': getattr(obj, to_field_name), 'text': str(obj)}</replace></source_edit>\n\n<test_edit file=\"tests/admin_views/test_autocomplete_view.py\"><search>'results': [{'id': str(q.pk), 'text': q.question} for q in Question.objects.all()[:PAGINATOR_SIZE]],</search><replace>'results': [{'id': q.pk, 'text': q.question} for q in Question.objects.all()[:PAGINATOR_SIZE]],</replace></test_edit>\n\n<test_edit file=\"tests/admin_views/test_autocomplete_view.py\"><search>'results': [{'id': str(q.pk), 'text': q.question} for q in Question.objects.all()[PAGINATOR_SIZE:]],</search><replace>'results': [{'id': q.pk, 'text': q.question} for q in Question.objects.all()[PAGINATOR_SIZE:]],</replace></test_edit>\n\n<test_edit file=\"tests/admin_views/test_autocomplete_view.py\"><search>{'id': str(q.pk), 'text': q.question, 'posted': str(q.posted)}</search><replace>{'id': q.pk, 'text': q.question, 'posted': str(q.posted)}</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Change the default \u201cid\u201d field to be returned as a raw primary\u2011key value instead of a string.",
+ "requirement": "This update supersedes any conflicting expectation in the issue. The default serialization for autocomplete results must return the object's primary key as a JSON number (or the native type of the primary key) rather than its string representation. In other words, the dictionary produced by\u202fserialize_result()\u202fshould contain\u202f'id': getattr(obj, to_field_name)\u202finstead of\u202f'id': str(getattr(obj, to_field_name)). This provides a more type\u2011correct API while preserving the existing\u202f'text'\u202ffield.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admin/views/autocomplete.py",
+   "search": "return {'id': str(getattr(obj, to_field_name)), 'text': str(obj)}",
+   "replace": "return {'id': getattr(obj, to_field_name), 'text': str(obj)}"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_views/test_autocomplete_view.py",
+   "search": "'results': [{'id': str(q.pk), 'text': q.question} for q in Question.objects.all()[:PAGINATOR_SIZE]],",
+   "replace": "'results': [{'id': q.pk, 'text': q.question} for q in Question.objects.all()[:PAGINATOR_SIZE]],"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_views/test_autocomplete_view.py",
+   "search": "'results': [{'id': str(q.pk), 'text': q.question} for q in Question.objects.all()[PAGINATOR_SIZE:]],",
+   "replace": "'results': [{'id': q.pk, 'text': q.question} for q in Question.objects.all()[PAGINATOR_SIZE:]],"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_views/test_autocomplete_view.py",
+   "search": "{'id': str(q.pk), 'text': q.question, 'posted': str(q.posted)}",
+   "replace": "{'id': q.pk, 'text': q.question, 'posted': str(q.posted)}"
+  }
+ ]
+}

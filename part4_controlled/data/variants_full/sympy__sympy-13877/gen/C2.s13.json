@@ -1,0 +1,61 @@
+{
+ "instance_id": "sympy__sympy-13877",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "a06ec87d923bc09353caedb1ed199e1ff1f61a171db10eecb5bda8c4e19af88a",
+ "raw": "<summary>Determinant computation should raise a ValueError for symbolic matrices that would otherwise produce NaN under the Bareiss algorithm.</summary>\n<requirement>When the Bareiss algorithm encounters a symbolic matrix that would lead to an invalid NaN comparison, the determinant method must raise a ValueError with the exact message \"Bareiss algorithm not applicable to symbolic matrices\". This requirement supersedes any previous expectation that the determinant should return zero or any other value for such matrices.</requirement>\n<source_edit file=\"sympy/matrices/matrices.py\"><search>return bareiss(self)</search><replace>det_val = bareiss(self)\n        if det_val.has(S.NaN):\n            raise ValueError(\"Bareiss algorithm not applicable to symbolic matrices\")\n        return det_val</replace></source_edit>\n<source_edit file=\"sympy/matrices/tests/test_matrices.py\"><search>from sympy import symbols</search><replace>from sympy import symbols\nimport pytest</replace></source_edit>\n<test_edit file=\"sympy/matrices/tests/test_matrices.py\"><search>assert M(5).det() == 0</search><replace>with pytest.raises(ValueError):\n        M(5).det()</replace></test_edit>\n<test_edit file=\"sympy/matrices/tests/test_matrices.py\"><search>assert M(6).det() == 0</search><replace>with pytest.raises(ValueError):\n        M(6).det()</replace></test_edit>\n<test_edit file=\"sympy/matrices/tests/test_matrices.py\"><search>assert M(7).det() == 0</search><replace>with pytest.raises(ValueError):\n        M(7).det()</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1639,
+  "prompt_tokens": 3054,
+  "total_tokens": 4693,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1276,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Determinant computation should raise a ValueError for symbolic matrices that would otherwise produce NaN under the Bareiss algorithm.",
+ "requirement": "When the Bareiss algorithm encounters a symbolic matrix that would lead to an invalid NaN comparison, the determinant method must raise a ValueError with the exact message \"Bareiss algorithm not applicable to symbolic matrices\". This requirement supersedes any previous expectation that the determinant should return zero or any other value for such matrices.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/matrices.py",
+   "search": "return bareiss(self)",
+   "replace": "det_val = bareiss(self)\n        if det_val.has(S.NaN):\n            raise ValueError(\"Bareiss algorithm not applicable to symbolic matrices\")\n        return det_val"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/tests/test_matrices.py",
+   "search": "from sympy import symbols",
+   "replace": "from sympy import symbols\nimport pytest"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/tests/test_matrices.py",
+   "search": "assert M(5).det() == 0",
+   "replace": "with pytest.raises(ValueError):\n        M(5).det()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/tests/test_matrices.py",
+   "search": "assert M(6).det() == 0",
+   "replace": "with pytest.raises(ValueError):\n        M(6).det()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/tests/test_matrices.py",
+   "search": "assert M(7).det() == 0",
+   "replace": "with pytest.raises(ValueError):\n        M(7).det()"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-13964",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 25109,
+ "raw": "<summary>ForeignKey auto\u2011population now only occurs when the related object's primary key is numeric.</summary>\n<requirement>When a foreign\u2011key field is assigned an unsaved related instance, the ORM should automatically copy the related object's primary\u2011key value into the foreign\u2011key column only if that primary key is of a numeric type (e.g., an AutoField). If the related object's primary key is non\u2011numeric (such as a CharField primary key), the foreign\u2011key column must remain unchanged; developers must set it explicitly. This supersedes any previous expectation that the ORM would always copy the primary key regardless of its type.</requirement>\n<source_edit file=\"django/db/models/base.py\"><search>elif getattr(self, field.attname) in field.empty_values:</search><replace>elif getattr(self, field.attname) in field.empty_values and isinstance(obj.pk, int):</replace></source_edit>\n<test_edit file=\"tests/many_to_one/tests.py\"><search>self.assertEqual(child.parent, parent)</search><replace># The foreign\u2011key should not be auto\u2011populated for non\u2011numeric PKs.</replace></test_edit>\n<test_edit file=\"tests/many_to_one/tests.py\"><search>self.assertEqual(child.parent_id, parent.name)</search><replace>self.assertEqual(child.parent_id, '')</replace></test_edit>\n<test_edit file=\"tests/many_to_one/tests.py\"><search>self.assertEqual(child.parent, parent)</search><replace># The foreign\u2011key should not be auto\u2011populated for non\u2011numeric PKs.</replace></test_edit>\n<test_edit file=\"tests/many_to_one/tests.py\"><search>self.assertEqual(child.parent_id, parent.name)</search><replace>self.assertEqual(child.parent_id, '')</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "ForeignKey auto\u2011population now only occurs when the related object's primary key is numeric.",
+ "requirement": "When a foreign\u2011key field is assigned an unsaved related instance, the ORM should automatically copy the related object's primary\u2011key value into the foreign\u2011key column only if that primary key is of a numeric type (e.g., an AutoField). If the related object's primary key is non\u2011numeric (such as a CharField primary key), the foreign\u2011key column must remain unchanged; developers must set it explicitly. This supersedes any previous expectation that the ORM would always copy the primary key regardless of its type.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/base.py",
+   "search": "elif getattr(self, field.attname) in field.empty_values:",
+   "replace": "elif getattr(self, field.attname) in field.empty_values and isinstance(obj.pk, int):"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/many_to_one/tests.py",
+   "search": "self.assertEqual(child.parent, parent)",
+   "replace": "# The foreign\u2011key should not be auto\u2011populated for non\u2011numeric PKs."
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/many_to_one/tests.py",
+   "search": "self.assertEqual(child.parent_id, parent.name)",
+   "replace": "self.assertEqual(child.parent_id, '')"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/many_to_one/tests.py",
+   "search": "self.assertEqual(child.parent, parent)",
+   "replace": "# The foreign\u2011key should not be auto\u2011populated for non\u2011numeric PKs."
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/many_to_one/tests.py",
+   "search": "self.assertEqual(child.parent_id, parent.name)",
+   "replace": "self.assertEqual(child.parent_id, '')"
+  }
+ ]
+}

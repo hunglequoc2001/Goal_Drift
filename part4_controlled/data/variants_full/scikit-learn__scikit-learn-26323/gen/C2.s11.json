@@ -1,0 +1,49 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-26323",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "c92e50fa2fa8434edfecf93ae0f9e9c9ee7a0d6db9edc4e459697fd9a63ef47d",
+ "raw": "<summary>set_output no longer propagates to remainder estimators and emits a warning</summary>\n<requirement>When `ColumnTransformer.set_output` is called, the method must **not** attempt to set the output configuration on the `remainder` estimator. Instead, if the `remainder` is anything other than `\"passthrough\"` or `\"drop\"`, the method should emit a `UserWarning` with the message \u201cColumnTransformer.set_output does not propagate to remainder estimator.\u201d This supersedes any previous expectation that the remainder\u2019s output would be set.</requirement>\n<source_edit file=\"sklearn/compose/_column_transformer.py\"><search>from sklearn.base import BaseEstimator, TransformerMixin, clone</search><replace>from sklearn.base import BaseEstimator, TransformerMixin, clone\nimport warnings</replace></source_edit>\n<source_edit file=\"sklearn/compose/_column_transformer.py\"><search>if self.remainder not in {\"passthrough\", \"drop\"}:</search><replace>if self.remainder not in {\"passthrough\", \"drop\"}:\n            warnings.warn(\n                \"ColumnTransformer.set_output does not propagate to remainder estimator.\",\n                UserWarning,\n            )</replace></source_edit>\n<test_edit file=\"sklearn/compose/tests/test_column_transformer.py\"><search>ct.set_output(transform=\"pandas\")</search><replace>with pytest.warns(UserWarning, match=\"ColumnTransformer.set_output does not propagate to remainder estimator.\"):\n    ct.set_output(transform=\"pandas\")\nout = ct.fit_transform(df)\nassert isinstance(out, np.ndarray)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1551,
+  "prompt_tokens": 1939,
+  "total_tokens": 3490,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1210,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "set_output no longer propagates to remainder estimators and emits a warning",
+ "requirement": "When `ColumnTransformer.set_output` is called, the method must **not** attempt to set the output configuration on the `remainder` estimator. Instead, if the `remainder` is anything other than `\"passthrough\"` or `\"drop\"`, the method should emit a `UserWarning` with the message \u201cColumnTransformer.set_output does not propagate to remainder estimator.\u201d This supersedes any previous expectation that the remainder\u2019s output would be set.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/compose/_column_transformer.py",
+   "search": "from sklearn.base import BaseEstimator, TransformerMixin, clone",
+   "replace": "from sklearn.base import BaseEstimator, TransformerMixin, clone\nimport warnings"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sklearn/compose/_column_transformer.py",
+   "search": "if self.remainder not in {\"passthrough\", \"drop\"}:",
+   "replace": "if self.remainder not in {\"passthrough\", \"drop\"}:\n            warnings.warn(\n                \"ColumnTransformer.set_output does not propagate to remainder estimator.\",\n                UserWarning,\n            )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/compose/tests/test_column_transformer.py",
+   "search": "ct.set_output(transform=\"pandas\")",
+   "replace": "with pytest.warns(UserWarning, match=\"ColumnTransformer.set_output does not propagate to remainder estimator.\"):\n    ct.set_output(transform=\"pandas\")\nout = ct.fit_transform(df)\nassert isinstance(out, np.ndarray)"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,43 @@
+{
+ "instance_id": "pylint-dev__pylint-6903",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "7cf05bf56efa25e897284cc44d5405a92124cabf7b69f6dc3396889d4d0dbc41",
+ "raw": "<summary>Require _query_cpu to raise an error when it would return zero CPUs.</summary>\n<requirement>When the calculated available CPU count is zero, pylint must raise a ValueError with the exact message \u201cCPU count cannot be zero\u201d instead of silently substituting a default. This supersedes any previous expectation that the function should fallback to using 1 CPU.</requirement>\n\n<source_edit file=\"pylint/lint/run.py\"><search># In K8s Pods also a fraction of a single core could be available\n# As multiprocessing is not able to run only a \"fraction\" of process\n# assume we have 1 CPU available\nif avail_cpu == 0:\n    avail_cpu = 1\n</search><replace># In K8s Pods a fraction of a single core could be reported.\n# Multiprocessing cannot handle a fractional CPU count;\n# raise an error to inform the caller.\nif avail_cpu == 0:\n    raise ValueError(\"CPU count cannot be zero\")\n</replace></source_edit>\n\n<test_edit file=\"tests/test_pylint_runners.py\"><search>with pytest.raises(SystemExit) as err:\n            Run(testargs, reporter=Reporter())\n        assert err.value.code == 0</search><replace>with pytest.raises(ValueError):\n            Run(testargs, reporter=Reporter())</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1378,
+  "prompt_tokens": 2144,
+  "total_tokens": 3522,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1089,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Require _query_cpu to raise an error when it would return zero CPUs.",
+ "requirement": "When the calculated available CPU count is zero, pylint must raise a ValueError with the exact message \u201cCPU count cannot be zero\u201d instead of silently substituting a default. This supersedes any previous expectation that the function should fallback to using 1 CPU.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "pylint/lint/run.py",
+   "search": "# In K8s Pods also a fraction of a single core could be available\n# As multiprocessing is not able to run only a \"fraction\" of process\n# assume we have 1 CPU available\nif avail_cpu == 0:\n    avail_cpu = 1",
+   "replace": "# In K8s Pods a fraction of a single core could be reported.\n# Multiprocessing cannot handle a fractional CPU count;\n# raise an error to inform the caller.\nif avail_cpu == 0:\n    raise ValueError(\"CPU count cannot be zero\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_pylint_runners.py",
+   "search": "with pytest.raises(SystemExit) as err:\n            Run(testargs, reporter=Reporter())\n        assert err.value.code == 0",
+   "replace": "with pytest.raises(ValueError):\n            Run(testargs, reporter=Reporter())"
+  }
+ ],
+ "status": "generated"
+}

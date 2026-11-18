@@ -1,0 +1,79 @@
+{
+ "instance_id": "django__django-13344",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 38322,
+ "raw": "<summary>Middleware must expose an ``is_async`` boolean indicating whether its ``get_response`` callable is a coroutine function.</summary>\n<requirement>All middleware classes that inherit from ``MiddlewareMixin`` must set an attribute named ``is_async`` on the instance during ``__init__``. The attribute must be ``True`` only when the ``get_response`` callable passed to the constructor is a coroutine function (i.e. ``asyncio.iscoroutinefunction(get_response)`` returns ``True``); otherwise it must be ``False``. This requirement supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"django/contrib/sessions/middleware.py\"><search>from django.utils.deprecation import MiddlewareMixin</search><replace>from django.utils.deprecation import MiddlewareMixin\nimport asyncio</replace></source_edit>\n\n<source_edit file=\"django/contrib/sessions/middleware.py\"><search>super().__init__(get_response)</search><replace>super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)</replace></source_edit>\n\n<source_edit file=\"django/middleware/cache.py\"><search>from django.utils.deprecation import MiddlewareMixin</search><replace>from django.utils.deprecation import MiddlewareMixin\nimport asyncio</replace></source_edit>\n\n<source_edit file=\"django/middleware/cache.py\"><search>super().__init__(get_response)</search><replace>super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)</replace></source_edit>\n\n<source_edit file=\"django/middleware/cache.py\"><search>def __init__(self, get_response=None):</search><replace>def __init__(self, get_response=None):\n        super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)</replace></source_edit>\n\n<source_edit file=\"django/middleware/cache.py\"><search>def __init__(self, get_response=None, cache_timeout=None, page_timeout=None, **kwargs):</search><replace>def __init__(self, get_response=None, cache_timeout=None, page_timeout=None, **kwargs):\n        super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)</replace></source_edit>\n\n<source_edit file=\"django/middleware/security.py\"><search>from django.utils.deprecation import MiddlewareMixin</search><replace>from django.utils.deprecation import MiddlewareMixin\nimport asyncio</replace></source_edit>\n\n<source_edit file=\"django/middleware/security.py\"><search>super().__init__(get_response)</search><replace>super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)</replace></source_edit>\n\n<test_edit file=\"tests/deprecation/test_middleware_mixin.py\"><search>self.assertIs(asyncio.iscoroutinefunction(middleware_instance), True)</search><replace>self.assertTrue(middleware_instance.is_async)</replace></test_edit>\n\n<test_edit file=\"tests/deprecation/test_middleware_mixin.py\"><search>self.assertIs(asyncio.iscoroutinefunction(middleware_instance), False)</search><replace>self.assertFalse(middleware_instance.is_async)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Middleware must expose an ``is_async`` boolean indicating whether its ``get_response`` callable is a coroutine function.",
+ "requirement": "All middleware classes that inherit from ``MiddlewareMixin`` must set an attribute named ``is_async`` on the instance during ``__init__``. The attribute must be ``True`` only when the ``get_response`` callable passed to the constructor is a coroutine function (i.e. ``asyncio.iscoroutinefunction(get_response)`` returns ``True``); otherwise it must be ``False``. This requirement supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sessions/middleware.py",
+   "search": "from django.utils.deprecation import MiddlewareMixin",
+   "replace": "from django.utils.deprecation import MiddlewareMixin\nimport asyncio"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sessions/middleware.py",
+   "search": "super().__init__(get_response)",
+   "replace": "super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "from django.utils.deprecation import MiddlewareMixin",
+   "replace": "from django.utils.deprecation import MiddlewareMixin\nimport asyncio"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "super().__init__(get_response)",
+   "replace": "super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "def __init__(self, get_response=None):",
+   "replace": "def __init__(self, get_response=None):\n        super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "def __init__(self, get_response=None, cache_timeout=None, page_timeout=None, **kwargs):",
+   "replace": "def __init__(self, get_response=None, cache_timeout=None, page_timeout=None, **kwargs):\n        super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/security.py",
+   "search": "from django.utils.deprecation import MiddlewareMixin",
+   "replace": "from django.utils.deprecation import MiddlewareMixin\nimport asyncio"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/security.py",
+   "search": "super().__init__(get_response)",
+   "replace": "super().__init__(get_response)\n        self.is_async = asyncio.iscoroutinefunction(get_response)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/deprecation/test_middleware_mixin.py",
+   "search": "self.assertIs(asyncio.iscoroutinefunction(middleware_instance), True)",
+   "replace": "self.assertTrue(middleware_instance.is_async)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/deprecation/test_middleware_mixin.py",
+   "search": "self.assertIs(asyncio.iscoroutinefunction(middleware_instance), False)",
+   "replace": "self.assertFalse(middleware_instance.is_async)"
+  }
+ ]
+}

@@ -1,0 +1,31 @@
+{
+ "instance_id": "sympy__sympy-13798",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 17068,
+ "raw": "<summary>Custom mul_symbol is now used for all multiplication, including between numeric factors.</summary>\n<requirement>When a user supplies a custom ``mul_symbol`` (any string not limited to the predefined choices), that symbol must be used for **every** multiplication operation in the LaTeX output, even when the operands are numbers. The previous special case that replaces whitespace\u2011type symbols with a dot for numeric multiplication is removed. For example, ``latex(1.5*3**x, mul_symbol='\\\\,')`` must now produce the string ``\"1.5\\\\,3^{x}\"``. This supersedes any earlier expectation that numbers would use a dot while other terms use the custom symbol.</requirement>\n<source_edit file=\"sympy/printing/latex.py\"><search>        try:\n            self._settings['mul_symbol_latex_numbers'] = \\\n                mul_symbol_table[self._settings['mul_symbol'] or 'dot']\n        except KeyError:\n            if (self._settings['mul_symbol'].strip() in\n                    ['', ' ', '\\\\', '\\\\,', '\\\\:', '\\\\;', '\\\\quad']):\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    mul_symbol_table['dot']\n            else:\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    self._settings['mul_symbol']</search><replace>        self._settings['mul_symbol_latex_numbers'] = \\\n            self._settings['mul_symbol_latex']</replace></source_edit>\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(1.5*3**x, mul_symbol='\\\\,') == r\"1.5 \\cdot 3^{x}\"</search><replace>assert latex(1.5*3**x, mul_symbol='\\\\,') == r\"1.5\\,3^{x}\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Custom mul_symbol is now used for all multiplication, including between numeric factors.",
+ "requirement": "When a user supplies a custom ``mul_symbol`` (any string not limited to the predefined choices), that symbol must be used for **every** multiplication operation in the LaTeX output, even when the operands are numbers. The previous special case that replaces whitespace\u2011type symbols with a dot for numeric multiplication is removed. For example, ``latex(1.5*3**x, mul_symbol='\\\\,')`` must now produce the string ``\"1.5\\\\,3^{x}\"``. This supersedes any earlier expectation that numbers would use a dot while other terms use the custom symbol.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/latex.py",
+   "search": "        try:\n            self._settings['mul_symbol_latex_numbers'] = \\\n                mul_symbol_table[self._settings['mul_symbol'] or 'dot']\n        except KeyError:\n            if (self._settings['mul_symbol'].strip() in\n                    ['', ' ', '\\\\', '\\\\,', '\\\\:', '\\\\;', '\\\\quad']):\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    mul_symbol_table['dot']\n            else:\n                self._settings['mul_symbol_latex_numbers'] = \\\n                    self._settings['mul_symbol']",
+   "replace": "        self._settings['mul_symbol_latex_numbers'] = \\\n            self._settings['mul_symbol_latex']"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(1.5*3**x, mul_symbol='\\\\,') == r\"1.5 \\cdot 3^{x}\"",
+   "replace": "assert latex(1.5*3**x, mul_symbol='\\\\,') == r\"1.5\\,3^{x}\""
+  }
+ ]
+}

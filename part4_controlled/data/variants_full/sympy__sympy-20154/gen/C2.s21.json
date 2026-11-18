@@ -1,0 +1,55 @@
+{
+ "instance_id": "sympy__sympy-20154",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "7469f01c565734355ccfab52b32a2fa3428e4f5fce392a60acad1b9c1350f481",
+ "raw": "<summary>partitions() should reuse the same dictionary object for each yielded partition</summary>\n<requirement>For performance reasons the `partitions()` iterator must return the *same* mutable dictionary object on each iteration, updating its contents for the next partition. Callers who need independent dictionaries should explicitly copy the result (e.g., using `.copy()`). This requirement supersedes any earlier suggestion that the function should return fresh copies.</requirement>\n\n<source_edit file=\"sympy/utilities/iterables.py\"><search>yield sum(ms.values()), ms.copy()</search><replace>yield sum(ms.values()), ms</replace></source_edit>\n\n<source_edit file=\"sympy/utilities/iterables.py\"><search>yield ms.copy()</search><replace>yield ms</replace></source_edit>\n\n<source_edit file=\"sympy/utilities/iterables.py\"><search>References\n    ==========</search><replace>    Note that the _same_ dictionary object is returned each time.\n    This is for speed:  generating each partition goes quickly,\n    taking constant time, independent of n.\n\n    >>> [p for p in partitions(6, k=2)]\n    [{1: 6}, {1: 6}, {1: 6}, {1: 6}]\n\n    If you want to build a list of the returned dictionaries then\n    make a copy of them:\n\n    >>> [p.copy() for p in partitions(6, k=2)]  # doctest: +SKIP\n    [{2: 3}, {1: 2, 2: 2}, {1: 4, 2: 1}, {1: 6}]\n    >>> [(M, p.copy()) for M, p in partitions(6, k=2, size=True)]  # doctest: +SKIP\n    [(3, {2: 3}), (4, {1: 2, 2: 2}), (5, {1: 4, 2: 1}), (6, {1: 6})]\nReferences\n    ==========</replace></source_edit>\n\n<test_edit file=\"sympy/utilities/tests/test_iterables.py\"><search>assert list(uniq(p for p in partitions(4))) == \\</search><replace>assert list(uniq(p.copy() for p in partitions(4))) == \\</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2483,
+  "prompt_tokens": 2008,
+  "total_tokens": 4491,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1971,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "partitions() should reuse the same dictionary object for each yielded partition",
+ "requirement": "For performance reasons the `partitions()` iterator must return the *same* mutable dictionary object on each iteration, updating its contents for the next partition. Callers who need independent dictionaries should explicitly copy the result (e.g., using `.copy()`). This requirement supersedes any earlier suggestion that the function should return fresh copies.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/iterables.py",
+   "search": "yield sum(ms.values()), ms.copy()",
+   "replace": "yield sum(ms.values()), ms"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/iterables.py",
+   "search": "yield ms.copy()",
+   "replace": "yield ms"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/utilities/iterables.py",
+   "search": "References\n    ==========",
+   "replace": "    Note that the _same_ dictionary object is returned each time.\n    This is for speed:  generating each partition goes quickly,\n    taking constant time, independent of n.\n\n    >>> [p for p in partitions(6, k=2)]\n    [{1: 6}, {1: 6}, {1: 6}, {1: 6}]\n\n    If you want to build a list of the returned dictionaries then\n    make a copy of them:\n\n    >>> [p.copy() for p in partitions(6, k=2)]  # doctest: +SKIP\n    [{2: 3}, {1: 2, 2: 2}, {1: 4, 2: 1}, {1: 6}]\n    >>> [(M, p.copy()) for M, p in partitions(6, k=2, size=True)]  # doctest: +SKIP\n    [(3, {2: 3}), (4, {1: 2, 2: 2}), (5, {1: 4, 2: 1}), (6, {1: 6})]\nReferences\n    =========="
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/utilities/tests/test_iterables.py",
+   "search": "assert list(uniq(p for p in partitions(4))) == \\",
+   "replace": "assert list(uniq(p.copy() for p in partitions(4))) == \\"
+  }
+ ],
+ "status": "generated"
+}

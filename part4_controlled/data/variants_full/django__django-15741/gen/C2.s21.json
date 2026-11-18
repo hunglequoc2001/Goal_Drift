@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-15741",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "818502a3096b79bad9b16e7acdd3076bccd202b4cb0be8a9b77e3b8f5c77fd0f",
+ "raw": "<summary>add explicit allow_lazy flag to get_format and reject lazy format strings by default</summary>\n<requirement>get_format now accepts an optional boolean keyword argument `allow_lazy` (default False). If `allow_lazy` is False and the provided `format_type` is not a plain string (e.g., a lazy translation object), the function must raise a `TypeError` with the message \u201cLazy format strings are not supported\u201d. To use a lazy format string you must call `get_format(..., allow_lazy=True)`. This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"django/utils/formats.py\"><search>def get_format(format_type, lang=None, use_l10n=None):</search><replace>def get_format(format_type, lang=None, use_l10n=None, allow_lazy=False):</replace></source_edit>\n<source_edit file=\"django/utils/formats.py\"><search>format_type = str(format_type)  # format_type may be lazy.</search><replace>if not isinstance(format_type, str):\n    if not allow_lazy:\n        raise TypeError(\"Lazy format strings are not supported\")\n    format_type = str(format_type)  # allow_lazy=True, evaluate lazy.</replace></source_edit>\n<test_edit file=\"tests/i18n/tests.py\"><search>self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")</search><replace>self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\"), allow_lazy=True), \"N j, Y\")</replace></test_edit>\n<test_edit file=\"tests/template_tests/filter_tests/test_date.py\"><search>output = self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})\n        self.assertEqual(output, \"00:00\")</search><replace>with self.assertRaises(TypeError):\n            self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1918,
+  "prompt_tokens": 1115,
+  "total_tokens": 3033,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1494,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "add explicit allow_lazy flag to get_format and reject lazy format strings by default",
+ "requirement": "get_format now accepts an optional boolean keyword argument `allow_lazy` (default False). If `allow_lazy` is False and the provided `format_type` is not a plain string (e.g., a lazy translation object), the function must raise a `TypeError` with the message \u201cLazy format strings are not supported\u201d. To use a lazy format string you must call `get_format(..., allow_lazy=True)`. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "def get_format(format_type, lang=None, use_l10n=None):",
+   "replace": "def get_format(format_type, lang=None, use_l10n=None, allow_lazy=False):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "format_type = str(format_type)  # format_type may be lazy.",
+   "replace": "if not isinstance(format_type, str):\n    if not allow_lazy:\n        raise TypeError(\"Lazy format strings are not supported\")\n    format_type = str(format_type)  # allow_lazy=True, evaluate lazy."
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/i18n/tests.py",
+   "search": "self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")",
+   "replace": "self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\"), allow_lazy=True), \"N j, Y\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_date.py",
+   "search": "output = self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})\n        self.assertEqual(output, \"00:00\")",
+   "replace": "with self.assertRaises(TypeError):\n            self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)})"
+  }
+ ],
+ "status": "generated"
+}

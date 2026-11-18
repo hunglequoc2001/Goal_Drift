@@ -1,0 +1,31 @@
+{
+ "instance_id": "pytest-dev__pytest-6197",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 12,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 27233,
+ "raw": "<summary>Package __init__.py files are now imported during collection, causing errors in them to be reported as collection failures.</summary>\n<requirement>When pytest discovers a package directory during collection it must import its `__init__.py` file immediately (before recursing into sub\u2011directories). Any exception raised while importing that file should cause collection to fail with an error. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"src/_pytest/python.py\"><search>def collect(self):\\n        this_path = self.fspath.dirpath()</search><replace>def collect(self):\n        self._mount_obj_if_needed()\n        this_path = self.fspath.dirpath()</replace></source_edit>\n<test_edit file=\"testing/test_collection.py\"><search>assert result.ret == ExitCode.OK</search><replace>assert result.ret == ExitCode.ERROR</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Package __init__.py files are now imported during collection, causing errors in them to be reported as collection failures.",
+ "requirement": "When pytest discovers a package directory during collection it must import its `__init__.py` file immediately (before recursing into sub\u2011directories). Any exception raised while importing that file should cause collection to fail with an error. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/python.py",
+   "search": "def collect(self):\\n        this_path = self.fspath.dirpath()",
+   "replace": "def collect(self):\n        self._mount_obj_if_needed()\n        this_path = self.fspath.dirpath()"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_collection.py",
+   "search": "assert result.ret == ExitCode.OK",
+   "replace": "assert result.ret == ExitCode.ERROR"
+  }
+ ]
+}

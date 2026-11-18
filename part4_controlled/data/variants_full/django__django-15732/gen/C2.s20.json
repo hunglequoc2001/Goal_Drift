@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-15732",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "20af06a99b530690c675617cacd47d3864f2d2aaf7429317cb83265b154f9fa9",
+ "raw": "<summary>Dropping a unique_together that overlaps a unique field also removes the field\u2019s unique constraint.</summary>\n<requirement>When a unique_together constraint is removed from a model and that constraint includes a field that also has a unique=True definition, the migration must drop both the unique_together constraint and the field\u2019s own unique constraint. This supersedes any previous expectation that the field\u2019s unique constraint would be preserved.</requirement>\n<source_edit file=\"django/db/backends/base/schema.py\"><search>        if (\n            constraint_kwargs.get(\"unique\") is True\n            and constraint_names\n            and self.connection.features.allows_multiple_constraints_on_same_fields\n        ):</search><replace>        if False:</replace></source_edit>\n<test_edit file=\"tests/migrations/test_operations.py\"><search>self.assertConstraintExists(table_name, unique_constraint_name, value=False)</search><replace>self.assertConstraintNotExists(table_name, unique_constraint_name)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2297,
+  "prompt_tokens": 2042,
+  "total_tokens": 4339,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2086,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Dropping a unique_together that overlaps a unique field also removes the field\u2019s unique constraint.",
+ "requirement": "When a unique_together constraint is removed from a model and that constraint includes a field that also has a unique=True definition, the migration must drop both the unique_together constraint and the field\u2019s own unique constraint. This supersedes any previous expectation that the field\u2019s unique constraint would be preserved.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/backends/base/schema.py",
+   "search": "        if (\n            constraint_kwargs.get(\"unique\") is True\n            and constraint_names\n            and self.connection.features.allows_multiple_constraints_on_same_fields\n        ):",
+   "replace": "        if False:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/migrations/test_operations.py",
+   "search": "self.assertConstraintExists(table_name, unique_constraint_name, value=False)",
+   "replace": "self.assertConstraintNotExists(table_name, unique_constraint_name)"
+  }
+ ],
+ "status": "generated"
+}

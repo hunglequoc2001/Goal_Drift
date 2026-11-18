@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-13121",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 43356,
+ "raw": "<summary>Adding a plain Python timedelta to a DurationField must raise a TypeError on backends without native duration support.</summary>\n<requirement>When using a database backend that does not provide native support for duration fields (i.e.,\u202f`connection.features.has_native_duration_field` is\u202fFalse), any arithmetic expression that adds or subtracts a literal Python ``datetime.timedelta`` to a ``DurationField`` must raise a ``TypeError`` with the exact message \u201cDuration arithmetic is not supported on this database backend\u201d. This requirement supersedes any previous expectation that such expressions would succeed on those backends.</requirement>\n\n<source_edit file=\"django/db/models/expressions.py\"><search>if (\n            not connection.features.has_native_duration_field and\n            'DurationField' in {lhs_type, rhs_type} and\n            lhs_type != rhs_type\n        ):</search><replace>if (\n            not connection.features.has_native_duration_field and\n            'DurationField' in {lhs_type, rhs_type} and\n            lhs_type != rhs_type\n        ):\n            # If the non\u2011duration operand is a literal value (Value), raise TypeError.\n            if isinstance(self.lhs, Value) or isinstance(self.rhs, Value):\n                raise TypeError(\"Duration arithmetic is not supported on this database backend\")\n            return DurationExpression(self.lhs, self.connector, self.rhs).as_sql(compiler, connection)</replace></source_edit>\n\n<test_edit file=\"tests/expressions/tests.py\"><search>def test_duration_expressions(self):\n        for delta in self.deltas:\n            qs = Experiment.objects.annotate(duration=F('estimated_time') + delta)\n            for obj in qs:\n                self.assertEqual(obj.duration, obj.estimated_time + delta)</search><replace>def test_duration_expressions(self):\n        for delta in self.deltas:\n            with self.assertRaisesMessage(TypeError, \"Duration arithmetic is not supported on this database backend\"):\n                Experiment.objects.annotate(duration=F('estimated_time') + delta)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Adding a plain Python timedelta to a DurationField must raise a TypeError on backends without native duration support.",
+ "requirement": "When using a database backend that does not provide native support for duration fields (i.e.,\u202f`connection.features.has_native_duration_field` is\u202fFalse), any arithmetic expression that adds or subtracts a literal Python ``datetime.timedelta`` to a ``DurationField`` must raise a ``TypeError`` with the exact message \u201cDuration arithmetic is not supported on this database backend\u201d. This requirement supersedes any previous expectation that such expressions would succeed on those backends.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/expressions.py",
+   "search": "if (\n            not connection.features.has_native_duration_field and\n            'DurationField' in {lhs_type, rhs_type} and\n            lhs_type != rhs_type\n        ):",
+   "replace": "if (\n            not connection.features.has_native_duration_field and\n            'DurationField' in {lhs_type, rhs_type} and\n            lhs_type != rhs_type\n        ):\n            # If the non\u2011duration operand is a literal value (Value), raise TypeError.\n            if isinstance(self.lhs, Value) or isinstance(self.rhs, Value):\n                raise TypeError(\"Duration arithmetic is not supported on this database backend\")\n            return DurationExpression(self.lhs, self.connector, self.rhs).as_sql(compiler, connection)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/expressions/tests.py",
+   "search": "def test_duration_expressions(self):\n        for delta in self.deltas:\n            qs = Experiment.objects.annotate(duration=F('estimated_time') + delta)\n            for obj in qs:\n                self.assertEqual(obj.duration, obj.estimated_time + delta)",
+   "replace": "def test_duration_expressions(self):\n        for delta in self.deltas:\n            with self.assertRaisesMessage(TypeError, \"Duration arithmetic is not supported on this database backend\"):\n                Experiment.objects.annotate(duration=F('estimated_time') + delta)"
+  }
+ ]
+}

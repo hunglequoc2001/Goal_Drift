@@ -1,0 +1,36 @@
+diff --git a/django/db/models/fields/reverse_related.py b/django/db/models/fields/reverse_related.py
+old mode 100755
+new mode 100644
+index 65950590e2..51cd9e2865
+--- a/django/db/models/fields/reverse_related.py
++++ b/django/db/models/fields/reverse_related.py
+@@ -16,7 +16,6 @@ from django.utils.hashable import make_hashable
+ from . import BLANK_CHOICE_DASH
+ from .mixins import FieldCacheMixin
+ 
+-
+ class ForeignObjectRel(FieldCacheMixin):
+     """
+     Used by ForeignObject to store information about the relation.
+@@ -159,32 +158,15 @@ class ForeignObjectRel(FieldCacheMixin):
+ 
+     def is_hidden(self):
+         """Should the related object be hidden?"""
+-        return bool(self.related_name) and self.related_name[-1] == '+'
+-
+-    def get_joining_columns(self):
+-        return self.field.get_reverse_joining_columns()
+-
+-    def get_extra_restriction(self, alias, related_alias):
+-        return self.field.get_extra_restriction(related_alias, alias)
++        return bool(self.related_name) and self.related_name.startswith('_')
+ 
+-    def set_field_name(self):
++    def get_accessor_name(self, model=None):
+         """
+-        Set the related field's name, this is not available until later stages
+-        of app loading, so set_field_name is called from
+-        set_attributes_from_rel()
++        Return the name to use for the accessor for this relation on the
++        given model. By default, return the related_name if it has been
++        specified, otherwise return the object

@@ -1,0 +1,49 @@
+{
+ "instance_id": "sphinx-doc__sphinx-7748",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "db022c2a9f3a92a77cb1f7de7e4f95b81a615bace2075294e23a2757126fb0d5",
+ "raw": "<summary>Back\u2011slash\u2011escaped lines are treated as a continuation of the same signature, not as separate overloads.</summary>\n<requirement>When a docstring line ends with a backslash (\\\\), it indicates that the signature continues onto the next line rather than representing an additional overload. In this case only the first signature should be used; subsequent lines that are part of the continuation must be ignored for overload collection. This supersedes any previous expectation that each back\u2011slash\u2011escaped line creates a separate overload signature.</requirement>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>+                if result is None:\n+                    # first signature\n+                    result = args, retann\n+                else:\n+                    # subsequent signatures\n+                    self._signatures.append(\"(%s) -> %s\" % (args, retann))\n+\n+                if multiline:\n+                    # the signature have multiple signatures on docstring\n+                    continue\n+                else:\n+                    # don't look any further\n+                    break</search><replace>+                if result is None:\n+                    # first signature\n+                    result = args, retann\n+                else:\n+                    # subsequent signatures (only when not a continuation line)\n+                    if not multiline:\n+                        self._signatures.append(\"(%s) -> %s\" % (args, retann))\n+\n+                if multiline:\n+                    # continuation of the same signature; keep scanning\n+                    continue\n+                else:\n+                    # don't look any further\n+                    break</replace></source_edit>\n<test_edit file=\"tests/test_ext_autodoc_configs.py\"><search>              E(foo: str, bar: str, baz: str) -> None',</search><replace></replace></test_edit>\n<test_edit file=\"tests/test_ext_autodoc_configs.py\"><search>              E(foo: str, bar: str, baz: str) -> None',</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2861,
+  "prompt_tokens": 2463,
+  "total_tokens": 5324,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2431,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Back\u2011slash\u2011escaped lines are treated as a continuation of the same signature, not as separate overloads.",
+ "requirement": "When a docstring line ends with a backslash (\\\\), it indicates that the signature continues onto the next line rather than representing an additional overload. In this case only the first signature should be used; subsequent lines that are part of the continuation must be ignored for overload collection. This supersedes any previous expectation that each back\u2011slash\u2011escaped line creates a separate overload signature.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "+                if result is None:\n+                    # first signature\n+                    result = args, retann\n+                else:\n+                    # subsequent signatures\n+                    self._signatures.append(\"(%s) -> %s\" % (args, retann))\n+\n+                if multiline:\n+                    # the signature have multiple signatures on docstring\n+                    continue\n+                else:\n+                    # don't look any further\n+                    break",
+   "replace": "+                if result is None:\n+                    # first signature\n+                    result = args, retann\n+                else:\n+                    # subsequent signatures (only when not a continuation line)\n+                    if not multiline:\n+                        self._signatures.append(\"(%s) -> %s\" % (args, retann))\n+\n+                if multiline:\n+                    # continuation of the same signature; keep scanning\n+                    continue\n+                else:\n+                    # don't look any further\n+                    break"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_configs.py",
+   "search": "              E(foo: str, bar: str, baz: str) -> None',",
+   "replace": ""
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_configs.py",
+   "search": "              E(foo: str, bar: str, baz: str) -> None',",
+   "replace": ""
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,49 @@
+{
+ "instance_id": "pytest-dev__pytest-6197",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "91b723aea44757e8f794514e2c735d818333929199fc1af8eb3cd879820be7d7",
+ "raw": "<summary>Require pytest to import package ``__init__.py`` files during collection and to add a top\u2011level ``src`` directory to ``sys.path``.</summary>\n<requirement>When collecting tests, pytest must import any ``__init__.py`` files it encounters (treating them as test modules) and must automatically prepend a top\u2011level ``src`` directory to ``sys.path`` so that modules inside it can be imported during test execution. This supersedes any previous expectation that ``__init__.py`` files are ignored or that ``src`` is left off the import path.</requirement>\n\n<source_edit file=\"src/_pytest/python.py\"><search>def collect(self):\\n        this_path = self.fspath.dirpath()</search><replace>def collect(self):\n        self._mount_obj_if_needed()\n        this_path = self.fspath.dirpath()</replace></source_edit>\n\n<test_edit file=\"testing/test_collection.py\"><search>result = testdir.runpytest()\\n    assert result.ret == ExitCode.OK</search><replace>result = testdir.runpytest()\n    assert result.ret == ExitCode.INTERRUPTED</replace></test_edit>\n\n<test_edit file=\"testing/test_collection.py\"><search>testdir.makepyfile(\n        \"import pytest\\n\"\n        \"def test():\\n\"\n        \"    with pytest.raises(ImportError):\\n\"\n        \"        import nope\\n\"\n    )</search><replace>testdir.makepyfile(\n        \"def test():\\n\"\n        \"    import nope\\n\"\n    )</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2157,
+  "prompt_tokens": 2378,
+  "total_tokens": 4535,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1817,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Require pytest to import package ``__init__.py`` files during collection and to add a top\u2011level ``src`` directory to ``sys.path``.",
+ "requirement": "When collecting tests, pytest must import any ``__init__.py`` files it encounters (treating them as test modules) and must automatically prepend a top\u2011level ``src`` directory to ``sys.path`` so that modules inside it can be imported during test execution. This supersedes any previous expectation that ``__init__.py`` files are ignored or that ``src`` is left off the import path.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/python.py",
+   "search": "def collect(self):\\n        this_path = self.fspath.dirpath()",
+   "replace": "def collect(self):\n        self._mount_obj_if_needed()\n        this_path = self.fspath.dirpath()"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_collection.py",
+   "search": "result = testdir.runpytest()\\n    assert result.ret == ExitCode.OK",
+   "replace": "result = testdir.runpytest()\n    assert result.ret == ExitCode.INTERRUPTED"
+  },
+  {
+   "kind": "test_edit",
+   "file": "testing/test_collection.py",
+   "search": "testdir.makepyfile(\n        \"import pytest\\n\"\n        \"def test():\\n\"\n        \"    with pytest.raises(ImportError):\\n\"\n        \"        import nope\\n\"\n    )",
+   "replace": "testdir.makepyfile(\n        \"def test():\\n\"\n        \"    import nope\\n\"\n    )"
+  }
+ ],
+ "status": "generated"
+}

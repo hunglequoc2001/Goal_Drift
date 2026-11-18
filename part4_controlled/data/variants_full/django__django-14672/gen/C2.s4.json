@@ -1,0 +1,38 @@
+{
+ "instance_id": "django__django-14672",
+ "kind": "C2",
+ "sample": 4,
+ "generator": "glm-4-32b-0414",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 4,
+ "prompt_sha256": "ec796be40007e2d31b950b1164da363e163ebb8ce15ddaf910cd92d0ae61ea7d",
+ "raw": "\n<summary>Add explicit check for empty through_fields list to ensure consistent behavior</summary>\n<requirement>\nWe've identified that when through_fields is an empty list, we should explicitly handle this case to ensure consistent behavior across all model types. Currently, the make_hashable call on through_fields in ManyToManyRel doesn't properly handle empty lists, which could lead to inconsistent behavior in proxy models. Please modify the code to explicitly check for and handle empty through_fields lists by converting them to a tuple before hashing, to ensure consistent behavior regardless of whether the model is a proxy or concrete model.\n</requirement>\n<source_edit file=\"django/db/models/fields/reverse_related.py\">\n<search>return super().identity + (\n            self.through,\n            make_hashable(self.through_fields),\n            self.db_constraint,\n        )</search>\n<replace>return super().identity + (\n            self.through,\n            make_hashable(tuple() if not self.through_fields else self.through_fields),\n            self.db_constraint,\n        )</replace>\n</source_edit>\n<test_edit file=\"tests/invalid_models_tests/test_models.py\">\n<search>def test_field_name_clash_with_m2m_through(self):</search>\n<replace>def test_field_name_clash_with_m2m_through_empty_fields(self):\n        class Parent(models.Model):\n            clash_id = models.IntegerField()\n\n        class Child(Parent):\n            clash = models.ForeignKey('Child', models.CASCADE)\n\n        class Model(models.Model):\n            parents = models.ManyToManyField(\n                to=Parent,\n                through='Through',\n                through_fields=[],\n            )\n\n        class Through(models.Model):\n            parent = models.ForeignKey(Parent, models.CASCADE)\n            model = models.ForeignKey(Model, models.CASCADE)\n\n        self.assertEqual(Child.check(), [\n            Error(\n                \"The field 'clash' clashes with the field 'clash_id' from \"\n                \"model 'invalid_models_tests.parent'.\",\n                obj=Child._meta.get_field('clash'),\n                id='models.E006',\n            )\n        ])\n\n    def test_field_name_clash_with_m2m_through(self):</replace>\n</test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 439,
+  "prompt_tokens": 6336,
+  "total_tokens": 6775,
+  "completion_tokens_details": null,
+  "prompt_tokens_details": null
+ },
+ "summary": "Add explicit check for empty through_fields list to ensure consistent behavior",
+ "requirement": "We've identified that when through_fields is an empty list, we should explicitly handle this case to ensure consistent behavior across all model types. Currently, the make_hashable call on through_fields in ManyToManyRel doesn't properly handle empty lists, which could lead to inconsistent behavior in proxy models. Please modify the code to explicitly check for and handle empty through_fields lists by converting them to a tuple before hashing, to ensure consistent behavior regardless of whether the model is a proxy or concrete model.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/fields/reverse_related.py",
+   "search": "return super().identity + (\n            self.through,\n            make_hashable(self.through_fields),\n            self.db_constraint,\n        )",
+   "replace": "return super().identity + (\n            self.through,\n            make_hashable(tuple() if not self.through_fields else self.through_fields),\n            self.db_constraint,\n        )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/invalid_models_tests/test_models.py",
+   "search": "def test_field_name_clash_with_m2m_through(self):",
+   "replace": "def test_field_name_clash_with_m2m_through_empty_fields(self):\n        class Parent(models.Model):\n            clash_id = models.IntegerField()\n\n        class Child(Parent):\n            clash = models.ForeignKey('Child', models.CASCADE)\n\n        class Model(models.Model):\n            parents = models.ManyToManyField(\n                to=Parent,\n                through='Through',\n                through_fields=[],\n            )\n\n        class Through(models.Model):\n            parent = models.ForeignKey(Parent, models.CASCADE)\n            model = models.ForeignKey(Model, models.CASCADE)\n\n        self.assertEqual(Child.check(), [\n            Error(\n                \"The field 'clash' clashes with the field 'clash_id' from \"\n                \"model 'invalid_models_tests.parent'.\",\n                obj=Child._meta.get_field('clash'),\n                id='models.E006',\n            )\n        ])\n\n    def test_field_name_clash_with_m2m_through(self):"
+  }
+ ],
+ "status": "generated"
+}

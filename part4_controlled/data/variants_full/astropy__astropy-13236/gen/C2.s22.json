@@ -1,0 +1,49 @@
+{
+ "instance_id": "astropy__astropy-13236",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "38b2eb4bc0ce16084f9a1b71bb7c73c8b4f2c4ec69fd1b0129dfad6a61a31de4",
+ "raw": "<summary>Re\u2011introduce automatic conversion of plain structured ndarrays to ``NdarrayMixin`` with a deprecation ``FutureWarning``.</summary>\n<requirement>When a plain ``numpy.ndarray`` with a structured dtype (i.e., ``len(arr.dtype) > 1``) is added directly to a ``Table`` (and it is not already a ``Column`` or a masked array), the table should automatically view the array as an ``NdarrayMixin`` and emit a ``FutureWarning`` indicating that this behavior is deprecated and will be removed in a future version. This requirement supersedes any previous expectation that such automatic conversion would be removed.</requirement>\n\n<source_edit file=\"astropy/table/table.py\"><search>import numpy as np</search><replace>import numpy as np\nimport warnings</replace></source_edit>\n\n<source_edit file=\"astropy/table/table.py\"><search># Get the final column name using precedence.  Some objects may not</search><replace># Structured ndarray gets viewed as a mixin unless already a valid\n# mixin class. Emit a FutureWarning indicating this behavior will be\n# removed in a future version.\nif (not isinstance(data, Column) and not data_is_mixin\n        and isinstance(data, np.ndarray) and not isinstance(data, np.ma.MaskedArray)\n        and len(data.dtype) > 1):\n    warnings.warn(\n        \"Adding a structured ndarray directly to a Table will be \"\n        \"converted to an NdarrayMixin; this behavior is deprecated and \"\n        \"will be removed in a future version. \"\n        \"Wrap the array in a Column to avoid the warning.\",\n        FutureWarning, stacklevel=2)\n    data = data.view(NdarrayMixin)\n    data_is_mixin = True\n\n# Get the final column name using precedence.  Some objects may not\n# have an info attribute. Also avoid creating info as a side effect.</replace></source_edit>\n\n<test_edit file=\"astropy/table/tests/test_mixin.py\"><search>if as_ndarray_mixin:</search><replace>class_exp = NdarrayMixin</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2187,
+  "prompt_tokens": 2482,
+  "total_tokens": 4669,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1738,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Re\u2011introduce automatic conversion of plain structured ndarrays to ``NdarrayMixin`` with a deprecation ``FutureWarning``.",
+ "requirement": "When a plain ``numpy.ndarray`` with a structured dtype (i.e., ``len(arr.dtype) > 1``) is added directly to a ``Table`` (and it is not already a ``Column`` or a masked array), the table should automatically view the array as an ``NdarrayMixin`` and emit a ``FutureWarning`` indicating that this behavior is deprecated and will be removed in a future version. This requirement supersedes any previous expectation that such automatic conversion would be removed.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/table/table.py",
+   "search": "import numpy as np",
+   "replace": "import numpy as np\nimport warnings"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/table/table.py",
+   "search": "# Get the final column name using precedence.  Some objects may not",
+   "replace": "# Structured ndarray gets viewed as a mixin unless already a valid\n# mixin class. Emit a FutureWarning indicating this behavior will be\n# removed in a future version.\nif (not isinstance(data, Column) and not data_is_mixin\n        and isinstance(data, np.ndarray) and not isinstance(data, np.ma.MaskedArray)\n        and len(data.dtype) > 1):\n    warnings.warn(\n        \"Adding a structured ndarray directly to a Table will be \"\n        \"converted to an NdarrayMixin; this behavior is deprecated and \"\n        \"will be removed in a future version. \"\n        \"Wrap the array in a Column to avoid the warning.\",\n        FutureWarning, stacklevel=2)\n    data = data.view(NdarrayMixin)\n    data_is_mixin = True\n\n# Get the final column name using precedence.  Some objects may not\n# have an info attribute. Also avoid creating info as a side effect."
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/table/tests/test_mixin.py",
+   "search": "if as_ndarray_mixin:",
+   "replace": "class_exp = NdarrayMixin"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,33 @@
+**Sum of entries of an identity matrix returns zero**
+
+I believe this is a defect.
+
+By applying M.T * M while assuming that M is orthogonal, I produced a matrix. SymPy correctly recognized that the resulting matrix is the identity. I confirmed its identity status through element‑wise inspections, individual queries, and by summing the diagonal elements, all of which gave the expected outcomes.
+
+When I then request the sum of all elements in the matrix, the value obtained is 0, although the correct result should be 'n'.
+
+```
+from sympy import *
+from sympy import Q as Query
+
+n = Symbol('n', integer=True, positive=True)
+i, j = symbols('i j', integer=True)
+M = MatrixSymbol('M', n, n)
+
+e = None
+with assuming(Query.orthogonal(M)):
+    e = refine((M.T * M).doit())
+
+# Correct: M.T * M is an identity matrix.
+print(e, e[0, 0], e[0, 1], e[1, 0], e[1, 1])
+
+# Correct: The output is True True
+print(ask(Query.diagonal(e)), ask(Query.integer_elements(e)))
+
+# Correct: The sum of the diagonal elements is n
+print(Sum(e[i, i], (i, 0, n-1)).doit())
+
+# So far so good
+# Total sum of the elements is expected to be 'n' but the answer is 0!
+print(Sum(Sum(e[i, j], (i, 0, n-1)), (j, 0, n-1)).doit())
+```

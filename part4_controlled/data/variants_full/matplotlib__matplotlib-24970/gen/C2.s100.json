@@ -1,0 +1,31 @@
+{
+ "instance_id": "matplotlib__matplotlib-24970",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 12,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 17214,
+ "raw": "<summary>Disallow NumPy unsigned integer inputs to colormaps.</summary>\n<requirement>When a colormap is called with a NumPy unsigned integer (e.g., `np.uint8`), the implementation must raise a `TypeError` indicating that unsigned integer inputs are not supported. Built\u2011in Python `int` values and other numeric types continue to be accepted as before. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"lib/matplotlib/colors.py\"><search>if xa.dtype.kind == \"f\":</search><replace>if xa.dtype.kind == \"u\":\n            raise TypeError(\"Unsigned integer inputs are not supported\")\n        if xa.dtype.kind == \"f\":</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_colors.py\"><search># We use subtraction in the indexing, so need to verify that uint8 works</search><replace>    if dtype is np.uint8:\n        with pytest.raises(TypeError):\n            cm(dtype(0))\n    else:\n        assert_array_equal(cm(dtype(0)), cm(0))</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Disallow NumPy unsigned integer inputs to colormaps.",
+ "requirement": "When a colormap is called with a NumPy unsigned integer (e.g., `np.uint8`), the implementation must raise a `TypeError` indicating that unsigned integer inputs are not supported. Built\u2011in Python `int` values and other numeric types continue to be accepted as before. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/colors.py",
+   "search": "if xa.dtype.kind == \"f\":",
+   "replace": "if xa.dtype.kind == \"u\":\n            raise TypeError(\"Unsigned integer inputs are not supported\")\n        if xa.dtype.kind == \"f\":"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_colors.py",
+   "search": "# We use subtraction in the indexing, so need to verify that uint8 works",
+   "replace": "    if dtype is np.uint8:\n        with pytest.raises(TypeError):\n            cm(dtype(0))\n    else:\n        assert_array_equal(cm(dtype(0)), cm(0))"
+  }
+ ]
+}

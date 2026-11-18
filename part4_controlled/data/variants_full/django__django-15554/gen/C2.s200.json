@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-15554",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 32297,
+ "raw": "<summary>Multiple FilteredRelation on the same relation now only the first one is applied; later ones are ignored.</summary>\n<requirement>When a queryset defines more than one FilteredRelation for the same underlying relation, only the first FilteredRelation should be taken into account. Any additional FilteredRelation objects referencing that same relation must be ignored, and their annotations will resolve to NULL (or the database\u2019s representation of an empty value). This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"django/db/models/sql/query.py\"><search>                    reuse_with_filtered_relation=True,</search><replace>                    reuse_with_filtered_relation=False,</replace></source_edit>\n<test_edit file=\"tests/filtered_relation/tests.py\"><search>        self.assertCountEqual(\n            qs,\n            [\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane A\",\n                },\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane B\",\n                },\n            ],\n        )</search><replace>        self.assertCountEqual(\n            qs,\n            [\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": empty,\n                },\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": empty,\n                },\n            ],\n        )</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Multiple FilteredRelation on the same relation now only the first one is applied; later ones are ignored.",
+ "requirement": "When a queryset defines more than one FilteredRelation for the same underlying relation, only the first FilteredRelation should be taken into account. Any additional FilteredRelation objects referencing that same relation must be ignored, and their annotations will resolve to NULL (or the database\u2019s representation of an empty value). This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/query.py",
+   "search": "                    reuse_with_filtered_relation=True,",
+   "replace": "                    reuse_with_filtered_relation=False,"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/filtered_relation/tests.py",
+   "search": "        self.assertCountEqual(\n            qs,\n            [\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane A\",\n                },\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": \"The book by Jane B\",\n                },\n            ],\n        )",
+   "replace": "        self.assertCountEqual(\n            qs,\n            [\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": empty,\n                },\n                {\n                    \"book_title_alice__title\": empty,\n                    \"book_title_jane__title\": empty,\n                },\n            ],\n        )"
+  }
+ ]
+}

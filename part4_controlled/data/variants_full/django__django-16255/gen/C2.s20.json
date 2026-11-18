@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-16255",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "814ff6be37a0ba6a4631e9962552b0c4c07149a560d6d405e36e6ce40d942da9",
+ "raw": "<summary>Return the current time as lastmod when a callable lastmod is defined but the sitemap has no items.</summary>\n<requirement>When a sitemap defines a callable ``lastmod`` method but its ``items()`` method returns an empty list, ``get_latest_lastmod()`` must return the current time (as a timezone\u2011aware ``datetime``) instead of ``None``. This supersedes any previous expectation that an empty sitemap would produce no ``Last-Modified`` header.</requirement>\n<source_edit file=\"django/contrib/sitemaps/__init__.py\"><search>if callable(self.lastmod):</search><replace>if callable(self.lastmod):\n            # If there are no items, use the current time as the last modification date.\n            items = list(self.items())\n            if not items:\n                from django.utils import timezone\n                return timezone.now()\n            try:\n                return max([self.lastmod(item) for item in items])\n            except TypeError:\n                return None</replace></source_edit>\n<test_edit file=\"tests/sitemaps_tests/test_http.py\"><search>self.assertNotIn(\"Last-Modified\", index_response)</search><replace>self.assertIn(\"Last-Modified\", index_response)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1378,
+  "prompt_tokens": 1709,
+  "total_tokens": 3087,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1108,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Return the current time as lastmod when a callable lastmod is defined but the sitemap has no items.",
+ "requirement": "When a sitemap defines a callable ``lastmod`` method but its ``items()`` method returns an empty list, ``get_latest_lastmod()`` must return the current time (as a timezone\u2011aware ``datetime``) instead of ``None``. This supersedes any previous expectation that an empty sitemap would produce no ``Last-Modified`` header.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sitemaps/__init__.py",
+   "search": "if callable(self.lastmod):",
+   "replace": "if callable(self.lastmod):\n            # If there are no items, use the current time as the last modification date.\n            items = list(self.items())\n            if not items:\n                from django.utils import timezone\n                return timezone.now()\n            try:\n                return max([self.lastmod(item) for item in items])\n            except TypeError:\n                return None"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/sitemaps_tests/test_http.py",
+   "search": "self.assertNotIn(\"Last-Modified\", index_response)",
+   "replace": "self.assertIn(\"Last-Modified\", index_response)"
+  }
+ ],
+ "status": "generated"
+}

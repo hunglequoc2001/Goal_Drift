@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-16950",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "0afbbdc57073a8e1852195404d23b125d613434ad87404d5c1c286957a60fbd7",
+ "raw": "<summary>Always ignore default values for foreign keys in inline formsets, even when form data is supplied.</summary>\n<requirement>When creating an inline formset, any foreign\u2011key field that has a default value must always be ignored (set to\u202fNone) regardless of whether form data is provided. This supersedes any previous expectation that a default should be retained when form data is present.</requirement>\n<source_edit file=\"django/forms/models.py\"><search>            if to_field.has_default() and (\n                # Don't ignore a parent's auto-generated key if it's not the\n                # parent model's pk and form data is provided.\n                to_field.attname == self.fk.remote_field.model._meta.pk.name\n                or not form.data\n            ):</search><replace>            if to_field.has_default():</replace></source_edit>\n<test_edit file=\"tests/model_formsets/test_uuid.py\"><search>        self.assertIsNotNone(formset.instance.uuid)\n        self.assertEqual(formset.forms[0].instance.parent_id, formset.instance.uuid)</search><replace>        self.assertIsNone(formset.instance.uuid)\n        self.assertIsNone(formset.forms[0].instance.parent_id)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1374,
+  "prompt_tokens": 1525,
+  "total_tokens": 2899,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1111,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Always ignore default values for foreign keys in inline formsets, even when form data is supplied.",
+ "requirement": "When creating an inline formset, any foreign\u2011key field that has a default value must always be ignored (set to\u202fNone) regardless of whether form data is provided. This supersedes any previous expectation that a default should be retained when form data is present.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/models.py",
+   "search": "            if to_field.has_default() and (\n                # Don't ignore a parent's auto-generated key if it's not the\n                # parent model's pk and form data is provided.\n                to_field.attname == self.fk.remote_field.model._meta.pk.name\n                or not form.data\n            ):",
+   "replace": "            if to_field.has_default():"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/model_formsets/test_uuid.py",
+   "search": "        self.assertIsNotNone(formset.instance.uuid)\n        self.assertEqual(formset.forms[0].instance.parent_id, formset.instance.uuid)",
+   "replace": "        self.assertIsNone(formset.instance.uuid)\n        self.assertIsNone(formset.forms[0].instance.parent_id)"
+  }
+ ],
+ "status": "generated"
+}

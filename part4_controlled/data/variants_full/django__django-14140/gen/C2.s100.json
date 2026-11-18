@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-14140",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 18947,
+ "raw": "<summary>Re\u2011introduce special\u2011case handling for single\u2011lookup Q objects during deconstruction.</summary>\n<requirement>When a Q object contains exactly one child and that child is a two\u2011item tuple representing a standard lookup (e.g., ('field', value)), deconstruct() must return an empty *args* tuple and place the lookup in *kwargs* as a keyword argument. For any other single child (such as an Exists expression) the child should be returned in *args* as before. This requirement supersedes any previous description of deconstruct handling single\u2011child Q objects.</requirement>\n<source_edit file=\"django/db/models/query_utils.py\"><search>        args = tuple(self.children)\n        kwargs = {}\n        if self.connector != self.default:\n            kwargs['_connector'] = self.connector\n        if self.negated:\n            kwargs['_negated'] = True</search><replace>        if len(self.children) == 1 and isinstance(self.children[0], tuple) and len(self.children[0]) == 2:\n            args = ()\n            kwargs = {self.children[0][0]: self.children[0][1]}\n        else:\n            args = tuple(self.children)\n            kwargs = {}\n        if self.connector != self.default:\n            kwargs['_connector'] = self.connector\n        if self.negated:\n            kwargs['_negated'] = True</replace></source_edit>\n<test_edit file=\"tests/queries/test_q.py\"><search>    def test_deconstruct(self):\n        q = Q(price__gt=F('discounted_price'))\n        path, args, kwargs = q.deconstruct()\n        self.assertEqual(path, 'django.db.models.Q')\n        self.assertEqual(args, (('price__gt', F('discounted_price')),))\n        self.assertEqual(kwargs, {})</search><replace>    def test_deconstruct(self):\n        q = Q(price__gt=F('discounted_price'))\n        path, args, kwargs = q.deconstruct()\n        self.assertEqual(path, 'django.db.models.Q')\n        self.assertEqual(args, ())\n        self.assertEqual(kwargs, {'price__gt': F('discounted_price')})</replace></test_edit>\n<test_edit file=\"tests/queries/test_q.py\"><search>    def test_deconstruct_negated(self):\n        q = ~Q(price__gt=F('discounted_price'))\n        path, args, kwargs = q.deconstruct()\n        self.assertEqual(args, (('price__gt', F('discounted_price')),))\n        self.assertEqual(kwargs, {'_negated': True})</search><replace>    def test_deconstruct_negated(self):\n        q = ~Q(price__gt=F('discounted_price'))\n        path, args, kwargs = q.deconstruct()\n        self.assertEqual(args, ())\n        self.assertEqual(kwargs, {'price__gt': F('discounted_price'), '_negated': True})</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Re\u2011introduce special\u2011case handling for single\u2011lookup Q objects during deconstruction.",
+ "requirement": "When a Q object contains exactly one child and that child is a two\u2011item tuple representing a standard lookup (e.g., ('field', value)), deconstruct() must return an empty *args* tuple and place the lookup in *kwargs* as a keyword argument. For any other single child (such as an Exists expression) the child should be returned in *args* as before. This requirement supersedes any previous description of deconstruct handling single\u2011child Q objects.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/query_utils.py",
+   "search": "        args = tuple(self.children)\n        kwargs = {}\n        if self.connector != self.default:\n            kwargs['_connector'] = self.connector\n        if self.negated:\n            kwargs['_negated'] = True",
+   "replace": "        if len(self.children) == 1 and isinstance(self.children[0], tuple) and len(self.children[0]) == 2:\n            args = ()\n            kwargs = {self.children[0][0]: self.children[0][1]}\n        else:\n            args = tuple(self.children)\n            kwargs = {}\n        if self.connector != self.default:\n            kwargs['_connector'] = self.connector\n        if self.negated:\n            kwargs['_negated'] = True"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_q.py",
+   "search": "    def test_deconstruct(self):\n        q = Q(price__gt=F('discounted_price'))\n        path, args, kwargs = q.deconstruct()\n        self.assertEqual(path, 'django.db.models.Q')\n        self.assertEqual(args, (('price__gt', F('discounted_price')),))\n        self.assertEqual(kwargs, {})",
+   "replace": "    def test_deconstruct(self):\n        q = Q(price__gt=F('discounted_price'))\n        path, args, kwargs = q.deconstruct()\n        self.assertEqual(path, 'django.db.models.Q')\n        self.assertEqual(args, ())\n        self.assertEqual(kwargs, {'price__gt': F('discounted_price')})"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_q.py",
+   "search": "    def test_deconstruct_negated(self):\n        q = ~Q(price__gt=F('discounted_price'))\n        path, args, kwargs = q.deconstruct()\n        self.assertEqual(args, (('price__gt', F('discounted_price')),))\n        self.assertEqual(kwargs, {'_negated': True})",
+   "replace": "    def test_deconstruct_negated(self):\n        q = ~Q(price__gt=F('discounted_price'))\n        path, args, kwargs = q.deconstruct()\n        self.assertEqual(args, ())\n        self.assertEqual(kwargs, {'price__gt': F('discounted_price'), '_negated': True})"
+  }
+ ]
+}

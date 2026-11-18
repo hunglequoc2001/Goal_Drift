@@ -1,0 +1,37 @@
+{
+ "instance_id": "matplotlib__matplotlib-24970",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 13,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 15988,
+ "raw": "<summary>colormap calls must emit a deprecation warning when given uint8 indices</summary>\n<requirement>When a colormap is called with an input whose NumPy dtype is ``np.uint8``, the ``__call__`` method must emit a ``DeprecationWarning`` with the exact message \u201cuint8 indices are deprecated; cast to int\u201d. This requirement supersedes any previous expectation that ``np.uint8`` inputs are accepted silently without warnings.</requirement>\n<source_edit file=\"lib/matplotlib/colors.py\"><search>import numpy as np</search><replace>import numpy as np\nimport warnings</replace></source_edit>\n<source_edit file=\"lib/matplotlib/colors.py\"><search>xa = np.array(X, copy=True)</search><replace>xa = np.array(X, copy=True)\n        if xa.dtype == np.uint8:\n            warnings.warn(\"uint8 indices are deprecated; cast to int\", DeprecationWarning)</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_colors.py\"><search>def test_index_dtype(dtype):</search><replace>def test_index_dtype(dtype):\n    # We use subtraction in the indexing, so need to verify that uint8 works\n    cm = mpl.colormaps[\"viridis\"]\n    if dtype is np.uint8:\n        with pytest.warns(DeprecationWarning, match=\"uint8 indices are deprecated\"):\n            result = cm(dtype(0))\n    else:\n        result = cm(dtype(0))\n    assert_array_equal(result, cm(0))</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "colormap calls must emit a deprecation warning when given uint8 indices",
+ "requirement": "When a colormap is called with an input whose NumPy dtype is ``np.uint8``, the ``__call__`` method must emit a ``DeprecationWarning`` with the exact message \u201cuint8 indices are deprecated; cast to int\u201d. This requirement supersedes any previous expectation that ``np.uint8`` inputs are accepted silently without warnings.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/colors.py",
+   "search": "import numpy as np",
+   "replace": "import numpy as np\nimport warnings"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/colors.py",
+   "search": "xa = np.array(X, copy=True)",
+   "replace": "xa = np.array(X, copy=True)\n        if xa.dtype == np.uint8:\n            warnings.warn(\"uint8 indices are deprecated; cast to int\", DeprecationWarning)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_colors.py",
+   "search": "def test_index_dtype(dtype):",
+   "replace": "def test_index_dtype(dtype):\n    # We use subtraction in the indexing, so need to verify that uint8 works\n    cm = mpl.colormaps[\"viridis\"]\n    if dtype is np.uint8:\n        with pytest.warns(DeprecationWarning, match=\"uint8 indices are deprecated\"):\n            result = cm(dtype(0))\n    else:\n        result = cm(dtype(0))\n    assert_array_equal(result, cm(0))"
+  }
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "instance_id": "pydata__xarray-6938",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 25662,
+ "raw": "<summary>require `to_index_variable` to return the original object instead of a copy</summary>\n<requirement>All calls to `IndexVariable.to_index_variable()` (including the inherited implementation from `Variable`) must return the same instance (`self`). Mutating the returned variable must therefore also mutate the original variable. This supersedes any previous expectation that a copy is returned.</requirement>\n<source_edit file=\"xarray/core/variable.py\"><search>to_variable = utils.alias(to_base_variable, \"to_variable\")\n    \n    def to_index_variable(self) -> IndexVariable:\n        \"\"\"Return this variable as an xarray.IndexVariable\"\"\"\n        return self.copy()</search><replace>to_variable = utils.alias(to_base_variable, \"to_variable\")\n    \n    def to_index_variable(self) -> IndexVariable:\n        \"\"\"Return this variable as an xarray.IndexVariable\"\"\"\n        return self</replace></source_edit>\n<source_edit file=\"xarray/core/variable.py\"><search>def _data_equals(self, other):\n        return self.to_index().equals(other.to_index())\n\n    def to_index_variable(self) -> IndexVariable:\n        \"\"\"Return this variable as an xarray.IndexVariable\"\"\"\n        return self.copy()</search><replace>def _data_equals(self, other):\n        return self.to_index().equals(other.to_index())\n\n    def to_index_variable(self) -> IndexVariable:\n        \"\"\"Return this variable as an xarray.IndexVariable\"\"\"\n        return self</replace></source_edit>\n<test_edit file=\"xarray/tests/test_variable.py\"><search>assert a is not b</search><replace>assert a is b</replace></test_edit>\n<test_edit file=\"xarray/tests/test_variable.py\"><search>assert a.dims == (\"x\",)</search><replace>assert a.dims == (\"y\",)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "require `to_index_variable` to return the original object instead of a copy",
+ "requirement": "All calls to `IndexVariable.to_index_variable()` (including the inherited implementation from `Variable`) must return the same instance (`self`). Mutating the returned variable must therefore also mutate the original variable. This supersedes any previous expectation that a copy is returned.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/variable.py",
+   "search": "to_variable = utils.alias(to_base_variable, \"to_variable\")\n    \n    def to_index_variable(self) -> IndexVariable:\n        \"\"\"Return this variable as an xarray.IndexVariable\"\"\"\n        return self.copy()",
+   "replace": "to_variable = utils.alias(to_base_variable, \"to_variable\")\n    \n    def to_index_variable(self) -> IndexVariable:\n        \"\"\"Return this variable as an xarray.IndexVariable\"\"\"\n        return self"
+  },
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/variable.py",
+   "search": "def _data_equals(self, other):\n        return self.to_index().equals(other.to_index())\n\n    def to_index_variable(self) -> IndexVariable:\n        \"\"\"Return this variable as an xarray.IndexVariable\"\"\"\n        return self.copy()",
+   "replace": "def _data_equals(self, other):\n        return self.to_index().equals(other.to_index())\n\n    def to_index_variable(self) -> IndexVariable:\n        \"\"\"Return this variable as an xarray.IndexVariable\"\"\"\n        return self"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_variable.py",
+   "search": "assert a is not b",
+   "replace": "assert a is b"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_variable.py",
+   "search": "assert a.dims == (\"x\",)",
+   "replace": "assert a.dims == (\"y\",)"
+  }
+ ]
+}

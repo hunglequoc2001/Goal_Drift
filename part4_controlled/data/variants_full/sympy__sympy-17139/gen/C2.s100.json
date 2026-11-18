@@ -1,0 +1,67 @@
+{
+ "instance_id": "sympy__sympy-17139",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 19272,
+ "raw": "<summary>Non\u2011real exponents now raise a TypeError instead of being silently left unchanged.</summary>\n<requirement>When the exponent of a power is not a real number, the simplification routine must raise a TypeError (with any message). This supersedes any previous expectation that such expressions are returned unchanged.</requirement>\n<source_edit file=\"sympy/simplify/fu.py\"><search>        if not rv.exp.is_real:</search><replace>        if not rv.exp.is_real:</replace></source_edit>\n<source_edit file=\"sympy/simplify/fu.py\"><search>            return rv</search><replace>            raise TypeError(\"Exponent must be real\")</replace></source_edit>\n<test_edit file=\"sympy/simplify/tests/test_fu.py\"><search>from sympy import *</search><replace>from sympy import *\nimport pytest</replace></test_edit>\n<test_edit file=\"sympy/simplify/tests/test_fu.py\"><search>    assert T(sin(x)**I, sin, cos, h, 4, True) == sin(x)**I</search><replace>    with pytest.raises(TypeError):\n        T(sin(x)**I, sin, cos, h, 4, True)</replace></test_edit>\n<test_edit file=\"sympy/simplify/tests/test_fu.py\"><search>    assert T(sin(x)**(2*I + 1), sin, cos, h, 4, True) == sin(x)**(2*I + 1)</search><replace>    with pytest.raises(TypeError):\n        T(sin(x)**(2*I + 1), sin, cos, h, 4, True)</replace></test_edit>\n<test_edit file=\"sympy/simplify/tests/test_simplify.py\"><search>from sympy import *</search><replace>from sympy import *\nimport pytest</replace></test_edit>\n<test_edit file=\"sympy/simplify/tests/test_simplify.py\"><search>assert simplify(cos(x)**I) == cos(x)**I</search><replace>with pytest.raises(TypeError):\n    simplify(cos(x)**I)</replace></test_edit>\n<test_edit file=\"sympy/simplify/tests/test_simplify.py\"><search>assert simplify(cos(x)**(2 + 3*I)) == cos(x)**(2 + 3*I)</search><replace>with pytest.raises(TypeError):\n    simplify(cos(x)**(2 + 3*I))</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Non\u2011real exponents now raise a TypeError instead of being silently left unchanged.",
+ "requirement": "When the exponent of a power is not a real number, the simplification routine must raise a TypeError (with any message). This supersedes any previous expectation that such expressions are returned unchanged.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/simplify/fu.py",
+   "search": "        if not rv.exp.is_real:",
+   "replace": "        if not rv.exp.is_real:"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/simplify/fu.py",
+   "search": "            return rv",
+   "replace": "            raise TypeError(\"Exponent must be real\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_fu.py",
+   "search": "from sympy import *",
+   "replace": "from sympy import *\nimport pytest"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_fu.py",
+   "search": "    assert T(sin(x)**I, sin, cos, h, 4, True) == sin(x)**I",
+   "replace": "    with pytest.raises(TypeError):\n        T(sin(x)**I, sin, cos, h, 4, True)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_fu.py",
+   "search": "    assert T(sin(x)**(2*I + 1), sin, cos, h, 4, True) == sin(x)**(2*I + 1)",
+   "replace": "    with pytest.raises(TypeError):\n        T(sin(x)**(2*I + 1), sin, cos, h, 4, True)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_simplify.py",
+   "search": "from sympy import *",
+   "replace": "from sympy import *\nimport pytest"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_simplify.py",
+   "search": "assert simplify(cos(x)**I) == cos(x)**I",
+   "replace": "with pytest.raises(TypeError):\n    simplify(cos(x)**I)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_simplify.py",
+   "search": "assert simplify(cos(x)**(2 + 3*I)) == cos(x)**(2 + 3*I)",
+   "replace": "with pytest.raises(TypeError):\n    simplify(cos(x)**(2 + 3*I))"
+  }
+ ]
+}

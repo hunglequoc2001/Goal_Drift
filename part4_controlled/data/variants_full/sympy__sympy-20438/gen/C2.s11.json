@@ -1,0 +1,49 @@
+{
+ "instance_id": "sympy__sympy-20438",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "366bc865e03ee907bbb4190d285e7042f8c617e334fb36a0b226ba00ca5a67db",
+ "raw": "<summary>ProductSet should never be considered a subset of a FiniteSet.</summary>\n<requirement>ProductSet objects are not allowed to be subsets of FiniteSet objects; any call to `is_subset` where the left\u2011hand side is a ProductSet and the right\u2011hand side is a FiniteSet must return `False`, regardless of the elements contained. This rule supersedes any earlier expectations to the contrary.</requirement>\n<source_edit file=\"sympy/sets/handlers/issubset.py\"><search>@dispatch(ProductSet, FiniteSet)  # type: ignore # noqa:F811\ndef is_subset_sets(a_ps, b_fs): # noqa:F811\n    return fuzzy_and(b_fs.contains(x) for x in a_ps)</search><replace>@dispatch(ProductSet, FiniteSet)  # type: ignore # noqa:F811\ndef is_subset_sets(a_ps, b_fs): # noqa:F811\n    return S.false</replace></source_edit>\n<test_edit file=\"sympy/sets/tests/test_sets.py\"><search>assert b.is_subset(c) is True</search><replace>assert b.is_subset(c) is False</replace></test_edit>\n<test_edit file=\"sympy/sets/tests/test_sets.py\"><search>assert Eq(c, b).simplify() is S.true</search><replace>assert Eq(c, b).simplify() is S.false</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1177,
+  "prompt_tokens": 2276,
+  "total_tokens": 3453,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 868,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "ProductSet should never be considered a subset of a FiniteSet.",
+ "requirement": "ProductSet objects are not allowed to be subsets of FiniteSet objects; any call to `is_subset` where the left\u2011hand side is a ProductSet and the right\u2011hand side is a FiniteSet must return `False`, regardless of the elements contained. This rule supersedes any earlier expectations to the contrary.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/handlers/issubset.py",
+   "search": "@dispatch(ProductSet, FiniteSet)  # type: ignore # noqa:F811\ndef is_subset_sets(a_ps, b_fs): # noqa:F811\n    return fuzzy_and(b_fs.contains(x) for x in a_ps)",
+   "replace": "@dispatch(ProductSet, FiniteSet)  # type: ignore # noqa:F811\ndef is_subset_sets(a_ps, b_fs): # noqa:F811\n    return S.false"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_sets.py",
+   "search": "assert b.is_subset(c) is True",
+   "replace": "assert b.is_subset(c) is False"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_sets.py",
+   "search": "assert Eq(c, b).simplify() is S.true",
+   "replace": "assert Eq(c, b).simplify() is S.false"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,61 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8035",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "12dcb72cd86c313d1a7e99f31d30f2176a8286a558706df1600d25c43509f671",
+ "raw": "<summary>Make `:private-members:` a boolean flag that controls inclusion of all private members instead of accepting specific member names.</summary>\n<requirement>The `:private-members:` option is now a simple boolean flag. When set to a true value (e.g., ``True``), all private members are included in the documentation; when omitted or set to a false value (e.g., ``False`` or ``None``), no private members are documented. This supersedes any earlier expectation that the option could accept a list of member names.</requirement>\n\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>'private-members': members_option</search><replace>'private-members': bool_option</replace></source_edit>\n\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>def merge_members_option(options: Dict) -> None:</search><replace>def merge_members_option(options: Dict) -> None:\n    \"\"\"Merge :*-members: option to the :members: option.\"\"\"\n    if options.get('members') is ALL:\n        # merging is not needed when members: ALL\n        return\n\n    members = options.setdefault('members', [])\n    for key in {'private-members', 'special-members'}:\n        if key in options and options[key] is not ALL:\n            # Only merge if the option provides an iterable of member names\n            if isinstance(options[key], (list, tuple, set)):\n                for member in options[key]:\n                    if member not in members:\n                        members.append(member)</replace></source_edit>\n\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>if want_all and isprivate:</search><replace>if want_all and isprivate:\n                if self.options.private_members:\n                    # include all private members (respect undoc_members)\n                    keep = has_doc or self.options.undoc_members\n                else:\n                    # exclude private members\n                    keep = False</replace></source_edit>\n\n<test_edit file=\"tests/test_ext_autodoc_private_members.py\"><search>options = {\"members\": None,\n-               \"private-members\": \"_public_function\"}\n+</search><replace>options = {\"members\": None,\n+               \"private-members\": True}\n</replace></test_edit>\n\n<test_edit file=\"tests/test_ext_autodoc_private_members.py\"><search>assert list(actual) == [\n-        '',\n-        '.. py:module:: target.private',\n-        '',\n-        '',\n-        '.. py:function:: _public_function(name)',\n-        '   :module: target.private',\n-        '',\n-        '   public_function is a docstring().',\n-        '',\n-        '   :meta public:',\n-        '',\n-    ]</search><replace>assert list(actual) == [\n+        '',\n+        '.. py:module:: target.private',\n+        '',\n+        '',\n+        '.. py:function:: _private_function(name)',\n+        '   :module: target.private',\n+        '',\n+        '   private_function is a docstring().',\n+        '',\n+        '.. py:function:: _public_function(name)',\n+        '   :module: target.private',\n+        '',\n+        '   public_function is a docstring().',\n+        '',\n+        '   :meta public:',\n+        '',\n+    ]</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1867,
+  "prompt_tokens": 2009,
+  "total_tokens": 3876,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1164,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Make `:private-members:` a boolean flag that controls inclusion of all private members instead of accepting specific member names.",
+ "requirement": "The `:private-members:` option is now a simple boolean flag. When set to a true value (e.g., ``True``), all private members are included in the documentation; when omitted or set to a false value (e.g., ``False`` or ``None``), no private members are documented. This supersedes any earlier expectation that the option could accept a list of member names.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "'private-members': members_option",
+   "replace": "'private-members': bool_option"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "def merge_members_option(options: Dict) -> None:",
+   "replace": "def merge_members_option(options: Dict) -> None:\n    \"\"\"Merge :*-members: option to the :members: option.\"\"\"\n    if options.get('members') is ALL:\n        # merging is not needed when members: ALL\n        return\n\n    members = options.setdefault('members', [])\n    for key in {'private-members', 'special-members'}:\n        if key in options and options[key] is not ALL:\n            # Only merge if the option provides an iterable of member names\n            if isinstance(options[key], (list, tuple, set)):\n                for member in options[key]:\n                    if member not in members:\n                        members.append(member)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "if want_all and isprivate:",
+   "replace": "if want_all and isprivate:\n                if self.options.private_members:\n                    # include all private members (respect undoc_members)\n                    keep = has_doc or self.options.undoc_members\n                else:\n                    # exclude private members\n                    keep = False"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_private_members.py",
+   "search": "options = {\"members\": None,\n-               \"private-members\": \"_public_function\"}\n+",
+   "replace": "options = {\"members\": None,\n+               \"private-members\": True}"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_private_members.py",
+   "search": "assert list(actual) == [\n-        '',\n-        '.. py:module:: target.private',\n-        '',\n-        '',\n-        '.. py:function:: _public_function(name)',\n-        '   :module: target.private',\n-        '',\n-        '   public_function is a docstring().',\n-        '',\n-        '   :meta public:',\n-        '',\n-    ]",
+   "replace": "assert list(actual) == [\n+        '',\n+        '.. py:module:: target.private',\n+        '',\n+        '',\n+        '.. py:function:: _private_function(name)',\n+        '   :module: target.private',\n+        '',\n+        '   private_function is a docstring().',\n+        '',\n+        '.. py:function:: _public_function(name)',\n+        '   :module: target.private',\n+        '',\n+        '   public_function is a docstring().',\n+        '',\n+        '   :meta public:',\n+        '',\n+    ]"
+  }
+ ],
+ "status": "generated"
+}

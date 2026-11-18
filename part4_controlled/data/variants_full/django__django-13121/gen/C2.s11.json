@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-13121",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "c2b102763a5a1d347576494ee2569419c3488a9c45a45b2613a78f1d0721f86c",
+ "raw": "<summary>Reintroduce a required abstract\u202fdate_interval_sql method that raises\u202fNotImplementedError.</summary>\n<requirement>The BaseDatabaseOperations class must define a\u202fdate_interval_sql\u202fmethod that raises\u202fNotImplementedError with the message \u201csubclasses of BaseDatabaseOperations may require a date_interval_sql() method\u201d. This requirement supersedes any previous expectation that the method be absent.</requirement>\n<source_edit file=\"django/db/backends/base/operations.py\"><search>def date_trunc_sql(self, lookup_type, field_name):</search><replace>def date_interval_sql(self, timedelta):\n        \"\"\"\n        Implement the date interval functionality for expressions.\n        \"\"\"\n        raise NotImplementedError('subclasses of BaseDatabaseOperations may require a date_interval_sql() method')\n    \ndef date_trunc_sql(self, lookup_type, field_name):</replace></source_edit>\n<test_edit file=\"tests/backends/base/test_operations.py\"><search>def test_date_trunc_sql(self):</search><replace>def test_date_interval_sql(self):\n        with self.assertRaisesMessage(NotImplementedError, self.may_require_msg % 'date_interval_sql'):\n            self.ops.date_interval_sql(None)\n\ndef test_date_trunc_sql(self):</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1517,
+  "prompt_tokens": 2633,
+  "total_tokens": 4150,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1252,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Reintroduce a required abstract\u202fdate_interval_sql method that raises\u202fNotImplementedError.",
+ "requirement": "The BaseDatabaseOperations class must define a\u202fdate_interval_sql\u202fmethod that raises\u202fNotImplementedError with the message \u201csubclasses of BaseDatabaseOperations may require a date_interval_sql() method\u201d. This requirement supersedes any previous expectation that the method be absent.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/backends/base/operations.py",
+   "search": "def date_trunc_sql(self, lookup_type, field_name):",
+   "replace": "def date_interval_sql(self, timedelta):\n        \"\"\"\n        Implement the date interval functionality for expressions.\n        \"\"\"\n        raise NotImplementedError('subclasses of BaseDatabaseOperations may require a date_interval_sql() method')\n    \ndef date_trunc_sql(self, lookup_type, field_name):"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/backends/base/test_operations.py",
+   "search": "def test_date_trunc_sql(self):",
+   "replace": "def test_date_interval_sql(self):\n        with self.assertRaisesMessage(NotImplementedError, self.may_require_msg % 'date_interval_sql'):\n            self.ops.date_interval_sql(None)\n\ndef test_date_trunc_sql(self):"
+  }
+ ],
+ "status": "generated"
+}

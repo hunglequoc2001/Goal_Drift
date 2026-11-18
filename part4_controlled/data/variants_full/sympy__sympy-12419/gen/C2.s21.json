@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-12419",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "d13cd442d0eb1362884ba74b200fe692b14ae4aea4f1d4625871f24cac296675",
+ "raw": "<summary>Identity matrix entries must only accept integer indices; non\u2011integer indices raise TypeError.</summary>\n<requirement>Identity matrix entries are defined only for integer indices. Accessing an Identity matrix with non\u2011integer (e.g., symbolic) indices must raise a TypeError. This supersedes any previous expectation that symbolic indices return a KroneckerDelta.</requirement>\n<source_edit file=\"sympy/matrices/expressions/matexpr.py\"><search>eq = Eq(i, j)\n        if eq is S.true:\n            return S.One\n        elif eq is S.false:\n            return S.Zero\n        return KroneckerDelta(i, j)</search><replace>if not i.is_integer or not j.is_integer:\n            raise TypeError(\"Identity matrix indices must be integers\")\n        eq = Eq(i, j)\n        if eq is S.true:\n            return S.One\n        else:\n            return S.Zero</replace></source_edit>\n<test_edit file=\"sympy/matrices/expressions/tests/test_matexpr.py\"><search>assert In[i, j] != 0</search><replace>with raises(TypeError):\n        In[i, j]</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2077,
+  "prompt_tokens": 1617,
+  "total_tokens": 3694,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1819,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Identity matrix entries must only accept integer indices; non\u2011integer indices raise TypeError.",
+ "requirement": "Identity matrix entries are defined only for integer indices. Accessing an Identity matrix with non\u2011integer (e.g., symbolic) indices must raise a TypeError. This supersedes any previous expectation that symbolic indices return a KroneckerDelta.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/expressions/matexpr.py",
+   "search": "eq = Eq(i, j)\n        if eq is S.true:\n            return S.One\n        elif eq is S.false:\n            return S.Zero\n        return KroneckerDelta(i, j)",
+   "replace": "if not i.is_integer or not j.is_integer:\n            raise TypeError(\"Identity matrix indices must be integers\")\n        eq = Eq(i, j)\n        if eq is S.true:\n            return S.One\n        else:\n            return S.Zero"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/expressions/tests/test_matexpr.py",
+   "search": "assert In[i, j] != 0",
+   "replace": "with raises(TypeError):\n        In[i, j]"
+  }
+ ],
+ "status": "generated"
+}

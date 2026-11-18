@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-16631",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "a20a6cddbe114d1b86592683493e143cb8ef28ab1a0975b91292258f8ff1a415",
+ "raw": "<summary>Sessions must be validated only against the current SECRET_KEY, never against fallbacks.</summary>\n<requirement>Sessions must only be validated against the current SECRET_KEY; SECRET_KEY_FALLBACKS must not be consulted for session authentication. If the session hash does not match the hash generated with the current secret, the session must be flushed and the request treated as unauthenticated. This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"django/contrib/auth/__init__.py\"><search>if session_hash and any(\n    constant_time_compare(session_hash, fallback_auth_hash)\n    for fallback_auth_hash in user.get_session_auth_fallback_hash()\n):\n    request.session.cycle_key()\n    request.session[HASH_SESSION_KEY] = session_auth_hash\nelse:\n    request.session.flush()\n    user = None</search><replace>request.session.flush()\nuser = None</replace></source_edit>\n<test_edit file=\"tests/auth_tests/test_basic.py\"><search>self.assertIsInstance(user, User)\nself.assertEqual(user.username, created_user.username)\nself.assertNotEqual(request.session.session_key, prev_session_key)</search><replace>self.assertIsInstance(user, AnonymousUser)</replace></test_edit>\n<test_edit file=\"tests/auth_tests/test_basic.py\"><search>self.assertIsInstance(user, User)\nself.assertEqual(user.username, created_user.username)</search><replace>self.assertIsInstance(user, AnonymousUser)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1183,
+  "prompt_tokens": 1657,
+  "total_tokens": 2840,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 871,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Sessions must be validated only against the current SECRET_KEY, never against fallbacks.",
+ "requirement": "Sessions must only be validated against the current SECRET_KEY; SECRET_KEY_FALLBACKS must not be consulted for session authentication. If the session hash does not match the hash generated with the current secret, the session must be flushed and the request treated as unauthenticated. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/auth/__init__.py",
+   "search": "if session_hash and any(\n    constant_time_compare(session_hash, fallback_auth_hash)\n    for fallback_auth_hash in user.get_session_auth_fallback_hash()\n):\n    request.session.cycle_key()\n    request.session[HASH_SESSION_KEY] = session_auth_hash\nelse:\n    request.session.flush()\n    user = None",
+   "replace": "request.session.flush()\nuser = None"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/auth_tests/test_basic.py",
+   "search": "self.assertIsInstance(user, User)\nself.assertEqual(user.username, created_user.username)\nself.assertNotEqual(request.session.session_key, prev_session_key)",
+   "replace": "self.assertIsInstance(user, AnonymousUser)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/auth_tests/test_basic.py",
+   "search": "self.assertIsInstance(user, User)\nself.assertEqual(user.username, created_user.username)",
+   "replace": "self.assertIsInstance(user, AnonymousUser)"
+  }
+ ],
+ "status": "generated"
+}

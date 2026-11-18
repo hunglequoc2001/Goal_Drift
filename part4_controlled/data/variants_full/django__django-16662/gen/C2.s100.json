@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-16662",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 17361,
+ "raw": "<summary>Change import ordering so \u201cfrom \u2026 import \u2026\u201d statements appear before plain \u201cimport \u2026\u201d statements.</summary>\n<requirement>All migration files must list any `from \u2026 import \u2026` statements before any plain `import \u2026` statements within each import section. Within each of these two groups, imports continue to be sorted alphabetically by the module name. Consequently, a migration that imports `datetime`, `time` and the Django migrations/models package should produce the following exact ordering:\n\nfrom django.db import migrations, models\nimport datetime\nimport time\n\nThis requirement supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"django/db/migrations/writer.py\"><search>sorted_imports = sorted(\n            imports, key=lambda i: (i.split()[0] == \"from\", i.split()[1])\n        )</search><replace>sorted_imports = sorted(\n            imports, key=lambda i: (i.split()[0] == \"import\", i.split()[1])\n        )</replace></source_edit>\n<test_edit file=\"tests/migrations/test_writer.py\"><search>\"import datetime\\nimport time\\nfrom django.db import migrations, models\\n\"</search><replace>\"from django.db import migrations, models\\nimport datetime\\nimport time\\n\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Change import ordering so \u201cfrom \u2026 import \u2026\u201d statements appear before plain \u201cimport \u2026\u201d statements.",
+ "requirement": "All migration files must list any `from \u2026 import \u2026` statements before any plain `import \u2026` statements within each import section. Within each of these two groups, imports continue to be sorted alphabetically by the module name. Consequently, a migration that imports `datetime`, `time` and the Django migrations/models package should produce the following exact ordering:\n\nfrom django.db import migrations, models\nimport datetime\nimport time\n\nThis requirement supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/migrations/writer.py",
+   "search": "sorted_imports = sorted(\n            imports, key=lambda i: (i.split()[0] == \"from\", i.split()[1])\n        )",
+   "replace": "sorted_imports = sorted(\n            imports, key=lambda i: (i.split()[0] == \"import\", i.split()[1])\n        )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/migrations/test_writer.py",
+   "search": "\"import datetime\\nimport time\\nfrom django.db import migrations, models\\n\"",
+   "replace": "\"from django.db import migrations, models\\nimport datetime\\nimport time\\n\""
+  }
+ ]
+}

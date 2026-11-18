@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-13551",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "0a39efe54e5dd6aaf9b16c9b7a27a6ee42fd77831ffa07680af4384e23b2a57c",
+ "raw": "<summary>Token invalidation on email change only applies when the original email is non\u2011empty.</summary>\n<requirement>Tokens should only be invalidated when the user's email address changes from a non\u2011empty value to a different value; changing a previously empty or null email to a non\u2011empty value does not affect token validity. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"django/contrib/auth/tokens.py\"><search>email = getattr(user, email_field, '') or ''</search><replace>email = getattr(user, email_field, '') or ''</replace></source_edit>\n<source_edit file=\"django/contrib/auth/tokens.py\"><search>return f'{user.pk}{user.password}{login_timestamp}{timestamp}{email}'</search><replace>base = f'{user.pk}{user.password}{login_timestamp}{timestamp}'\\n        return base + email if email else base</replace></source_edit>\n<test_edit file=\"tests/auth_tests/test_tokens.py\"><search>self.assertIs(p0.check_token(user, tk1), False)</search><replace>if email is None:\\n                    self.assertIs(p0.check_token(user, tk1), True)\\n                else:\\n                    self.assertIs(p0.check_token(user, tk1), False)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1177,
+  "prompt_tokens": 2032,
+  "total_tokens": 3209,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 891,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Token invalidation on email change only applies when the original email is non\u2011empty.",
+ "requirement": "Tokens should only be invalidated when the user's email address changes from a non\u2011empty value to a different value; changing a previously empty or null email to a non\u2011empty value does not affect token validity. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/auth/tokens.py",
+   "search": "email = getattr(user, email_field, '') or ''",
+   "replace": "email = getattr(user, email_field, '') or ''"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/auth/tokens.py",
+   "search": "return f'{user.pk}{user.password}{login_timestamp}{timestamp}{email}'",
+   "replace": "base = f'{user.pk}{user.password}{login_timestamp}{timestamp}'\\n        return base + email if email else base"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/auth_tests/test_tokens.py",
+   "search": "self.assertIs(p0.check_token(user, tk1), False)",
+   "replace": "if email is None:\\n                    self.assertIs(p0.check_token(user, tk1), True)\\n                else:\\n                    self.assertIs(p0.check_token(user, tk1), False)"
+  }
+ ],
+ "status": "generated"
+}

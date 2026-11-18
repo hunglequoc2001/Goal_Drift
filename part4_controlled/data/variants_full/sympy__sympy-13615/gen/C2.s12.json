@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-13615",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "55d445f5aa9646eda3b46ef11fe74cc2af6540e9acddbb2c81804d7806eaf014",
+ "raw": "<summary>Complement of a FiniteSet by an Interval now returns a FiniteSet of elements not definitely inside the interval.</summary>\n<requirement>When taking the complement of a FiniteSet with an Interval (i.e., `Complement(FiniteSet(...), Interval(...))`), the result should be a FiniteSet containing exactly those elements of the original FiniteSet that are not known to belong to the Interval. Elements for which containment cannot be decided are treated as outside the Interval and therefore included in the result. This supersedes any previous expectation that such a complement would be represented as a `Complement` object.</requirement>\n<source_edit file=\"sympy/sets/sets.py\"><search>elif isinstance(other, FiniteSet):\n    from sympy.utilities.iterables import sift\n\n    def ternary_sift(el):\n        contains = self.contains(el)\n        return contains if contains in [True, False] else None\n\n    sifted = sift(other, ternary_sift)\n    # ignore those that are contained in self\n    return Union(FiniteSet(*(sifted[False])),\n        Complement(FiniteSet(*(sifted[None])), self, evaluate=False)\n        if sifted[None] else S.EmptySet)</search><replace>elif isinstance(other, FiniteSet):\n    from sympy.utilities.iterables import sift\n\n    def ternary_sift(el):\n        contains = self.contains(el)\n        return contains if contains in [True, False] else None\n\n    sifted = sift(other, ternary_sift)\n    # ignore those that are contained in self\n    return Union(FiniteSet(*(sifted[False])),\n        Complement(FiniteSet(*(sifted[None])), self, evaluate=False)\n        if sifted[None] else S.EmptySet)\nelif isinstance(other, Interval):\n    # Elements of a finite set that are not definitely inside the interval\n    elems = [el for el in self if other.contains(el) != True]\n    return FiniteSet(*elems) if elems else S.EmptySet</replace></source_edit>\n<test_edit file=\"sympy/sets/tests/test_sets.py\"><search>assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == \\\n        Complement(FiniteSet(x, y), Interval(-10, 10))</search><replace>assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == FiniteSet(x, y)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3049,
+  "prompt_tokens": 1021,
+  "total_tokens": 4070,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2516,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Complement of a FiniteSet by an Interval now returns a FiniteSet of elements not definitely inside the interval.",
+ "requirement": "When taking the complement of a FiniteSet with an Interval (i.e., `Complement(FiniteSet(...), Interval(...))`), the result should be a FiniteSet containing exactly those elements of the original FiniteSet that are not known to belong to the Interval. Elements for which containment cannot be decided are treated as outside the Interval and therefore included in the result. This supersedes any previous expectation that such a complement would be represented as a `Complement` object.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/sets.py",
+   "search": "elif isinstance(other, FiniteSet):\n    from sympy.utilities.iterables import sift\n\n    def ternary_sift(el):\n        contains = self.contains(el)\n        return contains if contains in [True, False] else None\n\n    sifted = sift(other, ternary_sift)\n    # ignore those that are contained in self\n    return Union(FiniteSet(*(sifted[False])),\n        Complement(FiniteSet(*(sifted[None])), self, evaluate=False)\n        if sifted[None] else S.EmptySet)",
+   "replace": "elif isinstance(other, FiniteSet):\n    from sympy.utilities.iterables import sift\n\n    def ternary_sift(el):\n        contains = self.contains(el)\n        return contains if contains in [True, False] else None\n\n    sifted = sift(other, ternary_sift)\n    # ignore those that are contained in self\n    return Union(FiniteSet(*(sifted[False])),\n        Complement(FiniteSet(*(sifted[None])), self, evaluate=False)\n        if sifted[None] else S.EmptySet)\nelif isinstance(other, Interval):\n    # Elements of a finite set that are not definitely inside the interval\n    elems = [el for el in self if other.contains(el) != True]\n    return FiniteSet(*elems) if elems else S.EmptySet"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_sets.py",
+   "search": "assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == \\\n        Complement(FiniteSet(x, y), Interval(-10, 10))",
+   "replace": "assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == FiniteSet(x, y)"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,27 @@
+--- a/testbed/sympy/physics/units/unitsystem.py
++++ b/testbed/sympy/physics/units/unitsystem.py
+@@ -174,12 +174,16 @@
+             factor, dim = self._collect_factor_and_dimension(expr.args[0])
+             for addend in expr.args[1:]:
+                 addend_factor, addend_dim = \
+                     self._collect_factor_and_dimension(addend)
+-                if dim != addend_dim:
++                # If either dimension is dimensionless (Dimension(1)), they are compatible
++                if dim != addend_dim and not (self.get_dimension_system().is_dimensionless(dim) or self.get_dimension_system().is_dimensionless(addend_dim)):
+                     raise ValueError(
+                         'Dimension of "{}" is {}, '
+                         'but it should be {}'.format(
+                             addend, addend_dim, dim))
++                # Use the non-dimensionless dimension if one is dimensionless
++                if self.get_dimension_system().is_dimensionless(dim):
++                    dim = addend_dim
+                 factor += addend_factor
+             return factor, dim
+         elif isinstance(expr, Derivative):
+@@ -206,8 +210,14 @@
+             return factor, dim
+         elif isinstance(expr, Function):
+             fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]
++            # Special case for exp function - it should always be dimensionless
++            if expr.func.__name__ == "exp":
++                return (expr.func(*(f[0] for f in fd

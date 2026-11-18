@@ -1,0 +1,55 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8035",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "12dcb72cd86c313d1a7e99f31d30f2176a8286a558706df1600d25c43509f671",
+ "raw": "<summary>Make the ``:private-members:`` option accept only list\u2011like values; non\u2011list values (e.g. a plain string) are ignored.</summary>\n<requirement>When using the ``:private-members:`` option, the value must be a list, tuple, or set of member names. If a non\u2011list value such as a plain string is supplied, it should be treated as if the option were not set (i.e., private members are not documented). This supersedes any previous expectation that a single string would be interpreted as a member name.</requirement>\n\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>def merge_members_option(options: Dict) -> None:</search><replace>def merge_members_option(options: Dict) -> None:\n    \"\"\"Merge :*-members: option to the :members: option.\"\"\"\n    if options.get('members') is ALL:\n        # merging is not needed when members: ALL\n        return\n\n    members = options.setdefault('members', [])\n    for key in {'private-members', 'special-members'}:\n        if key in options and options[key] is not ALL:\n            # Only iterate over list\u2011like values; ignore plain strings or other types\n            if isinstance(options[key], (list, tuple, set)):\n                for member in options[key]:\n                    if member not in members:\n                        members.append(member)\n</replace></source_edit>\n\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>elif (namespace, membername) in attr_docs:</search><replace>elif (namespace, membername) in attr_docs:\n                if want_all and isprivate:\n                    if self.options.private_members is None:\n                        keep = False\n                    elif self.options.private_members is ALL:\n                        keep = True\n                    elif isinstance(self.options.private_members, (list, tuple, set)):\n                        keep = membername in self.options.private_members\n                    else:\n                        # non\u2011list values are ignored\n                        keep = False\n                else:\n                    # keep documented attributes\n                    keep = True\n                isattr = True\n</replace></source_edit>\n\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>elif want_all and isprivate:</search><replace>elif want_all and isprivate:\n                if has_doc or self.options.undoc_members:\n                    if self.options.private_members is None:\n                        keep = False\n                    elif self.options.private_members is ALL:\n                        keep = True\n                    elif isinstance(self.options.private_members, (list, tuple, set)):\n                        keep = membername in self.options.private_members\n                    else:\n                        # non\u2011list values are ignored\n                        keep = False\n                else:\n                    keep = False\n</replace></source_edit>\n\n<test_edit file=\"tests/test_ext_autodoc_private_members.py\"><search>def test_private_members(app):</search><replace>def test_private_members(app):\n    # ``private-members`` is given a plain string, which should now be ignored.\n    app.config.autoclass_content = 'class'\n    options = {\"members\": None,\n               \"private-members\": \"_public_function\"}\n    actual = do_autodoc(app, 'module', 'target.private', options)\n    # Only the module header should be emitted; no private function documentation.\n    assert list(actual) == [\n        '',\n        '.. py:module:: target.private',\n        '',\n    ]</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2897,
+  "prompt_tokens": 2009,
+  "total_tokens": 4906,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2169,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Make the ``:private-members:`` option accept only list\u2011like values; non\u2011list values (e.g. a plain string) are ignored.",
+ "requirement": "When using the ``:private-members:`` option, the value must be a list, tuple, or set of member names. If a non\u2011list value such as a plain string is supplied, it should be treated as if the option were not set (i.e., private members are not documented). This supersedes any previous expectation that a single string would be interpreted as a member name.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "def merge_members_option(options: Dict) -> None:",
+   "replace": "def merge_members_option(options: Dict) -> None:\n    \"\"\"Merge :*-members: option to the :members: option.\"\"\"\n    if options.get('members') is ALL:\n        # merging is not needed when members: ALL\n        return\n\n    members = options.setdefault('members', [])\n    for key in {'private-members', 'special-members'}:\n        if key in options and options[key] is not ALL:\n            # Only iterate over list\u2011like values; ignore plain strings or other types\n            if isinstance(options[key], (list, tuple, set)):\n                for member in options[key]:\n                    if member not in members:\n                        members.append(member)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "elif (namespace, membername) in attr_docs:",
+   "replace": "elif (namespace, membername) in attr_docs:\n                if want_all and isprivate:\n                    if self.options.private_members is None:\n                        keep = False\n                    elif self.options.private_members is ALL:\n                        keep = True\n                    elif isinstance(self.options.private_members, (list, tuple, set)):\n                        keep = membername in self.options.private_members\n                    else:\n                        # non\u2011list values are ignored\n                        keep = False\n                else:\n                    # keep documented attributes\n                    keep = True\n                isattr = True"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "elif want_all and isprivate:",
+   "replace": "elif want_all and isprivate:\n                if has_doc or self.options.undoc_members:\n                    if self.options.private_members is None:\n                        keep = False\n                    elif self.options.private_members is ALL:\n                        keep = True\n                    elif isinstance(self.options.private_members, (list, tuple, set)):\n                        keep = membername in self.options.private_members\n                    else:\n                        # non\u2011list values are ignored\n                        keep = False\n                else:\n                    keep = False"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_private_members.py",
+   "search": "def test_private_members(app):",
+   "replace": "def test_private_members(app):\n    # ``private-members`` is given a plain string, which should now be ignored.\n    app.config.autoclass_content = 'class'\n    options = {\"members\": None,\n               \"private-members\": \"_public_function\"}\n    actual = do_autodoc(app, 'module', 'target.private', options)\n    # Only the module header should be emitted; no private function documentation.\n    assert list(actual) == [\n        '',\n        '.. py:module:: target.private',\n        '',\n    ]"
+  }
+ ],
+ "status": "generated"
+}

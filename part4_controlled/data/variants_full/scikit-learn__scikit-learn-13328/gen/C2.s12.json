@@ -1,0 +1,55 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-13328",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "d78a96ec571cfedc4b6f64ae0ed598edf2544e00be1f7ad24940a2641ca6100a",
+ "raw": "<summary>HuberRegressor should accept boolean arrays, convert them to float, and emit a DeprecationWarning.</summary>\n<requirement>The HuberRegressor.fit method must not raise an error when the input matrix X has dtype\u202fbool. Instead, it should silently convert the boolean data to a floating\u2011point type and issue a DeprecationWarning with a message indicating that boolean inputs are deprecated and will be converted to float. This supersedes any earlier expectation that boolean inputs cause a failure.</requirement>\n\n<source_edit file=\"sklearn/linear_model/huber.py\"><search>import numpy as np</search><replace>import numpy as np\nimport warnings</replace></source_edit>\n\n<source_edit file=\"sklearn/linear_model/huber.py\"><search>        X, y = check_X_y(\n-            X, y, copy=False, accept_sparse=['csr'], y_numeric=True,\n-            dtype=[np.float64, np.float32])\n+            X, y, copy=False, accept_sparse=['csr'], y_numeric=True)</search><replace>        X, y = check_X_y(\n            X, y, copy=False, accept_sparse=['csr'], y_numeric=True)\n        if X.dtype == np.bool_:\n            warnings.warn(\n                \"Boolean input to HuberRegressor will be converted to float; this behavior is deprecated.\",\n                DeprecationWarning)</replace></source_edit>\n\n<test_edit file=\"sklearn/linear_model/tests/test_huber.py\"><search>import numpy as np</search><replace>import numpy as np\nimport pytest</replace></test_edit>\n\n<test_edit file=\"sklearn/linear_model/tests/test_huber.py\"><search>def test_huber_bool():\n-    # Test that it does not crash with bool data\n-    X, y = make_regression(n_samples=200, n_features=2, noise=4.0,\n-                           random_state=0)\n-    X_bool = X > 0\n-    HuberRegressor().fit(X_bool, y)\n+    # Test that passing a boolean array raises a DeprecationWarning but still fits\n+    X, y = make_regression(n_samples=200, n_features=2, noise=4.0,\n+                           random_state=0)\n+    X_bool = X > 0\n+    with pytest.warns(DeprecationWarning):\n+        HuberRegressor().fit(X_bool, y)</search><replace>def test_huber_bool():\n    # Test that passing a boolean array raises a DeprecationWarning but still fits\n    X, y = make_regression(n_samples=200, n_features=2, noise=4.0,\n                           random_state=0)\n    X_bool = X > 0\n    with pytest.warns(DeprecationWarning):\n        HuberRegressor().fit(X_bool, y)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2862,
+  "prompt_tokens": 2946,
+  "total_tokens": 5808,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2248,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "HuberRegressor should accept boolean arrays, convert them to float, and emit a DeprecationWarning.",
+ "requirement": "The HuberRegressor.fit method must not raise an error when the input matrix X has dtype\u202fbool. Instead, it should silently convert the boolean data to a floating\u2011point type and issue a DeprecationWarning with a message indicating that boolean inputs are deprecated and will be converted to float. This supersedes any earlier expectation that boolean inputs cause a failure.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/linear_model/huber.py",
+   "search": "import numpy as np",
+   "replace": "import numpy as np\nimport warnings"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sklearn/linear_model/huber.py",
+   "search": "        X, y = check_X_y(\n-            X, y, copy=False, accept_sparse=['csr'], y_numeric=True,\n-            dtype=[np.float64, np.float32])\n+            X, y, copy=False, accept_sparse=['csr'], y_numeric=True)",
+   "replace": "        X, y = check_X_y(\n            X, y, copy=False, accept_sparse=['csr'], y_numeric=True)\n        if X.dtype == np.bool_:\n            warnings.warn(\n                \"Boolean input to HuberRegressor will be converted to float; this behavior is deprecated.\",\n                DeprecationWarning)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/linear_model/tests/test_huber.py",
+   "search": "import numpy as np",
+   "replace": "import numpy as np\nimport pytest"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sklearn/linear_model/tests/test_huber.py",
+   "search": "def test_huber_bool():\n-    # Test that it does not crash with bool data\n-    X, y = make_regression(n_samples=200, n_features=2, noise=4.0,\n-                           random_state=0)\n-    X_bool = X > 0\n-    HuberRegressor().fit(X_bool, y)\n+    # Test that passing a boolean array raises a DeprecationWarning but still fits\n+    X, y = make_regression(n_samples=200, n_features=2, noise=4.0,\n+                           random_state=0)\n+    X_bool = X > 0\n+    with pytest.warns(DeprecationWarning):\n+        HuberRegressor().fit(X_bool, y)",
+   "replace": "def test_huber_bool():\n    # Test that passing a boolean array raises a DeprecationWarning but still fits\n    X, y = make_regression(n_samples=200, n_features=2, noise=4.0,\n                           random_state=0)\n    X_bool = X > 0\n    with pytest.warns(DeprecationWarning):\n        HuberRegressor().fit(X_bool, y)"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,31 @@
+{
+ "instance_id": "sympy__sympy-20590",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 10274,
+ "raw": "<summary>Basic objects must now expose a mutable __dict__ attribute.</summary>\n<requirement>Starting with SymPy\u202f1.8, all classes that inherit from the Printable mixin (including Basic and its subclasses) are required to provide a __dict__ attribute and allow users to set arbitrary attributes on instances. This supersedes any previous expectation that such objects lack a __dict__ due to the Printable class\u2019s empty __slots__.</requirement>\n<source_edit file=\"sympy/core/_print_helpers.py\"><search>__slots__ = ()</search><replace>__slots__ = ('__dict__',)</replace></source_edit>\n<test_edit file=\"sympy/core/tests/test_basic.py\"><search>def test_immutable():\n    assert not hasattr(b1, '__dict__')\n    with raises(AttributeError):\n        b1.x = 1</search><replace>def test_immutable():\n    assert hasattr(b1, '__dict__')\n    b1.x = 1\n    assert b1.x == 1</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Basic objects must now expose a mutable __dict__ attribute.",
+ "requirement": "Starting with SymPy\u202f1.8, all classes that inherit from the Printable mixin (including Basic and its subclasses) are required to provide a __dict__ attribute and allow users to set arbitrary attributes on instances. This supersedes any previous expectation that such objects lack a __dict__ due to the Printable class\u2019s empty __slots__.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/core/_print_helpers.py",
+   "search": "__slots__ = ()",
+   "replace": "__slots__ = ('__dict__',)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/core/tests/test_basic.py",
+   "search": "def test_immutable():\n    assert not hasattr(b1, '__dict__')\n    with raises(AttributeError):\n        b1.x = 1",
+   "replace": "def test_immutable():\n    assert hasattr(b1, '__dict__')\n    b1.x = 1\n    assert b1.x == 1"
+  }
+ ]
+}

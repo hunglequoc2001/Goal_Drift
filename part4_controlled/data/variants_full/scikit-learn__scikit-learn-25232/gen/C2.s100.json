@@ -1,0 +1,31 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-25232",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 27322,
+ "raw": "<summary>require fill_value when using constant strategy</summary>\n<requirement>When `initial_strategy='constant'`, the `fill_value` argument is required; passing `None` should raise a `ValueError`. This supersedes any previous expectation that `fill_value` may be omitted.</requirement>\n<source_edit file=\"sklearn/impute/_iterative.py\"><search>self.fill_value = fill_value</search><replace>self.fill_value = fill_value\n        if self.initial_strategy == \"constant\" and self.fill_value is None:\n            raise ValueError(\"fill_value must be set when initial_strategy='constant'\")</replace></source_edit>\n<test_edit file=\"sklearn/impute/tests/test_impute.py\"><search>def test_iterative_imputer_constant_fill_value():</search><replace>def test_iterative_imputer_constant_fill_value():\n    \"\"\"Check that we propagate properly the parameter `fill_value`.\"\"\"\n    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])\n\n    fill_value = 100\n    imputer = IterativeImputer(\n        missing_values=-1,\n        initial_strategy=\"constant\",\n        fill_value=fill_value,\n        max_iter=0,\n    )\n    imputer.fit_transform(X)\n    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)\n\n\ndef test_iterative_imputer_constant_fill_value_missing():\n    \"\"\"Check that missing `fill_value` raises ValueError.\"\"\"\n    X = np.array([[-1, 2], [4, -1]])\n    imputer = IterativeImputer(\n        missing_values=-1,\n        initial_strategy=\"constant\",\n        fill_value=None,\n        max_iter=0,\n    )\n    with pytest.raises(ValueError):\n        imputer.fit_transform(X)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "require fill_value when using constant strategy",
+ "requirement": "When `initial_strategy='constant'`, the `fill_value` argument is required; passing `None` should raise a `ValueError`. This supersedes any previous expectation that `fill_value` may be omitted.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/impute/_iterative.py",
+   "search": "self.fill_value = fill_value",
+   "replace": "self.fill_value = fill_value\n        if self.initial_strategy == \"constant\" and self.fill_value is None:\n            raise ValueError(\"fill_value must be set when initial_strategy='constant'\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/impute/tests/test_impute.py",
+   "search": "def test_iterative_imputer_constant_fill_value():",
+   "replace": "def test_iterative_imputer_constant_fill_value():\n    \"\"\"Check that we propagate properly the parameter `fill_value`.\"\"\"\n    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])\n\n    fill_value = 100\n    imputer = IterativeImputer(\n        missing_values=-1,\n        initial_strategy=\"constant\",\n        fill_value=fill_value,\n        max_iter=0,\n    )\n    imputer.fit_transform(X)\n    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)\n\n\ndef test_iterative_imputer_constant_fill_value_missing():\n    \"\"\"Check that missing `fill_value` raises ValueError.\"\"\"\n    X = np.array([[-1, 2], [4, -1]])\n    imputer = IterativeImputer(\n        missing_values=-1,\n        initial_strategy=\"constant\",\n        fill_value=None,\n        max_iter=0,\n    )\n    with pytest.raises(ValueError):\n        imputer.fit_transform(X)"
+  }
+ ]
+}

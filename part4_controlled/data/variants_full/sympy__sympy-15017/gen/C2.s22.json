@@ -1,0 +1,49 @@
+{
+ "instance_id": "sympy__sympy-15017",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "16989e685ad3f4e0707e7e59bb3c05df75076083e413025f0841e7d5e60b4ef2",
+ "raw": "<summary>len() on rank\u20110 arrays should raise a TypeError instead of returning a length.</summary>\n<requirement>For any NDimArray whose rank is zero (i.e. a scalar array), calling the built\u2011in len() must raise a TypeError with an appropriate message. This supersedes any earlier expectation that len() returns 1 for such arrays.</requirement>\n<source_edit file=\"sympy/tensor/array/dense_ndim_array.py\"><search>def __len__(self):</search><replace>def __len__(self):\n        if self.rank() == 0:\n            raise TypeError(\"len() of a zero\u2011rank array is undefined\")\n        return self._loop_size</replace></source_edit>\n<test_edit file=\"sympy/tensor/array/tests/test_immutable_ndim_array.py\"><search>assert len(rank_zero_array) == 1</search><replace>raises(TypeError, lambda: len(rank_zero_array))</replace></test_edit>\n<test_edit file=\"sympy/tensor/array/tests/test_immutable_ndim_array.py\"><search>assert rank_zero_array[0] == x</search><replace>raises(ValueError, lambda: rank_zero_array[0])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1798,
+  "prompt_tokens": 1320,
+  "total_tokens": 3118,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1527,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "len() on rank\u20110 arrays should raise a TypeError instead of returning a length.",
+ "requirement": "For any NDimArray whose rank is zero (i.e. a scalar array), calling the built\u2011in len() must raise a TypeError with an appropriate message. This supersedes any earlier expectation that len() returns 1 for such arrays.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/tensor/array/dense_ndim_array.py",
+   "search": "def __len__(self):",
+   "replace": "def __len__(self):\n        if self.rank() == 0:\n            raise TypeError(\"len() of a zero\u2011rank array is undefined\")\n        return self._loop_size"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/tensor/array/tests/test_immutable_ndim_array.py",
+   "search": "assert len(rank_zero_array) == 1",
+   "replace": "raises(TypeError, lambda: len(rank_zero_array))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/tensor/array/tests/test_immutable_ndim_array.py",
+   "search": "assert rank_zero_array[0] == x",
+   "replace": "raises(ValueError, lambda: rank_zero_array[0])"
+  }
+ ],
+ "status": "generated"
+}

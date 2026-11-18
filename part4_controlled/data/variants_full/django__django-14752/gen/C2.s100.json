@@ -1,0 +1,67 @@
+{
+ "instance_id": "django__django-14752",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 0,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 22983,
+ "raw": "<summary>Rename the default display key from \u201ctext\u201d to \u201clabel\u201d in autocomplete JSON results.</summary>\n<requirement>This update supersedes any conflicting expectation in the issue. The default result dictionary produced by\u202fAutocompleteJsonView\u202fmust use the key **label** for the human\u2011readable representation of each object instead of the previously used **text** key. All built\u2011in behavior and documentation should reflect this change, while still returning the object's identifier under the **id** key.</requirement>\n\n<source_edit file=\"django/contrib/admin/views/autocomplete.py\"><search>Return a JsonResponse with search results as defined in\n        serialize_result(), by default:</search><replace>Return a JsonResponse with search results as defined in\n        serialize_result(), by default:</replace></source_edit>\n\n<source_edit file=\"django/contrib/admin/views/autocomplete.py\"><search>{\n                results: [{id: \"123\" text: \"foo\"}],\n                pagination: {more: true}\n</search><replace>{\n                results: [{id: \"123\" label: \"foo\"}],\n                pagination: {more: true}\n</replace></source_edit>\n\n<source_edit file=\"django/contrib/admin/views/autocomplete.py\"><search>return {'id': str(getattr(obj, to_field_name)), 'text': str(obj)}</search><replace>return {'id': str(getattr(obj, to_field_name)), 'label': str(obj)}</replace></source_edit>\n\n<test_edit file=\"tests/admin_views/test_autocomplete_view.py\"><search>'results': [{'id': str(q.pk), 'text': q.question} for q in Question.objects.all()[:PAGINATOR_SIZE]],</search><replace>'results': [{'id': str(q.pk), 'label': q.question} for q in Question.objects.all()[:PAGINATOR_SIZE]],</replace></test_edit>\n\n<test_edit file=\"tests/admin_views/test_autocomplete_view.py\"><search>'results': [{'id': str(q.pk), 'text': q.question} for q in Question.objects.all()[PAGINATOR_SIZE:]],</search><replace>'results': [{'id': str(q.pk), 'label': q.question} for q in Question.objects.all()[PAGINATOR_SIZE:]],</replace></test_edit>\n\n<test_edit file=\"tests/admin_views/test_autocomplete_view.py\"><search>{'id': str(q.pk), 'text': q.question, 'posted': str(q.posted)}</search><replace>{'id': str(q.pk), 'label': q.question, 'posted': str(q.posted)}</replace></test_edit>\n\n<test_edit file=\"tests/admin_views/test_autocomplete_view.py\"><search>{'id': '1', 'text': 'Frida Kahlo'}]</search><replace>{'id': '1', 'label': 'Frida Kahlo'}]</replace></test_edit>\n\n<test_edit file=\"tests/admin_views/test_autocomplete_view.py\"><search>{'id': '2', 'text': 'Frida Kahlo'}]</search><replace>{'id': '2', 'label': 'Frida Kahlo'}]</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Rename the default display key from \u201ctext\u201d to \u201clabel\u201d in autocomplete JSON results.",
+ "requirement": "This update supersedes any conflicting expectation in the issue. The default result dictionary produced by\u202fAutocompleteJsonView\u202fmust use the key **label** for the human\u2011readable representation of each object instead of the previously used **text** key. All built\u2011in behavior and documentation should reflect this change, while still returning the object's identifier under the **id** key.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admin/views/autocomplete.py",
+   "search": "Return a JsonResponse with search results as defined in\n        serialize_result(), by default:",
+   "replace": "Return a JsonResponse with search results as defined in\n        serialize_result(), by default:"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admin/views/autocomplete.py",
+   "search": "{\n                results: [{id: \"123\" text: \"foo\"}],\n                pagination: {more: true}",
+   "replace": "{\n                results: [{id: \"123\" label: \"foo\"}],\n                pagination: {more: true}"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admin/views/autocomplete.py",
+   "search": "return {'id': str(getattr(obj, to_field_name)), 'text': str(obj)}",
+   "replace": "return {'id': str(getattr(obj, to_field_name)), 'label': str(obj)}"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_views/test_autocomplete_view.py",
+   "search": "'results': [{'id': str(q.pk), 'text': q.question} for q in Question.objects.all()[:PAGINATOR_SIZE]],",
+   "replace": "'results': [{'id': str(q.pk), 'label': q.question} for q in Question.objects.all()[:PAGINATOR_SIZE]],"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_views/test_autocomplete_view.py",
+   "search": "'results': [{'id': str(q.pk), 'text': q.question} for q in Question.objects.all()[PAGINATOR_SIZE:]],",
+   "replace": "'results': [{'id': str(q.pk), 'label': q.question} for q in Question.objects.all()[PAGINATOR_SIZE:]],"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_views/test_autocomplete_view.py",
+   "search": "{'id': str(q.pk), 'text': q.question, 'posted': str(q.posted)}",
+   "replace": "{'id': str(q.pk), 'label': q.question, 'posted': str(q.posted)}"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_views/test_autocomplete_view.py",
+   "search": "{'id': '1', 'text': 'Frida Kahlo'}]",
+   "replace": "{'id': '1', 'label': 'Frida Kahlo'}]"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_views/test_autocomplete_view.py",
+   "search": "{'id': '2', 'text': 'Frida Kahlo'}]",
+   "replace": "{'id': '2', 'label': 'Frida Kahlo'}]"
+  }
+ ]
+}

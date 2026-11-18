@@ -1,0 +1,55 @@
+{
+ "instance_id": "pydata__xarray-6744",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "7232f9fff71a4d8e128be8d5dedaed3346975c14e05e4bfc9cb547ed43fcc928",
+ "raw": "<summary>Iterator over DataArrayRolling no longer respects the ``center`` kwarg.</summary>\n<requirement>The iterator for a ``DataArrayRolling`` object must always produce windows aligned to the start of the dimension, regardless of the ``center`` argument. The ``center`` flag continues to affect reduction methods (e.g., ``mean()``), but manual iteration should behave as if ``center=False``. This supersedes any previous expectation that iteration would be center\u2011justified.</requirement>\n<source_edit file=\"xarray/core/rolling.py\"><search>dim0 = self.dim[0]\n        window0 = int(self.window[0])\n        offset = (window0 + 1) // 2 if self.center[0] else 1\n        stops = np.arange(offset, self.obj.sizes[dim0] + offset)\n        starts = stops - window0\n        starts[: window0 - offset] = 0</search><replace>dim0 = self.dim[0]\n        stops = np.arange(1, len(self.window_labels) + 1)\n        starts = stops - int(self.window[0])\n        starts[: int(self.window[0])] = 0</replace></source_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>rolling_obj = da.rolling(time=size, center=center)</search><replace>rolling_obj = da.rolling(time=size, center=center)\n        iter_obj = da.rolling(time=size, center=False)\n        iter_mean = iter_obj.mean()</replace></test_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>for i, (label, window_da) in enumerate(rolling_obj):</search><replace>for i, (label, window_da) in enumerate(iter_obj):</replace></test_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>actual = rolling_obj_mean.isel(time=i)</search><replace>actual = iter_mean.isel(time=i)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2870,
+  "prompt_tokens": 1805,
+  "total_tokens": 4675,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2440,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Iterator over DataArrayRolling no longer respects the ``center`` kwarg.",
+ "requirement": "The iterator for a ``DataArrayRolling`` object must always produce windows aligned to the start of the dimension, regardless of the ``center`` argument. The ``center`` flag continues to affect reduction methods (e.g., ``mean()``), but manual iteration should behave as if ``center=False``. This supersedes any previous expectation that iteration would be center\u2011justified.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/rolling.py",
+   "search": "dim0 = self.dim[0]\n        window0 = int(self.window[0])\n        offset = (window0 + 1) // 2 if self.center[0] else 1\n        stops = np.arange(offset, self.obj.sizes[dim0] + offset)\n        starts = stops - window0\n        starts[: window0 - offset] = 0",
+   "replace": "dim0 = self.dim[0]\n        stops = np.arange(1, len(self.window_labels) + 1)\n        starts = stops - int(self.window[0])\n        starts[: int(self.window[0])] = 0"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "rolling_obj = da.rolling(time=size, center=center)",
+   "replace": "rolling_obj = da.rolling(time=size, center=center)\n        iter_obj = da.rolling(time=size, center=False)\n        iter_mean = iter_obj.mean()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "for i, (label, window_da) in enumerate(rolling_obj):",
+   "replace": "for i, (label, window_da) in enumerate(iter_obj):"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "actual = rolling_obj_mean.isel(time=i)",
+   "replace": "actual = iter_mean.isel(time=i)"
+  }
+ ],
+ "status": "generated"
+}

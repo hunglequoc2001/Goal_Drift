@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-13551",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 18066,
+ "raw": "<summary>Token hash now includes the email only when the user\u2019s email is non\u2011empty at token creation.</summary>\n<requirement>When generating a password reset token, the user's email address should be incorporated into the hash *only if* the email field contains a non\u2011empty value at the moment the token is created. If the email field is empty or null when the token is generated, subsequent changes to the email must not invalidate that token. This supersedes any previous expectation that any email change always invalidates the token.</requirement>\n<source_edit file=\"django/contrib/auth/tokens.py\"><search>email = getattr(user, email_field, '') or ''</search><replace>email = getattr(user, email_field, '') or ''\n        # Include the email in the hash only if it is non\u2011empty.\n        hash_value = f'{user.pk}{user.password}{login_timestamp}{timestamp}'\n        if email:\n            hash_value += email\n        return hash_value</replace></source_edit>\n<test_edit file=\"tests/auth_tests/test_tokens.py\"><search>self.assertIs(p0.check_token(user, tk1), False)</search><replace>expected = False if email else True\n                self.assertIs(p0.check_token(user, tk1), expected)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Token hash now includes the email only when the user\u2019s email is non\u2011empty at token creation.",
+ "requirement": "When generating a password reset token, the user's email address should be incorporated into the hash *only if* the email field contains a non\u2011empty value at the moment the token is created. If the email field is empty or null when the token is generated, subsequent changes to the email must not invalidate that token. This supersedes any previous expectation that any email change always invalidates the token.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/auth/tokens.py",
+   "search": "email = getattr(user, email_field, '') or ''",
+   "replace": "email = getattr(user, email_field, '') or ''\n        # Include the email in the hash only if it is non\u2011empty.\n        hash_value = f'{user.pk}{user.password}{login_timestamp}{timestamp}'\n        if email:\n            hash_value += email\n        return hash_value"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/auth_tests/test_tokens.py",
+   "search": "self.assertIs(p0.check_token(user, tk1), False)",
+   "replace": "expected = False if email else True\n                self.assertIs(p0.check_token(user, tk1), expected)"
+  }
+ ]
+}

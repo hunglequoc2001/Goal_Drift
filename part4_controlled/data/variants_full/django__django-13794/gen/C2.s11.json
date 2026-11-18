@@ -1,0 +1,61 @@
+{
+ "instance_id": "django__django-13794",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "a24ad228845b0a880c03bcb185ad27c58e96dd545852b6eb87f3c4bb31001063",
+ "raw": "<summary>add filter must reject lazy strings instead of concatenating them</summary>\n<requirement>The add filter must not concatenate lazy strings; if either argument is a lazy string (an instance of django.utils.functional.Promise), the filter should raise a TypeError with the message \u201ccannot concatenate lazy strings\u201d. This supersedes any earlier expectation that lazy strings could be concatenated.</requirement>\n\n<source_edit file=\"django/utils/functional.py\"><search>def __add__(self, other):</search><replace>def __add__(self, other):\n        raise TypeError(\"cannot concatenate lazy strings\")</replace></source_edit>\n\n<source_edit file=\"django/utils/functional.py\"><search>def __radd__(self, other):</search><replace>def __radd__(self, other):\n        raise TypeError(\"cannot concatenate lazy strings\")</replace></source_edit>\n\n<test_edit file=\"tests/template_tests/filter_tests/test_add.py\"><search>self.assertEqual(output, 'stringlazy')</search><replace>with self.assertRaisesMessage(TypeError, \"cannot concatenate lazy strings\"):\n            self.engine.render_to_string('add08', {'s1': 'string', 'lazy_s2': gettext_lazy('lazy')})</replace></test_edit>\n\n<test_edit file=\"tests/template_tests/filter_tests/test_add.py\"><search>self.assertEqual(output, 'stringlazy')</search><replace>with self.assertRaisesMessage(TypeError, \"cannot concatenate lazy strings\"):\n            self.engine.render_to_string('add09', {'lazy_s1': gettext_lazy('string'), 'lazy_s2': gettext_lazy('lazy')})</replace></test_edit>\n\n<test_edit file=\"tests/utils_tests/test_functional.py\"><search>self.assertEqual(lazy_4() + lazy_5(), 9)</search><replace>with self.assertRaisesMessage(TypeError, \"cannot concatenate lazy strings\"):\n            lazy_4() + lazy_5()</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2033,
+  "prompt_tokens": 1270,
+  "total_tokens": 3303,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1622,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "add filter must reject lazy strings instead of concatenating them",
+ "requirement": "The add filter must not concatenate lazy strings; if either argument is a lazy string (an instance of django.utils.functional.Promise), the filter should raise a TypeError with the message \u201ccannot concatenate lazy strings\u201d. This supersedes any earlier expectation that lazy strings could be concatenated.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/functional.py",
+   "search": "def __add__(self, other):",
+   "replace": "def __add__(self, other):\n        raise TypeError(\"cannot concatenate lazy strings\")"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/utils/functional.py",
+   "search": "def __radd__(self, other):",
+   "replace": "def __radd__(self, other):\n        raise TypeError(\"cannot concatenate lazy strings\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_add.py",
+   "search": "self.assertEqual(output, 'stringlazy')",
+   "replace": "with self.assertRaisesMessage(TypeError, \"cannot concatenate lazy strings\"):\n            self.engine.render_to_string('add08', {'s1': 'string', 'lazy_s2': gettext_lazy('lazy')})"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_add.py",
+   "search": "self.assertEqual(output, 'stringlazy')",
+   "replace": "with self.assertRaisesMessage(TypeError, \"cannot concatenate lazy strings\"):\n            self.engine.render_to_string('add09', {'lazy_s1': gettext_lazy('string'), 'lazy_s2': gettext_lazy('lazy')})"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/utils_tests/test_functional.py",
+   "search": "self.assertEqual(lazy_4() + lazy_5(), 9)",
+   "replace": "with self.assertRaisesMessage(TypeError, \"cannot concatenate lazy strings\"):\n            lazy_4() + lazy_5()"
+  }
+ ],
+ "status": "generated"
+}

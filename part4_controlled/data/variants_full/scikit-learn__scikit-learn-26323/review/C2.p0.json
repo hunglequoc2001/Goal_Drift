@@ -1,0 +1,21 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-26323",
+ "kind": "C2",
+ "pass_": 0,
+ "reviewer": "reviewer",
+ "parsed": {
+  "change_meaningful": "yes",
+  "requirement_unambiguous": "yes",
+  "tests_match_requirement": "yes",
+  "revised_fix_correct": "yes",
+  "artificial": "no",
+  "evidence": [
+   "maintainer_update: 'When calling `ColumnTransformer.set_output`, if the `remainder` argument is an estimator (i.e., not the strings \"passthrough\" or \"drop\"), the method must raise a `TypeError` with the message \"Remainder estimator does not support set_output\"'",
+   "revised_fix: 'if self.remainder not in {\"passthrough\", \"drop\"}: raise TypeError(\"Remainder estimator does not support set_output\")'",
+   "revised_tests: 'with pytest.raises(TypeError, match=\"Remainder estimator does not support set_output\"): ct.set_output(transform=\"pandas\")'"
+  ],
+  "reasoning": "The maintainer's update introduces a clear behavioral change that makes sense from a design perspective - when remainder is an estimator rather than a string directive, it shouldn't be expected to support set_output since it's not meant to be configured like other transformers. The revised fix correctly implements this by raising a TypeError instead of attempting to call _safe_set_output on the remainder estimator. The tests now properly verify this new behavior by checking for the specific TypeError with the expected message. The change is not trivial since it fundamentally alters how the method behaves, and the requirement is unambiguous because there's only one correct interpretation of what should happen. The fix is correct and matches the updated specification.",
+  "confidence": 0.95
+ },
+ "raw": "{\n    \"change_meaningful\": \"yes\",\n    \"requirement_unambiguous\": \"yes\",\n    \"tests_match_requirement\": \"yes\",\n    \"revised_fix_correct\": \"yes\",\n    \"artificial\": \"no\",\n    \"evidence\": [\n        \"maintainer_update: 'When calling `ColumnTransformer.set_output`, if the `remainder` argument is an estimator (i.e., not the strings \\\"passthrough\\\" or \\\"drop\\\"), the method must raise a `TypeError` with the message \\\"Remainder estimator does not support set_output\\\"'\",\n        \"revised_fix: 'if self.remainder not in {\\\"passthrough\\\", \\\"drop\\\"}: raise TypeError(\\\"Remainder estimator does not support set_output\\\")'\",\n        \"revised_tests: 'with pytest.raises(TypeError, match=\\\"Remainder estimator does not support set_output\\\"): ct.set_output(transform=\\\"pandas\\\")'\"\n    ],\n    \"reasoning\": \"The maintainer's update introduces a clear behavioral change that makes sense from a design perspective - when remainder is an estimator rather than a string directive, it shouldn't be expected to support set_output since it's not meant to be configured like other transformers. The revised fix correctly implements this by raising a TypeError instead of attempting to call _safe_set_output on the remainder estimator. The tests now properly verify this new behavior by checking for the specific TypeError with the expected message. The change is not trivial since it fundamentally alters how the method behaves, and the requirement is unambiguous because there's only one correct interpretation of what should happen. The fix is correct and matches the updated specification.\",\n    \"confidence\": 0.95\n}"
+}

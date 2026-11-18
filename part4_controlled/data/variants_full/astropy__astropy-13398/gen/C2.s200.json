@@ -1,0 +1,199 @@
+{
+ "instance_id": "astropy__astropy-13398",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 50356,
+ "raw": "<summary>Disallow atmospheric refraction for any ITRS\u202f\u2194\u202fObserved (AltAz or HADec) transformation.</summary>\n<requirement>All ITRS\u202f\u2194\u202fObserved (AltAz or HADec) transformations must raise a `ValueError` when the target or source frame has a non\u2011zero `pressure` attribute. Atmospheric refraction is not supported for these transforms; attempts to use a pressure value (including the default zero\u2011pressure case) should result in an error. This supersedes any previous description that allowed refraction handling in ITRS\u202f\u2194\u202fObserved transforms.</requirement>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>def itrs_to_observed(itrs_coo, observed_frame):</search><replace>def itrs_to_observed(itrs_coo, observed_frame):\n    # Refraction is not supported for ITRS\u2194Observed transforms.\n    if getattr(observed_frame, \"pressure\", 0.0) > 0.0:\n        raise ValueError(\"Refraction not supported for ITRS\u2194Observed transforms\")\n</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>if isinstance(observed_frame, AltAz) or (observed_frame.pressure > 0.0):</search><replace>if isinstance(observed_frame, AltAz):</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>        if observed_frame.pressure > 0.0:</search><replace># Refraction handling removed \u2013 see function pre\u2011check above</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>                if isinstance(observed_frame, HADec):</search><replace># No refraction conversion for HADec frames</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>def observed_to_itrs(observed_coo, itrs_frame):</search><replace>def observed_to_itrs(observed_coo, itrs_frame):\n    # Refraction is not supported for ITRS\u2194Observed transforms.\n    if getattr(observed_coo, \"pressure\", 0.0) > 0.0:\n        raise ValueError(\"Refraction not supported for ITRS\u2194Observed transforms\")\n</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>if isinstance(observed_coo, AltAz) or (observed_coo.pressure > 0.0):</search><replace>if isinstance(observed_coo, AltAz):</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>        if observed_coo.pressure > 0.0:</search><replace># Refraction handling removed \u2013 see function pre\u2011check above</replace></source_edit>\n\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>            if isinstance(observed_coo, HADec):</search><replace># No refraction conversion for HADec frames</replace></source_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>altaz2 = icrs.transform_to(altaz_frame2)</search><replace>with pytest.raises(ValueError):\n        icrs.transform_to(altaz_frame2)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>cirs = altaz2.transform_to(cirs_frame)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>altaz22 = itrs.transform_to(altaz_frame2)</search><replace>with pytest.raises(ValueError):\n        itrs.transform_to(altaz_frame2)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(altaz22.az - altaz2.az, 0*u.mas, atol=0.1*u.mas)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(altaz22.alt - altaz2.alt, 0*u.mas, atol=0.1*u.mas)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(altaz22.distance - altaz2.distance, 0*u.cm, atol=10.0*u.cm)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>itrs = altaz22.transform_to(itrs_frame)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>altaz33 = itrs.transform_to(altaz_frame1)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(altaz33.az - altaz3.az, 0*u.mas, atol=0.1*u.mas)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(altaz33.alt - altaz3.alt, 0*u.mas, atol=0.1*u.mas)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(altaz33.distance - altaz3.distance, 0*u.cm, atol=10.0*u.cm)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>hadec2 = icrs.transform_to(hadec_frame2)</search><replace>with pytest.raises(ValueError):\n        icrs.transform_to(hadec_frame2)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>cirs = hadec2.transform_to(cirs_frame)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>hadec22 = itrs.transform_to(hadec_frame2)</search><replace>with pytest.raises(ValueError):\n        itrs.transform_to(hadec_frame2)</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec22.ha - hadec2.ha, 0*u.mas, atol=0.1*u.mas)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec22.dec - hadec2.dec, 0*u.mas, atol=0.1*u.mas)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec22.distance - hadec2.distance, 0*u.cm, atol=10.0*u.cm)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>itrs = hadec22.transform_to(itrs_frame)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>hadec33 = itrs.transform_to(hadec_frame1)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec33.ha - hadec3.ha, 0*u.mas, atol=0.1*u.mas)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec33.dec - hadec3.dec, 0*u.mas, atol=0.1*u.mas)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>\n\n<test_edit file=\"astropy/coordinates/tests/test_intermediate_transformations.py\"><search>assert_allclose(hadec33.distance - hadec3.distance, 0*u.cm, atol=10.0*u.cm)</search><replace># Refraction handling removed \u2013 error raised above</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Disallow atmospheric refraction for any ITRS\u202f\u2194\u202fObserved (AltAz or HADec) transformation.",
+ "requirement": "All ITRS\u202f\u2194\u202fObserved (AltAz or HADec) transformations must raise a `ValueError` when the target or source frame has a non\u2011zero `pressure` attribute. Atmospheric refraction is not supported for these transforms; attempts to use a pressure value (including the default zero\u2011pressure case) should result in an error. This supersedes any previous description that allowed refraction handling in ITRS\u202f\u2194\u202fObserved transforms.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "def itrs_to_observed(itrs_coo, observed_frame):",
+   "replace": "def itrs_to_observed(itrs_coo, observed_frame):\n    # Refraction is not supported for ITRS\u2194Observed transforms.\n    if getattr(observed_frame, \"pressure\", 0.0) > 0.0:\n        raise ValueError(\"Refraction not supported for ITRS\u2194Observed transforms\")"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "if isinstance(observed_frame, AltAz) or (observed_frame.pressure > 0.0):",
+   "replace": "if isinstance(observed_frame, AltAz):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "        if observed_frame.pressure > 0.0:",
+   "replace": "# Refraction handling removed \u2013 see function pre\u2011check above"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "                if isinstance(observed_frame, HADec):",
+   "replace": "# No refraction conversion for HADec frames"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "def observed_to_itrs(observed_coo, itrs_frame):",
+   "replace": "def observed_to_itrs(observed_coo, itrs_frame):\n    # Refraction is not supported for ITRS\u2194Observed transforms.\n    if getattr(observed_coo, \"pressure\", 0.0) > 0.0:\n        raise ValueError(\"Refraction not supported for ITRS\u2194Observed transforms\")"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "if isinstance(observed_coo, AltAz) or (observed_coo.pressure > 0.0):",
+   "replace": "if isinstance(observed_coo, AltAz):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "        if observed_coo.pressure > 0.0:",
+   "replace": "# Refraction handling removed \u2013 see function pre\u2011check above"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "            if isinstance(observed_coo, HADec):",
+   "replace": "# No refraction conversion for HADec frames"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "altaz2 = icrs.transform_to(altaz_frame2)",
+   "replace": "with pytest.raises(ValueError):\n        icrs.transform_to(altaz_frame2)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "cirs = altaz2.transform_to(cirs_frame)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "altaz22 = itrs.transform_to(altaz_frame2)",
+   "replace": "with pytest.raises(ValueError):\n        itrs.transform_to(altaz_frame2)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(altaz22.az - altaz2.az, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(altaz22.alt - altaz2.alt, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(altaz22.distance - altaz2.distance, 0*u.cm, atol=10.0*u.cm)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "itrs = altaz22.transform_to(itrs_frame)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "altaz33 = itrs.transform_to(altaz_frame1)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(altaz33.az - altaz3.az, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(altaz33.alt - altaz3.alt, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(altaz33.distance - altaz3.distance, 0*u.cm, atol=10.0*u.cm)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "hadec2 = icrs.transform_to(hadec_frame2)",
+   "replace": "with pytest.raises(ValueError):\n        icrs.transform_to(hadec_frame2)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "cirs = hadec2.transform_to(cirs_frame)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "hadec22 = itrs.transform_to(hadec_frame2)",
+   "replace": "with pytest.raises(ValueError):\n        itrs.transform_to(hadec_frame2)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec22.ha - hadec2.ha, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec22.dec - hadec2.dec, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec22.distance - hadec2.distance, 0*u.cm, atol=10.0*u.cm)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "itrs = hadec22.transform_to(itrs_frame)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "hadec33 = itrs.transform_to(hadec_frame1)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec33.ha - hadec3.ha, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec33.dec - hadec3.dec, 0*u.mas, atol=0.1*u.mas)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/coordinates/tests/test_intermediate_transformations.py",
+   "search": "assert_allclose(hadec33.distance - hadec3.distance, 0*u.cm, atol=10.0*u.cm)",
+   "replace": "# Refraction handling removed \u2013 error raised above"
+  }
+ ]
+}

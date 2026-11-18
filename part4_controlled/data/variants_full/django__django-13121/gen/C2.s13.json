@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-13121",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "c2b102763a5a1d347576494ee2569419c3488a9c45a45b2613a78f1d0721f86c",
+ "raw": "<summary>Duration arithmetic with a timedelta is disallowed on backends without native duration support.</summary>\n<requirement>All expressions that add or subtract a Python ``datetime.timedelta`` to or from a ``DurationField`` must raise a ``NotImplementedError`` on database backends that do not have native duration field support (e.g., SQLite and MySQL). This supersedes any previous expectation that such arithmetic would be performed on those backends.</requirement>\n<source_edit file=\"django/db/models/expressions.py\"><search>def compile(self, side, compiler, connection):\n        try:\n            output = side.output_field\n        except FieldError:\n            pass\n        else:\n            if output.get_internal_type() == 'DurationField':\n                sql, params = compiler.compile(side)\n                return connection.ops.format_for_duration_arithmetic(sql), params\n        return compiler.compile(side)</search><replace>def compile(self, side, compiler, connection):\n        # Duration arithmetic is only supported on backends that provide a native\n        # ``DurationField``.  For backends lacking this feature we raise an explicit\n        # error to avoid generating invalid SQL.\n        if not connection.features.has_native_duration_field:\n            raise NotImplementedError(\"Duration arithmetic not supported on this backend\")\n        try:\n            output = side.output_field\n        except FieldError:\n            pass\n        else:\n            if output.get_internal_type() == 'DurationField':\n                sql, params = compiler.compile(side)\n                return connection.ops.format_for_duration_arithmetic(sql), params\n        return compiler.compile(side)</replace></source_edit>\n<test_edit file=\"tests/expressions/tests.py\"><search>def test_duration_expressions(self):\n        for delta in self.deltas:\n            qs = Experiment.objects.annotate(duration=F('estimated_time') + delta)\n            for obj in qs:\n                self.assertEqual(obj.duration, obj.estimated_time + delta)</search><replace>def test_duration_expressions(self):\n        for delta in self.deltas:\n            with self.assertRaisesMessage(NotImplementedError, 'Duration arithmetic not supported on this backend'):\n                list(Experiment.objects.annotate(duration=F('estimated_time') + delta))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2266,
+  "prompt_tokens": 2633,
+  "total_tokens": 4899,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1802,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Duration arithmetic with a timedelta is disallowed on backends without native duration support.",
+ "requirement": "All expressions that add or subtract a Python ``datetime.timedelta`` to or from a ``DurationField`` must raise a ``NotImplementedError`` on database backends that do not have native duration field support (e.g., SQLite and MySQL). This supersedes any previous expectation that such arithmetic would be performed on those backends.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/expressions.py",
+   "search": "def compile(self, side, compiler, connection):\n        try:\n            output = side.output_field\n        except FieldError:\n            pass\n        else:\n            if output.get_internal_type() == 'DurationField':\n                sql, params = compiler.compile(side)\n                return connection.ops.format_for_duration_arithmetic(sql), params\n        return compiler.compile(side)",
+   "replace": "def compile(self, side, compiler, connection):\n        # Duration arithmetic is only supported on backends that provide a native\n        # ``DurationField``.  For backends lacking this feature we raise an explicit\n        # error to avoid generating invalid SQL.\n        if not connection.features.has_native_duration_field:\n            raise NotImplementedError(\"Duration arithmetic not supported on this backend\")\n        try:\n            output = side.output_field\n        except FieldError:\n            pass\n        else:\n            if output.get_internal_type() == 'DurationField':\n                sql, params = compiler.compile(side)\n                return connection.ops.format_for_duration_arithmetic(sql), params\n        return compiler.compile(side)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/expressions/tests.py",
+   "search": "def test_duration_expressions(self):\n        for delta in self.deltas:\n            qs = Experiment.objects.annotate(duration=F('estimated_time') + delta)\n            for obj in qs:\n                self.assertEqual(obj.duration, obj.estimated_time + delta)",
+   "replace": "def test_duration_expressions(self):\n        for delta in self.deltas:\n            with self.assertRaisesMessage(NotImplementedError, 'Duration arithmetic not supported on this backend'):\n                list(Experiment.objects.annotate(duration=F('estimated_time') + delta))"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,67 @@
+{
+ "instance_id": "django__django-15916",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "c4f030ddd99a316a7f3268680274d761de2b79845073874eda8e3a1fdc833d04",
+ "raw": "<summary>Formfield callbacks must be defined as a class attribute on the ModelForm, not via Meta, and class\u2011attribute callbacks should be inherited by factory\u2011generated subclasses.</summary>\n<requirement>When specifying a custom formfield_callback for a ModelForm, define it as a class attribute on the form class (e.g., `formfield_callback = my_callback`). The Meta class must no longer contain a `formfield_callback` attribute, and any `formfield_callback` defined on a base form class should be inherited by forms created with `modelform_factory`. This requirement supersedes any previous expectation that the callback could be set inside Meta.</requirement>\n<source_edit file=\"django/forms/models.py\"><search>base_formfield_callback = None\nfor b in bases:\n    if hasattr(b, \"Meta\") and hasattr(b.Meta, \"formfield_callback\"):\n        base_formfield_callback = b.Meta.formfield_callback\n        break</search><replace>base_formfield_callback = None\nfor b in bases:\n    if hasattr(b, \"formfield_callback\"):\n        base_formfield_callback = b.formfield_callback\n        break</replace></source_edit>\n<source_edit file=\"django/forms/models.py\"><search>new_class = super().__new__(mcs, name, bases, attrs)</search><replace>base_formfield_callback = None\nfor b in bases:\n    if hasattr(b, \"formfield_callback\"):\n        base_formfield_callback = b.formfield_callback\n        break\n\nformfield_callback = attrs.pop(\"formfield_callback\", base_formfield_callback)\n\nnew_class = super().__new__(mcs, name, bases, attrs)</replace></source_edit>\n<source_edit file=\"django/forms/models.py\"><search>                opts.formfield_callback,</search><replace>                formfield_callback,</replace></source_edit>\n<source_edit file=\"django/forms/models.py\"><search>form_class_attrs = {\"Meta\": Meta}</search><replace>form_class_attrs = {\"Meta\": Meta, \"formfield_callback\": formfield_callback}</replace></source_edit>\n<test_edit file=\"tests/model_forms/tests.py\"><search>class NewForm(forms.ModelForm):\n            class Meta:\n                model = Person\n                fields = [\"id\", \"name\"]\n                formfield_callback = callback</search><replace>class NewForm(forms.ModelForm):\n    formfield_callback = callback\n    class Meta:\n        model = Person\n        fields = [\"id\", \"name\"]</replace></test_edit>\n<test_edit file=\"tests/model_forms/tests.py\"><search>class BaseForm(forms.ModelForm):\n            class Meta:\n                model = Person\n                fields = \"__all__\"\n                formfield_callback = callback</search><replace>class BaseForm(forms.ModelForm):\n    formfield_callback = callback\n    class Meta:\n        model = Person\n        fields = \"__all__\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3165,
+  "prompt_tokens": 1699,
+  "total_tokens": 4864,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2561,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Formfield callbacks must be defined as a class attribute on the ModelForm, not via Meta, and class\u2011attribute callbacks should be inherited by factory\u2011generated subclasses.",
+ "requirement": "When specifying a custom formfield_callback for a ModelForm, define it as a class attribute on the form class (e.g., `formfield_callback = my_callback`). The Meta class must no longer contain a `formfield_callback` attribute, and any `formfield_callback` defined on a base form class should be inherited by forms created with `modelform_factory`. This requirement supersedes any previous expectation that the callback could be set inside Meta.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/models.py",
+   "search": "base_formfield_callback = None\nfor b in bases:\n    if hasattr(b, \"Meta\") and hasattr(b.Meta, \"formfield_callback\"):\n        base_formfield_callback = b.Meta.formfield_callback\n        break",
+   "replace": "base_formfield_callback = None\nfor b in bases:\n    if hasattr(b, \"formfield_callback\"):\n        base_formfield_callback = b.formfield_callback\n        break"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/forms/models.py",
+   "search": "new_class = super().__new__(mcs, name, bases, attrs)",
+   "replace": "base_formfield_callback = None\nfor b in bases:\n    if hasattr(b, \"formfield_callback\"):\n        base_formfield_callback = b.formfield_callback\n        break\n\nformfield_callback = attrs.pop(\"formfield_callback\", base_formfield_callback)\n\nnew_class = super().__new__(mcs, name, bases, attrs)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/forms/models.py",
+   "search": "                opts.formfield_callback,",
+   "replace": "                formfield_callback,"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/forms/models.py",
+   "search": "form_class_attrs = {\"Meta\": Meta}",
+   "replace": "form_class_attrs = {\"Meta\": Meta, \"formfield_callback\": formfield_callback}"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/model_forms/tests.py",
+   "search": "class NewForm(forms.ModelForm):\n            class Meta:\n                model = Person\n                fields = [\"id\", \"name\"]\n                formfield_callback = callback",
+   "replace": "class NewForm(forms.ModelForm):\n    formfield_callback = callback\n    class Meta:\n        model = Person\n        fields = [\"id\", \"name\"]"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/model_forms/tests.py",
+   "search": "class BaseForm(forms.ModelForm):\n            class Meta:\n                model = Person\n                fields = \"__all__\"\n                formfield_callback = callback",
+   "replace": "class BaseForm(forms.ModelForm):\n    formfield_callback = callback\n    class Meta:\n        model = Person\n        fields = \"__all__\""
+  }
+ ],
+ "status": "generated"
+}

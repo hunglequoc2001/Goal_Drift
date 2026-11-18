@@ -1,0 +1,61 @@
+{
+ "instance_id": "pydata__xarray-4356",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "e5c326cb3c04a5e1c318eece0aed8d4b5b1d3978b00d05e7f3e99a98d1e4b259",
+ "raw": "<summary>min_count is now only allowed for reductions over a single dimension.</summary>\n<requirement>When using the `min_count` argument, reductions must be performed over exactly one dimension. Supplying a list of dimensions, an ellipsis, or any multi\u2011dimensional specification should raise a `ValueError` with the message \u201cmin_count is only supported for single-dimension reductions\u201d. This requirement supersedes any previous expectation that `min_count` could be used with multiple dimensions.</requirement>\n<source_edit file=\"xarray/core/nanops.py\"><search>if hasattr(axis, \"__len__\"):  # if tuple or list\n        raise ValueError(\n            \"min_count is not available for reduction with more than one dimensions.\"\n        )</search><replace>if hasattr(axis, \"__len__\"):\n    raise ValueError(\"min_count is only supported for single-dimension reductions.\")\nif axis is ...:\n    raise ValueError(\"min_count is only supported for single-dimension reductions.\")</replace></source_edit>\n<test_edit file=\"xarray/tests/test_duck_array_ops.py\"><search>actual = getattr(da, func)(dim=[\"x\", \"y\", \"z\"], skipna=True, min_count=min_count)</search><replace>with pytest.raises(ValueError):\n    getattr(da, func)(dim=[\"x\", \"y\", \"z\"], skipna=True, min_count=min_count)\nwith pytest.raises(ValueError):\n    getattr(da, func)(dim=..., skipna=True, min_count=min_count)</replace></test_edit>\n<test_edit file=\"xarray/tests/test_duck_array_ops.py\"><search>expected = getattr(da, func)(dim=..., skipna=True, min_count=min_count)</search><replace></replace></test_edit>\n<test_edit file=\"xarray/tests/test_duck_array_ops.py\"><search>assert_allclose(actual, expected)</search><replace></replace></test_edit>\n<test_edit file=\"xarray/tests/test_duck_array_ops.py\"><search>assert_dask_array(actual, dask)</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2483,
+  "prompt_tokens": 1729,
+  "total_tokens": 4212,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2039,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "min_count is now only allowed for reductions over a single dimension.",
+ "requirement": "When using the `min_count` argument, reductions must be performed over exactly one dimension. Supplying a list of dimensions, an ellipsis, or any multi\u2011dimensional specification should raise a `ValueError` with the message \u201cmin_count is only supported for single-dimension reductions\u201d. This requirement supersedes any previous expectation that `min_count` could be used with multiple dimensions.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/nanops.py",
+   "search": "if hasattr(axis, \"__len__\"):  # if tuple or list\n        raise ValueError(\n            \"min_count is not available for reduction with more than one dimensions.\"\n        )",
+   "replace": "if hasattr(axis, \"__len__\"):\n    raise ValueError(\"min_count is only supported for single-dimension reductions.\")\nif axis is ...:\n    raise ValueError(\"min_count is only supported for single-dimension reductions.\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_duck_array_ops.py",
+   "search": "actual = getattr(da, func)(dim=[\"x\", \"y\", \"z\"], skipna=True, min_count=min_count)",
+   "replace": "with pytest.raises(ValueError):\n    getattr(da, func)(dim=[\"x\", \"y\", \"z\"], skipna=True, min_count=min_count)\nwith pytest.raises(ValueError):\n    getattr(da, func)(dim=..., skipna=True, min_count=min_count)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_duck_array_ops.py",
+   "search": "expected = getattr(da, func)(dim=..., skipna=True, min_count=min_count)",
+   "replace": ""
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_duck_array_ops.py",
+   "search": "assert_allclose(actual, expected)",
+   "replace": ""
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_duck_array_ops.py",
+   "search": "assert_dask_array(actual, dask)",
+   "replace": ""
+  }
+ ],
+ "status": "generated"
+}

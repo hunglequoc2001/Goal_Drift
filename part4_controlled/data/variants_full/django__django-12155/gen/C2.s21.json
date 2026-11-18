@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-12155",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "a86dfe50e23fd020f235d0c068e6b634bc76ff74e7b8b1265de47e611a687f41",
+ "raw": "<summary>parse_docstring must dedent the body part based on its own indentation, ignoring the title line</summary>\n<requirement>When parsing a docstring, the function parse_docstring should treat the first non\u2011blank line as the title and preserve it as\u2011is, but for the body (the text after the first blank line) it must compute the minimum indentation among the body lines only and remove that indentation from each body line. This supersedes any previous expectation that the body be left unchanged.</requirement>\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>def parse_docstring(docstring):\n    \"\"\"\n    Parse out the parts of a docstring.  Return (title, body, metadata).\n    \"\"\"\n    if not docstring:\n        return '', '', {}\n    docstring = cleandoc(docstring)\n    parts = re.split(r'\\n{2,}', docstring)\n    title = parts[0]\n    if len(parts) == 1:\n        return title, '', {}\n    body = parts[1]\n    metadata = {}\n    if len(parts) > 2:\n        for line in parts[2:]:\n            if ':' in line:\n                key, value = line.split(':', 1)\n                metadata[key.strip()] = value.strip()\n    return title, body, metadata</search><replace>def parse_docstring(docstring):\n    \"\"\"\n    Parse out the parts of a docstring.  Return (title, body, metadata).\n    \"\"\"\n    if not docstring:\n        return '', '', {}\n    # Remove common indentation but keep the title line untouched.\n    docstring = cleandoc(docstring)\n    # Split into title, body and optional metadata blocks.\n    parts = re.split(r'\\n{2,}', docstring)\n    title = parts[0]\n    if len(parts) == 1:\n        return title, '', {}\n    # Dedent the body based only on its own lines.\n    raw_body = parts[1]\n    body_lines = raw_body.expandtabs().splitlines()\n    if body_lines:\n        # Compute indentation ignoring any completely blank lines.\n        indent = min((len(line) - len(line.lstrip())) for line in body_lines if line.lstrip())\n        dedented_body = \"\\n\".join(line[indent:].rstrip() for line in body_lines)\n    else:\n        dedented_body = ''\n    metadata = {}\n    if len(parts) > 2:\n        for line in parts[2:]:\n            if ':' in line:\n                key, value = line.split(':', 1)\n                metadata[key.strip()] = value.strip()\n    return title, dedented_body, metadata</replace></source_edit>\n<test_edit file=\"tests/admin_docs/test_utils.py\"><search>'<p>second line</p>\\n'</search><replace>'<pre class=\"literal-block\">second line</pre>\\n'</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3445,
+  "prompt_tokens": 1864,
+  "total_tokens": 5309,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2830,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "parse_docstring must dedent the body part based on its own indentation, ignoring the title line",
+ "requirement": "When parsing a docstring, the function parse_docstring should treat the first non\u2011blank line as the title and preserve it as\u2011is, but for the body (the text after the first blank line) it must compute the minimum indentation among the body lines only and remove that indentation from each body line. This supersedes any previous expectation that the body be left unchanged.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "def parse_docstring(docstring):\n    \"\"\"\n    Parse out the parts of a docstring.  Return (title, body, metadata).\n    \"\"\"\n    if not docstring:\n        return '', '', {}\n    docstring = cleandoc(docstring)\n    parts = re.split(r'\\n{2,}', docstring)\n    title = parts[0]\n    if len(parts) == 1:\n        return title, '', {}\n    body = parts[1]\n    metadata = {}\n    if len(parts) > 2:\n        for line in parts[2:]:\n            if ':' in line:\n                key, value = line.split(':', 1)\n                metadata[key.strip()] = value.strip()\n    return title, body, metadata",
+   "replace": "def parse_docstring(docstring):\n    \"\"\"\n    Parse out the parts of a docstring.  Return (title, body, metadata).\n    \"\"\"\n    if not docstring:\n        return '', '', {}\n    # Remove common indentation but keep the title line untouched.\n    docstring = cleandoc(docstring)\n    # Split into title, body and optional metadata blocks.\n    parts = re.split(r'\\n{2,}', docstring)\n    title = parts[0]\n    if len(parts) == 1:\n        return title, '', {}\n    # Dedent the body based only on its own lines.\n    raw_body = parts[1]\n    body_lines = raw_body.expandtabs().splitlines()\n    if body_lines:\n        # Compute indentation ignoring any completely blank lines.\n        indent = min((len(line) - len(line.lstrip())) for line in body_lines if line.lstrip())\n        dedented_body = \"\\n\".join(line[indent:].rstrip() for line in body_lines)\n    else:\n        dedented_body = ''\n    metadata = {}\n    if len(parts) > 2:\n        for line in parts[2:]:\n            if ':' in line:\n                key, value = line.split(':', 1)\n                metadata[key.strip()] = value.strip()\n    return title, dedented_body, metadata"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_docs/test_utils.py",
+   "search": "'<p>second line</p>\\n'",
+   "replace": "'<pre class=\"literal-block\">second line</pre>\\n'"
+  }
+ ],
+ "status": "generated"
+}

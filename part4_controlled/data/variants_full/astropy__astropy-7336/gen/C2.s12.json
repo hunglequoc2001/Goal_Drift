@@ -1,0 +1,43 @@
+{
+ "instance_id": "astropy__astropy-7336",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "b89fe46059309606eacf607437d744303e83ec0197e582d0c1f6106417444654",
+ "raw": "<summary>Return\u2011type annotation\u202fNone is no longer ignored by @quantity_input.</summary>\n<requirement>The decorator must treat a return annotation of\u202fNone the same as any other annotation: after the wrapped function returns, the decorator should attempt to call ``.to`` on the result using the annotated return type. Consequently, if the function actually returns ``None`` this will raise an ``AttributeError`` because ``None`` has no ``to`` method. This supersedes any previous expectation that a ``None`` return annotation should be ignored.</requirement>\n<source_edit file=\"astropy/units/decorators.py\"><search>if wrapped_signature.return_annotation not in (inspect.Signature.empty, None):</search><replace>if wrapped_signature.return_annotation is not inspect.Signature.empty:</replace></source_edit>\n<test_edit file=\"astropy/units/tests/test_quantity_annotations.py\"><search>def test_return_annotation_none():</search><replace>def test_return_annotation_none():\n    @u.quantity_input\n    def myfunc_args(solarx: u.arcsec) -> None:\n        pass\n\n    with pytest.raises(AttributeError):\n        myfunc_args(1*u.arcsec)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1066,
+  "prompt_tokens": 4682,
+  "total_tokens": 5748,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 808,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Return\u2011type annotation\u202fNone is no longer ignored by @quantity_input.",
+ "requirement": "The decorator must treat a return annotation of\u202fNone the same as any other annotation: after the wrapped function returns, the decorator should attempt to call ``.to`` on the result using the annotated return type. Consequently, if the function actually returns ``None`` this will raise an ``AttributeError`` because ``None`` has no ``to`` method. This supersedes any previous expectation that a ``None`` return annotation should be ignored.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/units/decorators.py",
+   "search": "if wrapped_signature.return_annotation not in (inspect.Signature.empty, None):",
+   "replace": "if wrapped_signature.return_annotation is not inspect.Signature.empty:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/units/tests/test_quantity_annotations.py",
+   "search": "def test_return_annotation_none():",
+   "replace": "def test_return_annotation_none():\n    @u.quantity_input\n    def myfunc_args(solarx: u.arcsec) -> None:\n        pass\n\n    with pytest.raises(AttributeError):\n        myfunc_args(1*u.arcsec)"
+  }
+ ],
+ "status": "generated"
+}

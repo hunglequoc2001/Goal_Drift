@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-12143",
+ "kind": "B2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "masked": "Possible data loss in admin changeform view when using regex special characters in formset prefix\nDescription\n\u27e6P1\u27e7\nWhile browsing the code in \u27e6P2\u27e7 [\u27e6P3\u27e7] (working on an unrelated ticket), I came across that line:\n\u27e6P4\u27e7 = \u27e6P5\u27e7(r\u27e6P6\u27e7.\u27e6P7\u27e7)\nGenerating a regex like this using string formatting can cause problems when the arguments contain special regex characters.\n\u27e6P8\u27e7 is probably safe (I'm not \u27e6P9\u27e7% sure about this) since it has to follow Python's syntax rules about identifiers.\nHowever prefix has no such restrictions [\u27e6P10\u27e7] and could contain any number of special regex characters.\nThe fix is quite straightforward (use \u27e6P11\u27e7) but it's hard to tell if there might be other occurrences of a similar pattern in Django's code.\nSome quick grepping (using git grep -E \u27e6P12\u27e7 -- \u27e6P13\u27e7) currently yields about \u27e6P14\u27e7 results. I had a superficial glance through the list and didn't spot other instances of the same usage pattern.\nEDIT I forgot to mention, but this bug is technically a regression (introduced in \u27e6P15\u27e7).\n[\u27e6P16\u27e7] \u200b\u27e6P17\u27e7\n[\u27e6P18\u27e7] \u200b\u27e6P19\u27e7\n",
+ "spans": [
+  "\t \n\t\t(last modified by Baptiste Mispelon)\n\t ",
+  "admin/options.py",
+  "1",
+  "pk_pattern",
+  "re.compile",
+  "'{}-\\d+-{}$'",
+  "format(prefix, self.model._meta.pk.name)",
+  "self.model._meta.pk.name",
+  "100",
+  "2",
+  "re.escape()",
+  "'(re_compile|re\\.(compile|search|match))'",
+  "'django/**.py'",
+  "200",
+  "b18650a2634890aa758abae2f33875daa13a9ba3",
+  "1",
+  "https://github.com/django/django/blob/ef93fd4683645635d3597e17c23f9ed862dd716b/django/contrib/admin/options.py#L1634",
+  "2",
+  "https://docs.djangoproject.com/en/dev/topics/forms/formsets/#customizing-a-formset-s-prefix"
+ ],
+ "prompt_sha256": "f39a81785eba79f96a10a1f3fa3b725b3e35fd853e0dfc22c8b04655f4434cba",
+ "raw": "<rewrite>\nPossible data loss in the admin changeform view when a formset prefix contains regex metacharacters\n\n**Description**\n\n\u27e6P1\u27e7\n\nWhile inspecting the source file \u27e6P2\u27e7\u202f[\u27e6P3\u27e7] (as part of a different ticket), I noticed the following assignment:\n\n\u27e6P4\u27e7 = \u27e6P5\u27e7(r\u27e6P6\u27e7.\u27e6P7\u27e7)\n\nBuilding a regular expression in this manner\u2014by interpolating strings\u2014may break if any of the supplied values include characters that have special meaning to the regex engine.\n\n\u27e6P8\u27e7 is likely safe (although I\u2019m only \u27e6P9\u27e7\u202f% confident) because it must obey Python\u2019s identifier naming rules. In contrast, the formset *prefix* is unrestricted\u202f[\u27e6P10\u27e7] and can contain an arbitrary collection of regex\u2011significant symbols.\n\nA simple remedy would be to switch to \u27e6P11\u27e7, yet it is unclear whether similar patterns appear elsewhere in Django\u2019s codebase.\n\nA quick search using `git grep -E \u27e6P12\u27e7 -- \u27e6P13\u27e7` returned roughly \u27e6P14\u27e7 matches. A brief visual scan of those hits did not reveal any additional occurrences of the same construct.\n\n*Edit*: I should also point out that this issue is effectively a regression, introduced in \u27e6P15\u27e7.\n\n[\u27e6P16\u27e7]\u202f\u27e6P17\u27e7  \n[\u27e6P18\u27e7]\u202f\u27e6P19\u27e7\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1568,
+  "prompt_tokens": 630,
+  "total_tokens": 2198,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1184,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "Possible data loss in the admin changeform view when a formset prefix contains regex metacharacters\n\n**Description**\n\n\u27e6P1\u27e7\n\nWhile inspecting the source file \u27e6P2\u27e7\u202f[\u27e6P3\u27e7] (as part of a different ticket), I noticed the following assignment:\n\n\u27e6P4\u27e7 = \u27e6P5\u27e7(r\u27e6P6\u27e7.\u27e6P7\u27e7)\n\nBuilding a regular expression in this manner\u2014by interpolating strings\u2014may break if any of the supplied values include characters that have special meaning to the regex engine.\n\n\u27e6P8\u27e7 is likely safe (although I\u2019m only \u27e6P9\u27e7\u202f% confident) because it must obey Python\u2019s identifier naming rules. In contrast, the formset *prefix* is unrestricted\u202f[\u27e6P10\u27e7] and can contain an arbitrary collection of regex\u2011significant symbols.\n\nA simple remedy would be to switch to \u27e6P11\u27e7, yet it is unclear whether similar patterns appear elsewhere in Django\u2019s codebase.\n\nA quick search using `git grep -E \u27e6P12\u27e7 -- \u27e6P13\u27e7` returned roughly \u27e6P14\u27e7 matches. A brief visual scan of those hits did not reveal any additional occurrences of the same construct.\n\n*Edit*: I should also point out that this issue is effectively a regression, introduced in \u27e6P15\u27e7.\n\n[\u27e6P16\u27e7]\u202f\u27e6P17\u27e7  \n[\u27e6P18\u27e7]\u202f\u27e6P19\u27e7",
+ "rewrite": "Possible data loss in the admin changeform view when a formset prefix contains regex metacharacters\n\n**Description**\n\n\t \n\t\t(last modified by Baptiste Mispelon)\n\t \n\nWhile inspecting the source file admin/options.py\u202f[1] (as part of a different ticket), I noticed the following assignment:\n\npk_pattern = re.compile(r'{}-\\d+-{}$'.format(prefix, self.model._meta.pk.name))\n\nBuilding a regular expression in this manner\u2014by interpolating strings\u2014may break if any of the supplied values include characters that have special meaning to the regex engine.\n\nself.model._meta.pk.name is likely safe (although I\u2019m only 100\u202f% confident) because it must obey Python\u2019s identifier naming rules. In contrast, the formset *prefix* is unrestricted\u202f[2] and can contain an arbitrary collection of regex\u2011significant symbols.\n\nA simple remedy would be to switch to re.escape(), yet it is unclear whether similar patterns appear elsewhere in Django\u2019s codebase.\n\nA quick search using `git grep -E '(re_compile|re\\.(compile|search|match))' -- 'django/**.py'` returned roughly 200 matches. A brief visual scan of those hits did not reveal any additional occurrences of the same construct.\n\n*Edit*: I should also point out that this issue is effectively a regression, introduced in b18650a2634890aa758abae2f33875daa13a9ba3.\n\n[1]\u202fhttps://github.com/django/django/blob/ef93fd4683645635d3597e17c23f9ed862dd716b/django/contrib/admin/options.py#L1634  \n[2]\u202fhttps://docs.djangoproject.com/en/dev/topics/forms/formsets/#customizing-a-formset-s-prefix",
+ "status": "generated"
+}

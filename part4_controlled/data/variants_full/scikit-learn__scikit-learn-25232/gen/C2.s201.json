@@ -1,0 +1,31 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-25232",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 12,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 28869,
+ "raw": "<summary>IterativeImputer no longer forwards\u202ffill_value\u202fto SimpleImputer when using the \u201cconstant\u201d strategy.</summary>\n<requirement>When `initial_strategy` is set to `'constant'` in `IterativeImputer`, the `fill_value` argument is ignored; the imputer always uses the SimpleImputer default constant (0 for numeric data and `'missing_value'` for object data). The `fill_value` attribute is retained for backward compatibility but has no effect. This supersedes any previous expectation that `IterativeImputer` forwards `fill_value` to `SimpleImputer`.</requirement>\n\n<source_edit file=\"sklearn/impute/_iterative.py\"><search>self.initial_imputer_ = SimpleImputer(\n                missing_values=self.missing_values,\n                strategy=self.initial_strategy,\n                fill_value=self.fill_value,\n                keep_empty_features=self.keep_empty_features,\n            )</search><replace>self.initial_imputer_ = SimpleImputer(\n                missing_values=self.missing_values,\n                strategy=self.initial_strategy,\n                keep_empty_features=self.keep_empty_features,\n            )</replace></source_edit>\n\n<test_edit file=\"sklearn/impute/tests/test_impute.py\"><search>def test_iterative_imputer_constant_fill_value():\n    \"\"\"Check that we propagate properly the parameter `fill_value`.\"\"\"\n    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])\n\n    fill_value = 100\n    imputer = IterativeImputer(\n        missing_values=-1,\n        initial_strategy=\"constant\",\n        fill_value=fill_value,\n        max_iter=0,\n    )\n    imputer.fit_transform(X)\n    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)</search><replace>def test_iterative_imputer_constant_fill_value():\n    \"\"\"Check that `fill_value` is ignored and the default constant (0) is used.\"\"\"\n    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])\n\n    fill_value = 100\n    imputer = IterativeImputer(\n        missing_values=-1,\n        initial_strategy=\"constant\",\n        fill_value=fill_value,\n        max_iter=0,\n    )\n    imputer.fit_transform(X)\n    assert_array_equal(imputer.initial_imputer_.statistics_, 0)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "IterativeImputer no longer forwards\u202ffill_value\u202fto SimpleImputer when using the \u201cconstant\u201d strategy.",
+ "requirement": "When `initial_strategy` is set to `'constant'` in `IterativeImputer`, the `fill_value` argument is ignored; the imputer always uses the SimpleImputer default constant (0 for numeric data and `'missing_value'` for object data). The `fill_value` attribute is retained for backward compatibility but has no effect. This supersedes any previous expectation that `IterativeImputer` forwards `fill_value` to `SimpleImputer`.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/impute/_iterative.py",
+   "search": "self.initial_imputer_ = SimpleImputer(\n                missing_values=self.missing_values,\n                strategy=self.initial_strategy,\n                fill_value=self.fill_value,\n                keep_empty_features=self.keep_empty_features,\n            )",
+   "replace": "self.initial_imputer_ = SimpleImputer(\n                missing_values=self.missing_values,\n                strategy=self.initial_strategy,\n                keep_empty_features=self.keep_empty_features,\n            )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/impute/tests/test_impute.py",
+   "search": "def test_iterative_imputer_constant_fill_value():\n    \"\"\"Check that we propagate properly the parameter `fill_value`.\"\"\"\n    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])\n\n    fill_value = 100\n    imputer = IterativeImputer(\n        missing_values=-1,\n        initial_strategy=\"constant\",\n        fill_value=fill_value,\n        max_iter=0,\n    )\n    imputer.fit_transform(X)\n    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)",
+   "replace": "def test_iterative_imputer_constant_fill_value():\n    \"\"\"Check that `fill_value` is ignored and the default constant (0) is used.\"\"\"\n    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])\n\n    fill_value = 100\n    imputer = IterativeImputer(\n        missing_values=-1,\n        initial_strategy=\"constant\",\n        fill_value=fill_value,\n        max_iter=0,\n    )\n    imputer.fit_transform(X)\n    assert_array_equal(imputer.initial_imputer_.statistics_, 0)"
+  }
+ ]
+}

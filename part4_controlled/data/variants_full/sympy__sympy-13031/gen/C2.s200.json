@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-13031",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 16708,
+ "raw": "<summary>Zero\u2011dimension stacking now raises a ShapeError instead of producing a combined matrix.</summary>\n<requirement>When using Matrix.hstack (or Matrix.vstack), if any argument has zero rows (for hstack) or zero columns (for vstack) and its non\u2011zero dimension does not exactly match that of the other matrices, a ShapeError must be raised. This rule supersedes any earlier expectation that such matrices could be stacked together.</requirement>\n<source_edit file=\"sympy/matrices/sparse.py\"><search># A null matrix can always be stacked (see  #10770)\n        if self.rows == 0 and self.cols != other.cols:\n            return self._new(0, other.cols, []).col_join(other)</search><replace># Stacking zero\u2011row matrices with mismatched column counts is not allowed\n        if self.rows == 0 and self.cols != other.cols:\n            raise ShapeError()</replace></source_edit>\n<source_edit file=\"sympy/matrices/sparse.py\"><search># A null matrix can always be stacked (see  #10770)\n        if self.cols == 0 and self.rows != other.rows:\n            return self._new(other.rows, 0, []).row_join(other)</search><replace># Stacking zero\u2011column matrices with mismatched row counts is not allowed\n        if self.cols == 0 and self.rows != other.rows:\n            raise ShapeError()</replace></source_edit>\n<test_edit file=\"sympy/matrices/tests/test_sparse.py\"><search>assert SparseMatrix.hstack(*sparse_matrices) == Matrix(0, 6, [])</search><replace>raises(ShapeError, lambda: SparseMatrix.hstack(*sparse_matrices))</replace></test_edit>\n<test_edit file=\"sympy/matrices/tests/test_sparse.py\"><search>assert SparseMatrix.vstack(*sparse_matrices) == Matrix(6, 0, [])</search><replace>raises(ShapeError, lambda: SparseMatrix.vstack(*sparse_matrices))</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Zero\u2011dimension stacking now raises a ShapeError instead of producing a combined matrix.",
+ "requirement": "When using Matrix.hstack (or Matrix.vstack), if any argument has zero rows (for hstack) or zero columns (for vstack) and its non\u2011zero dimension does not exactly match that of the other matrices, a ShapeError must be raised. This rule supersedes any earlier expectation that such matrices could be stacked together.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/sparse.py",
+   "search": "# A null matrix can always be stacked (see  #10770)\n        if self.rows == 0 and self.cols != other.cols:\n            return self._new(0, other.cols, []).col_join(other)",
+   "replace": "# Stacking zero\u2011row matrices with mismatched column counts is not allowed\n        if self.rows == 0 and self.cols != other.cols:\n            raise ShapeError()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/sparse.py",
+   "search": "# A null matrix can always be stacked (see  #10770)\n        if self.cols == 0 and self.rows != other.rows:\n            return self._new(other.rows, 0, []).row_join(other)",
+   "replace": "# Stacking zero\u2011column matrices with mismatched row counts is not allowed\n        if self.cols == 0 and self.rows != other.rows:\n            raise ShapeError()"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/tests/test_sparse.py",
+   "search": "assert SparseMatrix.hstack(*sparse_matrices) == Matrix(0, 6, [])",
+   "replace": "raises(ShapeError, lambda: SparseMatrix.hstack(*sparse_matrices))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/tests/test_sparse.py",
+   "search": "assert SparseMatrix.vstack(*sparse_matrices) == Matrix(6, 0, [])",
+   "replace": "raises(ShapeError, lambda: SparseMatrix.vstack(*sparse_matrices))"
+  }
+ ]
+}

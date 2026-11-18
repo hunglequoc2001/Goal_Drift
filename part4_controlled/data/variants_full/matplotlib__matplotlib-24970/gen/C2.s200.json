@@ -1,0 +1,37 @@
+{
+ "instance_id": "matplotlib__matplotlib-24970",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 12,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 17214,
+ "raw": "<summary>Deprecate integer inputs to colormaps by emitting a DeprecationWarning.</summary>\n<requirement>When a colormap is called with integer inputs (including unsigned integer types), the implementation must emit a DeprecationWarning with the message \u201cInteger inputs to colormaps are deprecated and may be removed in a future version.\u201d before processing the input. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"lib/matplotlib/colors.py\"><search>import numpy as np</search><replace>import numpy as np\nimport warnings</replace></source_edit>\n<source_edit file=\"lib/matplotlib/colors.py\"><search>xa = np.array(X, copy=True)</search><replace>xa = np.array(X, copy=True)\n        # Emit a deprecation warning for integer inputs.\n        if np.issubdtype(xa.dtype, np.integer):\n            warnings.warn(\n                \"Integer inputs to colormaps are deprecated and may be removed in a future version.\",\n                DeprecationWarning,\n            )</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_colors.py\"><search>assert_array_equal(cm(dtype(0)), cm(0))</search><replace>with pytest.warns(DeprecationWarning):\n            assert_array_equal(cm(dtype(0)), cm(0))</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Deprecate integer inputs to colormaps by emitting a DeprecationWarning.",
+ "requirement": "When a colormap is called with integer inputs (including unsigned integer types), the implementation must emit a DeprecationWarning with the message \u201cInteger inputs to colormaps are deprecated and may be removed in a future version.\u201d before processing the input. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/colors.py",
+   "search": "import numpy as np",
+   "replace": "import numpy as np\nimport warnings"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/colors.py",
+   "search": "xa = np.array(X, copy=True)",
+   "replace": "xa = np.array(X, copy=True)\n        # Emit a deprecation warning for integer inputs.\n        if np.issubdtype(xa.dtype, np.integer):\n            warnings.warn(\n                \"Integer inputs to colormaps are deprecated and may be removed in a future version.\",\n                DeprecationWarning,\n            )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_colors.py",
+   "search": "assert_array_equal(cm(dtype(0)), cm(0))",
+   "replace": "with pytest.warns(DeprecationWarning):\n            assert_array_equal(cm(dtype(0)), cm(0))"
+  }
+ ]
+}

@@ -1,0 +1,15 @@
+LassoLarsIC – unexpected copy_X semantics
+
+I have discovered what appears to be a defect in the handling of the `copy_X` argument inside the `LassoLarsIC` class. The issue is evident from the source rather than from runtime behaviour, so I omit a step‑by‑step reproduction.
+
+The constructor of LassoLarsIC currently declares a copy_X parameter:
+
+https://github.com/scikit-learn/scikit-learn/blob/7389dbac82d362f296dc2746f10e43ffa1615660/sklearn/linear_model/least_angle.py#L1487
+
+A few lines later, however, the same class also defines a copy_X parameter as part of ```fit```:
+
+    ```def fit(self, X, y, copy_X=True):```
+
+Consequently, two distinct values for copy_X are created, each of which is used exactly once. This leads to ```fit``` exhibiting inconsistent behaviour. The problem is especially insidious because copy_X defaults to True. If a user tries to set it to False during initialization – for example by passing `my_lasso = LassoLarsIC(copy_X=False)` – and subsequently invokes ```my_lasso.fit(X, y)```, the original setting is silently overridden.
+
+A clean solution would be to drop the copy_X argument from ```fit``` altogether. No other estimator in the linear‑models package repeats a class attribute as a fit argument (I have inspected more than ten of them). Since removing the argument would constitute a breaking change, I suggest instead giving ```fit``` a default of `None` and only updating the existing value when the caller explicitly supplies it via ```fit```. I intend to open a pull request implementing this behaviour.

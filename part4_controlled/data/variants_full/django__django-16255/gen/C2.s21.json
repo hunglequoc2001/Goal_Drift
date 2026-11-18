@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-16255",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "814ff6be37a0ba6a4631e9962552b0c4c07149a560d6d405e36e6ce40d942da9",
+ "raw": "<summary>When a sitemap\u2019s callable\u202flastmod is defined but items() returns empty, the sitemap should report the Unix epoch as its last modification date.</summary>\n<requirement>When a sitemap defines a callable\u202flastmod method but its items() method returns an empty list, get_latest_lastmod must return the Unix epoch (datetime(1970, 1, 1, tzinfo=timezone.utc)) instead of None, and the sitemap index view must include a \u201cLast-Modified\u201d header with this value. This supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"django/contrib/sitemaps/__init__.py\"><search>def get_latest_lastmod(self):</search><replace>from datetime import datetime, timezone\n\ndef get_latest_lastmod(self):</replace></source_edit>\n\n<source_edit file=\"django/contrib/sitemaps/__init__.py\"><search>return max([self.lastmod(item) for item in self.items()], default=None)</search><replace>return max([self.lastmod(item) for item in self.items()], default=datetime(1970, 1, 1, tzinfo=timezone.utc))</replace></source_edit>\n\n<test_edit file=\"tests/sitemaps_tests/test_http.py\"><search>self.assertNotIn(\"Last-Modified\", index_response)</search><replace>self.assertIn(\"Last-Modified\", index_response)\n        self.assertEqual(index_response[\"Last-Modified\"], \"Thu, 01 Jan 1970 00:00:00 GMT\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1467,
+  "prompt_tokens": 1709,
+  "total_tokens": 3176,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1132,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "When a sitemap\u2019s callable\u202flastmod is defined but items() returns empty, the sitemap should report the Unix epoch as its last modification date.",
+ "requirement": "When a sitemap defines a callable\u202flastmod method but its items() method returns an empty list, get_latest_lastmod must return the Unix epoch (datetime(1970, 1, 1, tzinfo=timezone.utc)) instead of None, and the sitemap index view must include a \u201cLast-Modified\u201d header with this value. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sitemaps/__init__.py",
+   "search": "def get_latest_lastmod(self):",
+   "replace": "from datetime import datetime, timezone\n\ndef get_latest_lastmod(self):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sitemaps/__init__.py",
+   "search": "return max([self.lastmod(item) for item in self.items()], default=None)",
+   "replace": "return max([self.lastmod(item) for item in self.items()], default=datetime(1970, 1, 1, tzinfo=timezone.utc))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/sitemaps_tests/test_http.py",
+   "search": "self.assertNotIn(\"Last-Modified\", index_response)",
+   "replace": "self.assertIn(\"Last-Modified\", index_response)\n        self.assertEqual(index_response[\"Last-Modified\"], \"Thu, 01 Jan 1970 00:00:00 GMT\")"
+  }
+ ],
+ "status": "generated"
+}

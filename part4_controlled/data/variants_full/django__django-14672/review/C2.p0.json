@@ -1,0 +1,22 @@
+{
+ "instance_id": "django__django-14672",
+ "kind": "C2",
+ "pass_": 0,
+ "reviewer": "reviewer",
+ "parsed": {
+  "change_meaningful": "yes",
+  "requirement_unambiguous": "yes",
+  "tests_match_requirement": "yes",
+  "revised_fix_correct": "yes",
+  "artificial": "no",
+  "evidence": [
+   "The maintainer update states: 'The through_fields attribute of ManyToManyRel must always be stored as a tuple, not a list.'",
+   "Original fix used `make_hashable(self.through_fields)` but maintainer update supersedes this by requiring tuple storage",
+   "Revised fix changes `self.through_fields = through_fields` to `self.through_fields = tuple(through_fields) if through_fields is not None else None`",
+   "Revised tests now assert `reverse_m2m.through_fields` is `('event', 'invitee')` instead of `['event', 'invitee']`"
+  ],
+  "reasoning": "The maintainer's update represents a clear, logical design decision to standardize the storage format of through_fields as tuples rather than lists, which resolves the hashability issue at its root cause. The revised fix correctly implements this by coercing any iterable input into a tuple during initialization. The tests now properly validate that through_fields is indeed stored as a tuple and that hash consistency is maintained between inherited models. This change is not artificial since it directly addresses the core problem identified in the original issue while providing a cleaner, more consistent API. The requirement is unambiguous because there's only one correct way to implement tuple coercion.",
+  "confidence": 0.95
+ },
+ "raw": "{\n    \"change_meaningful\": \"yes\",\n    \"requirement_unambiguous\": \"yes\",\n    \"tests_match_requirement\": \"yes\",\n    \"revised_fix_correct\": \"yes\",\n    \"artificial\": \"no\",\n    \"evidence\": [\n        \"The maintainer update states: 'The through_fields attribute of ManyToManyRel must always be stored as a tuple, not a list.'\",\n        \"Original fix used `make_hashable(self.through_fields)` but maintainer update supersedes this by requiring tuple storage\",\n        \"Revised fix changes `self.through_fields = through_fields` to `self.through_fields = tuple(through_fields) if through_fields is not None else None`\",\n        \"Revised tests now assert `reverse_m2m.through_fields` is `('event', 'invitee')` instead of `['event', 'invitee']`\"\n    ],\n    \"reasoning\": \"The maintainer's update represents a clear, logical design decision to standardize the storage format of through_fields as tuples rather than lists, which resolves the hashability issue at its root cause. The revised fix correctly implements this by coercing any iterable input into a tuple during initialization. The tests now properly validate that through_fields is indeed stored as a tuple and that hash consistency is maintained between inherited models. This change is not artificial since it directly addresses the core problem identified in the original issue while providing a cleaner, more consistent API. The requirement is unambiguous because there's only one correct way to implement tuple coercion.\",\n    \"confidence\": 0.95\n}"
+}

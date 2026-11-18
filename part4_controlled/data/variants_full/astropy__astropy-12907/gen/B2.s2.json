@@ -1,0 +1,31 @@
+{
+ "instance_id": "astropy__astropy-12907",
+ "kind": "B2",
+ "sample": 2,
+ "generator": "glm-4-32b-0414",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 2,
+ "masked": "Modeling's \u27e6P1\u27e7 does not compute separability correctly for nested \u27e6P2\u27e7\nConsider the following model:\n\n\u27e6P3\u27e7\n\nIt's separability matrix as you might expect is a diagonal:\n\n\u27e6P4\u27e7\n\nIf I make the model more complex:\n\u27e6P5\u27e7\n\nThe output matrix is again, as expected, the outputs and inputs to the linear models are separable and independent of each other.\n\nIf however, I nest these compound models:\n\u27e6P6\u27e7\nSuddenly the inputs and outputs are no longer separable?\n\nThis feels like a bug to me, but I might be missing something?\n",
+ "spans": [
+  "`separability_matrix`",
+  "CompoundModels",
+  "```python\nfrom astropy.modeling import models as m\nfrom astropy.modeling.separable import separability_matrix\n\ncm = m.Linear1D(10) & m.Linear1D(5)\n```",
+  "```python\n>>> separability_matrix(cm)\narray([[ True, False],\n       [False,  True]])\n```",
+  "```python\n>>> separability_matrix(m.Pix2Sky_TAN() & m.Linear1D(10) & m.Linear1D(5))\narray([[ True,  True, False, False],\n       [ True,  True, False, False],\n       [False, False,  True, False],\n       [False, False, False,  True]])\n```",
+  "```python\n>>> separability_matrix(m.Pix2Sky_TAN() & cm)\narray([[ True,  True, False, False],\n       [ True,  True, False, False],\n       [False, False,  True,  True],\n       [False, False,  True,  True]])\n```"
+ ],
+ "prompt_sha256": "3223a3585b0e496d0455f38ea92e2b9b5a1792e9a2ecb01983ae6460d12f1813",
+ "raw": "\n<rewrite>\nThere appears to be an issue with the separability computation in Modeling's \u27e6P1\u27e7 when dealing with nested \u27e6P2\u27e7 structures. \n\nLet's start with a simple model:\n\n\u27e6P3\u27e7\n\nThe expected separability matrix for this should be diagonal:\n\n\u27e6P4\u27e7\n\nNow, if I enhance the model's complexity:\n\n\u27e6P5\u27e7\n\nThe output matrix correctly shows that the outputs and inputs of the linear models are separable and independent from one another, which is the anticipated behavior.\n\nHowever, when I nest these compound models together:\n\n\u27e6P6\u27e7\nThe results indicate that the inputs and outputs are no longer separable, which seems incorrect.\n\nI suspect this might be a bug, but I could be overlooking something important.\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 171,
+  "prompt_tokens": 355,
+  "total_tokens": 526,
+  "completion_tokens_details": null,
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "There appears to be an issue with the separability computation in Modeling's \u27e6P1\u27e7 when dealing with nested \u27e6P2\u27e7 structures. \n\nLet's start with a simple model:\n\n\u27e6P3\u27e7\n\nThe expected separability matrix for this should be diagonal:\n\n\u27e6P4\u27e7\n\nNow, if I enhance the model's complexity:\n\n\u27e6P5\u27e7\n\nThe output matrix correctly shows that the outputs and inputs of the linear models are separable and independent from one another, which is the anticipated behavior.\n\nHowever, when I nest these compound models together:\n\n\u27e6P6\u27e7\nThe results indicate that the inputs and outputs are no longer separable, which seems incorrect.\n\nI suspect this might be a bug, but I could be overlooking something important.",
+ "rewrite": "There appears to be an issue with the separability computation in Modeling's `separability_matrix` when dealing with nested CompoundModels structures. \n\nLet's start with a simple model:\n\n```python\nfrom astropy.modeling import models as m\nfrom astropy.modeling.separable import separability_matrix\n\ncm = m.Linear1D(10) & m.Linear1D(5)\n```\n\nThe expected separability matrix for this should be diagonal:\n\n```python\n>>> separability_matrix(cm)\narray([[ True, False],\n       [False,  True]])\n```\n\nNow, if I enhance the model's complexity:\n\n```python\n>>> separability_matrix(m.Pix2Sky_TAN() & m.Linear1D(10) & m.Linear1D(5))\narray([[ True,  True, False, False],\n       [ True,  True, False, False],\n       [False, False,  True, False],\n       [False, False, False,  True]])\n```\n\nThe output matrix correctly shows that the outputs and inputs of the linear models are separable and independent from one another, which is the anticipated behavior.\n\nHowever, when I nest these compound models together:\n\n```python\n>>> separability_matrix(m.Pix2Sky_TAN() & cm)\narray([[ True,  True, False, False],\n       [ True,  True, False, False],\n       [False, False,  True,  True],\n       [False, False,  True,  True]])\n```\nThe results indicate that the inputs and outputs are no longer separable, which seems incorrect.\n\nI suspect this might be a bug, but I could be overlooking something important.",
+ "status": "generated"
+}

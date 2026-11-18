@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-11490",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "dfb864a0c09bee15a18b859ce527d8d08787f327cb44d1bc007bab3fedd68f85",
+ "raw": "<summary>Composed queries must keep their original column list; subsequent values()/values_list() calls cannot change the selected columns.</summary>\n<requirement>When a combined QuerySet (e.g., using union, intersection, or difference) has been evaluated with a particular set of fields via values() or values_list(), that set of fields becomes fixed for the lifetime of that combined query. Any later calls to values() or values_list() on the same combined QuerySet must ignore new field arguments and return results using the originally selected columns. This supersedes any previous expectation that the column list could be changed on subsequent evaluations.</requirement>\n\n<source_edit file=\"django/db/models/sql/compiler.py\"><search>                    compiler.query = compiler.query.clone()</search><replace>                    # The query is not cloned; keep the original values_select to enforce a fixed column list</replace></source_edit>\n\n<test_edit file=\"tests/queries/test_qs_combinators.py\"><search># List of columns can be changed.</search><replace># List of columns cannot be changed; should return the original columns.</replace></test_edit>\n\n<test_edit file=\"tests/queries/test_qs_combinators.py\"><search>reserved_name = qs1.union(qs1).values_list('order').get()</search><replace>reserved_name2 = qs1.union(qs1).values_list('order').get()</replace></test_edit>\n\n<test_edit file=\"tests/queries/test_qs_combinators.py\"><search>self.assertEqual(reserved_name, (2,))</search><replace>self.assertEqual(reserved_name2, reserved_name)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1571,
+  "prompt_tokens": 1019,
+  "total_tokens": 2590,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1222,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Composed queries must keep their original column list; subsequent values()/values_list() calls cannot change the selected columns.",
+ "requirement": "When a combined QuerySet (e.g., using union, intersection, or difference) has been evaluated with a particular set of fields via values() or values_list(), that set of fields becomes fixed for the lifetime of that combined query. Any later calls to values() or values_list() on the same combined QuerySet must ignore new field arguments and return results using the originally selected columns. This supersedes any previous expectation that the column list could be changed on subsequent evaluations.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/compiler.py",
+   "search": "                    compiler.query = compiler.query.clone()",
+   "replace": "                    # The query is not cloned; keep the original values_select to enforce a fixed column list"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_qs_combinators.py",
+   "search": "# List of columns can be changed.",
+   "replace": "# List of columns cannot be changed; should return the original columns."
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_qs_combinators.py",
+   "search": "reserved_name = qs1.union(qs1).values_list('order').get()",
+   "replace": "reserved_name2 = qs1.union(qs1).values_list('order').get()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_qs_combinators.py",
+   "search": "self.assertEqual(reserved_name, (2,))",
+   "replace": "self.assertEqual(reserved_name2, reserved_name)"
+  }
+ ],
+ "status": "generated"
+}

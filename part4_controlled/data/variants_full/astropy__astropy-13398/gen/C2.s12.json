@@ -1,0 +1,48 @@
+{
+ "instance_id": "astropy__astropy-13398",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "78b9adf2796f96125a4f4a06a5a7f672d9cbd9c28ae702f1cb6bceb8d236975d",
+ "raw": "<summary>ITRS\u2192Observed transforms must always treat ITRS coordinates as geocentric and subtract the observer\u2019s EarthLocation internally.</summary>\n<requirement>All ITRS\u2011to\u2011AltAz and ITRS\u2011to\u2011HADec transformations must ignore any location or obstime differences between the input ITRS object and the target observed frame. The transform must always compute a topocentric vector by subtracting the observer\u2019s EarthLocation (as given by the observed frame) from the ITRS Cartesian coordinates before applying the rotation matrix, and must not perform an intermediate ITRS\u2011to\u2011ITRS re\u2011transformation to match the observed frame\u2019s location or obstime. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>    if (np.any(itrs_coo.location != observed_frame.location) or\n            np.any(itrs_coo.obstime != observed_frame.obstime)):\n        # This transform will go through the CIRS and alter stellar aberration.\n        itrs_coo = itrs_coo.transform_to(ITRS(obstime=observed_frame.obstime,\n                                              location=observed_frame.location))</search><replace></replace></source_edit>\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>        crepr = itrs_coo.cartesian.transform(itrs_to_altaz_mat(lon, lat))</search><replace>        topocentric = itrs_coo.cartesian - observed_frame.location.get_itrs().cartesian\n        crepr = topocentric.transform(itrs_to_altaz_mat(lon, lat))</replace></source_edit>\n<source_edit file=\"astropy/coordinates/builtin_frames/itrs_observed_transforms.py\"><search>        crepr = itrs_coo.cartesian.transform(itrs_to_hadec_mat(lon))</search><replace>        topocentric = itrs_coo.cartesian - observed_frame.location.get_itrs().cartesian\n        crepr = topocentric.transform(itrs_to_hadec_mat(lon))</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2477,
+  "prompt_tokens": 8280,
+  "total_tokens": 10757,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2007,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "ITRS\u2192Observed transforms must always treat ITRS coordinates as geocentric and subtract the observer\u2019s EarthLocation internally.",
+ "requirement": "All ITRS\u2011to\u2011AltAz and ITRS\u2011to\u2011HADec transformations must ignore any location or obstime differences between the input ITRS object and the target observed frame. The transform must always compute a topocentric vector by subtracting the observer\u2019s EarthLocation (as given by the observed frame) from the ITRS Cartesian coordinates before applying the rotation matrix, and must not perform an intermediate ITRS\u2011to\u2011ITRS re\u2011transformation to match the observed frame\u2019s location or obstime. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "    if (np.any(itrs_coo.location != observed_frame.location) or\n            np.any(itrs_coo.obstime != observed_frame.obstime)):\n        # This transform will go through the CIRS and alter stellar aberration.\n        itrs_coo = itrs_coo.transform_to(ITRS(obstime=observed_frame.obstime,\n                                              location=observed_frame.location))",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "        crepr = itrs_coo.cartesian.transform(itrs_to_altaz_mat(lon, lat))",
+   "replace": "        topocentric = itrs_coo.cartesian - observed_frame.location.get_itrs().cartesian\n        crepr = topocentric.transform(itrs_to_altaz_mat(lon, lat))"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/coordinates/builtin_frames/itrs_observed_transforms.py",
+   "search": "        crepr = itrs_coo.cartesian.transform(itrs_to_hadec_mat(lon))",
+   "replace": "        topocentric = itrs_coo.cartesian - observed_frame.location.get_itrs().cartesian\n        crepr = topocentric.transform(itrs_to_hadec_mat(lon))"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

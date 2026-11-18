@@ -1,0 +1,49 @@
+{
+ "instance_id": "matplotlib__matplotlib-24026",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "2e877f80bb7a6855871469cdf28c7cf79fab7b458e0da1899a69503c04cddd3c",
+ "raw": "<summary>Disallow Matplotlib cycle references in the `colors` argument of `Axes.stackplot`.</summary>\n<requirement>When calling `Axes.stackplot`, the `colors` argument must contain explicit color specifications; passing Matplotlib cycle references such as `'C0'`, `'C1'`, etc., is not allowed and should raise a `ValueError`. This requirement supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"lib/matplotlib/stackplot.py\"><search>if colors is not None:</search><replace>if colors is not None:\n        # Disallow cycle reference strings like 'C0', 'C1', etc.\n        for c in colors:\n            if isinstance(c, str) and c.startswith('C') and c[1:].isdigit():\n                raise ValueError(\"Cycle references not allowed in colors argument\")\n        colors = itertools.cycle(colors)</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>import matplotlib.pyplot as plt</search><replace>import matplotlib.pyplot as plt\nimport pytest</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])</search><replace>with pytest.raises(ValueError):\n    ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1587,
+  "prompt_tokens": 1860,
+  "total_tokens": 3447,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1242,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow Matplotlib cycle references in the `colors` argument of `Axes.stackplot`.",
+ "requirement": "When calling `Axes.stackplot`, the `colors` argument must contain explicit color specifications; passing Matplotlib cycle references such as `'C0'`, `'C1'`, etc., is not allowed and should raise a `ValueError`. This requirement supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/stackplot.py",
+   "search": "if colors is not None:",
+   "replace": "if colors is not None:\n        # Disallow cycle reference strings like 'C0', 'C1', etc.\n        for c in colors:\n            if isinstance(c, str) and c.startswith('C') and c[1:].isdigit():\n                raise ValueError(\"Cycle references not allowed in colors argument\")\n        colors = itertools.cycle(colors)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "import matplotlib.pyplot as plt",
+   "replace": "import matplotlib.pyplot as plt\nimport pytest"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])",
+   "replace": "with pytest.raises(ValueError):\n    ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])"
+  }
+ ],
+ "status": "generated"
+}

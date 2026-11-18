@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-14539",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "460fa7bcd3bd153dcdb9477bbafb3e67e8667254b5197d61c4f48097ca8db697",
+ "raw": "<summary>Do not trim trailing punctuation from URLs that contain any HTML\u2011escaped characters.</summary>\n<requirement>When urlize processes a URL that includes any HTML\u2011escaped entity (e.g.,\u202f`&lt;`,\u202f`&gt;`,\u202f`&amp;`), it must treat the entire substring up to the next whitespace as the URL and must not strip trailing punctuation characters from it. This supersedes any previous expectation that such punctuation would be removed.</requirement>\n<source_edit file=\"django/utils/html.py\"><search>if middle_unescaped != stripped:\n                punctuation_count = len(middle_unescaped) - len(stripped)\n                trail = middle[-punctuation_count:] + trail\n                middle = middle[:-punctuation_count]\n                trimmed_something = True</search><replace>if middle_unescaped != stripped:\n                # If the original middle contains an HTML\u2011escaped entity, do not trim punctuation.\n                if '&' in middle:\n                    # Leave middle and trail unchanged.\n                    pass\n                else:\n                    punctuation_count = len(middle_unescaped) - len(stripped)\n                    trail = middle[-punctuation_count:] + trail\n                    middle = middle[:-punctuation_count]\n                    trimmed_something = True</replace></source_edit>\n<test_edit file=\"tests/utils_tests/test_html.py\"><search>'Search for <a href=\"http://google.com/?q=1%3C\">google.com/?q=1&lt</a>! and see.'</search><replace>'Search for <a href=\"http://google.com/?q=1%3C!\">google.com/?q=1&lt!</a> and see.'</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1571,
+  "prompt_tokens": 1057,
+  "total_tokens": 2628,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1210,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Do not trim trailing punctuation from URLs that contain any HTML\u2011escaped characters.",
+ "requirement": "When urlize processes a URL that includes any HTML\u2011escaped entity (e.g.,\u202f`&lt;`,\u202f`&gt;`,\u202f`&amp;`), it must treat the entire substring up to the next whitespace as the URL and must not strip trailing punctuation characters from it. This supersedes any previous expectation that such punctuation would be removed.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/html.py",
+   "search": "if middle_unescaped != stripped:\n                punctuation_count = len(middle_unescaped) - len(stripped)\n                trail = middle[-punctuation_count:] + trail\n                middle = middle[:-punctuation_count]\n                trimmed_something = True",
+   "replace": "if middle_unescaped != stripped:\n                # If the original middle contains an HTML\u2011escaped entity, do not trim punctuation.\n                if '&' in middle:\n                    # Leave middle and trail unchanged.\n                    pass\n                else:\n                    punctuation_count = len(middle_unescaped) - len(stripped)\n                    trail = middle[-punctuation_count:] + trail\n                    middle = middle[:-punctuation_count]\n                    trimmed_something = True"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/utils_tests/test_html.py",
+   "search": "'Search for <a href=\"http://google.com/?q=1%3C\">google.com/?q=1&lt</a>! and see.'",
+   "replace": "'Search for <a href=\"http://google.com/?q=1%3C!\">google.com/?q=1&lt!</a> and see.'"
+  }
+ ],
+ "status": "generated"
+}

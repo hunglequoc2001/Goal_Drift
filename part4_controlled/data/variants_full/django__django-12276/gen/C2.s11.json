@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-12276",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "5ff8518f1a9f9ec9d5ebda6e9fa1ce5e5978ce87cad264f894c7e98b3897faf4",
+ "raw": "<summary>FileInput must always render the required attribute, regardless of initial data.</summary>\n<requirement>When rendering a FileInput widget, the HTML should always include the `required` attribute if the field is marked as required, even when the form is instantiated with initial data for that field. This supersedes any previous expectation that the required attribute be omitted when initial data exists.</requirement>\n<source_edit file=\"django/forms/widgets.py\"><search>def use_required_attribute(self, initial):\n        return super().use_required_attribute(initial) and not initial</search><replace>def use_required_attribute(self, initial):\n        return super().use_required_attribute(initial)</replace></source_edit>\n<test_edit file=\"tests/forms_tests/tests/test_forms.py\"><search>self.assertHTMLEqual(\n            f.as_table(),\n            '&lt;tr&gt;&lt;th&gt;File1:&lt;/th&gt;&lt;td&gt;&lt;input type=\"file\" name=\"file1\"&gt;&lt;/td&gt;&lt;/tr&gt;',\n        )</search><replace>self.assertHTMLEqual(\n            f.as_table(),\n            '&lt;tr&gt;&lt;th&gt;File1:&lt;/th&gt;&lt;td&gt;&lt;input type=\"file\" name=\"file1\" required&gt;&lt;/td&gt;&lt;/tr&gt;',\n        )</replace></test_edit>\n<test_edit file=\"tests/forms_tests/widget_tests/test_fileinput.py\"><search>self.assertIs(self.widget.use_required_attribute('resume.txt'), False)</search><replace>self.assertIs(self.widget.use_required_attribute('resume.txt'), True)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1243,
+  "prompt_tokens": 1669,
+  "total_tokens": 2912,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 888,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "FileInput must always render the required attribute, regardless of initial data.",
+ "requirement": "When rendering a FileInput widget, the HTML should always include the `required` attribute if the field is marked as required, even when the form is instantiated with initial data for that field. This supersedes any previous expectation that the required attribute be omitted when initial data exists.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/widgets.py",
+   "search": "def use_required_attribute(self, initial):\n        return super().use_required_attribute(initial) and not initial",
+   "replace": "def use_required_attribute(self, initial):\n        return super().use_required_attribute(initial)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_forms.py",
+   "search": "self.assertHTMLEqual(\n            f.as_table(),\n            '&lt;tr&gt;&lt;th&gt;File1:&lt;/th&gt;&lt;td&gt;&lt;input type=\"file\" name=\"file1\"&gt;&lt;/td&gt;&lt;/tr&gt;',\n        )",
+   "replace": "self.assertHTMLEqual(\n            f.as_table(),\n            '&lt;tr&gt;&lt;th&gt;File1:&lt;/th&gt;&lt;td&gt;&lt;input type=\"file\" name=\"file1\" required&gt;&lt;/td&gt;&lt;/tr&gt;',\n        )"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/widget_tests/test_fileinput.py",
+   "search": "self.assertIs(self.widget.use_required_attribute('resume.txt'), False)",
+   "replace": "self.assertIs(self.widget.use_required_attribute('resume.txt'), True)"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-14539",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "460fa7bcd3bd153dcdb9477bbafb3e67e8667254b5197d61c4f48097ca8db697",
+ "raw": "<summary>Trailing punctuation after an HTML\u2011escaped sequence is now kept inside the URL instead of being stripped.</summary>\n<requirement>When urlize processes a string, any trailing punctuation character (such as \u201c!\u201d or \u201c.\u201d) that follows an HTML\u2011escaped entity (e.g., \u201c&lt\u201d, \u201c&amp\u201d, etc.) must be considered part of the URL and therefore remain inside the generated <a> tag. This supersedes any previous expectation that such punctuation would be moved outside the link.</requirement>\n<source_edit file=\"django/utils/html.py\"><search>punctuation_count = len(middle_unescaped) - len(stripped)</search><replace># Preserve trailing punctuation if the original middle contains an HTML entity\nif '&' not in middle:\n    punctuation_count = len(middle_unescaped) - len(stripped)\n    trail = middle[-punctuation_count:] + trail\n    middle = middle[:-punctuation_count]\nelse:\n    # Do not strip punctuation; keep middle as is\n    pass</replace></source_edit>\n<test_edit file=\"tests/utils_tests/test_html.py\"><search>'Search for <a href=\"http://google.com/?q=1%3C\">google.com/?q=1&lt</a>! and see.'</search><replace>'Search for <a href=\"http://google.com/?q=1%3C!\">google.com/?q=1&lt!</a> and see.'</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2679,
+  "prompt_tokens": 1057,
+  "total_tokens": 3736,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2365,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Trailing punctuation after an HTML\u2011escaped sequence is now kept inside the URL instead of being stripped.",
+ "requirement": "When urlize processes a string, any trailing punctuation character (such as \u201c!\u201d or \u201c.\u201d) that follows an HTML\u2011escaped entity (e.g., \u201c&lt\u201d, \u201c&amp\u201d, etc.) must be considered part of the URL and therefore remain inside the generated <a> tag. This supersedes any previous expectation that such punctuation would be moved outside the link.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/html.py",
+   "search": "punctuation_count = len(middle_unescaped) - len(stripped)",
+   "replace": "# Preserve trailing punctuation if the original middle contains an HTML entity\nif '&' not in middle:\n    punctuation_count = len(middle_unescaped) - len(stripped)\n    trail = middle[-punctuation_count:] + trail\n    middle = middle[:-punctuation_count]\nelse:\n    # Do not strip punctuation; keep middle as is\n    pass"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/utils_tests/test_html.py",
+   "search": "'Search for <a href=\"http://google.com/?q=1%3C\">google.com/?q=1&lt</a>! and see.'",
+   "replace": "'Search for <a href=\"http://google.com/?q=1%3C!\">google.com/?q=1&lt!</a> and see.'"
+  }
+ ],
+ "status": "generated"
+}

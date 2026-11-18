@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-13513",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "b35ed7ae56e8f25d806d6721cf0ae03222fc27e1649794c4e52fa51193d380c8",
+ "raw": "<summary>Ignore context exceptions without a traceback when determining the cause chain.</summary>\n<requirement>When building the exception cause chain for the debug view, the function that selects an explicit or implicit cause must ignore an exception\u2019s __context__ if that context exception does not have a traceback (i.e., its __traceback__ attribute is None). In such cases the cause should be treated as None, even when __suppress_context__ is False. This rule supersedes any previous description of how the cause chain is constructed.</requirement>\n<source_edit file=\"django/views/debug.py\"><search>def _get_explicit_or_implicit_cause(self, exc_value):\n        explicit = getattr(exc_value, '__cause__', None)\n        suppress_context = getattr(exc_value, '__suppress_context__', None)\n        implicit = getattr(exc_value, '__context__', None)\n        return explicit or (None if suppress_context else implicit)</search><replace>def _get_explicit_or_implicit_cause(self, exc_value):\n        explicit = getattr(exc_value, '__cause__', None)\n        suppress_context = getattr(exc_value, '__suppress_context__', None)\n        implicit = getattr(exc_value, '__context__', None)\n        # Ignore a context exception that lacks a traceback.\n        if not suppress_context and implicit is not None:\n            if getattr(implicit, '__traceback__', None) is None:\n                implicit = None\n        return explicit or (None if suppress_context else implicit)</replace></source_edit>\n<test_edit file=\"tests/view_tests/tests/test_debug.py\"><search>self.assertIn(\n            'During handling of the above exception (My context), another '\n            'exception occurred',\n            html,\n        )</search><replace>self.assertNotIn(\n            'During handling of the above exception (My context), another '\n            'exception occurred',\n            html,\n        )</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2081,
+  "prompt_tokens": 2073,
+  "total_tokens": 4154,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1676,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Ignore context exceptions without a traceback when determining the cause chain.",
+ "requirement": "When building the exception cause chain for the debug view, the function that selects an explicit or implicit cause must ignore an exception\u2019s __context__ if that context exception does not have a traceback (i.e., its __traceback__ attribute is None). In such cases the cause should be treated as None, even when __suppress_context__ is False. This rule supersedes any previous description of how the cause chain is constructed.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/views/debug.py",
+   "search": "def _get_explicit_or_implicit_cause(self, exc_value):\n        explicit = getattr(exc_value, '__cause__', None)\n        suppress_context = getattr(exc_value, '__suppress_context__', None)\n        implicit = getattr(exc_value, '__context__', None)\n        return explicit or (None if suppress_context else implicit)",
+   "replace": "def _get_explicit_or_implicit_cause(self, exc_value):\n        explicit = getattr(exc_value, '__cause__', None)\n        suppress_context = getattr(exc_value, '__suppress_context__', None)\n        implicit = getattr(exc_value, '__context__', None)\n        # Ignore a context exception that lacks a traceback.\n        if not suppress_context and implicit is not None:\n            if getattr(implicit, '__traceback__', None) is None:\n                implicit = None\n        return explicit or (None if suppress_context else implicit)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/view_tests/tests/test_debug.py",
+   "search": "self.assertIn(\n            'During handling of the above exception (My context), another '\n            'exception occurred',\n            html,\n        )",
+   "replace": "self.assertNotIn(\n            'During handling of the above exception (My context), another '\n            'exception occurred',\n            html,\n        )"
+  }
+ ],
+ "status": "generated"
+}

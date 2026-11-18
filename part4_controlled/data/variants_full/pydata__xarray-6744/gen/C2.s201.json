@@ -1,0 +1,37 @@
+{
+ "instance_id": "pydata__xarray-6744",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 12,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 18633,
+ "raw": "<summary>Iterating over a rolling object now yields the window first and the label second.</summary>\n<requirement>When manually iterating over a ``DataArrayRolling`` object, the iterator must return a tuple where the first element is the rolling ``DataArray`` window and the second element is the corresponding label (the coordinate value). This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"xarray/core/rolling.py\"><search>def __iter__(self) -> Iterator[tuple[DataArray, DataArray]]:</search><replace>def __iter__(self) -> Iterator[tuple[DataArray, RollingKey]]:</replace></source_edit>\n<source_edit file=\"xarray/core/rolling.py\"><search>yield (label, window)</search><replace>yield (window, label)</replace></source_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>for i, (label, window_da) in enumerate(rolling_obj):</search><replace>for i, (window_da, label) in enumerate(rolling_obj):</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Iterating over a rolling object now yields the window first and the label second.",
+ "requirement": "When manually iterating over a ``DataArrayRolling`` object, the iterator must return a tuple where the first element is the rolling ``DataArray`` window and the second element is the corresponding label (the coordinate value). This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/rolling.py",
+   "search": "def __iter__(self) -> Iterator[tuple[DataArray, DataArray]]:",
+   "replace": "def __iter__(self) -> Iterator[tuple[DataArray, RollingKey]]:"
+  },
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/rolling.py",
+   "search": "yield (label, window)",
+   "replace": "yield (window, label)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "for i, (label, window_da) in enumerate(rolling_obj):",
+   "replace": "for i, (window_da, label) in enumerate(rolling_obj):"
+  }
+ ]
+}

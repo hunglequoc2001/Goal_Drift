@@ -1,0 +1,31 @@
+{
+ "instance_id": "sympy__sympy-13615",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 14578,
+ "raw": "<summary>Do not simplify Complement when the first argument is a FiniteSet; return it unchanged.</summary>\n<requirement>When computing the complement of a FiniteSet with another set, the result must not drop elements of the FiniteSet that are known to belong to the other set; the Complement should be returned unchanged (i.e., no simplification based on containment). This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sympy/sets/sets.py\"><search>\n            from sympy.utilities.iterables import sift\n\n            def ternary_sift(el):\n                contains = self.contains(el)\n                return contains if contains in [True, False] else None\n\n            sifted = sift(other, ternary_sift)\n            # ignore those that are contained in self\n            return Union(FiniteSet(*(sifted[False])),\n                Complement(FiniteSet(*(sifted[None])), self, evaluate=False)\n                if sifted[None] else S.EmptySet)\n</search><replace>\n            return Complement(other, self, evaluate=False)\n</replace></source_edit>\n<test_edit file=\"sympy/sets/tests/test_sets.py\"><search>\n    assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == \\\n            Complement(FiniteSet(x, y), Interval(-10, 10))\n</search><replace>\n    assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) != \\\n            Complement(FiniteSet(x, y), Interval(-10, 10))\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Do not simplify Complement when the first argument is a FiniteSet; return it unchanged.",
+ "requirement": "When computing the complement of a FiniteSet with another set, the result must not drop elements of the FiniteSet that are known to belong to the other set; the Complement should be returned unchanged (i.e., no simplification based on containment). This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/sets/sets.py",
+   "search": "            from sympy.utilities.iterables import sift\n\n            def ternary_sift(el):\n                contains = self.contains(el)\n                return contains if contains in [True, False] else None\n\n            sifted = sift(other, ternary_sift)\n            # ignore those that are contained in self\n            return Union(FiniteSet(*(sifted[False])),\n                Complement(FiniteSet(*(sifted[None])), self, evaluate=False)\n                if sifted[None] else S.EmptySet)",
+   "replace": "            return Complement(other, self, evaluate=False)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/sets/tests/test_sets.py",
+   "search": "    assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == \\\n            Complement(FiniteSet(x, y), Interval(-10, 10))",
+   "replace": "    assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) != \\\n            Complement(FiniteSet(x, y), Interval(-10, 10))"
+  }
+ ]
+}

@@ -1,0 +1,61 @@
+{
+ "instance_id": "matplotlib__matplotlib-25122",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 22723,
+ "raw": "<summary>Window normalization must use the absolute\u2011value sum of the window.</summary>\n<requirement>When computing spectral results, the window normalization should be based on the L1 norm of the window (i.e., the sum of absolute values). Specifically, for magnitude and complex modes the result must be divided by\u202fnp.abs(window).sum(); for PSD scaling, if\u202fscale_by_freq\u202fis True the denominator must be\u202f(np.abs(window)**2).sum(), otherwise it must be\u202f(np.abs(window).sum())**2. This supersedes any earlier description that used the raw sum of the window values.</requirement>\n\n<source_edit file=\"lib/matplotlib/mlab.py\"><search>result = np.abs(result) / window.sum()</search><replace>result = np.abs(result) / np.abs(window).sum()</replace></source_edit>\n<source_edit file=\"lib/matplotlib/mlab.py\"><search>result /= window.sum()</search><replace>result /= np.abs(window).sum()</replace></source_edit>\n<source_edit file=\"lib/matplotlib/mlab.py\"><search>result /= (window**2).sum()</search><replace>result /= (np.abs(window)**2).sum()</replace></source_edit>\n<source_edit file=\"lib/matplotlib/mlab.py\"><search>result /= window.sum()**2</search><replace>result /= (np.abs(window).sum())**2</replace></source_edit>\n\n<test_edit file=\"lib/matplotlib/tests/test_mlab.py\"><search>spec_c *= len(ycontrol1)/(windowVals**2).sum()</search><replace>spec_c *= len(ycontrol1)/(np.abs(windowVals)**2).sum()</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_mlab.py\"><search>spec_c *= len(ycontrol1)/(windowVals**2).sum()</search><replace>spec_c *= len(ycontrol1)/(np.abs(windowVals)**2).sum()</replace></test_edit>\n<test_edit file=\"lib/matplotlib/tests/test_mlab.py\"><search>assert_allclose(spec*win.sum()**2,</search><replace>assert_allclose(spec*np.abs(win).sum()**2,</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Window normalization must use the absolute\u2011value sum of the window.",
+ "requirement": "When computing spectral results, the window normalization should be based on the L1 norm of the window (i.e., the sum of absolute values). Specifically, for magnitude and complex modes the result must be divided by\u202fnp.abs(window).sum(); for PSD scaling, if\u202fscale_by_freq\u202fis True the denominator must be\u202f(np.abs(window)**2).sum(), otherwise it must be\u202f(np.abs(window).sum())**2. This supersedes any earlier description that used the raw sum of the window values.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/mlab.py",
+   "search": "result = np.abs(result) / window.sum()",
+   "replace": "result = np.abs(result) / np.abs(window).sum()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/mlab.py",
+   "search": "result /= window.sum()",
+   "replace": "result /= np.abs(window).sum()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/mlab.py",
+   "search": "result /= (window**2).sum()",
+   "replace": "result /= (np.abs(window)**2).sum()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/mlab.py",
+   "search": "result /= window.sum()**2",
+   "replace": "result /= (np.abs(window).sum())**2"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_mlab.py",
+   "search": "spec_c *= len(ycontrol1)/(windowVals**2).sum()",
+   "replace": "spec_c *= len(ycontrol1)/(np.abs(windowVals)**2).sum()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_mlab.py",
+   "search": "spec_c *= len(ycontrol1)/(windowVals**2).sum()",
+   "replace": "spec_c *= len(ycontrol1)/(np.abs(windowVals)**2).sum()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_mlab.py",
+   "search": "assert_allclose(spec*win.sum()**2,",
+   "replace": "assert_allclose(spec*np.abs(win).sum()**2,"
+  }
+ ]
+}

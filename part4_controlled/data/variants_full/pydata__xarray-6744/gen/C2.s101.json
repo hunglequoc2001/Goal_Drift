@@ -1,0 +1,31 @@
+{
+ "instance_id": "pydata__xarray-6744",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 12,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 18633,
+ "raw": "<summary>Iterating over a rolling object must ignore the ``center`` argument.</summary>\n<requirement>When manually iterating over a ``DataArrayRolling`` object, the iterator must disregard the ``center`` keyword and always produce windows aligned to the start of each label (i.e., the same behavior as if ``center=False`` were used). This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"xarray/core/rolling.py\"><search>        dim0 = self.dim[0]\n        window0 = int(self.window[0])\n        offset = (window0 + 1) // 2 if self.center[0] else 1\n        stops = np.arange(offset, self.obj.sizes[dim0] + offset)\n        starts = stops - window0\n        starts[: window0 - offset] = 0</search><replace>        dim0 = self.dim[0]\n        window0 = int(self.window[0])\n        stops = np.arange(1, len(self.window_labels) + 1)\n        starts = stops - window0\n        starts[: window0] = 0</replace></source_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>@pytest.mark.parametrize(\"center\", [True, False])</search><replace>@pytest.mark.parametrize(\"center\", [False])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Iterating over a rolling object must ignore the ``center`` argument.",
+ "requirement": "When manually iterating over a ``DataArrayRolling`` object, the iterator must disregard the ``center`` keyword and always produce windows aligned to the start of each label (i.e., the same behavior as if ``center=False`` were used). This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/rolling.py",
+   "search": "        dim0 = self.dim[0]\n        window0 = int(self.window[0])\n        offset = (window0 + 1) // 2 if self.center[0] else 1\n        stops = np.arange(offset, self.obj.sizes[dim0] + offset)\n        starts = stops - window0\n        starts[: window0 - offset] = 0",
+   "replace": "        dim0 = self.dim[0]\n        window0 = int(self.window[0])\n        stops = np.arange(1, len(self.window_labels) + 1)\n        starts = stops - window0\n        starts[: window0] = 0"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "@pytest.mark.parametrize(\"center\", [True, False])",
+   "replace": "@pytest.mark.parametrize(\"center\", [False])"
+  }
+ ]
+}

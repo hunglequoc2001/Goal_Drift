@@ -1,0 +1,49 @@
+{
+ "instance_id": "astropy__astropy-13236",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "38b2eb4bc0ce16084f9a1b71bb7c73c8b4f2c4ec69fd1b0129dfad6a61a31de4",
+ "raw": "<summary>Re\u2011introduce automatic conversion of plain structured ndarrays to NdarrayMixin with a deprecation warning, but exclude masked arrays.</summary>\n<requirement>When a plain (non\u2011masked) structured ``np.ndarray`` is added to a ``Table`` and is not already a ``Column`` or a mixin, the table should automatically view it as an ``NdarrayMixin`` and issue a ``FutureWarning`` stating that this behavior is deprecated and will be removed in version\u202f5.2, advising users to wrap the data in a ``Column`` instead. This rule does not apply to masked arrays; they should be handled by the existing masked\u2011array logic. This supersedes any previous expectation that such structured arrays are added directly as ``Column`` objects.</requirement>\n\n<source_edit file=\"astropy/table/table.py\"><search># Get the final column name using precedence.  Some objects may not\nhave an info attribute. Also avoid creating info as a side effect.\nif not name:</search><replace># Structured ndarray gets viewed as a mixin unless already a valid\n# mixin class or a masked array. Emit a FutureWarning for deprecation.\nif (not isinstance(data, Column) and not data_is_mixin\n        and isinstance(data, np.ndarray) and not isinstance(data, np.ma.MaskedArray)\n        and len(data.dtype) > 1):\n    warnings.warn(\n        'Adding a structured ndarray directly to a Table will be deprecated; '\n        'wrap it in a Column instead. Future versions will add it as a Column.',\n        FutureWarning)\n    data = data.view(NdarrayMixin)\n    data_is_mixin = True\n\n# Get the final column name using precedence.  Some objects may not\nhave an info attribute. Also avoid creating info as a side effect.\nif not name:</replace></source_edit>\n\n<source_edit file=\"astropy/table/table.py\"><search>import numpy as np</search><replace>import numpy as np\nimport warnings</replace></source_edit>\n\n<test_edit file=\"astropy/table/tests/test_mixin.py\"><search>def test_ndarray_mixin(as_ndarray_mixin):</search><replace>def test_ndarray_mixin(as_ndarray_mixin):\n    \"\"\"\n    Test directly adding various forms of structured ndarray columns to a table.\n    Adding as NdarrayMixin is expected to be somewhat unusual after #12644\n    (which provides full support for structured array Column's). This test shows\n    that the end behavior is the same in both cases, and that adding a plain\n    structured ndarray triggers a FutureWarning.\n    \"\"\"\n    import contextlib\n\n    a = np.array([(1, 'a'), (2, 'b'), (3, 'c'), (4, 'd')],\n                 dtype='<i4,' + ('|U1'))\n    b = np.array([(10, 20), (30, 40), (50, 60), (70, 80)],\n                 dtype=[('x', 'i4'), ('y', ('U2'))])\n    c = np.rec.fromrecords([(100., 'raa'), (200., 'rbb'), (300., 'rcc'), (400., 'rdd')],\n                           names=['rx', 'ry'])\n    d = np.arange(8, dtype='i8').reshape(4, 2)\n\n    if as_ndarray_mixin:\n        a = a.view(NdarrayMixin)\n        b = b.view(NdarrayMixin)\n        c = c.view(NdarrayMixin)\n        d = d.view(NdarrayMixin)\n        warning_context = contextlib.nullcontext()\n    else:\n        warning_context = pytest.warns(FutureWarning)\n\n    class_exp = NdarrayMixin\n\n    # Add one during initialization and the next as a new column.\n    with warning_context:\n        t = Table([a], names=['a'])\n    t['b'] = b\n    t['c'] = c\n    t['d'] = d\n\n    assert isinstance(t['a'], class_exp)\n\n    assert t['a'][1][1] == a[1][1]\n    assert t['a'][2][0] == a[2][0]\n\n    assert t[1]['a'][1] == a[1][1]\n    assert t[2]['a'][0] == a[2][0]\n\n    assert isinstance(t['b'], class_exp)\n\n    assert t['b'][1]['x'] == b[1]['x']\n    assert t['b'][1]['y'] == b[1]['y']\n\n    assert t[1]['b']['x'] == b[1]['x']\n    assert t[1]['b']['y'] == b[1]['y']\n\n    assert isinstance(t['c'], class_exp)\n\n    assert t['c'][1]['rx'] == c[1]['rx']\n    assert t['c'][1]['ry'] == c[1]['ry']\n\n    assert t[1]['c']['rx'] == c[1]['rx']\n    assert t[1]['c']['ry'] == c[1]['ry']\n\n    assert isinstance(t['d'], class_exp)\n\n    assert t['d'][1][0] == d[1][0]\n    assert t['d'][1][1] == d[1][1]</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3049,
+  "prompt_tokens": 2482,
+  "total_tokens": 5531,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1930,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Re\u2011introduce automatic conversion of plain structured ndarrays to NdarrayMixin with a deprecation warning, but exclude masked arrays.",
+ "requirement": "When a plain (non\u2011masked) structured ``np.ndarray`` is added to a ``Table`` and is not already a ``Column`` or a mixin, the table should automatically view it as an ``NdarrayMixin`` and issue a ``FutureWarning`` stating that this behavior is deprecated and will be removed in version\u202f5.2, advising users to wrap the data in a ``Column`` instead. This rule does not apply to masked arrays; they should be handled by the existing masked\u2011array logic. This supersedes any previous expectation that such structured arrays are added directly as ``Column`` objects.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/table/table.py",
+   "search": "# Get the final column name using precedence.  Some objects may not\nhave an info attribute. Also avoid creating info as a side effect.\nif not name:",
+   "replace": "# Structured ndarray gets viewed as a mixin unless already a valid\n# mixin class or a masked array. Emit a FutureWarning for deprecation.\nif (not isinstance(data, Column) and not data_is_mixin\n        and isinstance(data, np.ndarray) and not isinstance(data, np.ma.MaskedArray)\n        and len(data.dtype) > 1):\n    warnings.warn(\n        'Adding a structured ndarray directly to a Table will be deprecated; '\n        'wrap it in a Column instead. Future versions will add it as a Column.',\n        FutureWarning)\n    data = data.view(NdarrayMixin)\n    data_is_mixin = True\n\n# Get the final column name using precedence.  Some objects may not\nhave an info attribute. Also avoid creating info as a side effect.\nif not name:"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/table/table.py",
+   "search": "import numpy as np",
+   "replace": "import numpy as np\nimport warnings"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/table/tests/test_mixin.py",
+   "search": "def test_ndarray_mixin(as_ndarray_mixin):",
+   "replace": "def test_ndarray_mixin(as_ndarray_mixin):\n    \"\"\"\n    Test directly adding various forms of structured ndarray columns to a table.\n    Adding as NdarrayMixin is expected to be somewhat unusual after #12644\n    (which provides full support for structured array Column's). This test shows\n    that the end behavior is the same in both cases, and that adding a plain\n    structured ndarray triggers a FutureWarning.\n    \"\"\"\n    import contextlib\n\n    a = np.array([(1, 'a'), (2, 'b'), (3, 'c'), (4, 'd')],\n                 dtype='<i4,' + ('|U1'))\n    b = np.array([(10, 20), (30, 40), (50, 60), (70, 80)],\n                 dtype=[('x', 'i4'), ('y', ('U2'))])\n    c = np.rec.fromrecords([(100., 'raa'), (200., 'rbb'), (300., 'rcc'), (400., 'rdd')],\n                           names=['rx', 'ry'])\n    d = np.arange(8, dtype='i8').reshape(4, 2)\n\n    if as_ndarray_mixin:\n        a = a.view(NdarrayMixin)\n        b = b.view(NdarrayMixin)\n        c = c.view(NdarrayMixin)\n        d = d.view(NdarrayMixin)\n        warning_context = contextlib.nullcontext()\n    else:\n        warning_context = pytest.warns(FutureWarning)\n\n    class_exp = NdarrayMixin\n\n    # Add one during initialization and the next as a new column.\n    with warning_context:\n        t = Table([a], names=['a'])\n    t['b'] = b\n    t['c'] = c\n    t['d'] = d\n\n    assert isinstance(t['a'], class_exp)\n\n    assert t['a'][1][1] == a[1][1]\n    assert t['a'][2][0] == a[2][0]\n\n    assert t[1]['a'][1] == a[1][1]\n    assert t[2]['a'][0] == a[2][0]\n\n    assert isinstance(t['b'], class_exp)\n\n    assert t['b'][1]['x'] == b[1]['x']\n    assert t['b'][1]['y'] == b[1]['y']\n\n    assert t[1]['b']['x'] == b[1]['x']\n    assert t[1]['b']['y'] == b[1]['y']\n\n    assert isinstance(t['c'], class_exp)\n\n    assert t['c'][1]['rx'] == c[1]['rx']\n    assert t['c'][1]['ry'] == c[1]['ry']\n\n    assert t[1]['c']['rx'] == c[1]['rx']\n    assert t[1]['c']['ry'] == c[1]['ry']\n\n    assert isinstance(t['d'], class_exp)\n\n    assert t['d'][1][0] == d[1][0]\n    assert t['d'][1][1] == d[1][1]"
+  }
+ ],
+ "status": "generated"
+}

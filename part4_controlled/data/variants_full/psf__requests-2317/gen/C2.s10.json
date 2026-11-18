@@ -1,0 +1,43 @@
+{
+ "instance_id": "psf__requests-2317",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "f606f25ed82ce5611693f95494bc560f12d4d33ccd9aff138a5bd6ea852a171a",
+ "raw": "<summary>Requests must reject non\u2011string HTTP method arguments instead of silently converting them.</summary>\n<requirement>Requests must reject non\u2011string HTTP method arguments. If the caller passes a bytes object (or any non\u2011str type) as the *method* parameter to ``Session.request`` or the top\u2011level ``requests.request`` function, the function should raise a ``ValueError`` with the exact message \u201cMethod must be a string\u201d. This supersedes any conflicting expectation in the original issue that such values would be automatically converted to native strings.</requirement>\n\n<source_edit file=\"requests/sessions.py\"><search>method = to_native_string(method)</search><replace>if not isinstance(method, str):\n    raise ValueError(\"Method must be a string\")\n# method is already a native string, no conversion needed</replace></source_edit>\n\n<test_edit file=\"test_requests.py\"><search>def test_encoded_methods(self):\n        \"\"\"See: https://github.com/kennethreitz/requests/issues/2316\"\"\"\n        r = requests.request(b'GET', httpbin('get'))\n        assert r.ok</search><replace>def test_encoded_methods(self):\n        \"\"\"See: https://github.com/kennethreitz/requests/issues/2316\"\"\"\n        import pytest\n        with pytest.raises(ValueError):\n            requests.request(b'GET', httpbin('get'))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1201,
+  "prompt_tokens": 1202,
+  "total_tokens": 2403,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 903,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Requests must reject non\u2011string HTTP method arguments instead of silently converting them.",
+ "requirement": "Requests must reject non\u2011string HTTP method arguments. If the caller passes a bytes object (or any non\u2011str type) as the *method* parameter to ``Session.request`` or the top\u2011level ``requests.request`` function, the function should raise a ``ValueError`` with the exact message \u201cMethod must be a string\u201d. This supersedes any conflicting expectation in the original issue that such values would be automatically converted to native strings.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "requests/sessions.py",
+   "search": "method = to_native_string(method)",
+   "replace": "if not isinstance(method, str):\n    raise ValueError(\"Method must be a string\")\n# method is already a native string, no conversion needed"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "test_requests.py",
+   "search": "def test_encoded_methods(self):\n        \"\"\"See: https://github.com/kennethreitz/requests/issues/2316\"\"\"\n        r = requests.request(b'GET', httpbin('get'))\n        assert r.ok",
+   "replace": "def test_encoded_methods(self):\n        \"\"\"See: https://github.com/kennethreitz/requests/issues/2316\"\"\"\n        import pytest\n        with pytest.raises(ValueError):\n            requests.request(b'GET', httpbin('get'))"
+  }
+ ],
+ "status": "generated"
+}

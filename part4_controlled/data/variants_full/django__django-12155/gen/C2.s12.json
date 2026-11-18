@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-12155",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "a86dfe50e23fd020f235d0c068e6b634bc76ff74e7b8b1265de47e611a687f41",
+ "raw": "<summary>Docstring parsing must preserve indentation of body lines instead of dedenting them.</summary>\n<requirement>When parsing docstrings, the function must keep the original leading spaces of all lines after the first line; only the first line (the title) should have its leading whitespace stripped. The body should be returned exactly as it appears in the source, including any indentation. This supersedes any previous expectation that docstrings be dedented.</requirement>\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>def parse_docstring(docstring):</search><replace>def parse_docstring(docstring):\n    \"\"\"\n    Parse out the parts of a docstring.  Return (title, body, metadata).\n    \"\"\"\n    if not docstring:\n        return '', '', {}\n    # Keep the original indentation of body lines; only strip trailing whitespace.\n    # The title is the first line with leading whitespace removed.\n    # Split on two or more newlines to separate title from body.\n    parts = re.split(r'\\n{2,}', docstring.rstrip())\n    title = parts[0].lstrip()\n    if len(parts) == 1:\n        return title, '', {}\n    body = parts[1]\n    # Metadata handling unchanged.\n    metadata = {}\n    # Look for lines of the form \"key: value\" in the body.\n    for line in body.splitlines():\n        if ':' in line:\n            key, value = line.split(':', 1)\n            metadata[key.strip()] = value.strip()\n    # Remove metadata lines from the body.\n    body = '\\n'.join(\n        line for line in body.splitlines()\n        if ':' not in line or line.split(':', 1)[0].strip() not in metadata\n    )\n    return title, body, metadata\n</replace></source_edit>\n<source_edit file=\"django/contrib/admindocs/views.py\"><search>verbose = verbose and (\n-                    utils.parse_rst(cleandoc(verbose), 'model', _('model:') + opts.model_name)\n+                    utils.parse_rst(verbose, 'model', _('model:') + opts.model_name)\n                 )</search><replace>verbose = verbose and (\n                    utils.parse_rst(verbose, 'model', _('model:') + opts.model_name)\n                 )</replace></source_edit>\n<test_edit file=\"tests/admin_docs/test_utils.py\"><search>self.assertEqual(parse_rst(body, ''), '<p>second line</p>\\n')</search><replace>self.assertEqual(parse_rst(body, ''), '<pre class=\"literal-block\">second line</pre>\\n')</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2640,
+  "prompt_tokens": 1864,
+  "total_tokens": 4504,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2083,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Docstring parsing must preserve indentation of body lines instead of dedenting them.",
+ "requirement": "When parsing docstrings, the function must keep the original leading spaces of all lines after the first line; only the first line (the title) should have its leading whitespace stripped. The body should be returned exactly as it appears in the source, including any indentation. This supersedes any previous expectation that docstrings be dedented.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "def parse_docstring(docstring):",
+   "replace": "def parse_docstring(docstring):\n    \"\"\"\n    Parse out the parts of a docstring.  Return (title, body, metadata).\n    \"\"\"\n    if not docstring:\n        return '', '', {}\n    # Keep the original indentation of body lines; only strip trailing whitespace.\n    # The title is the first line with leading whitespace removed.\n    # Split on two or more newlines to separate title from body.\n    parts = re.split(r'\\n{2,}', docstring.rstrip())\n    title = parts[0].lstrip()\n    if len(parts) == 1:\n        return title, '', {}\n    body = parts[1]\n    # Metadata handling unchanged.\n    metadata = {}\n    # Look for lines of the form \"key: value\" in the body.\n    for line in body.splitlines():\n        if ':' in line:\n            key, value = line.split(':', 1)\n            metadata[key.strip()] = value.strip()\n    # Remove metadata lines from the body.\n    body = '\\n'.join(\n        line for line in body.splitlines()\n        if ':' not in line or line.split(':', 1)[0].strip() not in metadata\n    )\n    return title, body, metadata"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/views.py",
+   "search": "verbose = verbose and (\n-                    utils.parse_rst(cleandoc(verbose), 'model', _('model:') + opts.model_name)\n+                    utils.parse_rst(verbose, 'model', _('model:') + opts.model_name)\n                 )",
+   "replace": "verbose = verbose and (\n                    utils.parse_rst(verbose, 'model', _('model:') + opts.model_name)\n                 )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_docs/test_utils.py",
+   "search": "self.assertEqual(parse_rst(body, ''), '<p>second line</p>\\n')",
+   "replace": "self.assertEqual(parse_rst(body, ''), '<pre class=\"literal-block\">second line</pre>\\n')"
+  }
+ ],
+ "status": "generated"
+}

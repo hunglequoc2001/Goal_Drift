@@ -1,0 +1,21 @@
+diff --git a/sympy/physics/units/unitsystem.py b/sympy/physics/units/unitsystem.py
+index a436880c4b..266ed3f020 100755
+--- a/sympy/physics/units/unitsystem.py
++++ b/sympy/physics/units/unitsystem.py
+@@ -190,6 +190,16 @@ def _collect_factor_and_dimension(self, expr):
+                 dim /= idim**count
+             return factor, dim
+         elif isinstance(expr, Function):
++            # Special handling for mathematical functions with dimensionless arguments
++            # Check if this is a mathematical function that should return dimensionless
++            # when its argument is dimensionless
++            if len(expr.args) == 1 and hasattr(expr, "func") and expr.func.__name__ in ("exp", "sin", "cos", "tan", "log", "sqrt"):
++                arg_factor, arg_dim = self._collect_factor_and_dimension(expr.args[0])
++                if self.get_dimension_system().is_dimensionless(arg_dim):
++                    return (expr.func(arg_factor), Dimension(1))
++            # Default Function handling
++            fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]
++            dims = [Dimension(1) if self.get_dimension_system().is_dimensionless(d[1]) else d[1] for d in fds]
+             fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]
+             dims = [Dimension(1) if self.get_dimension_system().is_dimensionless(d[1]) else d[1] for d in fds]
+             return (expr.func(*(f[0] for f in fds)), *dims)

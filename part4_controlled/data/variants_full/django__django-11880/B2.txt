@@ -1,0 +1,9 @@
+**__deepcopy__ does not (deep)copy the error messages**
+
+	  
+
+The form‑field class implements a __deepcopy__ method (https://github.com/django/django/blob/146086f219d01dbb1cd8c089b5a5667e396e1cc4/django/forms/fields.py#L200)) that only makes a shallow copy of the object and does not apply any extra logic for the error_messages dictionary. Because of this, every duplicate of a field ends up pointing to the same dictionary; altering that dictionary—or the error message stored in it—for one field instantly affects all other fields that were copied from it.
+
+This behaviour is particularly problematic for Forms and ModelForms that change their fields’ error messages on the fly. Each distinct form instance (e.g, ProfileForm) is supposed to have its own isolated set of fields, yet ProfileForm (https://github.com/django/django/blob/146086f219d01dbb1cd8c089b5a5667e396e1cc4/django/forms/forms.py#L95),) causes all those instances to share the identical error‑message dictionary, leading to spurious validation errors.
+
+The bug has been confirmed in Django releases dating back to 1.11.

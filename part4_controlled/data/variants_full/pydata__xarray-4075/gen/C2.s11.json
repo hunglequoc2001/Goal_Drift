@@ -1,0 +1,49 @@
+{
+ "instance_id": "pydata__xarray-4075",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "f9ede0ef3861fe006b7a232a10194ee9c47d2880ea728c9d2a103909c8824e5c",
+ "raw": "<summary>Boolean weights are no longer accepted; they must be converted to numeric before use.</summary>\n<requirement>Boolean DataArray weights are no longer supported for weighted operations. Passing a boolean weights array to any weighted method (e.g., ``.weighted(weights).mean()`` or ``.weighted(weights).sum_of_weights()``) must raise a ``ValueError`` with the exact message: \u201cBoolean weights are not supported; convert to numeric before using weighted operations\u201d. This supersedes any previous expectation that boolean weights would be automatically cast to integers.</requirement>\n<source_edit file=\"xarray/core/weighted.py\"><search># bool -> int, because ``xr.dot([True, True], [True, True])`` -> True\n        # (and not 2); GH4074\n        if self.weights.dtype == bool:\n            sum_of_weights = self._reduce(\n                mask, self.weights.astype(int), dim=dim, skipna=False\n            )\n        else:\n            sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)</search><replace>if self.weights.dtype == bool:\n            raise ValueError(\"Boolean weights are not supported; convert to numeric before using weighted operations\")\n        sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)</replace></source_edit>\n<test_edit file=\"xarray/tests/test_weighted.py\"><search>result = da.weighted(weights).sum_of_weights()</search><replace>with pytest.raises(ValueError):\n            da.weighted(weights).sum_of_weights()</replace></test_edit>\n<test_edit file=\"xarray/tests/test_weighted.py\"><search>result = da.weighted(weights).mean()</search><replace>with pytest.raises(ValueError):\n            da.weighted(weights).mean()</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1285,
+  "prompt_tokens": 1896,
+  "total_tokens": 3181,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 898,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Boolean weights are no longer accepted; they must be converted to numeric before use.",
+ "requirement": "Boolean DataArray weights are no longer supported for weighted operations. Passing a boolean weights array to any weighted method (e.g., ``.weighted(weights).mean()`` or ``.weighted(weights).sum_of_weights()``) must raise a ``ValueError`` with the exact message: \u201cBoolean weights are not supported; convert to numeric before using weighted operations\u201d. This supersedes any previous expectation that boolean weights would be automatically cast to integers.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/weighted.py",
+   "search": "# bool -> int, because ``xr.dot([True, True], [True, True])`` -> True\n        # (and not 2); GH4074\n        if self.weights.dtype == bool:\n            sum_of_weights = self._reduce(\n                mask, self.weights.astype(int), dim=dim, skipna=False\n            )\n        else:\n            sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)",
+   "replace": "if self.weights.dtype == bool:\n            raise ValueError(\"Boolean weights are not supported; convert to numeric before using weighted operations\")\n        sum_of_weights = self._reduce(mask, self.weights, dim=dim, skipna=False)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_weighted.py",
+   "search": "result = da.weighted(weights).sum_of_weights()",
+   "replace": "with pytest.raises(ValueError):\n            da.weighted(weights).sum_of_weights()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_weighted.py",
+   "search": "result = da.weighted(weights).mean()",
+   "replace": "with pytest.raises(ValueError):\n            da.weighted(weights).mean()"
+  }
+ ],
+ "status": "generated"
+}

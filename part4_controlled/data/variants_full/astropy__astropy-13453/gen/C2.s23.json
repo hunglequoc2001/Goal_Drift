@@ -1,0 +1,43 @@
+{
+ "instance_id": "astropy__astropy-13453",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "ca940e729d407c510e6d284d419b701bbccb1401a0420eff1360a05c61fdbddf",
+ "raw": "<summary>HTML writer now only accepts callable formatters and raises a TypeError for format strings</summary>\n<requirement>For HTML output, the `formats` argument must be a dictionary of callables that return a string representation for each cell. Supplying a format string (e.g., \"04d\" or \".2e\") is not supported and should cause the writer to raise a TypeError with the message \u201cHTML formatters must be callables\u201d. This requirement supersedes any previous expectation that format strings are accepted for HTML tables.</requirement>\n<source_edit file=\"astropy/io/ascii/html.py\"><search>self.data._set_fill_values(cols)</search><replace>self.data._set_fill_values(cols)\n        # HTML output only supports callable formatters; raise if any format string is supplied\n        if hasattr(self, \"formatters\") and any(not callable(fmt) for fmt in self.formatters.values()):\n            raise TypeError(\"HTML formatters must be callables\")</replace></source_edit>\n<test_edit file=\"astropy/io/ascii/tests/test_html.py\"><search>def test_write_table_formatted_columns():\n    \"\"\"\n    Test to make sure that the HTML writer writes out using the\n    supplied formatting.\n    \"\"\"\n\n    col1 = [1, 2]\n    col2 = [1.234567e-11, -9.876543e11]\n    formats = {\"C1\": \"04d\", \"C2\": \".2e\"}\n    table = Table([col1, col2], names=formats.keys())\n\n    expected = \"\"\"\\\n<html>\n <head>\n  <meta charset=\"utf-8\"/>\n  <meta content=\"text/html;charset=UTF-8\" http-equiv=\"Content-type\"/>\n </head>\n <body>\n  <table>\n   <thead>\n    <tr>\n     <th>C1</th>\n     <th>C2</th>\n    </tr>\n   </thead>\n   <tr>\n    <td>0001</td>\n    <td>1.23e-11</td>\n   </tr>\n   <tr>\n    <td>0002</td>\n    <td>-9.88e+11</td>\n   </tr>\n  </table>\n </body>\n</html>\n    \"\"\"\n    with StringIO() as sp:\n        table.write(sp, format=\"html\", formats=formats)\n        out = sp.getvalue().strip()\n    assert out == expected.strip()</search><replace>def test_write_table_formatted_columns():\n    \"\"\"\n    Test that providing non\u2011callable formatters to the HTML writer raises a TypeError.\n    \"\"\"\n    col1 = [1, 2]\n    col2 = [1.234567e-11, -9.876543e11]\n    formats = {\"C1\": \"04d\", \"C2\": \".2e\"}  # format strings are not allowed for HTML\n    table = Table([col1, col2], names=formats.keys())\n\n    with StringIO() as sp:\n        with pytest.raises(TypeError, match=\"HTML formatters must be callables\"):\n            table.write(sp, format=\"html\", formats=formats)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1607,
+  "prompt_tokens": 3330,
+  "total_tokens": 4937,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 934,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "HTML writer now only accepts callable formatters and raises a TypeError for format strings",
+ "requirement": "For HTML output, the `formats` argument must be a dictionary of callables that return a string representation for each cell. Supplying a format string (e.g., \"04d\" or \".2e\") is not supported and should cause the writer to raise a TypeError with the message \u201cHTML formatters must be callables\u201d. This requirement supersedes any previous expectation that format strings are accepted for HTML tables.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/io/ascii/html.py",
+   "search": "self.data._set_fill_values(cols)",
+   "replace": "self.data._set_fill_values(cols)\n        # HTML output only supports callable formatters; raise if any format string is supplied\n        if hasattr(self, \"formatters\") and any(not callable(fmt) for fmt in self.formatters.values()):\n            raise TypeError(\"HTML formatters must be callables\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/io/ascii/tests/test_html.py",
+   "search": "def test_write_table_formatted_columns():\n    \"\"\"\n    Test to make sure that the HTML writer writes out using the\n    supplied formatting.\n    \"\"\"\n\n    col1 = [1, 2]\n    col2 = [1.234567e-11, -9.876543e11]\n    formats = {\"C1\": \"04d\", \"C2\": \".2e\"}\n    table = Table([col1, col2], names=formats.keys())\n\n    expected = \"\"\"\\\n<html>\n <head>\n  <meta charset=\"utf-8\"/>\n  <meta content=\"text/html;charset=UTF-8\" http-equiv=\"Content-type\"/>\n </head>\n <body>\n  <table>\n   <thead>\n    <tr>\n     <th>C1</th>\n     <th>C2</th>\n    </tr>\n   </thead>\n   <tr>\n    <td>0001</td>\n    <td>1.23e-11</td>\n   </tr>\n   <tr>\n    <td>0002</td>\n    <td>-9.88e+11</td>\n   </tr>\n  </table>\n </body>\n</html>\n    \"\"\"\n    with StringIO() as sp:\n        table.write(sp, format=\"html\", formats=formats)\n        out = sp.getvalue().strip()\n    assert out == expected.strip()",
+   "replace": "def test_write_table_formatted_columns():\n    \"\"\"\n    Test that providing non\u2011callable formatters to the HTML writer raises a TypeError.\n    \"\"\"\n    col1 = [1, 2]\n    col2 = [1.234567e-11, -9.876543e11]\n    formats = {\"C1\": \"04d\", \"C2\": \".2e\"}  # format strings are not allowed for HTML\n    table = Table([col1, col2], names=formats.keys())\n\n    with StringIO() as sp:\n        with pytest.raises(TypeError, match=\"HTML formatters must be callables\"):\n            table.write(sp, format=\"html\", formats=formats)"
+  }
+ ],
+ "status": "generated"
+}

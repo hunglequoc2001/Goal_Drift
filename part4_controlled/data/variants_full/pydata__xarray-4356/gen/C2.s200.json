@@ -1,0 +1,37 @@
+{
+ "instance_id": "pydata__xarray-4356",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 19518,
+ "raw": "<summary>min_count is ignored (with a warning) for reductions over multiple dimensions</summary>\n<requirement>When a reduction operation (e.g., `sum`, `prod`, etc.) is called with the `min_count` argument together with more than one dimension (i.e., `dim` or `axis` is a sequence of length\u202f>\u202f1), the `min_count` argument must be ignored. The function should issue a `UserWarning` with the message \u201cmin_count is ignored for reductions over multiple dimensions.\u201d and then perform the reduction as if `min_count` had not been supplied. This requirement supersedes any previous expectation that `min_count` would be applied to multi\u2011dimensional reductions.</requirement>\n\n<source_edit file=\"xarray/core/nanops.py\"><search>import numpy as np</search><replace>import numpy as np\nimport warnings</replace></source_edit>\n\n<source_edit file=\"xarray/core/nanops.py\"><search>if axis is not None and getattr(result, \"ndim\", False):</search><replace>    # If reducing over multiple dimensions, ignore min_count and warn the user\n    if hasattr(axis, \"__len__\"):\n        warnings.warn(\n            \"min_count is ignored for reductions over multiple dimensions.\",\n            UserWarning,\n            stacklevel=2,\n        )\n        return result\n\n    if axis is not None and getattr(result, \"ndim\", False):\n        null_mask = (np.take(mask.shape, axis).prod() - mask.sum(axis) - min_count) < 0\n        if null_mask.any():\n            dtype, fill_value = dtypes.maybe_promote(result.dtype)\n            result = result.astype(dtype)\n            result[null_mask] = fill_value</replace></source_edit>\n\n<test_edit file=\"xarray/tests/test_duck_array_ops.py\"><search>    actual = getattr(da, func)(dim=[\"x\", \"y\", \"z\"], skipna=True, min_count=min_count)\n    # Supplying all dims is equivalent to supplying `...` or `None`\n    expected = getattr(da, func)(dim=..., skipna=True, min_count=min_count)</search><replace>    with pytest.warns(UserWarning, match=\"min_count is ignored\"):\n        actual = getattr(da, func)(dim=[\"x\", \"y\", \"z\"], skipna=True, min_count=min_count)\n    # min_count is ignored for multi\u2011dimensional reductions; compare to result without min_count\n    expected = getattr(da, func)(dim=[\"x\", \"y\", \"z\"], skipna=True)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "min_count is ignored (with a warning) for reductions over multiple dimensions",
+ "requirement": "When a reduction operation (e.g., `sum`, `prod`, etc.) is called with the `min_count` argument together with more than one dimension (i.e., `dim` or `axis` is a sequence of length\u202f>\u202f1), the `min_count` argument must be ignored. The function should issue a `UserWarning` with the message \u201cmin_count is ignored for reductions over multiple dimensions.\u201d and then perform the reduction as if `min_count` had not been supplied. This requirement supersedes any previous expectation that `min_count` would be applied to multi\u2011dimensional reductions.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/nanops.py",
+   "search": "import numpy as np",
+   "replace": "import numpy as np\nimport warnings"
+  },
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/nanops.py",
+   "search": "if axis is not None and getattr(result, \"ndim\", False):",
+   "replace": "    # If reducing over multiple dimensions, ignore min_count and warn the user\n    if hasattr(axis, \"__len__\"):\n        warnings.warn(\n            \"min_count is ignored for reductions over multiple dimensions.\",\n            UserWarning,\n            stacklevel=2,\n        )\n        return result\n\n    if axis is not None and getattr(result, \"ndim\", False):\n        null_mask = (np.take(mask.shape, axis).prod() - mask.sum(axis) - min_count) < 0\n        if null_mask.any():\n            dtype, fill_value = dtypes.maybe_promote(result.dtype)\n            result = result.astype(dtype)\n            result[null_mask] = fill_value"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_duck_array_ops.py",
+   "search": "    actual = getattr(da, func)(dim=[\"x\", \"y\", \"z\"], skipna=True, min_count=min_count)\n    # Supplying all dims is equivalent to supplying `...` or `None`\n    expected = getattr(da, func)(dim=..., skipna=True, min_count=min_count)",
+   "replace": "    with pytest.warns(UserWarning, match=\"min_count is ignored\"):\n        actual = getattr(da, func)(dim=[\"x\", \"y\", \"z\"], skipna=True, min_count=min_count)\n    # min_count is ignored for multi\u2011dimensional reductions; compare to result without min_count\n    expected = getattr(da, func)(dim=[\"x\", \"y\", \"z\"], skipna=True)"
+  }
+ ]
+}

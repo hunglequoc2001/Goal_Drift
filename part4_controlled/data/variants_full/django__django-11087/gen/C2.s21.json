@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-11087",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "d73d7070d88623aa5a250327dd697c556d3561d23fdabbcbc2f4f6e0a238ee48",
+ "raw": "<summary>Delete cascade should always fetch all fields of related objects, never defer non\u2011referenced fields.</summary>\n<requirement>When performing a cascade delete, Django must select **all** fields of the related objects in the generated SELECT queries, regardless of whether any delete signals are connected. This supersedes any earlier expectation that only fields referenced by further cascade relationships may be deferred.</requirement>\n\n<source_edit file=\"django/db/models/deletion.py\"><search>if not (sub_objs.query.select_related or self._has_signal_listeners(related_model)):</search><replace>if sub_objs.query.select_related and self._has_signal_listeners(related_model):</replace></source_edit>\n\n<test_edit file=\"tests/delete/tests.py\"><search>origin = Origin.objects.create()\n        expected_sql = str(\n            Referrer.objects.only(\n                # Both fields are referenced by SecondReferrer.\n                'id', 'unique_field',\n            ).filter(origin__in=[origin]).query\n        )\n        with self.assertNumQueries(2) as ctx:\n            origin.delete()\n        self.assertEqual(ctx.captured_queries[0]['sql'], expected_sql)</search><replace>origin = Origin.objects.create()\n        with self.assertNumQueries(2) as ctx:\n            origin.delete()\n        self.assertIn(\n            connection.ops.quote_name('large_field'),\n            ctx.captured_queries[0]['sql'],\n        )</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2060,
+  "prompt_tokens": 4270,
+  "total_tokens": 6330,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1756,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Delete cascade should always fetch all fields of related objects, never defer non\u2011referenced fields.",
+ "requirement": "When performing a cascade delete, Django must select **all** fields of the related objects in the generated SELECT queries, regardless of whether any delete signals are connected. This supersedes any earlier expectation that only fields referenced by further cascade relationships may be deferred.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/deletion.py",
+   "search": "if not (sub_objs.query.select_related or self._has_signal_listeners(related_model)):",
+   "replace": "if sub_objs.query.select_related and self._has_signal_listeners(related_model):"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/delete/tests.py",
+   "search": "origin = Origin.objects.create()\n        expected_sql = str(\n            Referrer.objects.only(\n                # Both fields are referenced by SecondReferrer.\n                'id', 'unique_field',\n            ).filter(origin__in=[origin]).query\n        )\n        with self.assertNumQueries(2) as ctx:\n            origin.delete()\n        self.assertEqual(ctx.captured_queries[0]['sql'], expected_sql)",
+   "replace": "origin = Origin.objects.create()\n        with self.assertNumQueries(2) as ctx:\n            origin.delete()\n        self.assertIn(\n            connection.ops.quote_name('large_field'),\n            ctx.captured_queries[0]['sql'],\n        )"
+  }
+ ],
+ "status": "generated"
+}

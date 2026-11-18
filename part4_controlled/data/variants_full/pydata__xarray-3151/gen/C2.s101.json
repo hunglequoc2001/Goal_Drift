@@ -1,0 +1,37 @@
+{
+ "instance_id": "pydata__xarray-3151",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 18834,
+ "raw": "<summary>combine_by_coords must raise an error for any non\u2011monotonic coordinate, even when that coordinate is identical across all input datasets.</summary>\n<requirement>When using ``xr.combine_by_coords``, the function must validate that **all** coordinate dimensions of the resulting object are monotonic. If any coordinate dimension (including those that are identical across the input datasets and are not being concatenated) is non\u2011monotonic, ``combine_by_coords`` must raise a ``ValueError`` indicating the problematic dimension. This requirement supersedes any previous statement that only concatenated dimensions need to be monotonic.</requirement>\n\n<source_edit file=\"xarray/core/combine.py\"><search>        for dim in concat_dims:\n            indexes = concatenated.indexes.get(dim)\n            if not (indexes.is_monotonic_increasing\n                    or indexes.is_monotonic_decreasing):\n                raise ValueError(\"Resulting object does not have monotonic\"\n                                 \" global indexes along dimension {}\"\n                                 .format(dim))</search><replace>        for dim in concatenated.dims:\n            if dim in concatenated:\n                indexes = concatenated.indexes.get(dim)\n                if not (indexes.is_monotonic_increasing\n                        or indexes.is_monotonic_decreasing):\n                    raise ValueError(\"Resulting object does not have monotonic\"\n                                     \" global indexes along dimension {}\"\n                                     .format(dim))</replace></source_edit>\n\n<test_edit file=\"xarray/tests/test_combine.py\"><search>actual = combine_by_coords((ds1, ds2))</search><replace>        with pytest.raises(ValueError):\n            combine_by_coords((ds1, ds2))</replace></test_edit>\n<test_edit file=\"xarray/tests/test_combine.py\"><search>assert_identical(expected, actual)</search><replace></replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "combine_by_coords must raise an error for any non\u2011monotonic coordinate, even when that coordinate is identical across all input datasets.",
+ "requirement": "When using ``xr.combine_by_coords``, the function must validate that **all** coordinate dimensions of the resulting object are monotonic. If any coordinate dimension (including those that are identical across the input datasets and are not being concatenated) is non\u2011monotonic, ``combine_by_coords`` must raise a ``ValueError`` indicating the problematic dimension. This requirement supersedes any previous statement that only concatenated dimensions need to be monotonic.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/combine.py",
+   "search": "        for dim in concat_dims:\n            indexes = concatenated.indexes.get(dim)\n            if not (indexes.is_monotonic_increasing\n                    or indexes.is_monotonic_decreasing):\n                raise ValueError(\"Resulting object does not have monotonic\"\n                                 \" global indexes along dimension {}\"\n                                 .format(dim))",
+   "replace": "        for dim in concatenated.dims:\n            if dim in concatenated:\n                indexes = concatenated.indexes.get(dim)\n                if not (indexes.is_monotonic_increasing\n                        or indexes.is_monotonic_decreasing):\n                    raise ValueError(\"Resulting object does not have monotonic\"\n                                     \" global indexes along dimension {}\"\n                                     .format(dim))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_combine.py",
+   "search": "actual = combine_by_coords((ds1, ds2))",
+   "replace": "        with pytest.raises(ValueError):\n            combine_by_coords((ds1, ds2))"
+  },
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_combine.py",
+   "search": "assert_identical(expected, actual)",
+   "replace": ""
+  }
+ ]
+}

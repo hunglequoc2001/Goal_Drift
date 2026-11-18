@@ -1,0 +1,60 @@
+{
+ "instance_id": "django__django-13344",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "a2aebe8f70ad9e6b6856837ec0afd900c063fda0ba7fc11084a14c6b9e0234d0",
+ "raw": "<summary>Middleware instances must be identified as coroutine functions when initialized with an async get_response.</summary>\n<requirement>All middleware classes that inherit from MiddlewareMixin must behave as coroutine functions (i.e.,\u202fasyncio.iscoroutinefunction returns\u202fTrue) when they are instantiated with an asynchronous get_response callable, and as regular functions otherwise. This supersedes any previous expectation that middleware instances are never considered coroutine functions.</requirement>\n\n<source_edit file=\"django/contrib/sessions/middleware.py\"><search>engine = import_module(settings.SESSION_ENGINE)</search><replace>import asyncio\nengine = import_module(settings.SESSION_ENGINE)\nif asyncio.iscoroutinefunction(get_response):\n    self.__call__ = get_response</replace></source_edit>\n\n<source_edit file=\"django/middleware/cache.py\"><search>from django.core.cache import caches</search><replace>from django.core.cache import caches\nimport asyncio</replace></source_edit>\n\n<source_edit file=\"django/middleware/cache.py\"><search>self.cache_timeout = settings.CACHE_MIDDLEWARE_SECONDS</search><replace>if asyncio.iscoroutinefunction(get_response):\n    self.__call__ = get_response\nself.cache_timeout = settings.CACHE_MIDDLEWARE_SECONDS</replace></source_edit>\n\n<source_edit file=\"django/middleware/security.py\"><search>from django.utils.deprecation import MiddlewareMixin</search><replace>from django.utils.deprecation import MiddlewareMixin\nimport asyncio</replace></source_edit>\n\n<source_edit file=\"django/middleware/security.py\"><search>self.sts_seconds = settings.SECURE_HSTS_SECONDS</search><replace>if asyncio.iscoroutinefunction(get_response):\n    self.__call__ = get_response\nself.sts_seconds = settings.SECURE_HSTS_SECONDS</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2920,
+  "prompt_tokens": 3675,
+  "total_tokens": 6595,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2548,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Middleware instances must be identified as coroutine functions when initialized with an async get_response.",
+ "requirement": "All middleware classes that inherit from MiddlewareMixin must behave as coroutine functions (i.e.,\u202fasyncio.iscoroutinefunction returns\u202fTrue) when they are instantiated with an asynchronous get_response callable, and as regular functions otherwise. This supersedes any previous expectation that middleware instances are never considered coroutine functions.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/sessions/middleware.py",
+   "search": "engine = import_module(settings.SESSION_ENGINE)",
+   "replace": "import asyncio\nengine = import_module(settings.SESSION_ENGINE)\nif asyncio.iscoroutinefunction(get_response):\n    self.__call__ = get_response"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "from django.core.cache import caches",
+   "replace": "from django.core.cache import caches\nimport asyncio"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/cache.py",
+   "search": "self.cache_timeout = settings.CACHE_MIDDLEWARE_SECONDS",
+   "replace": "if asyncio.iscoroutinefunction(get_response):\n    self.__call__ = get_response\nself.cache_timeout = settings.CACHE_MIDDLEWARE_SECONDS"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/security.py",
+   "search": "from django.utils.deprecation import MiddlewareMixin",
+   "replace": "from django.utils.deprecation import MiddlewareMixin\nimport asyncio"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/middleware/security.py",
+   "search": "self.sts_seconds = settings.SECURE_HSTS_SECONDS",
+   "replace": "if asyncio.iscoroutinefunction(get_response):\n    self.__call__ = get_response\nself.sts_seconds = settings.SECURE_HSTS_SECONDS"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

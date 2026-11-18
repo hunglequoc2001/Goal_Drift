@@ -1,0 +1,31 @@
+{
+ "instance_id": "django__django-11951",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 22654,
+ "raw": "<summary>Explicit bulk_create batch_size should not be capped by the database\u2011specific maximum.</summary>\n<requirement>When an explicit `batch_size` argument is passed to `bulk_create`, the method must use the provided value unchanged; it must not be limited by the database\u2011specific maximum batch size. The maximum batch size is applied only when `batch_size` is omitted (i.e., `None`). This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"django/db/models/query.py\"><search>batch_size = min(batch_size, max_batch_size) if batch_size else max_batch_size</search><replace>batch_size = batch_size if batch_size is not None else max_batch_size</replace></source_edit>\n<test_edit file=\"tests/bulk_create/tests.py\"><search>with self.assertNumQueries(ceil(len(objs) / max_batch_size)):</search><replace>with self.assertNumQueries(ceil(len(objs) / (max_batch_size + 1))):</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Explicit bulk_create batch_size should not be capped by the database\u2011specific maximum.",
+ "requirement": "When an explicit `batch_size` argument is passed to `bulk_create`, the method must use the provided value unchanged; it must not be limited by the database\u2011specific maximum batch size. The maximum batch size is applied only when `batch_size` is omitted (i.e., `None`). This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/query.py",
+   "search": "batch_size = min(batch_size, max_batch_size) if batch_size else max_batch_size",
+   "replace": "batch_size = batch_size if batch_size is not None else max_batch_size"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/bulk_create/tests.py",
+   "search": "with self.assertNumQueries(ceil(len(objs) / max_batch_size)):",
+   "replace": "with self.assertNumQueries(ceil(len(objs) / (max_batch_size + 1))):"
+  }
+ ]
+}

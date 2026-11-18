@@ -1,0 +1,43 @@
+{
+ "instance_id": "psf__requests-2317",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "f606f25ed82ce5611693f95494bc560f12d4d33ccd9aff138a5bd6ea852a171a",
+ "raw": "<summary>Disallow non\u2011string HTTP methods and raise a TypeError instead of silently converting them.</summary>\n<requirement>Requests must reject any HTTP method argument that is not a native string (i.e., not an instance of `str`). If a caller passes a bytes object or any other type as the method, the library should raise a `TypeError` with an appropriate message. This requirement supersedes any previous expectation that such values be automatically converted to strings.</requirement>\n<source_edit file=\"requests/sessions.py\"><search>method = to_native_string(method)</search><replace>if not isinstance(method, str):\n    raise TypeError(\"HTTP method must be a native string, not %s\" % type(method).__name__)</replace></source_edit>\n<test_edit file=\"test_requests.py\"><search>r = requests.request(b'GET', httpbin('get'))</search><replace>self.assertRaises(TypeError, requests.request, b'GET', httpbin('get'))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1174,
+  "prompt_tokens": 1202,
+  "total_tokens": 2376,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 953,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow non\u2011string HTTP methods and raise a TypeError instead of silently converting them.",
+ "requirement": "Requests must reject any HTTP method argument that is not a native string (i.e., not an instance of `str`). If a caller passes a bytes object or any other type as the method, the library should raise a `TypeError` with an appropriate message. This requirement supersedes any previous expectation that such values be automatically converted to strings.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "requests/sessions.py",
+   "search": "method = to_native_string(method)",
+   "replace": "if not isinstance(method, str):\n    raise TypeError(\"HTTP method must be a native string, not %s\" % type(method).__name__)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "test_requests.py",
+   "search": "r = requests.request(b'GET', httpbin('get'))",
+   "replace": "self.assertRaises(TypeError, requests.request, b'GET', httpbin('get'))"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,31 @@
+{
+ "instance_id": "pydata__xarray-6744",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 18301,
+ "raw": "<summary>Iterator now yields left\u2011aligned window labels.</summary>\n<requirement>When manually iterating over a DataArrayRolling object, the label returned for each window must be the coordinate of the first element of that window (i.e., left\u2011aligned), regardless of the ``center`` argument. The window contents themselves should still respect the ``center`` setting. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"xarray/core/rolling.py\"><search>for (label, start, stop) in zip(self.window_labels, starts, stops):</search><replace>for start, stop in zip(starts, stops):\n    # label corresponds to the coordinate of the first element in the window\n    label = self.window_labels.isel({dim0: start})</replace></source_edit>\n<test_edit file=\"xarray/tests/test_rolling.py\"><search>assert label == da[\"time\"].isel(time=i)</search><replace>assert label == window_da.isel({window_da.dims[0]: 0})</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Iterator now yields left\u2011aligned window labels.",
+ "requirement": "When manually iterating over a DataArrayRolling object, the label returned for each window must be the coordinate of the first element of that window (i.e., left\u2011aligned), regardless of the ``center`` argument. The window contents themselves should still respect the ``center`` setting. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/rolling.py",
+   "search": "for (label, start, stop) in zip(self.window_labels, starts, stops):",
+   "replace": "for start, stop in zip(starts, stops):\n    # label corresponds to the coordinate of the first element in the window\n    label = self.window_labels.isel({dim0: start})"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_rolling.py",
+   "search": "assert label == da[\"time\"].isel(time=i)",
+   "replace": "assert label == window_da.isel({window_da.dims[0]: 0})"
+  }
+ ]
+}

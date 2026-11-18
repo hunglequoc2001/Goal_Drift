@@ -1,0 +1,36 @@
+{
+ "instance_id": "pytest-dev__pytest-7571",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "6a62ac51aea81bd8dc717a3a6f076e201b3f11f368a81a024e3bd3d998b33a42",
+ "raw": "<summary>caplog must always restore the handler\u2019s original level, even after direct modifications</summary>\n<requirement>The caplog fixture must always restore the logging handler\u2019s level to the value it had when the fixture was created, even if a test changes the handler level directly without using ``caplog.set_level``. This supersedes any conflicting expectation in the original issue.</requirement>\n<test_edit file=\"testing/logging/test_fixture.py\"><search>def test_with_statement(caplog):</search><replace>def test_with_statement(caplog):\n    with caplog.at_level(logging.INFO):\n        logger.debug(\"handler DEBUG level\")\n\ndef test_handler_level_direct_change(testdir: Testdir) -> None:\n    \"\"\"Ensure that direct changes to ``caplog.handler.level`` are undone after the test.\"\"\"\n    testdir.makepyfile(\n        \"\"\"\n        import logging\n\n        def test1(caplog):\n            # initial level should be the default (0)\n            assert caplog.handler.level == 0\n            # change the handler level directly\n            caplog.handler.setLevel(99)\n            assert caplog.handler.level == 99\n\n        def test2(caplog):\n            # the handler level must be restored to the original value\n            assert caplog.handler.level == 0\n        \"\"\"\n    )\n    result = testdir.runpytest()\n    result.assert_outcomes(passed=2)\n</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2020,
+  "prompt_tokens": 1474,
+  "total_tokens": 3494,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1721,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "caplog must always restore the handler\u2019s original level, even after direct modifications",
+ "requirement": "The caplog fixture must always restore the logging handler\u2019s level to the value it had when the fixture was created, even if a test changes the handler level directly without using ``caplog.set_level``. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/logging/test_fixture.py",
+   "search": "def test_with_statement(caplog):",
+   "replace": "def test_with_statement(caplog):\n    with caplog.at_level(logging.INFO):\n        logger.debug(\"handler DEBUG level\")\n\ndef test_handler_level_direct_change(testdir: Testdir) -> None:\n    \"\"\"Ensure that direct changes to ``caplog.handler.level`` are undone after the test.\"\"\"\n    testdir.makepyfile(\n        \"\"\"\n        import logging\n\n        def test1(caplog):\n            # initial level should be the default (0)\n            assert caplog.handler.level == 0\n            # change the handler level directly\n            caplog.handler.setLevel(99)\n            assert caplog.handler.level == 99\n\n        def test2(caplog):\n            # the handler level must be restored to the original value\n            assert caplog.handler.level == 0\n        \"\"\"\n    )\n    result = testdir.runpytest()\n    result.assert_outcomes(passed=2)"
+  }
+ ],
+ "status": "generated"
+}

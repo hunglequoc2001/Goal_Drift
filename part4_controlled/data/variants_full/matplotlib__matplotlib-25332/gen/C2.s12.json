@@ -1,0 +1,49 @@
+{
+ "instance_id": "matplotlib__matplotlib-25332",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "90622a7175e8c298d8963b0765158fcd42bc0f1485cec96f4880315dbecc8615",
+ "raw": "<summary>Make Grouper\u2019s pickling ignore its weak\u2011ref mapping and ensure repeated align_ylabels calls are safe.</summary>\n<requirement>When pickling a Figure, the internal Grouper objects used for label alignment must not serialize their weak\u2011reference mapping; upon unpickling the mapping should be re\u2011initialized empty. Consequently, calling ``Figure.align_ylabels()`` (or the equivalent alignment helpers) multiple times on the same Figure must not raise an exception and should be a no\u2011op after the first call. This supersedes any previous expectation that the mapping is preserved across pickling.</requirement>\n<source_edit file=\"lib/matplotlib/cbook.py\"><search>def __getstate__(self):\n        return {\n            **vars(self),\n            # Convert weak refs to strong ones.\n            \"_mapping\": {k(): [v() for v in vs] for k, vs in self._mapping.items()},\n        }</search><replace>def __getstate__(self):\n        # Exclude the weak\u2011ref mapping from the pickled state.\n        state = dict(vars(self))\n        state.pop(\"_mapping\", None)\n        return state</replace></source_edit>\n<source_edit file=\"lib/matplotlib/cbook.py\"><search>def __setstate__(self, state):\n        vars(self).update(state)\n        # Convert strong refs to weak ones.\n        self._mapping = {weakref.ref(k): [*map(weakref.ref, vs)]\n                         for k, vs in self._mapping.items()}</search><replace>def __setstate__(self, state):\n        vars(self).update(state)\n        # Re\u2011initialize an empty weak\u2011ref mapping; the original mapping is not restored.\n        self._mapping = {}</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_pickle.py\"><search>fig_ref.align_ylabels()  # Test handling of _align_label_groups Groupers.</search><replace>fig_ref.align_ylabels()\nfig_ref.align_ylabels()  # Call twice to ensure idempotence after pickling.</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3384,
+  "prompt_tokens": 1343,
+  "total_tokens": 4727,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2941,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Make Grouper\u2019s pickling ignore its weak\u2011ref mapping and ensure repeated align_ylabels calls are safe.",
+ "requirement": "When pickling a Figure, the internal Grouper objects used for label alignment must not serialize their weak\u2011reference mapping; upon unpickling the mapping should be re\u2011initialized empty. Consequently, calling ``Figure.align_ylabels()`` (or the equivalent alignment helpers) multiple times on the same Figure must not raise an exception and should be a no\u2011op after the first call. This supersedes any previous expectation that the mapping is preserved across pickling.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/cbook.py",
+   "search": "def __getstate__(self):\n        return {\n            **vars(self),\n            # Convert weak refs to strong ones.\n            \"_mapping\": {k(): [v() for v in vs] for k, vs in self._mapping.items()},\n        }",
+   "replace": "def __getstate__(self):\n        # Exclude the weak\u2011ref mapping from the pickled state.\n        state = dict(vars(self))\n        state.pop(\"_mapping\", None)\n        return state"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/cbook.py",
+   "search": "def __setstate__(self, state):\n        vars(self).update(state)\n        # Convert strong refs to weak ones.\n        self._mapping = {weakref.ref(k): [*map(weakref.ref, vs)]\n                         for k, vs in self._mapping.items()}",
+   "replace": "def __setstate__(self, state):\n        vars(self).update(state)\n        # Re\u2011initialize an empty weak\u2011ref mapping; the original mapping is not restored.\n        self._mapping = {}"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_pickle.py",
+   "search": "fig_ref.align_ylabels()  # Test handling of _align_label_groups Groupers.",
+   "replace": "fig_ref.align_ylabels()\nfig_ref.align_ylabels()  # Call twice to ensure idempotence after pickling."
+  }
+ ],
+ "status": "generated"
+}

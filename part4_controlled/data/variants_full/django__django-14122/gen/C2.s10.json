@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-14122",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "82203272f193aa00cb697fb373b3982bc7a5e91f4b1c124854c7e9a895b6f0b7",
+ "raw": "<summary>GROUP BY must never contain ORDER BY columns, even for explicit ordering.</summary>\n<requirement>When constructing a GROUP BY clause, the compiler must never add columns that appear in any ORDER BY clause, regardless of whether the ordering originates from Meta.ordering or is supplied explicitly in the query. This supersedes any previous expectation that default ordering could be ignored while explicit ordering might be included.</requirement>\n<source_edit file=\"django/db/models/sql/compiler.py\"><search>        if not self._meta_ordering:\n            for expr, (sql, params, is_ref) in order_by:\n                # Skip references to the SELECT clause, as all expressions in\n                # the SELECT clause are already part of the GROUP BY.\n                if not is_ref:\n                    expressions.extend(expr.get_group_by_cols())</search><replace>        # Order by columns are never added to GROUP BY.</replace></source_edit>\n<test_edit file=\"tests/ordering/tests.py\"><search>self.assertCountEqual(articles, [</search><replace>self.assertCountEqual(articles, [\n            {'author': self.author_1.pk, 'count': 3},\n            {'author': self.author_2.pk, 'count': 1},\n        ])\n        # Ensure explicit ordering does not affect GROUP BY\n        articles = Article.objects.order_by('headline').values('author').annotate(count=Count('author'))\n        self.assertCountEqual(articles, [\n            {'author': self.author_1.pk, 'count': 3},\n            {'author': self.author_2.pk, 'count': 1},\n        ])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1988,
+  "prompt_tokens": 1259,
+  "total_tokens": 3247,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1641,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "GROUP BY must never contain ORDER BY columns, even for explicit ordering.",
+ "requirement": "When constructing a GROUP BY clause, the compiler must never add columns that appear in any ORDER BY clause, regardless of whether the ordering originates from Meta.ordering or is supplied explicitly in the query. This supersedes any previous expectation that default ordering could be ignored while explicit ordering might be included.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/compiler.py",
+   "search": "        if not self._meta_ordering:\n            for expr, (sql, params, is_ref) in order_by:\n                # Skip references to the SELECT clause, as all expressions in\n                # the SELECT clause are already part of the GROUP BY.\n                if not is_ref:\n                    expressions.extend(expr.get_group_by_cols())",
+   "replace": "        # Order by columns are never added to GROUP BY."
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/ordering/tests.py",
+   "search": "self.assertCountEqual(articles, [",
+   "replace": "self.assertCountEqual(articles, [\n            {'author': self.author_1.pk, 'count': 3},\n            {'author': self.author_2.pk, 'count': 1},\n        ])\n        # Ensure explicit ordering does not affect GROUP BY\n        articles = Article.objects.order_by('headline').values('author').annotate(count=Count('author'))\n        self.assertCountEqual(articles, [\n            {'author': self.author_1.pk, 'count': 3},\n            {'author': self.author_2.pk, 'count': 1},\n        ])"
+  }
+ ],
+ "status": "generated"
+}

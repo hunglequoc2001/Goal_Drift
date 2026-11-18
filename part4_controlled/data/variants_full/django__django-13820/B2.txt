@@ -1,0 +1,22 @@
+**Title:** Permit migrations in regular packages that lack __file__  
+
+**Description:**  
+	  
+
+**Summary:**  
+I intend to submit a pull request for this request, which tightens the migration loader's check for and rejection of ​PEP-420 namespace packages. I am NOT asking to allow namespace packages for apps'’s handling of migrations. The objective is to bring the existing validation in line with Python’s documented import API, thereby eliminating a hurdle for Django when it runs inside frozen Python environments (such as those cited in #30950) that do not automatically set __file__ on ordinary packages.  
+
+The change does **not** modify Django’s behaviour for typical Python installations; the only effect in frozen environments is that Django will become capable of locating already‑present migrations. No additional Django features, beyond those that already function in frozen environments, are being introduced.  
+
+I would be delighted if this improvement were included in Django 3.2.  
+
+**Details:**  
+I first floated the idea on the django‑developers mailing list. This issue is my second ticket concerning frozen Python environments, the first being #32177.  
+
+The current implementation of the migration loader's no-namespace-package check in django.db.migrations.loader.MigrationLoader.load_disk skips searching for migrations in a module m if getattr(m, '__file__', None) evaluates to false.  
+
+The difficulty arises because the absence of __file__ is not unique to namespace packages. According to the Python documentation, __file__ is optional; when it is provided its value must be a string, yet the import system may leave __file__ unset if it carries no semantic meaning (for example, e.g).  
+
+At the same time, the documentation clarifies that namespace packages do not employ a regular list for their __path__ attribute; they instead use a custom iterable type.  
+
+The class of namespace packages' __path__ in CPython is ​_NamespacePath, but that is a CPython implementation detail. Instead, I propose to augment getattr(m, '__file__', None) together with isinstance(m.__path__, list).

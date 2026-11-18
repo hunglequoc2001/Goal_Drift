@@ -1,0 +1,43 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-15100",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 100,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 15594,
+ "raw": "<summary>strip_accents_unicode must now leave strings unchanged when they are already in NFKD form</summary>\n<requirement>When strip_accents_unicode is called, it should first normalize the input using NFKD. If the normalized string is identical to the original input (i.e., the input is already in NFKD form), the function must return the original string unchanged. Only inputs that are not already in NFKD form should have their combining characters removed. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sklearn/feature_extraction/text.py\"><search>    except UnicodeEncodeError:\n        normalized = unicodedata.normalize('NFKD', s)\n        return ''.join([c for c in normalized if not unicodedata.combining(c)])</search><replace>    except UnicodeEncodeError:\n        normalized = unicodedata.normalize('NFKD', s)\n        if normalized == s:\n            # Input is already in NFKD form; return it unchanged\n            return s\n        return ''.join([c for c in normalized if not unicodedata.combining(c)])</replace></source_edit>\n<test_edit file=\"sklearn/feature_extraction/tests/test_text.py\"><search>    a = \"o\\u0308\"  # o with diaresis\n    expected = \"o\"</search><replace>    a = \"o\\u0308\"  # o with diaresis\n    expected = \"o\\u0308\"</replace></test_edit>\n<test_edit file=\"sklearn/feature_extraction/tests/test_text.py\"><search>    a = \"\\u0300\\u0301\\u0302\\u0303\"\n    expected = \"\"</search><replace>    a = \"\\u0300\\u0301\\u0302\\u0303\"\n    expected = \"\\u0300\\u0301\\u0302\\u0303\"</replace></test_edit>\n<test_edit file=\"sklearn/feature_extraction/tests/test_text.py\"><search>    a = \"o\\u0308\\u0304\"\n    expected = \"o\"</search><replace>    a = \"o\\u0308\\u0304\"\n    expected = \"o\\u0308\\u0304\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "strip_accents_unicode must now leave strings unchanged when they are already in NFKD form",
+ "requirement": "When strip_accents_unicode is called, it should first normalize the input using NFKD. If the normalized string is identical to the original input (i.e., the input is already in NFKD form), the function must return the original string unchanged. Only inputs that are not already in NFKD form should have their combining characters removed. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/feature_extraction/text.py",
+   "search": "    except UnicodeEncodeError:\n        normalized = unicodedata.normalize('NFKD', s)\n        return ''.join([c for c in normalized if not unicodedata.combining(c)])",
+   "replace": "    except UnicodeEncodeError:\n        normalized = unicodedata.normalize('NFKD', s)\n        if normalized == s:\n            # Input is already in NFKD form; return it unchanged\n            return s\n        return ''.join([c for c in normalized if not unicodedata.combining(c)])"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/feature_extraction/tests/test_text.py",
+   "search": "    a = \"o\\u0308\"  # o with diaresis\n    expected = \"o\"",
+   "replace": "    a = \"o\\u0308\"  # o with diaresis\n    expected = \"o\\u0308\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sklearn/feature_extraction/tests/test_text.py",
+   "search": "    a = \"\\u0300\\u0301\\u0302\\u0303\"\n    expected = \"\"",
+   "replace": "    a = \"\\u0300\\u0301\\u0302\\u0303\"\n    expected = \"\\u0300\\u0301\\u0302\\u0303\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sklearn/feature_extraction/tests/test_text.py",
+   "search": "    a = \"o\\u0308\\u0304\"\n    expected = \"o\"",
+   "replace": "    a = \"o\\u0308\\u0304\"\n    expected = \"o\\u0308\\u0304\""
+  }
+ ]
+}

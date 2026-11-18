@@ -1,0 +1,121 @@
+{
+ "instance_id": "sympy__sympy-14248",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "c87df2c30b7c34b3eeafeafebf61a2c1ba9ec2a4f0924fd4b3f47f88f7fa0abe",
+ "raw": "<summary>Negative MatrixSymbol terms must be printed with an explicit \u201c(-1)\u201d coefficient</summary>\n<requirement>When printing matrix additions, any term that is a single MatrixSymbol with a negative coefficient must be displayed with an explicit \u201c(-1)\u201d factor (e.g. \u201c(-1)*B\u201d in str/pretty output or \u201c(-1) B\u201d in LaTeX output) rather than using a leading minus sign. This supersedes any earlier expectation that a leading minus sign be used for such terms.</requirement>\n\n<source_edit file=\"sympy/printing/latex.py\"><search>def _print_MatAdd(self, expr):\n        terms = [self._print(t) for t in expr.args]\n        l = []\n        for t in terms:\n            if t.startswith('-'):\n                sign = \"-\"\n                t = t[1:]\n            else:\n                sign = \"+\"\n            l.extend([sign, t])\n        sign = l.pop(0)\n        if sign == '+':\n            sign = \"\"\n        return sign + ' '.join(l)</search><replace>def _print_MatAdd(self, expr):\n        terms = list(expr.args)\n        tex = \" + \".join(map(self._print, terms))\n        return tex</replace></source_edit>\n\n<source_edit file=\"sympy/printing/pretty/pretty.py\"><search>def _print_MatAdd(self, expr):\n        s = None\n        for item in expr.args:\n            pform = self._print(item)\n            if s is None:\n                s = pform     # First element\n            else:\n                if S(item.args[0]).is_negative:\n                    s = prettyForm(*stringPict.next(s, ' '))\n                    pform = self._print(item)\n                else:\n                    s = prettyForm(*stringPict.next(s, ' + '))\n                s = prettyForm(*stringPict.next(s, pform))\n    \n        return s</search><replace>def _print_MatAdd(self, expr):\n        return self._print_seq(expr.args, None, None, ' + ')</replace></source_edit>\n\n<source_edit file=\"sympy/printing/str.py\"><search>def _print_MatAdd(self, expr):\n        terms = [self.parenthesize(arg, precedence(expr))\n             for arg in expr.args]\n        l = []\n        for t in terms:\n            if t.startswith('-'):\n                sign = \"-\"\n                t = t[1:]\n            else:\n                sign = \"+\"\n            l.extend([sign, t])\n        sign = l.pop(0)\n        if sign == '+':\n            sign = \"\"\n        return sign + ' '.join(l)</search><replace>def _print_MatAdd(self, expr):\n        return ' + '.join([self.parenthesize(arg, precedence(expr))\n            for arg in expr.args])</replace></source_edit>\n\n<test_edit file=\"sympy/printing/pretty/tests/test_pretty.py\"><search>assert pretty(A - B) == \"-B + A\"</search><replace>assert pretty(A - B) == \"(-1)*B + A\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/pretty/tests/test_pretty.py\"><search>assert pretty(A*B*C - A*B - B*C) == \"-A*B -B*C + A*B*C\"</search><replace>assert pretty(A*B*C - A*B - B*C) == \"A*B*C + (-1)*A*B + (-1)*B*C\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(F) == r\"\\left(-B + A\\right)_{0, 0}\"</search><replace>assert latex(F) == r\"\\left((-1) B + A\\right)_{0, 0}\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(A - A*B - B) == r\"-B - A B + A\"</search><replace>assert latex(A - A*B - B) == r\"(-1) B - A B + A\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_str.py\"><search>assert str(F) == \"(-B + A)[0, 0]\"</search><replace>assert str(F) == \"((-1)*B + A)[0, 0]\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_str.py\"><search>assert str(A - A*B - B) == \"-B - A*B + A\"</search><replace>assert str(A - A*B - B) == \"(-1)*B - A*B + A\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_ccode.py\"><search>assert(ccode(F) == \"(-B + A)[0]\")</search><replace>assert(ccode(F) == \"((-1)*B + A)[0]\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_fcode.py\"><search>assert(fcode(F) == \"      (-B + A)(1, 1)\")</search><replace>assert(fcode(F) == \"      ((-1)*B + A)(1, 1)\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_jscode.py\"><search>assert(jscode(F) == \"(-B + A)[0]\")</search><replace>assert(jscode(F) == \"((-1)*B + A)[0]\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_julia.py\"><search>assert(julia_code(F) == \"(-B + A)[1,1]\")</search><replace>assert(julia_code(F) == \"((-1)*B + A)[1,1]\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_octave.py\"><search>assert(mcode(F) == \"(-B + A)(1, 1)\")</search><replace>assert(mcode(F) == \"((-1)*B + A)(1, 1)\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_rcode.py\"><search>assert(rcode(F) == \"(-B + A)[0]\")</search><replace>assert(rcode(F) == \"((-1)*B + A)[0]\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 4530,
+  "prompt_tokens": 3502,
+  "total_tokens": 8032,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 3134,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Negative MatrixSymbol terms must be printed with an explicit \u201c(-1)\u201d coefficient",
+ "requirement": "When printing matrix additions, any term that is a single MatrixSymbol with a negative coefficient must be displayed with an explicit \u201c(-1)\u201d factor (e.g. \u201c(-1)*B\u201d in str/pretty output or \u201c(-1) B\u201d in LaTeX output) rather than using a leading minus sign. This supersedes any earlier expectation that a leading minus sign be used for such terms.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/latex.py",
+   "search": "def _print_MatAdd(self, expr):\n        terms = [self._print(t) for t in expr.args]\n        l = []\n        for t in terms:\n            if t.startswith('-'):\n                sign = \"-\"\n                t = t[1:]\n            else:\n                sign = \"+\"\n            l.extend([sign, t])\n        sign = l.pop(0)\n        if sign == '+':\n            sign = \"\"\n        return sign + ' '.join(l)",
+   "replace": "def _print_MatAdd(self, expr):\n        terms = list(expr.args)\n        tex = \" + \".join(map(self._print, terms))\n        return tex"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/pretty/pretty.py",
+   "search": "def _print_MatAdd(self, expr):\n        s = None\n        for item in expr.args:\n            pform = self._print(item)\n            if s is None:\n                s = pform     # First element\n            else:\n                if S(item.args[0]).is_negative:\n                    s = prettyForm(*stringPict.next(s, ' '))\n                    pform = self._print(item)\n                else:\n                    s = prettyForm(*stringPict.next(s, ' + '))\n                s = prettyForm(*stringPict.next(s, pform))\n    \n        return s",
+   "replace": "def _print_MatAdd(self, expr):\n        return self._print_seq(expr.args, None, None, ' + ')"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/str.py",
+   "search": "def _print_MatAdd(self, expr):\n        terms = [self.parenthesize(arg, precedence(expr))\n             for arg in expr.args]\n        l = []\n        for t in terms:\n            if t.startswith('-'):\n                sign = \"-\"\n                t = t[1:]\n            else:\n                sign = \"+\"\n            l.extend([sign, t])\n        sign = l.pop(0)\n        if sign == '+':\n            sign = \"\"\n        return sign + ' '.join(l)",
+   "replace": "def _print_MatAdd(self, expr):\n        return ' + '.join([self.parenthesize(arg, precedence(expr))\n            for arg in expr.args])"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/pretty/tests/test_pretty.py",
+   "search": "assert pretty(A - B) == \"-B + A\"",
+   "replace": "assert pretty(A - B) == \"(-1)*B + A\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/pretty/tests/test_pretty.py",
+   "search": "assert pretty(A*B*C - A*B - B*C) == \"-A*B -B*C + A*B*C\"",
+   "replace": "assert pretty(A*B*C - A*B - B*C) == \"A*B*C + (-1)*A*B + (-1)*B*C\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(F) == r\"\\left(-B + A\\right)_{0, 0}\"",
+   "replace": "assert latex(F) == r\"\\left((-1) B + A\\right)_{0, 0}\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(A - A*B - B) == r\"-B - A B + A\"",
+   "replace": "assert latex(A - A*B - B) == r\"(-1) B - A B + A\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_str.py",
+   "search": "assert str(F) == \"(-B + A)[0, 0]\"",
+   "replace": "assert str(F) == \"((-1)*B + A)[0, 0]\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_str.py",
+   "search": "assert str(A - A*B - B) == \"-B - A*B + A\"",
+   "replace": "assert str(A - A*B - B) == \"(-1)*B - A*B + A\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_ccode.py",
+   "search": "assert(ccode(F) == \"(-B + A)[0]\")",
+   "replace": "assert(ccode(F) == \"((-1)*B + A)[0]\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_fcode.py",
+   "search": "assert(fcode(F) == \"      (-B + A)(1, 1)\")",
+   "replace": "assert(fcode(F) == \"      ((-1)*B + A)(1, 1)\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_jscode.py",
+   "search": "assert(jscode(F) == \"(-B + A)[0]\")",
+   "replace": "assert(jscode(F) == \"((-1)*B + A)[0]\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_julia.py",
+   "search": "assert(julia_code(F) == \"(-B + A)[1,1]\")",
+   "replace": "assert(julia_code(F) == \"((-1)*B + A)[1,1]\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_octave.py",
+   "search": "assert(mcode(F) == \"(-B + A)(1, 1)\")",
+   "replace": "assert(mcode(F) == \"((-1)*B + A)(1, 1)\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_rcode.py",
+   "search": "assert(rcode(F) == \"(-B + A)[0]\")",
+   "replace": "assert(rcode(F) == \"((-1)*B + A)[0]\")"
+  }
+ ],
+ "status": "generated"
+}

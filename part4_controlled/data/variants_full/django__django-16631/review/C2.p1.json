@@ -1,0 +1,21 @@
+{
+ "instance_id": "django__django-16631",
+ "kind": "C2",
+ "pass_": 1,
+ "reviewer": "reviewer",
+ "parsed": {
+  "change_meaningful": "yes",
+  "requirement_unambiguous": "yes",
+  "tests_match_requirement": "yes",
+  "revised_fix_correct": "yes",
+  "artificial": "no",
+  "evidence": [
+   "maintainer_update states: 'When a session hash is validated using a secret from SECRET_KEY_FALLBACKS, the session must not be rotated; the existing session key should be kept and only the session authentication hash should be updated to the current secret.'",
+   "revised_fix changes request.session.cycle_key() to request.session[HASH_SESSION_KEY] = session_auth_hash",
+   "revised_tests verify that session key is preserved and only hash is updated when fallback secret is used"
+  ],
+  "reasoning": "The maintainer's update introduces a meaningful behavioral change that clarifies how sessions should behave when falling back to legacy secrets. Instead of rotating the session key (which would log users out), the system should preserve the existing session key while updating only the authentication hash to use the current secret. This makes sense from a user experience perspective - users shouldn't be logged out during key rotation. The revised fix correctly implements this by replacing `cycle_key()` with direct hash assignment when a fallback secret is used. The tests accurately reflect this requirement by checking that the session key remains unchanged while verifying the hash update behavior. The change isn't artificial since it directly addresses the core issue described in the original problem statement.",
+  "confidence": 0.95
+ },
+ "raw": "{\n    \"change_meaningful\": \"yes\",\n    \"requirement_unambiguous\": \"yes\",\n    \"tests_match_requirement\": \"yes\",\n    \"revised_fix_correct\": \"yes\",\n    \"artificial\": \"no\",\n    \"evidence\": [\n        \"maintainer_update states: 'When a session hash is validated using a secret from SECRET_KEY_FALLBACKS, the session must not be rotated; the existing session key should be kept and only the session authentication hash should be updated to the current secret.'\",\n        \"revised_fix changes request.session.cycle_key() to request.session[HASH_SESSION_KEY] = session_auth_hash\",\n        \"revised_tests verify that session key is preserved and only hash is updated when fallback secret is used\"\n    ],\n    \"reasoning\": \"The maintainer's update introduces a meaningful behavioral change that clarifies how sessions should behave when falling back to legacy secrets. Instead of rotating the session key (which would log users out), the system should preserve the existing session key while updating only the authentication hash to use the current secret. This makes sense from a user experience perspective - users shouldn't be logged out during key rotation. The revised fix correctly implements this by replacing `cycle_key()` with direct hash assignment when a fallback secret is used. The tests accurately reflect this requirement by checking that the session key remains unchanged while verifying the hash update behavior. The change isn't artificial since it directly addresses the core issue described in the original problem statement.\",\n    \"confidence\": 0.95\n}"
+}

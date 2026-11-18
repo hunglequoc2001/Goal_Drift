@@ -1,0 +1,73 @@
+{
+ "instance_id": "sympy__sympy-13974",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "087da6b8a921655c8ff9d38bf97d14956307ee852018f13186820f895058c01f",
+ "raw": "<summary>TensorProduct powers are no longer simplified by\u202ftensor_product_simp.</summary>\n<requirement>tensor_product_simp must no longer evaluate powers of TensorProduct. Any Pow whose base is a TensorProduct must be left unchanged (i.e. the function should return the original Pow expression, possibly after simplifying the base but without distributing the exponent). This supersedes any previous expectation that such powers are expanded.</requirement>\n<source_edit file=\"sympy/physics/quantum/tensorproduct.py\"><search>elif e.has(Pow):\n        new_args = [ tensor_product_simp_Pow(nc) for nc in nc_part ]\n        return tensor_product_simp_Mul(Mul(*c_part) * TensorProduct(*new_args))</search><replace># Pow handling removed per updated spec</replace></source_edit>\n<source_edit file=\"sympy/physics/quantum/tensorproduct.py\"><search>def tensor_product_simp_Pow(e):\n    \"\"\"Evaluates ``Pow`` expressions whose base is ``TensorProduct``\"\"\"\n    if not isinstance(e, Pow):\n        return e\n\n    if isinstance(e.base, TensorProduct):\n        return TensorProduct(*[ b**e.exp for b in e.base.args])\n    else:\n        return e</search><replace># tensor_product_simp_Pow removed per updated spec</replace></source_edit>\n<source_edit file=\"sympy/physics/quantum/tensorproduct.py\"><search>elif isinstance(e, Pow):\n-        if isinstance(e.base, TensorProduct):\n-            return tensor_product_simp_Pow(e)\n-        else:\n-            return tensor_product_simp(e.base) ** e.exp</search><replace>elif isinstance(e, Pow):\n        # Simplify the base but do not distribute the exponent over a TensorProduct\n        return tensor_product_simp(e.base) ** e.exp</replace></source_edit>\n<test_edit file=\"sympy/physics/quantum/tests/test_tensorproduct.py\"><search>    assert tensor_product_simp(TP(A, B)**x) == TP(A**x, B**x)</search><replace>    assert tensor_product_simp(TP(A, B)**x) == TP(A, B)**x</replace></test_edit>\n<test_edit file=\"sympy/physics/quantum/tests/test_tensorproduct.py\"><search>    assert tensor_product_simp(x*TP(A, B)**2) == x*TP(A**2,B**2)</search><replace>    assert tensor_product_simp(x*TP(A, B)**2) == x*TP(A, B)**2</replace></test_edit>\n<test_edit file=\"sympy/physics/quantum/tests/test_tensorproduct.py\"><search>    assert tensor_product_simp(x*(TP(A, B)**2)*TP(C,D)) == x*TP(A**2*C,B**2*D)</search><replace>    assert tensor_product_simp(x*(TP(A, B)**2)*TP(C,D)) == x*(TP(A, B)**2)*TP(C, D)</replace></test_edit>\n<test_edit file=\"sympy/physics/quantum/tests/test_tensorproduct.py\"><search>    assert tensor_product_simp(TP(A,B)-TP(C,D)**x) == TP(A,B)-TP(C**x,D**x)</search><replace>    assert tensor_product_simp(TP(A,B)-TP(C,D)**x) == TP(A, B)-TP(C, D)**x</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 3228,
+  "prompt_tokens": 2190,
+  "total_tokens": 5418,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2490,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "TensorProduct powers are no longer simplified by\u202ftensor_product_simp.",
+ "requirement": "tensor_product_simp must no longer evaluate powers of TensorProduct. Any Pow whose base is a TensorProduct must be left unchanged (i.e. the function should return the original Pow expression, possibly after simplifying the base but without distributing the exponent). This supersedes any previous expectation that such powers are expanded.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/physics/quantum/tensorproduct.py",
+   "search": "elif e.has(Pow):\n        new_args = [ tensor_product_simp_Pow(nc) for nc in nc_part ]\n        return tensor_product_simp_Mul(Mul(*c_part) * TensorProduct(*new_args))",
+   "replace": "# Pow handling removed per updated spec"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/physics/quantum/tensorproduct.py",
+   "search": "def tensor_product_simp_Pow(e):\n    \"\"\"Evaluates ``Pow`` expressions whose base is ``TensorProduct``\"\"\"\n    if not isinstance(e, Pow):\n        return e\n\n    if isinstance(e.base, TensorProduct):\n        return TensorProduct(*[ b**e.exp for b in e.base.args])\n    else:\n        return e",
+   "replace": "# tensor_product_simp_Pow removed per updated spec"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/physics/quantum/tensorproduct.py",
+   "search": "elif isinstance(e, Pow):\n-        if isinstance(e.base, TensorProduct):\n-            return tensor_product_simp_Pow(e)\n-        else:\n-            return tensor_product_simp(e.base) ** e.exp",
+   "replace": "elif isinstance(e, Pow):\n        # Simplify the base but do not distribute the exponent over a TensorProduct\n        return tensor_product_simp(e.base) ** e.exp"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/physics/quantum/tests/test_tensorproduct.py",
+   "search": "    assert tensor_product_simp(TP(A, B)**x) == TP(A**x, B**x)",
+   "replace": "    assert tensor_product_simp(TP(A, B)**x) == TP(A, B)**x"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/physics/quantum/tests/test_tensorproduct.py",
+   "search": "    assert tensor_product_simp(x*TP(A, B)**2) == x*TP(A**2,B**2)",
+   "replace": "    assert tensor_product_simp(x*TP(A, B)**2) == x*TP(A, B)**2"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/physics/quantum/tests/test_tensorproduct.py",
+   "search": "    assert tensor_product_simp(x*(TP(A, B)**2)*TP(C,D)) == x*TP(A**2*C,B**2*D)",
+   "replace": "    assert tensor_product_simp(x*(TP(A, B)**2)*TP(C,D)) == x*(TP(A, B)**2)*TP(C, D)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/physics/quantum/tests/test_tensorproduct.py",
+   "search": "    assert tensor_product_simp(TP(A,B)-TP(C,D)**x) == TP(A,B)-TP(C**x,D**x)",
+   "replace": "    assert tensor_product_simp(TP(A,B)-TP(C,D)**x) == TP(A, B)-TP(C, D)**x"
+  }
+ ],
+ "status": "generated"
+}

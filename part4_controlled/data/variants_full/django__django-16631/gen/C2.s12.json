@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-16631",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "a20a6cddbe114d1b86592683493e143cb8ef28ab1a0975b91292258f8ff1a415",
+ "raw": "<summary>SECRET_KEY_FALLBACKS must no longer be consulted when validating session authentication hashes.</summary>\n<requirement>When verifying a session's authentication hash, only the current SECRET_KEY should be used. Fallback secrets listed in SECRET_KEY_FALLBACKS are ignored for session authentication (they may still be used for other token types). This supersedes any previous expectation that fallback secrets are consulted for sessions.</requirement>\n<source_edit file=\"django/contrib/auth/__init__.py\"><search>if not session_hash_verified:\n                    # If the current secret does not verify the session, try\n                    # with the fallback secrets and stop when a matching one is\n                    # found.\n                    if session_hash and any(\n                        constant_time_compare(session_hash, fallback_auth_hash)\n                        for fallback_auth_hash in user.get_session_auth_fallback_hash()\n                    ):\n                        request.session.cycle_key()\n                        request.session[HASH_SESSION_KEY] = session_auth_hash\n                    else:</search><replace>if not session_hash_verified:\n                    request.session.flush()\n                    user = None</replace></source_edit>\n<test_edit file=\"tests/auth_tests/test_basic.py\"><search>self.assertIsInstance(user, User)</search><replace>self.assertIsInstance(user, AnonymousUser)</replace></test_edit>\n<test_edit file=\"tests/auth_tests/test_basic.py\"><search>self.assertIsInstance(user, User)</search><replace>self.assertIsInstance(user, AnonymousUser)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1440,
+  "prompt_tokens": 1657,
+  "total_tokens": 3097,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1127,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "SECRET_KEY_FALLBACKS must no longer be consulted when validating session authentication hashes.",
+ "requirement": "When verifying a session's authentication hash, only the current SECRET_KEY should be used. Fallback secrets listed in SECRET_KEY_FALLBACKS are ignored for session authentication (they may still be used for other token types). This supersedes any previous expectation that fallback secrets are consulted for sessions.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/auth/__init__.py",
+   "search": "if not session_hash_verified:\n                    # If the current secret does not verify the session, try\n                    # with the fallback secrets and stop when a matching one is\n                    # found.\n                    if session_hash and any(\n                        constant_time_compare(session_hash, fallback_auth_hash)\n                        for fallback_auth_hash in user.get_session_auth_fallback_hash()\n                    ):\n                        request.session.cycle_key()\n                        request.session[HASH_SESSION_KEY] = session_auth_hash\n                    else:",
+   "replace": "if not session_hash_verified:\n                    request.session.flush()\n                    user = None"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/auth_tests/test_basic.py",
+   "search": "self.assertIsInstance(user, User)",
+   "replace": "self.assertIsInstance(user, AnonymousUser)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/auth_tests/test_basic.py",
+   "search": "self.assertIsInstance(user, User)",
+   "replace": "self.assertIsInstance(user, AnonymousUser)"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,31 @@
+{
+ "instance_id": "sympy__sympy-16450",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 12,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 15134,
+ "raw": "<summary>posify should no longer copy the \u201czero\u201d assumption when creating dummy symbols</summary>\n<requirement>When posify creates dummy replacements for symbols lacking a positivity assumption, it must copy the original symbol\u2019s assumptions **except** the \u201czero\u201d assumption, because a positive dummy cannot be zero and this assumption is implied. This supersedes any earlier statement that all assumptions should be preserved.</requirement>\n<source_edit file=\"sympy/simplify/simplify.py\"><search>    reps = {s: Dummy(s.name, positive=True, **s.assumptions0)</search><replace>    reps = {s: Dummy(s.name, positive=True, **{k: v for k, v in s.assumptions0.items() if k != 'zero'})</replace></source_edit>\n<test_edit file=\"sympy/simplify/tests/test_simplify.py\"><search>assert eq.assumptions0 == {'positive': True, 'zero': False, 'imaginary': False,</search><replace>    # The dummy should inherit all assumptions except 'zero', which is implied by positivity\n    assert eq.assumptions0['positive'] is True\n    assert eq.assumptions0['finite'] is True\n    assert 'zero' not in eq.assumptions0</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "posify should no longer copy the \u201czero\u201d assumption when creating dummy symbols",
+ "requirement": "When posify creates dummy replacements for symbols lacking a positivity assumption, it must copy the original symbol\u2019s assumptions **except** the \u201czero\u201d assumption, because a positive dummy cannot be zero and this assumption is implied. This supersedes any earlier statement that all assumptions should be preserved.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/simplify/simplify.py",
+   "search": "    reps = {s: Dummy(s.name, positive=True, **s.assumptions0)",
+   "replace": "    reps = {s: Dummy(s.name, positive=True, **{k: v for k, v in s.assumptions0.items() if k != 'zero'})"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/simplify/tests/test_simplify.py",
+   "search": "assert eq.assumptions0 == {'positive': True, 'zero': False, 'imaginary': False,",
+   "replace": "    # The dummy should inherit all assumptions except 'zero', which is implied by positivity\n    assert eq.assumptions0['positive'] is True\n    assert eq.assumptions0['finite'] is True\n    assert 'zero' not in eq.assumptions0"
+  }
+ ]
+}

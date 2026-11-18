@@ -1,0 +1,43 @@
+{
+ "instance_id": "pydata__xarray-4094",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "bfac0c2c5e2c1c9c7dece0b262b3f5239a24d4eaef6015c85ccca7134b6c3749",
+ "raw": "<summary>Unstacked datasets must retain the stacked dimension as a coordinate instead of dropping it.</summary>\n<requirement>When converting a stacked DataArray back to a Dataset via `to_unstacked_dataset`, the coordinate corresponding to the stacked dimension (the `dim` argument) must be preserved as a coordinate variable in the resulting Dataset. This supersedes any prior expectation that the stacked coordinate be dropped during unstacking.</requirement>\n<source_edit file=\"xarray/core/dataarray.py\"><search>.sel({variable_dim: k}, drop=True).squeeze(drop=True)</search><replace>.sel({variable_dim: k}).squeeze(drop=True)</replace></source_edit>\n<test_edit file=\"xarray/tests/test_dataset.py\"><search>assert_identical(unstacked, data)</search><replace># data variables should match\n        for var in data.data_vars:\n            assert_identical(unstacked[var], data[var])\n        # stacked coordinate should be retained\n        assert \"y\" in unstacked.coords\n        np.testing.assert_array_equal(unstacked[\"y\"], data[\"x\"])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1624,
+  "prompt_tokens": 1509,
+  "total_tokens": 3133,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1380,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Unstacked datasets must retain the stacked dimension as a coordinate instead of dropping it.",
+ "requirement": "When converting a stacked DataArray back to a Dataset via `to_unstacked_dataset`, the coordinate corresponding to the stacked dimension (the `dim` argument) must be preserved as a coordinate variable in the resulting Dataset. This supersedes any prior expectation that the stacked coordinate be dropped during unstacking.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/dataarray.py",
+   "search": ".sel({variable_dim: k}, drop=True).squeeze(drop=True)",
+   "replace": ".sel({variable_dim: k}).squeeze(drop=True)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_dataset.py",
+   "search": "assert_identical(unstacked, data)",
+   "replace": "# data variables should match\n        for var in data.data_vars:\n            assert_identical(unstacked[var], data[var])\n        # stacked coordinate should be retained\n        assert \"y\" in unstacked.coords\n        np.testing.assert_array_equal(unstacked[\"y\"], data[\"x\"])"
+  }
+ ],
+ "status": "generated"
+}

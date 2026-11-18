@@ -1,0 +1,61 @@
+{
+ "instance_id": "django__django-15916",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "c4f030ddd99a316a7f3268680274d761de2b79845073874eda8e3a1fdc833d04",
+ "raw": "<summary>Make `formfield_callback` defined in a ModelForm\u2019s Meta ignored by `modelform_factory`; only an explicit `formfield_callback` argument should be used.</summary>\n<requirement>When creating a form class via `modelform_factory`, any `formfield_callback` specified inside the `Meta` class of the provided form should be ignored. The callback to be used must be supplied explicitly through the `formfield_callback` argument of `modelform_factory`; if it is omitted, no callback is applied. This requirement supersedes any previous expectation that `Meta.formfield_callback` would be honored by the factory.</requirement>\n<source_edit file=\"django/forms/models.py\"><search>new_class = super().__new__(mcs, name, bases, attrs)</search><replace>new_class = super().__new__(mcs, name, bases, attrs)\n        # Determine the formfield_callback: inherit from a base form's Meta if present,\n        # otherwise use an explicit class attribute. This value is *not* taken from\n        # the Meta class of the current form.\n        base_formfield_callback = None\n        for b in bases:\n            if hasattr(b, \"Meta\") and hasattr(b.Meta, \"formfield_callback\"):\n                base_formfield_callback = b.Meta.formfield_callback\n                break\n\n        formfield_callback = getattr(new_class, \"formfield_callback\", base_formfield_callback)</replace></source_edit>\n<source_edit file=\"django/forms/models.py\"><search>opts.formfield_callback,</search><replace>formfield_callback,</replace></source_edit>\n<source_edit file=\"django/forms/models.py\"><search>form_class_attrs = {\"Meta\": Meta}</search><replace>form_class_attrs = {\"Meta\": Meta, \"formfield_callback\": formfield_callback}</replace></source_edit>\n<test_edit file=\"tests/model_forms/tests.py\"><search>self.assertEqual(type(field.widget), forms.Textarea)</search><replace>self.assertNotEqual(type(field.widget), forms.Textarea)</replace></test_edit>\n<test_edit file=\"tests/model_forms/tests.py\"><search>self.assertEqual(type(field.widget), forms.Textarea)</search><replace>self.assertNotEqual(type(field.widget), forms.Textarea)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2270,
+  "prompt_tokens": 1699,
+  "total_tokens": 3969,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1791,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Make `formfield_callback` defined in a ModelForm\u2019s Meta ignored by `modelform_factory`; only an explicit `formfield_callback` argument should be used.",
+ "requirement": "When creating a form class via `modelform_factory`, any `formfield_callback` specified inside the `Meta` class of the provided form should be ignored. The callback to be used must be supplied explicitly through the `formfield_callback` argument of `modelform_factory`; if it is omitted, no callback is applied. This requirement supersedes any previous expectation that `Meta.formfield_callback` would be honored by the factory.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/models.py",
+   "search": "new_class = super().__new__(mcs, name, bases, attrs)",
+   "replace": "new_class = super().__new__(mcs, name, bases, attrs)\n        # Determine the formfield_callback: inherit from a base form's Meta if present,\n        # otherwise use an explicit class attribute. This value is *not* taken from\n        # the Meta class of the current form.\n        base_formfield_callback = None\n        for b in bases:\n            if hasattr(b, \"Meta\") and hasattr(b.Meta, \"formfield_callback\"):\n                base_formfield_callback = b.Meta.formfield_callback\n                break\n\n        formfield_callback = getattr(new_class, \"formfield_callback\", base_formfield_callback)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/forms/models.py",
+   "search": "opts.formfield_callback,",
+   "replace": "formfield_callback,"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/forms/models.py",
+   "search": "form_class_attrs = {\"Meta\": Meta}",
+   "replace": "form_class_attrs = {\"Meta\": Meta, \"formfield_callback\": formfield_callback}"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/model_forms/tests.py",
+   "search": "self.assertEqual(type(field.widget), forms.Textarea)",
+   "replace": "self.assertNotEqual(type(field.widget), forms.Textarea)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/model_forms/tests.py",
+   "search": "self.assertEqual(type(field.widget), forms.Textarea)",
+   "replace": "self.assertNotEqual(type(field.widget), forms.Textarea)"
+  }
+ ],
+ "status": "generated"
+}

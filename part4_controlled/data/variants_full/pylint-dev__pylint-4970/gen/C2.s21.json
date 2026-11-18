@@ -1,0 +1,49 @@
+{
+ "instance_id": "pylint-dev__pylint-4970",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "a77e796870be99ae4b3a5e32fb96d5fba554762e80ac7a5645d9ae50a4c6a4f0",
+ "raw": "<summary>Setting `min-similarity-lines` to\u202f0 should be treated as the default value rather than disabling the duplicate\u2011code check.</summary>\n<requirement>When the `min-similarity-lines` (or its alias `--duplicates`) option is set to\u202f0, the similar\u2011code checker must behave as if the default minimum line count were used (i.e., it must still perform duplicate detection). This supersedes any previous expectation that a value of\u202f0 disables the check.</requirement>\n<source_edit file=\"pylint/checkers/similar.py\"><search>        if self.min_lines == 0:</search><replace></replace></source_edit>\n<source_edit file=\"pylint/checkers/similar.py\"><search>            return</search><replace></replace></source_edit>\n<test_edit file=\"tests/checkers/unittest_similar.py\"><search>def test_set_duplicate_lines_to_zero() -> None:</search><replace>def test_set_duplicate_lines_to_zero() -> None:\n    output = StringIO()\n    with redirect_stdout(output), pytest.raises(SystemExit) as ex:\n        similar.Run([\"--duplicates=0\", SIMILAR1, SIMILAR2])\n    # Expect the duplicate check to run (0 is treated as default)\n    assert ex.value.code != 0\n    assert output.getvalue() != \"\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1198,
+  "prompt_tokens": 1046,
+  "total_tokens": 2244,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 899,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Setting `min-similarity-lines` to\u202f0 should be treated as the default value rather than disabling the duplicate\u2011code check.",
+ "requirement": "When the `min-similarity-lines` (or its alias `--duplicates`) option is set to\u202f0, the similar\u2011code checker must behave as if the default minimum line count were used (i.e., it must still perform duplicate detection). This supersedes any previous expectation that a value of\u202f0 disables the check.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "pylint/checkers/similar.py",
+   "search": "        if self.min_lines == 0:",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "pylint/checkers/similar.py",
+   "search": "            return",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/checkers/unittest_similar.py",
+   "search": "def test_set_duplicate_lines_to_zero() -> None:",
+   "replace": "def test_set_duplicate_lines_to_zero() -> None:\n    output = StringIO()\n    with redirect_stdout(output), pytest.raises(SystemExit) as ex:\n        similar.Run([\"--duplicates=0\", SIMILAR1, SIMILAR2])\n    # Expect the duplicate check to run (0 is treated as default)\n    assert ex.value.code != 0\n    assert output.getvalue() != \"\""
+  }
+ ],
+ "status": "generated"
+}

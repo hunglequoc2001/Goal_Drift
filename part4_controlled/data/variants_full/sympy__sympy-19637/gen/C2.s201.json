@@ -1,0 +1,31 @@
+{
+ "instance_id": "sympy__sympy-19637",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 101,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 13043,
+ "raw": "<summary>kernS must reject any input containing whitespace by raising a SympifyError.</summary>\n<requirement>kernS must now reject any input string that contains any whitespace character (such as spaces, tabs, or newlines). If the input contains whitespace, kernS should raise a SympifyError with the exact message \u201cwhitespace not allowed\u201d. This supersedes any previous behavior that stripped whitespace before processing.</requirement>\n<source_edit file=\"sympy/core/sympify.py\"><search>        # strip all space from s\n        s = ''.join(s.split())</search><replace>        # reject any whitespace in the original string\n        if any(ch.isspace() for ch in s):\n            raise SympifyError('whitespace not allowed')\n        # strip all space from s\n        s = ''.join(s.split())</replace></source_edit>\n<test_edit file=\"sympy/core/tests/test_sympify.py\"><search>    assert kernS(\"(2*x)/(x-1)\") == 2*x/(x-1)</search><replace>    assert kernS(\"(2*x)/(x-1)\") == 2*x/(x-1)\n    with pytest.raises(SympifyError):\n        kernS(\"x + y\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "kernS must reject any input containing whitespace by raising a SympifyError.",
+ "requirement": "kernS must now reject any input string that contains any whitespace character (such as spaces, tabs, or newlines). If the input contains whitespace, kernS should raise a SympifyError with the exact message \u201cwhitespace not allowed\u201d. This supersedes any previous behavior that stripped whitespace before processing.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/core/sympify.py",
+   "search": "        # strip all space from s\n        s = ''.join(s.split())",
+   "replace": "        # reject any whitespace in the original string\n        if any(ch.isspace() for ch in s):\n            raise SympifyError('whitespace not allowed')\n        # strip all space from s\n        s = ''.join(s.split())"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/core/tests/test_sympify.py",
+   "search": "    assert kernS(\"(2*x)/(x-1)\") == 2*x/(x-1)",
+   "replace": "    assert kernS(\"(2*x)/(x-1)\") == 2*x/(x-1)\n    with pytest.raises(SympifyError):\n        kernS(\"x + y\")"
+  }
+ ]
+}

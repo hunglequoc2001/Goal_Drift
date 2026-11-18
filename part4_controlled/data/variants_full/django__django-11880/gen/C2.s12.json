@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-11880",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "2c7cfc2158480162ecf8d525d08672677f25888b2629d500ddc0eff47f29198d",
+ "raw": "<summary>Deep\u2011copy the field\u2019s validators list instead of shallow\u2011copying it.</summary>\n<requirement>When deep\u2011copying a form field, the __deepcopy__ implementation must also deep\u2011copy the validators list so that each validator object is duplicated. This supersedes any previous expectation that a shallow copy of validators is sufficient.</requirement>\n<source_edit file=\"django/forms/fields.py\"><search>result.validators = self.validators[:]</search><replace>result.validators = copy.deepcopy(self.validators, memo)</replace></source_edit>\n<test_edit file=\"tests/forms_tests/tests/test_forms.py\"><search>field = CustomCharField()</search><replace>field = CustomCharField()\n        # Attach a mutable validator to ensure deep\u2011copying of validators\n        class DummyValidator:\n            def __init__(self):\n                self.state = []\n            def __call__(self, value):\n                pass\n        field.validators.append(DummyValidator())</replace></test_edit>\n<test_edit file=\"tests/forms_tests/tests/test_forms.py\"><search>self.assertIsNot(field_copy.error_messages, field.error_messages)</search><replace>self.assertIsNot(field_copy.error_messages, field.error_messages)\n        # The validator objects themselves must also be distinct copies\n        self.assertIsNot(field_copy.validators[0], field.validators[0])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1080,
+  "prompt_tokens": 1139,
+  "total_tokens": 2219,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 789,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Deep\u2011copy the field\u2019s validators list instead of shallow\u2011copying it.",
+ "requirement": "When deep\u2011copying a form field, the __deepcopy__ implementation must also deep\u2011copy the validators list so that each validator object is duplicated. This supersedes any previous expectation that a shallow copy of validators is sufficient.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/fields.py",
+   "search": "result.validators = self.validators[:]",
+   "replace": "result.validators = copy.deepcopy(self.validators, memo)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_forms.py",
+   "search": "field = CustomCharField()",
+   "replace": "field = CustomCharField()\n        # Attach a mutable validator to ensure deep\u2011copying of validators\n        class DummyValidator:\n            def __init__(self):\n                self.state = []\n            def __call__(self, value):\n                pass\n        field.validators.append(DummyValidator())"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_forms.py",
+   "search": "self.assertIsNot(field_copy.error_messages, field.error_messages)",
+   "replace": "self.assertIsNot(field_copy.error_messages, field.error_messages)\n        # The validator objects themselves must also be distinct copies\n        self.assertIsNot(field_copy.validators[0], field.validators[0])"
+  }
+ ],
+ "status": "generated"
+}

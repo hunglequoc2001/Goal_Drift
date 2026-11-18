@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-12143",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "c729dce841d956e88b6b3cb96070e6cf772d5a7c3301eaaaf4804a8d7f04a1c8",
+ "raw": "<summary>Reject prefixes containing regex metacharacters by raising a ValueError.</summary>\n<requirement>The admin\u2019s internal helper methods must not accept formset prefixes that contain regular\u2011expression metacharacters. If a caller supplies a prefix containing any of . ^ $ * + ? { } [ ] \\ | ( ), the method should raise a ValueError with the exact message \u201cPrefix must not contain regex special characters\u201d. This requirement overrides any previous expectation that such prefixes be tolerated or automatically escaped.</requirement>\n<source_edit file=\"django/contrib/admin/options.py\"><search>pk_pattern = re.compile(</search><replace>if re.search(r'[.\\^$*+?{}\\[\\]\\\\|()]', prefix):\n        raise ValueError(\"Prefix must not contain regex special characters\")\n    pk_pattern = re.compile(\n        r'{}-\\d+-{}$'.format(prefix, self.model._meta.pk.name)\n    )</replace></source_edit>\n<test_edit file=\"tests/admin_changelist/tests.py\"><search>queryset = m._get_list_editable_queryset(request, prefix='form$')</search><replace>with self.assertRaises(ValueError):\n            m._get_list_editable_queryset(request, prefix='form$')</replace></test_edit>\n<test_edit file=\"tests/admin_changelist/tests.py\"><search>self.assertEqual(queryset.count(), 1)</search><replace># Expected exception</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1572,
+  "prompt_tokens": 1510,
+  "total_tokens": 3082,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1267,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Reject prefixes containing regex metacharacters by raising a ValueError.",
+ "requirement": "The admin\u2019s internal helper methods must not accept formset prefixes that contain regular\u2011expression metacharacters. If a caller supplies a prefix containing any of . ^ $ * + ? { } [ ] \\ | ( ), the method should raise a ValueError with the exact message \u201cPrefix must not contain regex special characters\u201d. This requirement overrides any previous expectation that such prefixes be tolerated or automatically escaped.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admin/options.py",
+   "search": "pk_pattern = re.compile(",
+   "replace": "if re.search(r'[.\\^$*+?{}\\[\\]\\\\|()]', prefix):\n        raise ValueError(\"Prefix must not contain regex special characters\")\n    pk_pattern = re.compile(\n        r'{}-\\d+-{}$'.format(prefix, self.model._meta.pk.name)\n    )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_changelist/tests.py",
+   "search": "queryset = m._get_list_editable_queryset(request, prefix='form$')",
+   "replace": "with self.assertRaises(ValueError):\n            m._get_list_editable_queryset(request, prefix='form$')"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_changelist/tests.py",
+   "search": "self.assertEqual(queryset.count(), 1)",
+   "replace": "# Expected exception"
+  }
+ ],
+ "status": "generated"
+}

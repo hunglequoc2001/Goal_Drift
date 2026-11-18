@@ -1,0 +1,37 @@
+{
+ "instance_id": "matplotlib__matplotlib-25311",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 16391,
+ "raw": "<summary>DraggableBase must keep a direct canvas attribute, not a property, so the canvas is pickled.</summary>\n<requirement>DraggableBase objects should store the figure\u2019s canvas in a regular instance attribute named ``canvas`` during initialization (e.g., ``self.canvas = self.ref_artist.figure.canvas``). The ``canvas`` attribute must be a normal attribute, not a property, so that it becomes part of the object\u2019s state and is included in pickle representations. This supersedes any prior expectation that the canvas be omitted for picklability.</requirement>\n<source_edit file=\"lib/matplotlib/offsetbox.py\"><search>self.got_artist = False</search><replace>self.got_artist = False\n        self.canvas = self.ref_artist.figure.canvas</replace></source_edit>\n<source_edit file=\"lib/matplotlib/offsetbox.py\"><search>canvas = property(lambda self: self.ref_artist.figure.canvas)</search><replace></replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_pickle.py\"><search>assert \"FigureCanvasAgg\" not in [arg for op, arg, pos in pickletools.genops(pkl)]</search><replace>assert \"FigureCanvasAgg\" in [arg for op, arg, pos in pickletools.genops(pkl)]</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "DraggableBase must keep a direct canvas attribute, not a property, so the canvas is pickled.",
+ "requirement": "DraggableBase objects should store the figure\u2019s canvas in a regular instance attribute named ``canvas`` during initialization (e.g., ``self.canvas = self.ref_artist.figure.canvas``). The ``canvas`` attribute must be a normal attribute, not a property, so that it becomes part of the object\u2019s state and is included in pickle representations. This supersedes any prior expectation that the canvas be omitted for picklability.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/offsetbox.py",
+   "search": "self.got_artist = False",
+   "replace": "self.got_artist = False\n        self.canvas = self.ref_artist.figure.canvas"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/offsetbox.py",
+   "search": "canvas = property(lambda self: self.ref_artist.figure.canvas)",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_pickle.py",
+   "search": "assert \"FigureCanvasAgg\" not in [arg for op, arg, pos in pickletools.genops(pkl)]",
+   "replace": "assert \"FigureCanvasAgg\" in [arg for op, arg, pos in pickletools.genops(pkl)]"
+  }
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "instance_id": "matplotlib__matplotlib-25332",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 12,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 16837,
+ "raw": "<summary>Grouper\u2019s weak\u2011ref mapping must not be persisted across pickling; it should be re\u2011initialized empty on unpickling, and callers must re\u2011apply label alignment after loading a Figure.</summary>\n<requirement>When a Figure (or any object containing a ``Grouper``) is pickled, the ``Grouper`` must *not* serialize its internal weak\u2011reference mapping. Upon unpickling, the ``Grouper`` should start with an empty mapping (i.e., no groups are pre\u2011joined). Consequently, any code that relies on label alignment must explicitly call the appropriate alignment method (e.g. ``Figure.align_ylabels()``) after the Figure is unpickled to recompute the groups. This supersedes any previous expectation that the grouping state is preserved through pickling.</requirement>\n\n<source_edit file=\"lib/matplotlib/cbook.py\"><search>def __getstate__(self):\n        return {\n            **vars(self),\n            # Convert weak refs to strong ones.\n            \"_mapping\": {k(): [v() for v in vs] for k, vs in self._mapping.items()},\n        }</search><replace>def __getstate__(self):\n        # Do not pickle the weak\u2011reference mapping; it will be rebuilt on unpickling.\n        state = dict(vars(self))\n        state.pop(\"_mapping\", None)\n        return state</replace></source_edit>\n\n<source_edit file=\"lib/matplotlib/cbook.py\"><search>def __setstate__(self, state):\n        vars(self).update(state)\n        # Convert strong refs to weak ones.\n        self._mapping = {weakref.ref(k): [*map(weakref.ref, vs)]\n                         for k, vs in self._mapping.items()}</search><replace>def __setstate__(self, state):\n        vars(self).update(state)\n        # Initialise an empty weak\u2011reference mapping; groups will be rebuilt when needed.\n        self._mapping = {}</replace></source_edit>\n\n<test_edit file=\"lib/matplotlib/tests/test_pickle.py\"><search>loaded.canvas.draw()</search><replace>loaded.align_ylabels()\nloaded.canvas.draw()</replace></test_edit>\n\n<test_edit file=\"lib/matplotlib/tests/test_pickle.py\"><search>loaded_fig.canvas.draw()</search><replace>loaded_fig.align_ylabels()\nloaded_fig.canvas.draw()</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Grouper\u2019s weak\u2011ref mapping must not be persisted across pickling; it should be re\u2011initialized empty on unpickling, and callers must re\u2011apply label alignment after loading a Figure.",
+ "requirement": "When a Figure (or any object containing a ``Grouper``) is pickled, the ``Grouper`` must *not* serialize its internal weak\u2011reference mapping. Upon unpickling, the ``Grouper`` should start with an empty mapping (i.e., no groups are pre\u2011joined). Consequently, any code that relies on label alignment must explicitly call the appropriate alignment method (e.g. ``Figure.align_ylabels()``) after the Figure is unpickled to recompute the groups. This supersedes any previous expectation that the grouping state is preserved through pickling.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/cbook.py",
+   "search": "def __getstate__(self):\n        return {\n            **vars(self),\n            # Convert weak refs to strong ones.\n            \"_mapping\": {k(): [v() for v in vs] for k, vs in self._mapping.items()},\n        }",
+   "replace": "def __getstate__(self):\n        # Do not pickle the weak\u2011reference mapping; it will be rebuilt on unpickling.\n        state = dict(vars(self))\n        state.pop(\"_mapping\", None)\n        return state"
+  },
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/cbook.py",
+   "search": "def __setstate__(self, state):\n        vars(self).update(state)\n        # Convert strong refs to weak ones.\n        self._mapping = {weakref.ref(k): [*map(weakref.ref, vs)]\n                         for k, vs in self._mapping.items()}",
+   "replace": "def __setstate__(self, state):\n        vars(self).update(state)\n        # Initialise an empty weak\u2011reference mapping; groups will be rebuilt when needed.\n        self._mapping = {}"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_pickle.py",
+   "search": "loaded.canvas.draw()",
+   "replace": "loaded.align_ylabels()\nloaded.canvas.draw()"
+  },
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_pickle.py",
+   "search": "loaded_fig.canvas.draw()",
+   "replace": "loaded_fig.align_ylabels()\nloaded_fig.canvas.draw()"
+  }
+ ]
+}

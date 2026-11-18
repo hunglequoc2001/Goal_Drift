@@ -1,0 +1,55 @@
+{
+ "instance_id": "sympy__sympy-13031",
+ "kind": "C2",
+ "sample": 20,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 20,
+ "prompt_sha256": "924160126f51ff039eba07ff47d07422edc52e0a0a5a95222ed3071ab98bfdbc",
+ "raw": "<summary>hstack/vstack of zero\u2011dimension matrices should keep the maximum size, not sum dimensions</summary>\n<requirement>When stacking matrices that have zero rows (for hstack) or zero columns (for vstack), the resulting matrix must have the number of columns (respectively rows) equal to the maximum among the inputs, not the sum. In other words, `SparseMatrix.hstack` of matrices with shape `(0, n_i)` should produce a matrix of shape `(0, max_i n_i)`, and `SparseMatrix.vstack` of matrices with shape `(m_i, 0)` should produce a matrix of shape `(max_i m_i, 0)`. This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"sympy/matrices/sparse.py\"><search># A null matrix can always be stacked (see  #10770)\nif self.rows == 0 and self.cols != other.cols:\n    return self._new(0, other.cols, []).col_join(other)</search><replace># A null matrix can always be stacked; result has columns equal to the maximum of inputs\nif self.rows == 0:\n    return self._new(0, max(self.cols, other.cols), [])</replace></source_edit>\n<source_edit file=\"sympy/matrices/sparse.py\"><search># A null matrix can always be stacked (see  #10770)\nif self.cols == 0 and self.rows != other.rows:\n    return self._new(other.rows, 0, []).row_join(other)</search><replace># A null matrix can always be stacked; result has rows equal to the maximum of inputs\nif self.cols == 0:\n    return self._new(max(self.rows, other.rows), 0, [])</replace></source_edit>\n<test_edit file=\"sympy/matrices/tests/test_sparse.py\"><search>assert SparseMatrix.hstack(*sparse_matrices) == Matrix(0, 6, [])</search><replace>assert SparseMatrix.hstack(*sparse_matrices) == Matrix(0, 3, [])</replace></test_edit>\n<test_edit file=\"sympy/matrices/tests/test_sparse.py\"><search>assert SparseMatrix.vstack(*sparse_matrices) == Matrix(6, 0, [])</search><replace>assert SparseMatrix.vstack(*sparse_matrices) == Matrix(3, 0, [])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2167,
+  "prompt_tokens": 1354,
+  "total_tokens": 3521,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1652,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "hstack/vstack of zero\u2011dimension matrices should keep the maximum size, not sum dimensions",
+ "requirement": "When stacking matrices that have zero rows (for hstack) or zero columns (for vstack), the resulting matrix must have the number of columns (respectively rows) equal to the maximum among the inputs, not the sum. In other words, `SparseMatrix.hstack` of matrices with shape `(0, n_i)` should produce a matrix of shape `(0, max_i n_i)`, and `SparseMatrix.vstack` of matrices with shape `(m_i, 0)` should produce a matrix of shape `(max_i m_i, 0)`. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/sparse.py",
+   "search": "# A null matrix can always be stacked (see  #10770)\nif self.rows == 0 and self.cols != other.cols:\n    return self._new(0, other.cols, []).col_join(other)",
+   "replace": "# A null matrix can always be stacked; result has columns equal to the maximum of inputs\nif self.rows == 0:\n    return self._new(0, max(self.cols, other.cols), [])"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/sparse.py",
+   "search": "# A null matrix can always be stacked (see  #10770)\nif self.cols == 0 and self.rows != other.rows:\n    return self._new(other.rows, 0, []).row_join(other)",
+   "replace": "# A null matrix can always be stacked; result has rows equal to the maximum of inputs\nif self.cols == 0:\n    return self._new(max(self.rows, other.rows), 0, [])"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/tests/test_sparse.py",
+   "search": "assert SparseMatrix.hstack(*sparse_matrices) == Matrix(0, 6, [])",
+   "replace": "assert SparseMatrix.hstack(*sparse_matrices) == Matrix(0, 3, [])"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/tests/test_sparse.py",
+   "search": "assert SparseMatrix.vstack(*sparse_matrices) == Matrix(6, 0, [])",
+   "replace": "assert SparseMatrix.vstack(*sparse_matrices) == Matrix(3, 0, [])"
+  }
+ ],
+ "status": "generated"
+}

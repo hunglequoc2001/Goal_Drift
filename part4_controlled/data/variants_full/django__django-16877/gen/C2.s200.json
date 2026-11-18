@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-16877",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 12692,
+ "raw": "<summary>escapeseq must escape all elements, even those already marked safe</summary>\n<requirement>The `escapeseq` filter must escape every element of the sequence, regardless of whether an element is a `SafeString`. Consequently, when rendering a list that contains safe strings the output will contain escaped characters. For example, `{{ a|escapeseq|join:\", \" }} -- {{ b|escapeseq|join:\", \" }}` with `a = [\"x&y\", \"<p>\"]` and `b = [mark_safe(\"x&y\"), mark_safe(\"<p>\")]` should render as `x&amp;y, &lt;p&gt; -- x&amp;y, &lt;p&gt;`. This supersedes any previous expectation that safe strings would be left unchanged.</requirement>\n\n<source_edit file=\"django/template/defaultfilters.py\"><search>return [conditional_escape(obj) for obj in value]</search><replace>return [escape(obj) for obj in value]</replace></source_edit>\n\n<test_edit file=\"tests/template_tests/filter_tests/test_escapeseq.py\"><search>self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&y, <p>\")</search><replace>self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&amp;y, &lt;p&gt;\")</replace></test_edit>\n\n<test_edit file=\"tests/template_tests/filter_tests/test_escapeseq.py\"><search>self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&y, <p>\")</search><replace>self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&amp;y, &lt;p&gt;\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "escapeseq must escape all elements, even those already marked safe",
+ "requirement": "The `escapeseq` filter must escape every element of the sequence, regardless of whether an element is a `SafeString`. Consequently, when rendering a list that contains safe strings the output will contain escaped characters. For example, `{{ a|escapeseq|join:\", \" }} -- {{ b|escapeseq|join:\", \" }}` with `a = [\"x&y\", \"<p>\"]` and `b = [mark_safe(\"x&y\"), mark_safe(\"<p>\")]` should render as `x&amp;y, &lt;p&gt; -- x&amp;y, &lt;p&gt;`. This supersedes any previous expectation that safe strings would be left unchanged.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/template/defaultfilters.py",
+   "search": "return [conditional_escape(obj) for obj in value]",
+   "replace": "return [escape(obj) for obj in value]"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_escapeseq.py",
+   "search": "self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&y, <p>\")",
+   "replace": "self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&amp;y, &lt;p&gt;\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_escapeseq.py",
+   "search": "self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&y, <p>\")",
+   "replace": "self.assertEqual(output, \"x&amp;y, &lt;p&gt; -- x&amp;y, &lt;p&gt;\")"
+  }
+ ]
+}

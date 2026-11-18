@@ -1,0 +1,43 @@
+{
+ "instance_id": "matplotlib__matplotlib-24970",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "57c1f7001a19c466f662b61f12b06ccb251785d8da5f49bcafe67775283e61c2",
+ "raw": "<summary>Colormap calls must reject non\u2011floating\u2011point inputs.</summary>\n<requirement>The colormap\u202f`__call__` method should only accept floating\u2011point arrays. Passing any integer type (including NumPy integer types such as `uint8`) must raise a `TypeError` with the message \u201cColormap input must be a floating point array\u201d. This supersedes any previous expectation that integer inputs are accepted.</requirement>\n<source_edit file=\"lib/matplotlib/colors.py\"><search>            if xa.dtype.kind == \"f\":</search><replace>            if not np.issubdtype(xa.dtype, np.floating):\n                raise TypeError(\"Colormap input must be a floating point array\")\n            if xa.dtype.kind == \"f\":</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_colors.py\"><search>@pytest.mark.parametrize(\"dtype\", [np.uint8, int, np.float16, float])\ndef test_index_dtype(dtype):\n    # We use subtraction in the indexing, so need to verify that uint8 works\n    cm = mpl.colormaps[\"viridis\"]\n    assert_array_equal(cm(dtype(0)), cm(0))</search><replace>@pytest.mark.parametrize(\"dtype\", [np.uint8, int, np.float16, float])\ndef test_index_dtype(dtype):\n    cm = mpl.colormaps[\"viridis\"]\n    if np.issubdtype(dtype, np.floating):\n        # Floating point inputs should work as before\n        assert_array_equal(cm(dtype(0)), cm(0))\n    else:\n        # Integer inputs must now raise a TypeError\n        with pytest.raises(TypeError):\n            cm(dtype(0))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1589,
+  "prompt_tokens": 1588,
+  "total_tokens": 3177,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1222,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Colormap calls must reject non\u2011floating\u2011point inputs.",
+ "requirement": "The colormap\u202f`__call__` method should only accept floating\u2011point arrays. Passing any integer type (including NumPy integer types such as `uint8`) must raise a `TypeError` with the message \u201cColormap input must be a floating point array\u201d. This supersedes any previous expectation that integer inputs are accepted.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/colors.py",
+   "search": "            if xa.dtype.kind == \"f\":",
+   "replace": "            if not np.issubdtype(xa.dtype, np.floating):\n                raise TypeError(\"Colormap input must be a floating point array\")\n            if xa.dtype.kind == \"f\":"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_colors.py",
+   "search": "@pytest.mark.parametrize(\"dtype\", [np.uint8, int, np.float16, float])\ndef test_index_dtype(dtype):\n    # We use subtraction in the indexing, so need to verify that uint8 works\n    cm = mpl.colormaps[\"viridis\"]\n    assert_array_equal(cm(dtype(0)), cm(0))",
+   "replace": "@pytest.mark.parametrize(\"dtype\", [np.uint8, int, np.float16, float])\ndef test_index_dtype(dtype):\n    cm = mpl.colormaps[\"viridis\"]\n    if np.issubdtype(dtype, np.floating):\n        # Floating point inputs should work as before\n        assert_array_equal(cm(dtype(0)), cm(0))\n    else:\n        # Integer inputs must now raise a TypeError\n        with pytest.raises(TypeError):\n            cm(dtype(0))"
+  }
+ ],
+ "status": "generated"
+}

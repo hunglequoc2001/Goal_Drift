@@ -1,0 +1,55 @@
+{
+ "instance_id": "astropy__astropy-13579",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "f2f13dc61a6f72c5fbe3dc5c549ef74252799b536cb423f20488d0979469e9fc",
+ "raw": "<summary>world_to_pixel_values must reject calls with missing world coordinate arrays for sliced dimensions.</summary>\n<requirement>For SlicedLowLevelWCS, the method `world_to_pixel_values` shall raise a `ValueError` if it is called with fewer world coordinate arrays than the number of axes retained by the slice (i.e., when any dropped axis does not have an explicit world coordinate supplied). This requirement supersedes any previous expectation that missing world coordinates would be filled with default values.</requirement>\n<source_edit file=\"astropy/wcs/wcsapi/wrappers/sliced_wcs.py\"><search>        sliced_out_world_coords = self._pixel_to_world_values_all(*[0]*len(self._pixel_keep))</search><replace></replace></source_edit>\n<source_edit file=\"astropy/wcs/wcsapi/wrappers/sliced_wcs.py\"><search>        world_arrays = tuple(map(np.asanyarray, world_arrays))</search><replace>        world_arrays = tuple(map(np.asanyarray, world_arrays))\n        if len(world_arrays) != len(self._pixel_keep):\n            raise ValueError('world_to_pixel_values requires world coordinate arrays for all kept axes')</replace></source_edit>\n<test_edit file=\"astropy/wcs/wcsapi/wrappers/tests/test_sliced_wcs.py\"><search>import numpy as np</search><replace>import numpy as np\nimport pytest</replace></test_edit>\n<test_edit file=\"astropy/wcs/wcsapi/wrappers/tests/test_sliced_wcs.py\"><search>out_pix = sl.world_to_pixel_values(world[0], world[1])</search><replace>with pytest.raises(ValueError):\n    sl.world_to_pixel_values(world[0])</replace></test_edit>\n<test_edit file=\"astropy/wcs/wcsapi/wrappers/tests/test_sliced_wcs.py\"><search>assert np.allclose(out_pix[0], 0)</search><replace></replace>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2166,
+  "prompt_tokens": 2802,
+  "total_tokens": 4968,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1746,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "world_to_pixel_values must reject calls with missing world coordinate arrays for sliced dimensions.",
+ "requirement": "For SlicedLowLevelWCS, the method `world_to_pixel_values` shall raise a `ValueError` if it is called with fewer world coordinate arrays than the number of axes retained by the slice (i.e., when any dropped axis does not have an explicit world coordinate supplied). This requirement supersedes any previous expectation that missing world coordinates would be filled with default values.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/wcs/wcsapi/wrappers/sliced_wcs.py",
+   "search": "        sliced_out_world_coords = self._pixel_to_world_values_all(*[0]*len(self._pixel_keep))",
+   "replace": ""
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/wcs/wcsapi/wrappers/sliced_wcs.py",
+   "search": "        world_arrays = tuple(map(np.asanyarray, world_arrays))",
+   "replace": "        world_arrays = tuple(map(np.asanyarray, world_arrays))\n        if len(world_arrays) != len(self._pixel_keep):\n            raise ValueError('world_to_pixel_values requires world coordinate arrays for all kept axes')"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/wcs/wcsapi/wrappers/tests/test_sliced_wcs.py",
+   "search": "import numpy as np",
+   "replace": "import numpy as np\nimport pytest"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/wcs/wcsapi/wrappers/tests/test_sliced_wcs.py",
+   "search": "out_pix = sl.world_to_pixel_values(world[0], world[1])",
+   "replace": "with pytest.raises(ValueError):\n    sl.world_to_pixel_values(world[0])"
+  }
+ ],
+ "status": "generated"
+}

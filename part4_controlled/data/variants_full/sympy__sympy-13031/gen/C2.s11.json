@@ -1,0 +1,55 @@
+{
+ "instance_id": "sympy__sympy-13031",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "924160126f51ff039eba07ff47d07422edc52e0a0a5a95222ed3071ab98bfdbc",
+ "raw": "<summary>Disallow stacking zero\u2011row (or zero\u2011column) matrices unless dimensions match, raising ShapeError.</summary>\n<requirement>When using Matrix.hstack or Matrix.vstack, if any operand has zero rows (for hstack) or zero columns (for vstack) and its other dimension does not equal that of the other operands, the operation must raise a ShapeError. This supersedes any previous expectation that such zero\u2011dimension matrices could be concatenated regardless of mismatched sizes.</requirement>\n<source_edit file=\"sympy/matrices/sparse.py\"><search># A null matrix can always be stacked (see  #10770)\nif self.rows == 0 and self.cols != other.cols:\n    return self._new(0, other.cols, []).col_join(other)</search><replace># A null matrix cannot be stacked when dimensions differ\nif self.rows == 0 and self.cols != other.cols:\n    raise ShapeError()</replace></source_edit>\n<source_edit file=\"sympy/matrices/sparse.py\"><search># A null matrix can always be stacked (see  #10770)\nif self.cols == 0 and self.rows != other.rows:\n    return self._new(other.rows, 0, []).row_join(other)</search><replace># A null matrix cannot be stacked when dimensions differ\nif self.cols == 0 and self.rows != other.rows:\n    raise ShapeError()</replace></source_edit>\n<test_edit file=\"sympy/matrices/tests/test_sparse.py\"><search>assert SparseMatrix.hstack(*sparse_matrices) == Matrix(0, 6, [])</search><replace>with raises(ShapeError):\n    SparseMatrix.hstack(*sparse_matrices)</replace></test_edit>\n<test_edit file=\"sympy/matrices/tests/test_sparse.py\"><search>assert SparseMatrix.vstack(*sparse_matrices) == Matrix(6, 0, [])</search><replace>with raises(ShapeError):\n    SparseMatrix.vstack(*sparse_matrices)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2165,
+  "prompt_tokens": 1354,
+  "total_tokens": 3519,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1737,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow stacking zero\u2011row (or zero\u2011column) matrices unless dimensions match, raising ShapeError.",
+ "requirement": "When using Matrix.hstack or Matrix.vstack, if any operand has zero rows (for hstack) or zero columns (for vstack) and its other dimension does not equal that of the other operands, the operation must raise a ShapeError. This supersedes any previous expectation that such zero\u2011dimension matrices could be concatenated regardless of mismatched sizes.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/sparse.py",
+   "search": "# A null matrix can always be stacked (see  #10770)\nif self.rows == 0 and self.cols != other.cols:\n    return self._new(0, other.cols, []).col_join(other)",
+   "replace": "# A null matrix cannot be stacked when dimensions differ\nif self.rows == 0 and self.cols != other.cols:\n    raise ShapeError()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/matrices/sparse.py",
+   "search": "# A null matrix can always be stacked (see  #10770)\nif self.cols == 0 and self.rows != other.rows:\n    return self._new(other.rows, 0, []).row_join(other)",
+   "replace": "# A null matrix cannot be stacked when dimensions differ\nif self.cols == 0 and self.rows != other.rows:\n    raise ShapeError()"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/tests/test_sparse.py",
+   "search": "assert SparseMatrix.hstack(*sparse_matrices) == Matrix(0, 6, [])",
+   "replace": "with raises(ShapeError):\n    SparseMatrix.hstack(*sparse_matrices)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/matrices/tests/test_sparse.py",
+   "search": "assert SparseMatrix.vstack(*sparse_matrices) == Matrix(6, 0, [])",
+   "replace": "with raises(ShapeError):\n    SparseMatrix.vstack(*sparse_matrices)"
+  }
+ ],
+ "status": "generated"
+}

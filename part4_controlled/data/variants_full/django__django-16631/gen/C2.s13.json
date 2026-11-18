@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-16631",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "a20a6cddbe114d1b86592683493e143cb8ef28ab1a0975b91292258f8ff1a415",
+ "raw": "<summary>Fallback secret keys are no longer used to validate existing sessions.</summary>\n<requirement>When rotating the secret key, the list SECRET_KEY_FALLBACKS should be consulted only for token\u2011based operations (e.g., password reset) and must not be used to authenticate an existing session. If the current SECRET_KEY does not verify the session hash, the session must be flushed and the user treated as unauthenticated, even if a fallback secret would match. This supersedes any previous expectation that fallback secrets could restore a session.</requirement>\n<source_edit file=\"django/contrib/auth/__init__.py\"><search># If the current secret does not verify the session, try\n                    # with the fallback secrets and stop when a matching one is\n                    # found.\n                    if session_hash and any(\n                        constant_time_compare(session_hash, fallback_auth_hash)\n                        for fallback_auth_hash in user.get_session_auth_fallback_hash()\n                    ):\n                        request.session.cycle_key()\n                        request.session[HASH_SESSION_KEY] = session_auth_hash\n                    else:</search><replace>request.session.flush()\n                user = None</replace></source_edit>\n<test_edit file=\"tests/auth_tests/test_basic.py\"><search>self.assertIsInstance(user, User)\n            self.assertEqual(user.username, created_user.username)\n            self.assertNotEqual(request.session.session_key, prev_session_key)</search><replace>self.assertIsInstance(user, AnonymousUser)</replace></test_edit>\n<test_edit file=\"tests/auth_tests/test_basic.py\"><search>self.assertIsInstance(user, User)\n            self.assertEqual(user.username, created_user.username)</search><replace>self.assertIsInstance(user, AnonymousUser)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1532,
+  "prompt_tokens": 1657,
+  "total_tokens": 3189,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1172,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Fallback secret keys are no longer used to validate existing sessions.",
+ "requirement": "When rotating the secret key, the list SECRET_KEY_FALLBACKS should be consulted only for token\u2011based operations (e.g., password reset) and must not be used to authenticate an existing session. If the current SECRET_KEY does not verify the session hash, the session must be flushed and the user treated as unauthenticated, even if a fallback secret would match. This supersedes any previous expectation that fallback secrets could restore a session.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/auth/__init__.py",
+   "search": "# If the current secret does not verify the session, try\n                    # with the fallback secrets and stop when a matching one is\n                    # found.\n                    if session_hash and any(\n                        constant_time_compare(session_hash, fallback_auth_hash)\n                        for fallback_auth_hash in user.get_session_auth_fallback_hash()\n                    ):\n                        request.session.cycle_key()\n                        request.session[HASH_SESSION_KEY] = session_auth_hash\n                    else:",
+   "replace": "request.session.flush()\n                user = None"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/auth_tests/test_basic.py",
+   "search": "self.assertIsInstance(user, User)\n            self.assertEqual(user.username, created_user.username)\n            self.assertNotEqual(request.session.session_key, prev_session_key)",
+   "replace": "self.assertIsInstance(user, AnonymousUser)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/auth_tests/test_basic.py",
+   "search": "self.assertIsInstance(user, User)\n            self.assertEqual(user.username, created_user.username)",
+   "replace": "self.assertIsInstance(user, AnonymousUser)"
+  }
+ ],
+ "status": "generated"
+}

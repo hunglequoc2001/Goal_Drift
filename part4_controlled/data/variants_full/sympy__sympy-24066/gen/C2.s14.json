@@ -1,0 +1,43 @@
+{
+ "instance_id": "sympy__sympy-24066",
+ "kind": "C2",
+ "sample": 14,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 14,
+ "prompt_sha256": "fbb0d3b16f93cd6d007b953c498c940ed7a842b1082139387218c4577a9388e1",
+ "raw": "<summary>Functions must only accept dimensionless arguments; otherwise a ValueError is raised.</summary>\n<requirement>All functions (e.g., exp, log, sin, etc.) are required to have dimensionless arguments. If any argument of a function has a non\u2011dimensionless dimension, _collect_factor_and_dimension should raise a ValueError with a message indicating that the function argument must be dimensionless. The result of any function call is always considered dimensionless (Dimension(1)). This requirement supersedes any conflicting expectation in the original issue.</requirement>\n\n<source_edit file=\"sympy/physics/units/unitsystem.py\"><search>elif isinstance(expr, Function):\n            fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]\n            dims = [Dimension(1) if self.get_dimension_system().is_dimensionless(d[1]) else d[1] for d in fds]\n            return (expr.func(*(f[0] for f in fds)), *dims)</search><replace>elif isinstance(expr, Function):\n            # All functions must have dimensionless arguments; otherwise raise an error.\n            fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]\n            for f, d in fds:\n                if not self.get_dimension_system().is_dimensionless(d):\n                    raise ValueError(f'Argument of function {expr.func} must be dimensionless')\n            # The function itself is dimensionless.\n            return (expr.func(*(f for f, _ in fds)), Dimension(1))</replace></source_edit>\n\n<test_edit file=\"sympy/physics/units/tests/test_quantities.py\"><search>    assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))</search><replace>    assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))\n    # Function with a dimensionful argument should raise ValueError\n    from pytest import raises\n    with raises(ValueError):\n        SI._collect_factor_and_dimension(exp(R))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2366,
+  "prompt_tokens": 1279,
+  "total_tokens": 3645,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1923,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Functions must only accept dimensionless arguments; otherwise a ValueError is raised.",
+ "requirement": "All functions (e.g., exp, log, sin, etc.) are required to have dimensionless arguments. If any argument of a function has a non\u2011dimensionless dimension, _collect_factor_and_dimension should raise a ValueError with a message indicating that the function argument must be dimensionless. The result of any function call is always considered dimensionless (Dimension(1)). This requirement supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/physics/units/unitsystem.py",
+   "search": "elif isinstance(expr, Function):\n            fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]\n            dims = [Dimension(1) if self.get_dimension_system().is_dimensionless(d[1]) else d[1] for d in fds]\n            return (expr.func(*(f[0] for f in fds)), *dims)",
+   "replace": "elif isinstance(expr, Function):\n            # All functions must have dimensionless arguments; otherwise raise an error.\n            fds = [self._collect_factor_and_dimension(arg) for arg in expr.args]\n            for f, d in fds:\n                if not self.get_dimension_system().is_dimensionless(d):\n                    raise ValueError(f'Argument of function {expr.func} must be dimensionless')\n            # The function itself is dimensionless.\n            return (expr.func(*(f for f, _ in fds)), Dimension(1))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/physics/units/tests/test_quantities.py",
+   "search": "    assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))",
+   "replace": "    assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))\n    # Function with a dimensionful argument should raise ValueError\n    from pytest import raises\n    with raises(ValueError):\n        SI._collect_factor_and_dimension(exp(R))"
+  }
+ ],
+ "status": "generated"
+}

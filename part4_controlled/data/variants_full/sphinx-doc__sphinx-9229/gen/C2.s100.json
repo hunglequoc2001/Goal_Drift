@@ -1,0 +1,37 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9229",
+ "kind": "C2",
+ "sample": 100,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 20211,
+ "raw": "<summary>Alias documentation now always uses the default \u201calias of \u2026\u201d text, ignoring preceding comment lines.</summary>\n<requirement>When documenting a type alias, any preceding comment (e.g., `#: ...`) must be ignored; the generated documentation should always consist solely of the default alias text \u201calias of \u2026\u201d. For instance, the alias `OtherAlias` should be documented as `alias of :class:`target.classes.Bar``. This supersedes any previous expectation that such comments would be used as documentation.</requirement>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>if self.doc_as_attr:\n    # Don't show the docstring of the class when it is an alias.\n    comment = self.get_variable_comment()\n    if comment:\n        return []\n    else:\n        return None</search><replace>if self.doc_as_attr:\n    # Always show default alias text for type aliases.\n    return None</replace></source_edit>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>if self.doc_as_attr and not self.get_variable_comment():</search><replace>if self.doc_as_attr:</replace></source_edit>\n<test_edit file=\"tests/test_ext_autodoc_autoclass.py\"><search>[\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   docstring',\n        '',\n    ]</search><replace>[\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   alias of :class:`target.classes.Bar`',\n        '',\n    ]</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Alias documentation now always uses the default \u201calias of \u2026\u201d text, ignoring preceding comment lines.",
+ "requirement": "When documenting a type alias, any preceding comment (e.g., `#: ...`) must be ignored; the generated documentation should always consist solely of the default alias text \u201calias of \u2026\u201d. For instance, the alias `OtherAlias` should be documented as `alias of :class:`target.classes.Bar``. This supersedes any previous expectation that such comments would be used as documentation.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "if self.doc_as_attr:\n    # Don't show the docstring of the class when it is an alias.\n    comment = self.get_variable_comment()\n    if comment:\n        return []\n    else:\n        return None",
+   "replace": "if self.doc_as_attr:\n    # Always show default alias text for type aliases.\n    return None"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "if self.doc_as_attr and not self.get_variable_comment():",
+   "replace": "if self.doc_as_attr:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_autoclass.py",
+   "search": "[\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   docstring',\n        '',\n    ]",
+   "replace": "[\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   alias of :class:`target.classes.Bar`',\n        '',\n    ]"
+  }
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "instance_id": "matplotlib__matplotlib-24970",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "57c1f7001a19c466f662b61f12b06ccb251785d8da5f49bcafe67775283e61c2",
+ "raw": "<summary>Disallow unsigned integer inputs to colormaps</summary>\n<requirement>Colormap objects must reject any input whose NumPy dtype is an unsigned integer (e.g., np.uint8). When such a value is passed to a colormap, the call should raise a ValueError with the message \u201cUnsigned integer inputs are not supported\u201d. This requirement supersedes any previous behavior that allowed unsigned integer indexing.</requirement>\n<source_edit file=\"lib/matplotlib/colors.py\"><search>if not xa.dtype.isnative:</search><replace>if not xa.dtype.isnative:\n    xa = xa.byteswap().newbyteorder()  # Native byteorder is faster.\nif xa.dtype.kind == \"u\":\n    raise ValueError(\"Unsigned integer inputs are not supported\")\nif xa.dtype.kind == \"f\":</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_colors.py\"><search>def test_index_dtype(dtype):</search><replace>def test_index_dtype(dtype):\n    cm = mpl.colormaps[\"viridis\"]\n    if dtype is np.uint8:\n        with pytest.raises(ValueError):\n            cm(dtype(0))\n    else:\n        assert_array_equal(cm(dtype(0)), cm(0))</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1502,
+  "prompt_tokens": 1588,
+  "total_tokens": 3090,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1233,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow unsigned integer inputs to colormaps",
+ "requirement": "Colormap objects must reject any input whose NumPy dtype is an unsigned integer (e.g., np.uint8). When such a value is passed to a colormap, the call should raise a ValueError with the message \u201cUnsigned integer inputs are not supported\u201d. This requirement supersedes any previous behavior that allowed unsigned integer indexing.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/colors.py",
+   "search": "if not xa.dtype.isnative:",
+   "replace": "if not xa.dtype.isnative:\n    xa = xa.byteswap().newbyteorder()  # Native byteorder is faster.\nif xa.dtype.kind == \"u\":\n    raise ValueError(\"Unsigned integer inputs are not supported\")\nif xa.dtype.kind == \"f\":"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_colors.py",
+   "search": "def test_index_dtype(dtype):",
+   "replace": "def test_index_dtype(dtype):\n    cm = mpl.colormaps[\"viridis\"]\n    if dtype is np.uint8:\n        with pytest.raises(ValueError):\n            cm(dtype(0))\n    else:\n        assert_array_equal(cm(dtype(0)), cm(0))"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,36 @@
+{
+ "instance_id": "pydata__xarray-4695",
+ "kind": "C2",
+ "sample": 13,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 13,
+ "prompt_sha256": "f399033fad85d571ed22eb91ae481b09057527b88184a33815099707788c29b6",
+ "raw": "<summary>Handle a dimension named \u201cmethod\u201d specially when indexing with .loc.</summary>\n<requirement>When using the .loc accessor with a dictionary, any key named ``method`` must be treated as a dimension label rather than as the interpolation ``method`` argument of ``sel``. Implement this by first selecting all other dimensions with ``sel`` and then selecting the ``method`` dimension separately. This supersedes any previous expectation that passing the dictionary directly to ``sel`` would work for all dimension names.</requirement>\n<source_edit file=\"xarray/core/dataarray.py\"><search>return self.data_array.sel(key)</search><replace>        # ``method`` is a valid dimension name, but also a keyword argument of ``sel``.\n        if isinstance(key, dict) and \"method\" in key:\n            # Separate the ``method`` dimension from the ``method`` argument.\n            method_val = key[\"method\"]\n            other_keys = {k: v for k, v in key.items() if k != \"method\"}\n            # First select all other dimensions.\n            result = self.data_array.sel(**other_keys)\n            # Then select the ``method`` dimension.\n            return result.sel(method=method_val)\n        else:\n            return self.data_array.sel(**key)</replace></source_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2020,
+  "prompt_tokens": 2236,
+  "total_tokens": 4256,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1743,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Handle a dimension named \u201cmethod\u201d specially when indexing with .loc.",
+ "requirement": "When using the .loc accessor with a dictionary, any key named ``method`` must be treated as a dimension label rather than as the interpolation ``method`` argument of ``sel``. Implement this by first selecting all other dimensions with ``sel`` and then selecting the ``method`` dimension separately. This supersedes any previous expectation that passing the dictionary directly to ``sel`` would work for all dimension names.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/dataarray.py",
+   "search": "return self.data_array.sel(key)",
+   "replace": "        # ``method`` is a valid dimension name, but also a keyword argument of ``sel``.\n        if isinstance(key, dict) and \"method\" in key:\n            # Separate the ``method`` dimension from the ``method`` argument.\n            method_val = key[\"method\"]\n            other_keys = {k: v for k, v in key.items() if k != \"method\"}\n            # First select all other dimensions.\n            result = self.data_array.sel(**other_keys)\n            # Then select the ``method`` dimension.\n            return result.sel(method=method_val)\n        else:\n            return self.data_array.sel(**key)"
+  }
+ ],
+ "test_edits": [],
+ "status": "generated"
+}

@@ -1,0 +1,37 @@
+{
+ "instance_id": "sphinx-doc__sphinx-9229",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 20101,
+ "raw": "<summary>Variable comments on type\u2011alias assignments are ignored and the default \u201calias of \u2026\u201d text is always shown.</summary>\n<requirement>When documenting a type alias, any preceding variable comment (e.g. a line starting with `#:`) must be ignored. The generated documentation should always display the default \u201calias of :class:`target.classes.Bar`\u201d text (i.e. the fully\u2011qualified target class name) for the alias, regardless of any comment. This supersedes any conflicting expectation in the issue.</requirement>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>if self.doc_as_attr:\n    # Don't show the docstring of the class when it is an alias.\n    comment = self.get_variable_comment()\n    if comment:\n        return []\n    else:\n        return None</search><replace>if self.doc_as_attr:\n    # Don't show the docstring of the class when it is an alias.\n    return None</replace></source_edit>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>if self.doc_as_attr and not self.get_variable_comment():</search><replace>if self.doc_as_attr:</replace></source_edit>\n<test_edit file=\"tests/test_ext_autodoc_autoclass.py\"><search>def test_class_alias_having_doccomment(app):\n    actual = do_autodoc(app, 'class', 'target.classes.OtherAlias')\n    assert list(actual) == [\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   docstring',\n        '',\n    ]</search><replace>def test_class_alias_having_doccomment(app):\n    actual = do_autodoc(app, 'class', 'target.classes.OtherAlias')\n    assert list(actual) == [\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   alias of :class:`target.classes.Bar`',\n    ]</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Variable comments on type\u2011alias assignments are ignored and the default \u201calias of \u2026\u201d text is always shown.",
+ "requirement": "When documenting a type alias, any preceding variable comment (e.g. a line starting with `#:`) must be ignored. The generated documentation should always display the default \u201calias of :class:`target.classes.Bar`\u201d text (i.e. the fully\u2011qualified target class name) for the alias, regardless of any comment. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "if self.doc_as_attr:\n    # Don't show the docstring of the class when it is an alias.\n    comment = self.get_variable_comment()\n    if comment:\n        return []\n    else:\n        return None",
+   "replace": "if self.doc_as_attr:\n    # Don't show the docstring of the class when it is an alias.\n    return None"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "if self.doc_as_attr and not self.get_variable_comment():",
+   "replace": "if self.doc_as_attr:"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_autoclass.py",
+   "search": "def test_class_alias_having_doccomment(app):\n    actual = do_autodoc(app, 'class', 'target.classes.OtherAlias')\n    assert list(actual) == [\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   docstring',\n        '',\n    ]",
+   "replace": "def test_class_alias_having_doccomment(app):\n    actual = do_autodoc(app, 'class', 'target.classes.OtherAlias')\n    assert list(actual) == [\n        '',\n        '.. py:attribute:: OtherAlias',\n        '   :module: target.classes',\n        '',\n        '   alias of :class:`target.classes.Bar`',\n    ]"
+  }
+ ]
+}

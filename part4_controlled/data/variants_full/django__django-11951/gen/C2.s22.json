@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-11951",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "d391eb5b956491cbd5d2c3ad23c73dc5fce0bbca99170c7ad19c8dae92d7fb7f",
+ "raw": "<summary>bulk_create must honor the explicit batch_size even when it exceeds the backend\u2019s maximum batch size.</summary>\n<requirement>The bulk_create method should use the exact batch_size value supplied by the caller without capping it to the backend\u2011determined maximum batch size. If a batch_size argument is provided, it is applied as\u2011is, even when larger than the value returned by ops.bulk_batch_size; this supersedes any earlier expectation that the batch size would be limited to the maximum.</requirement>\n\n<source_edit file=\"django/db/models/query.py\">\n<search>max_batch_size = max(ops.bulk_batch_size(fields, objs), 1)</search>\n<replace>batch_size = (batch_size or max(ops.bulk_batch_size(fields, objs), 1))</replace>\n</source_edit>\n\n<test_edit file=\"tests/bulk_create/tests.py\">\n<search>with self.assertNumQueries(ceil(len(objs) / max_batch_size)):</search>\n<replace>with self.assertNumQueries(ceil(len(objs) / (max_batch_size + 1))):</replace>\n</test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1135,
+  "prompt_tokens": 1197,
+  "total_tokens": 2332,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 893,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "bulk_create must honor the explicit batch_size even when it exceeds the backend\u2019s maximum batch size.",
+ "requirement": "The bulk_create method should use the exact batch_size value supplied by the caller without capping it to the backend\u2011determined maximum batch size. If a batch_size argument is provided, it is applied as\u2011is, even when larger than the value returned by ops.bulk_batch_size; this supersedes any earlier expectation that the batch size would be limited to the maximum.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/query.py",
+   "search": "max_batch_size = max(ops.bulk_batch_size(fields, objs), 1)",
+   "replace": "batch_size = (batch_size or max(ops.bulk_batch_size(fields, objs), 1))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/bulk_create/tests.py",
+   "search": "with self.assertNumQueries(ceil(len(objs) / max_batch_size)):",
+   "replace": "with self.assertNumQueries(ceil(len(objs) / (max_batch_size + 1))):"
+  }
+ ],
+ "status": "generated"
+}

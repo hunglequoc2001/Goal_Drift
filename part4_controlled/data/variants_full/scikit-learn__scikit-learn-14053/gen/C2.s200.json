@@ -1,0 +1,31 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-14053",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 13,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 18440,
+ "raw": "<summary>Disallow empty strings in the `feature_names` list.</summary>\n<requirement>When a non\u2011None `feature_names` list is supplied to `export_text`, each entry must be a non\u2011empty string. Supplying an empty string should raise a `ValueError` with the message \u201cfeature_names must not contain empty strings\u201d. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sklearn/tree/export.py\"><search>    if (feature_names is not None and\n            len(feature_names) != tree_.n_features):\n        raise ValueError(\"feature_names must contain \"\n                         \"%d elements, got %d\" % (tree_.n_features,\n                                                  len(feature_names)))</search><replace>    if (feature_names is not None and\n            len(feature_names) != tree_.n_features):\n        raise ValueError(\"feature_names must contain \"\n                         \"%d elements, got %d\" % (tree_.n_features,\n                                                  len(feature_names)))\n    if feature_names is not None and any(name == \"\" for name in feature_names):\n        raise ValueError(\"feature_names must not contain empty strings\")</replace></source_edit>\n<test_edit file=\"sklearn/tree/tests/test_export.py\"><search>    assert export_text(reg, decimals=1, show_weights=True,\n                       feature_names=['first']) == expected_report</search><replace>    assert export_text(reg, decimals=1, show_weights=True,\n                       feature_names=['first']) == expected_report\n\n    with pytest.raises(ValueError, match=\"feature_names must not contain empty strings\"):\n        export_text(reg, feature_names=[''])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Disallow empty strings in the `feature_names` list.",
+ "requirement": "When a non\u2011None `feature_names` list is supplied to `export_text`, each entry must be a non\u2011empty string. Supplying an empty string should raise a `ValueError` with the message \u201cfeature_names must not contain empty strings\u201d. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/tree/export.py",
+   "search": "    if (feature_names is not None and\n            len(feature_names) != tree_.n_features):\n        raise ValueError(\"feature_names must contain \"\n                         \"%d elements, got %d\" % (tree_.n_features,\n                                                  len(feature_names)))",
+   "replace": "    if (feature_names is not None and\n            len(feature_names) != tree_.n_features):\n        raise ValueError(\"feature_names must contain \"\n                         \"%d elements, got %d\" % (tree_.n_features,\n                                                  len(feature_names)))\n    if feature_names is not None and any(name == \"\" for name in feature_names):\n        raise ValueError(\"feature_names must not contain empty strings\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/tree/tests/test_export.py",
+   "search": "    assert export_text(reg, decimals=1, show_weights=True,\n                       feature_names=['first']) == expected_report",
+   "replace": "    assert export_text(reg, decimals=1, show_weights=True,\n                       feature_names=['first']) == expected_report\n\n    with pytest.raises(ValueError, match=\"feature_names must not contain empty strings\"):\n        export_text(reg, feature_names=[''])"
+  }
+ ]
+}

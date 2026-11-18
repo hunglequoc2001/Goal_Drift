@@ -1,0 +1,42 @@
+{
+ "instance_id": "django__django-11087",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "d73d7070d88623aa5a250327dd697c556d3561d23fdabbcbc2f4f6e0a238ee48",
+ "raw": "<summary>Cascade deletes must always select all fields of related models, regardless of signal listeners.</summary>\n<requirement>When performing cascade deletions, the ORM must always retrieve all fields of related objects, even if no pre\u2011delete or post\u2011delete signal listeners are connected. This ensures that fields such as large text columns are included in the SELECT query for deletion. This supersedes any previous expectation that only fields referenced by other relations would be selected.</requirement>\n<test_edit file=\"tests/delete/tests.py\"><search>expected_sql = str(\n            Referrer.objects.only(\n                # Both fields are referenced by SecondReferrer.\n                'id', 'unique_field',\n            ).filter(origin__in=[origin]).query\n        )</search><replace># The previous expectation that only referenced fields are selected is no longer valid.\n        # Instead, we verify that a large text field is included in the SELECT.</replace></test_edit>\n<test_edit file=\"tests/delete/tests.py\"><search>self.assertEqual(ctx.captured_queries[0]['sql'], expected_sql)</search><replace>self.assertIn(\n            connection.ops.quote_name('large_field'),\n            ctx.captured_queries[0]['sql'],\n        )</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1446,
+  "prompt_tokens": 4270,
+  "total_tokens": 5716,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1183,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Cascade deletes must always select all fields of related models, regardless of signal listeners.",
+ "requirement": "When performing cascade deletions, the ORM must always retrieve all fields of related objects, even if no pre\u2011delete or post\u2011delete signal listeners are connected. This ensures that fields such as large text columns are included in the SELECT query for deletion. This supersedes any previous expectation that only fields referenced by other relations would be selected.",
+ "source_edits": [],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/delete/tests.py",
+   "search": "expected_sql = str(\n            Referrer.objects.only(\n                # Both fields are referenced by SecondReferrer.\n                'id', 'unique_field',\n            ).filter(origin__in=[origin]).query\n        )",
+   "replace": "# The previous expectation that only referenced fields are selected is no longer valid.\n        # Instead, we verify that a large text field is included in the SELECT."
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/delete/tests.py",
+   "search": "self.assertEqual(ctx.captured_queries[0]['sql'], expected_sql)",
+   "replace": "self.assertIn(\n            connection.ops.quote_name('large_field'),\n            ctx.captured_queries[0]['sql'],\n        )"
+  }
+ ],
+ "status": "generated"
+}

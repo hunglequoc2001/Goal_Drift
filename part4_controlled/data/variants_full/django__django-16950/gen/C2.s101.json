@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-16950",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 13,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "exec",
+ "prompt_chars": 19770,
+ "raw": "<summary>Inline formsets must always ignore a parent model\u2019s default key, even when form data is supplied.</summary>\n<requirement>When handling inline formsets, the admin should always ignore a parent model\u2019s default value for its foreign\u2011key field, regardless of whether any form data is present. The foreign\u2011key attribute must be set to\u202fNone before validation. This supersedes any earlier expectation that a default be retained when form data is provided.</requirement>\n<source_edit file=\"django/forms/models.py\"><search>if to_field.has_default() and (\n                # Don't ignore a parent's auto-generated key if it's not the\n                # parent model's pk and form data is provided.\n                to_field.attname == self.fk.remote_field.model._meta.pk.name\n                or not form.data\n            ):</search><replace>if to_field.has_default():\n                setattr(self.instance, to_field.attname, None)</replace></source_edit>\n<test_edit file=\"tests/model_formsets/test_uuid.py\"><search>self.assertIsNotNone(formset.instance.uuid)</search><replace>self.assertIsNone(formset.instance.uuid)</replace></test_edit>\n<test_edit file=\"tests/model_formsets/test_uuid.py\"><search>self.assertEqual(formset.forms[0].instance.parent_id, formset.instance.uuid)</search><replace>self.assertIsNone(formset.forms[0].instance.parent_id)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Inline formsets must always ignore a parent model\u2019s default key, even when form data is supplied.",
+ "requirement": "When handling inline formsets, the admin should always ignore a parent model\u2019s default value for its foreign\u2011key field, regardless of whether any form data is present. The foreign\u2011key attribute must be set to\u202fNone before validation. This supersedes any earlier expectation that a default be retained when form data is provided.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/models.py",
+   "search": "if to_field.has_default() and (\n                # Don't ignore a parent's auto-generated key if it's not the\n                # parent model's pk and form data is provided.\n                to_field.attname == self.fk.remote_field.model._meta.pk.name\n                or not form.data\n            ):",
+   "replace": "if to_field.has_default():\n                setattr(self.instance, to_field.attname, None)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/model_formsets/test_uuid.py",
+   "search": "self.assertIsNotNone(formset.instance.uuid)",
+   "replace": "self.assertIsNone(formset.instance.uuid)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/model_formsets/test_uuid.py",
+   "search": "self.assertEqual(formset.forms[0].instance.parent_id, formset.instance.uuid)",
+   "replace": "self.assertIsNone(formset.forms[0].instance.parent_id)"
+  }
+ ]
+}

@@ -1,0 +1,55 @@
+{
+ "instance_id": "django__django-14140",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "fababfa4fd61e9c11693db12c3760ac15ecd82172d24a0bd21819e47d8275037",
+ "raw": "<summary>Re\u2011introduce the special\u2011case handling for single\u2011lookup Q objects during deconstruction.</summary>\n<requirement>When a Q object contains exactly one child and that child is a two\u2011item tuple representing a standard lookup (e.g., ('field', value)), deconstruct() must return an empty args tuple and place the lookup in kwargs as a keyword argument. For any other single child (such as an Exists expression) the child should be returned in args as before. This requirement supersedes any previous description of deconstruct handling single\u2011child Q objects.</requirement>\n<source_edit file=\"django/db/models/query_utils.py\"><search>args = tuple(self.children)</search><replace>if len(self.children) == 1 and isinstance(self.children[0], tuple) and len(self.children[0]) == 2:\n            args = ()\n            kwargs = {self.children[0][0]: self.children[0][1]}\n        else:\n            args = tuple(self.children)\n            kwargs = {}\n            if self.connector != self.default:\n                kwargs['_connector'] = self.connector</replace></source_edit>\n<test_edit file=\"tests/queries/test_q.py\"><search>self.assertEqual(args, (('price__gt', F('discounted_price')),))</search><replace>self.assertEqual(args, ())</replace></test_edit>\n<test_edit file=\"tests/queries/test_q.py\"><search>self.assertEqual(kwargs, {})</search><replace>self.assertEqual(kwargs, {'price__gt': F('discounted_price')})</replace></test_edit>\n<test_edit file=\"tests/queries/test_q.py\"><search>self.assertEqual(kwargs, {'_negated': True})</search><replace>self.assertEqual(kwargs, {'price__gt': F('discounted_price'), '_negated': True})</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1958,
+  "prompt_tokens": 2086,
+  "total_tokens": 4044,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1562,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Re\u2011introduce the special\u2011case handling for single\u2011lookup Q objects during deconstruction.",
+ "requirement": "When a Q object contains exactly one child and that child is a two\u2011item tuple representing a standard lookup (e.g., ('field', value)), deconstruct() must return an empty args tuple and place the lookup in kwargs as a keyword argument. For any other single child (such as an Exists expression) the child should be returned in args as before. This requirement supersedes any previous description of deconstruct handling single\u2011child Q objects.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/query_utils.py",
+   "search": "args = tuple(self.children)",
+   "replace": "if len(self.children) == 1 and isinstance(self.children[0], tuple) and len(self.children[0]) == 2:\n            args = ()\n            kwargs = {self.children[0][0]: self.children[0][1]}\n        else:\n            args = tuple(self.children)\n            kwargs = {}\n            if self.connector != self.default:\n                kwargs['_connector'] = self.connector"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_q.py",
+   "search": "self.assertEqual(args, (('price__gt', F('discounted_price')),))",
+   "replace": "self.assertEqual(args, ())"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_q.py",
+   "search": "self.assertEqual(kwargs, {})",
+   "replace": "self.assertEqual(kwargs, {'price__gt': F('discounted_price')})"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/queries/test_q.py",
+   "search": "self.assertEqual(kwargs, {'_negated': True})",
+   "replace": "self.assertEqual(kwargs, {'price__gt': F('discounted_price'), '_negated': True})"
+  }
+ ],
+ "status": "generated"
+}

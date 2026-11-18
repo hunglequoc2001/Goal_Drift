@@ -1,0 +1,31 @@
+{
+ "instance_id": "sphinx-doc__sphinx-8035",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 13,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 28317,
+ "raw": "<summary>Allow \u201c*\u201d as a shortcut for \u201call private members\u201d in the :private-members: option.</summary>\n<requirement>The ``:private-members:`` (and ``:special-members:``) option now accepts the literal ``\"*\"``, which means \u201cinclude all private members\u201d. When this value is given, it behaves the same as specifying ``None`` (i.e., it documents every private member that meets the normal inclusion criteria). This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"sphinx/ext/autodoc/__init__.py\"><search>def members_option(arg: Any) -> Union[object, List[str]]:\n    \"\"\"Used to convert the :members: option to auto directives.\"\"\"\n    if arg is None or arg is True:\n        return ALL\n    return [x.strip() for x in arg.split(',') if x.strip()]</search><replace>def members_option(arg: Any) -> Union[object, List[str]]:\n    \"\"\"Used to convert the :members: option to auto directives.\n\n    The special string ``\"*\"``, when given as the argument, is interpreted as\n    ``ALL`` (i.e., include all members). This applies to ``:private-members:``\n    and ``:special-members:`` options as well.\n    \"\"\"\n    if arg is None or arg is True:\n        return ALL\n    # treat a single asterisk as a request for all members\n    if isinstance(arg, str) and arg.strip() == \"*\":\n        return ALL\n    return [x.strip() for x in arg.split(',') if x.strip()]</replace></source_edit>\n<test_edit file=\"tests/test_ext_autodoc_private_members.py\"><search>options = {\"members\": None,\n               \"private-members\": None}</search><replace>options = {\"members\": None,\n               \"private-members\": \"*\"}</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Allow \u201c*\u201d as a shortcut for \u201call private members\u201d in the :private-members: option.",
+ "requirement": "The ``:private-members:`` (and ``:special-members:``) option now accepts the literal ``\"*\"``, which means \u201cinclude all private members\u201d. When this value is given, it behaves the same as specifying ``None`` (i.e., it documents every private member that meets the normal inclusion criteria). This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sphinx/ext/autodoc/__init__.py",
+   "search": "def members_option(arg: Any) -> Union[object, List[str]]:\n    \"\"\"Used to convert the :members: option to auto directives.\"\"\"\n    if arg is None or arg is True:\n        return ALL\n    return [x.strip() for x in arg.split(',') if x.strip()]",
+   "replace": "def members_option(arg: Any) -> Union[object, List[str]]:\n    \"\"\"Used to convert the :members: option to auto directives.\n\n    The special string ``\"*\"``, when given as the argument, is interpreted as\n    ``ALL`` (i.e., include all members). This applies to ``:private-members:``\n    and ``:special-members:`` options as well.\n    \"\"\"\n    if arg is None or arg is True:\n        return ALL\n    # treat a single asterisk as a request for all members\n    if isinstance(arg, str) and arg.strip() == \"*\":\n        return ALL\n    return [x.strip() for x in arg.split(',') if x.strip()]"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/test_ext_autodoc_private_members.py",
+   "search": "options = {\"members\": None,\n               \"private-members\": None}",
+   "replace": "options = {\"members\": None,\n               \"private-members\": \"*\"}"
+  }
+ ]
+}

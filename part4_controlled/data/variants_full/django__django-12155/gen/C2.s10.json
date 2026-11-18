@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-12155",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "a86dfe50e23fd020f235d0c068e6b634bc76ff74e7b8b1265de47e611a687f41",
+ "raw": "<summary>parse_docstring must preserve indentation after the first line instead of dedenting the whole docstring</summary>\n<requirement>Update the documentation parser so that it no longer dedents the docstring using inspect.cleandoc. Only the first line of the docstring should be left\u2011stripped; all subsequent lines must retain their original indentation. This supersedes any previous expectation that the entire docstring be dedented.</requirement>\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>docstring = cleandoc(docstring)</search><replace>        # Preserve original indentation after the first line.\n        # Only left\u2011strip the first line; keep the rest as\u2011is.\n        docstring = docstring.expandtabs()\n        lines = docstring.splitlines()\n        if lines:\n            lines[0] = lines[0].lstrip()\n        docstring = \"\\n\".join(lines)</replace></source_edit>\n<source_edit file=\"django/contrib/admindocs/views.py\"><search>utils.parse_rst(cleandoc(verbose), 'model', _('model:') + opts.model_name)</search><replace>utils.parse_rst(\n                (lambda v: (\"\\n\".join([v.expandtabs().splitlines()[0].lstrip()] + v.expandtabs().splitlines()[1:])))(verbose),\n                'model',\n                _('model:') + opts.model_name\n            )</replace></source_edit>\n<test_edit file=\"tests/admin_docs/test_utils.py\"><search>self.assertEqual(parse_rst(body, ''), '&lt;p&gt;second line&lt;/p&gt;\\\\n')</search><replace>self.assertEqual(parse_rst(body, ''), '&lt;pre class=&quot;literal-block&quot;&gt;second line&lt;/pre&gt;\\\\n')</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2725,
+  "prompt_tokens": 1864,
+  "total_tokens": 4589,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 2334,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "parse_docstring must preserve indentation after the first line instead of dedenting the whole docstring",
+ "requirement": "Update the documentation parser so that it no longer dedents the docstring using inspect.cleandoc. Only the first line of the docstring should be left\u2011stripped; all subsequent lines must retain their original indentation. This supersedes any previous expectation that the entire docstring be dedented.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "docstring = cleandoc(docstring)",
+   "replace": "        # Preserve original indentation after the first line.\n        # Only left\u2011strip the first line; keep the rest as\u2011is.\n        docstring = docstring.expandtabs()\n        lines = docstring.splitlines()\n        if lines:\n            lines[0] = lines[0].lstrip()\n        docstring = \"\\n\".join(lines)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/views.py",
+   "search": "utils.parse_rst(cleandoc(verbose), 'model', _('model:') + opts.model_name)",
+   "replace": "utils.parse_rst(\n                (lambda v: (\"\\n\".join([v.expandtabs().splitlines()[0].lstrip()] + v.expandtabs().splitlines()[1:])))(verbose),\n                'model',\n                _('model:') + opts.model_name\n            )"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/admin_docs/test_utils.py",
+   "search": "self.assertEqual(parse_rst(body, ''), '&lt;p&gt;second line&lt;/p&gt;\\\\n')",
+   "replace": "self.assertEqual(parse_rst(body, ''), '&lt;pre class=&quot;literal-block&quot;&gt;second line&lt;/pre&gt;\\\\n')"
+  }
+ ],
+ "status": "generated"
+}

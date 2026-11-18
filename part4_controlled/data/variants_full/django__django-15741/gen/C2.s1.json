@@ -1,0 +1,44 @@
+{
+ "instance_id": "django__django-15741",
+ "kind": "C2",
+ "sample": 1,
+ "generator": "glm-4-32b-0414",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 1,
+ "prompt_sha256": "818502a3096b79bad9b16e7acdd3076bccd202b4cb0be8a9b77e3b8f5c77fd0f",
+ "raw": "\n<summary>Change the lazy parameter handling in get_format to preserve the original string if it's already a string.</summary>\n<requirement>Starting now, django.utils.formats.get_format should only convert the format_type parameter to a string if it is not already a string. This change supersedes any conflicting expectation in the issue. If the format_type is already a string (including lazy strings that have been resolved), it should be used as-is without conversion. Only non-string format_type values should be converted to strings.</requirement>\n<source_edit file=\"django/utils/formats.py\"><search>format_type = str(format_type)  # format_type may be lazy.</search><replace>format_type = str(format_type) if not isinstance(format_type, str) else format_type  # format_type may be lazy.</replace></source_edit>\n<test_edit file=\"tests/i18n/tests.py\"><search>self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")</search><replace>lazy_format = gettext_lazy(\"DATE_FORMAT\"); self.assertEqual(get_format(lazy_format), \"N j, Y\")</replace></test_edit>\n<test_edit file=\"tests/template_tests/filter_tests/test_date.py\"><search>self.assertEqual(output, \"00:00\")</search><replace>lazy_format = gettext_lazy(\"H:i\"); output = self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)}); self.assertEqual(output, \"00:00\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 315,
+  "prompt_tokens": 1047,
+  "total_tokens": 1362,
+  "completion_tokens_details": null,
+  "prompt_tokens_details": null
+ },
+ "summary": "Change the lazy parameter handling in get_format to preserve the original string if it's already a string.",
+ "requirement": "Starting now, django.utils.formats.get_format should only convert the format_type parameter to a string if it is not already a string. This change supersedes any conflicting expectation in the issue. If the format_type is already a string (including lazy strings that have been resolved), it should be used as-is without conversion. Only non-string format_type values should be converted to strings.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/formats.py",
+   "search": "format_type = str(format_type)  # format_type may be lazy.",
+   "replace": "format_type = str(format_type) if not isinstance(format_type, str) else format_type  # format_type may be lazy."
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/i18n/tests.py",
+   "search": "self.assertEqual(get_format(gettext_lazy(\"DATE_FORMAT\")), \"N j, Y\")",
+   "replace": "lazy_format = gettext_lazy(\"DATE_FORMAT\"); self.assertEqual(get_format(lazy_format), \"N j, Y\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/template_tests/filter_tests/test_date.py",
+   "search": "self.assertEqual(output, \"00:00\")",
+   "replace": "lazy_format = gettext_lazy(\"H:i\"); output = self.engine.render_to_string(\"datelazy\", {\"t\": time(0, 0)}); self.assertEqual(output, \"00:00\")"
+  }
+ ],
+ "status": "generated"
+}

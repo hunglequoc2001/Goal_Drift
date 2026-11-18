@@ -1,0 +1,42 @@
+{
+ "instance_id": "django__django-12155",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 10,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 24470,
+ "raw": "<summary>Use the project\u2019s trim_docstring (ignoring the first line for indentation) instead of inspect.cleandoc when parsing docstrings.</summary>\n<requirement>When parsing a docstring, the code must dedent based on the indentation of all lines **except** the first line, preserving any blank line after the first line. Replace the use of `inspect.cleandoc` with the project's `trim_docstring` helper, which should compute the minimum indentation from `lines[1:]`. Apply this change both in `utils.parse_docstring` and wherever a docstring is rendered in the admin docs views. This supersedes any conflicting expectation in the issue.</requirement>\n\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>return mod_name + '.' + view_name</search><replace>return mod_name + '.' + view_name\n\ndef trim_docstring(docstring):\n    \"\"\"\n    Uniformly trim leading/trailing whitespace from docstrings,\n    but compute indentation based on all lines except the first.\n    \"\"\"\n    if not docstring or not docstring.strip():\n        return ''\n    # Convert tabs to spaces and split into lines\n    lines = docstring.expandtabs().splitlines()\n    # Determine indentation from all lines except the first\n    indent = min((len(line) - len(line.lstrip()) for line in lines[1:] if line.lstrip()), default=0)\n    trimmed = [lines[0].lstrip()] + [line[indent:].rstrip() for line in lines[1:]]\n    return \"\\n\".join(trimmed).strip()</replace></source_edit>\n\n<source_edit file=\"django/contrib/admindocs/utils.py\"><search>docstring = cleandoc(docstring)</search><replace>docstring = trim_docstring(docstring)</replace></source_edit>\n\n<source_edit file=\"django/contrib/admindocs/views.py\"><search>from inspect import cleandoc</search><replace>from django.contrib.admindocs.utils import trim_docstring</replace></source_edit>\n\n<source_edit file=\"django/contrib/admindocs/views.py\"><search>cleandoc(verbose)</search><replace>trim_docstring(verbose)</replace></source_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Use the project\u2019s trim_docstring (ignoring the first line for indentation) instead of inspect.cleandoc when parsing docstrings.",
+ "requirement": "When parsing a docstring, the code must dedent based on the indentation of all lines **except** the first line, preserving any blank line after the first line. Replace the use of `inspect.cleandoc` with the project's `trim_docstring` helper, which should compute the minimum indentation from `lines[1:]`. Apply this change both in `utils.parse_docstring` and wherever a docstring is rendered in the admin docs views. This supersedes any conflicting expectation in the issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "return mod_name + '.' + view_name",
+   "replace": "return mod_name + '.' + view_name\n\ndef trim_docstring(docstring):\n    \"\"\"\n    Uniformly trim leading/trailing whitespace from docstrings,\n    but compute indentation based on all lines except the first.\n    \"\"\"\n    if not docstring or not docstring.strip():\n        return ''\n    # Convert tabs to spaces and split into lines\n    lines = docstring.expandtabs().splitlines()\n    # Determine indentation from all lines except the first\n    indent = min((len(line) - len(line.lstrip()) for line in lines[1:] if line.lstrip()), default=0)\n    trimmed = [lines[0].lstrip()] + [line[indent:].rstrip() for line in lines[1:]]\n    return \"\\n\".join(trimmed).strip()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/utils.py",
+   "search": "docstring = cleandoc(docstring)",
+   "replace": "docstring = trim_docstring(docstring)"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/views.py",
+   "search": "from inspect import cleandoc",
+   "replace": "from django.contrib.admindocs.utils import trim_docstring"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/contrib/admindocs/views.py",
+   "search": "cleandoc(verbose)",
+   "replace": "trim_docstring(verbose)"
+  }
+ ],
+ "test_edits": []
+}

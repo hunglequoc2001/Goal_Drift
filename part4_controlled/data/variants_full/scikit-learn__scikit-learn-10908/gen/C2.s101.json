@@ -1,0 +1,31 @@
+{
+ "instance_id": "scikit-learn__scikit-learn-10908",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 11,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 22538,
+ "raw": "<summary>Calling get_feature_names on a CountVectorizer with a user\u2011provided vocabulary before fitting must raise NotFittedError.</summary>\n<requirement>When a CountVectorizer is instantiated with a user\u2011provided ``vocabulary`` argument, calling ``get_feature_names`` before the estimator has been fitted must raise a ``NotFittedError``. The method must not automatically validate or set the internal ``vocabulary_`` attribute in this situation, and ``fixed_vocabulary_`` should remain ``False``. This requirement supersedes any previous expectation that ``get_feature_names`` would succeed with a supplied vocabulary.</requirement>\n<source_edit file=\"sklearn/feature_extraction/text.py\"><search>        if not hasattr(self, 'vocabulary_'):\\n            self._validate_vocabulary()</search><replace></replace></source_edit>\n<test_edit file=\"sklearn/feature_extraction/tests/test_text.py\"><search>    vocab = ['beer', 'burger', 'celeri', 'coke', 'pizza',\\n             'salad', 'sparkling', 'tomato', 'water']\\n\\n    cv = CountVectorizer(vocabulary=vocab)\\n    feature_names = cv.get_feature_names()\\n    assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza', 'salad',\\n                        'sparkling', 'tomato', 'water'], feature_names)\\n    assert_true(cv.fixed_vocabulary_)\\n\\n    for idx, name in enumerate(feature_names):\\n        assert_equal(idx, cv.vocabulary_.get(name))</search><replace>    vocab = ['beer', 'burger', 'celeri', 'coke', 'pizza',\\n             'salad', 'sparkling', 'tomato', 'water']\\n\\n    cv = CountVectorizer(vocabulary=vocab)\\n    assert_raises(NotFittedError, cv.get_feature_names)\\n    assert_false(cv.fixed_vocabulary_)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Calling get_feature_names on a CountVectorizer with a user\u2011provided vocabulary before fitting must raise NotFittedError.",
+ "requirement": "When a CountVectorizer is instantiated with a user\u2011provided ``vocabulary`` argument, calling ``get_feature_names`` before the estimator has been fitted must raise a ``NotFittedError``. The method must not automatically validate or set the internal ``vocabulary_`` attribute in this situation, and ``fixed_vocabulary_`` should remain ``False``. This requirement supersedes any previous expectation that ``get_feature_names`` would succeed with a supplied vocabulary.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sklearn/feature_extraction/text.py",
+   "search": "        if not hasattr(self, 'vocabulary_'):\\n            self._validate_vocabulary()",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sklearn/feature_extraction/tests/test_text.py",
+   "search": "    vocab = ['beer', 'burger', 'celeri', 'coke', 'pizza',\\n             'salad', 'sparkling', 'tomato', 'water']\\n\\n    cv = CountVectorizer(vocabulary=vocab)\\n    feature_names = cv.get_feature_names()\\n    assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza', 'salad',\\n                        'sparkling', 'tomato', 'water'], feature_names)\\n    assert_true(cv.fixed_vocabulary_)\\n\\n    for idx, name in enumerate(feature_names):\\n        assert_equal(idx, cv.vocabulary_.get(name))",
+   "replace": "    vocab = ['beer', 'burger', 'celeri', 'coke', 'pizza',\\n             'salad', 'sparkling', 'tomato', 'water']\\n\\n    cv = CountVectorizer(vocabulary=vocab)\\n    assert_raises(NotFittedError, cv.get_feature_names)\\n    assert_false(cv.fixed_vocabulary_)"
+  }
+ ]
+}

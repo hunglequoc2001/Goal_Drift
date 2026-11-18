@@ -1,0 +1,73 @@
+{
+ "instance_id": "astropy__astropy-7336",
+ "kind": "C2",
+ "sample": 10,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 10,
+ "prompt_sha256": "b89fe46059309606eacf607437d744303e83ec0197e582d0c1f6106417444654",
+ "raw": "<summary>Disallow None as a return annotation for @quantity_input</summary>\n<requirement>When a function is decorated with <code>@u.quantity_input</code>, it must not specify <code>None</code> as its return type annotation. If a return annotation of <code>None</code> is present, the decorator should raise a <code>TypeError</code> with a message indicating that return annotations cannot be <code>None</code>. This supersedes any previous expectation that a <code>None</code> return annotation is permitted.</requirement>\n\n<source_edit file=\"astropy/units/decorators.py\"><search>if wrapped_signature.return_annotation not in (inspect.Signature.empty, None):</search><replace>if wrapped_signature.return_annotation is inspect.Signature.empty:</replace></source_edit>\n<source_edit file=\"astropy/units/decorators.py\"><search>return return_</search><replace>return return_</replace></source_edit>\n<source_edit file=\"astropy/units/decorators.py\"><search>else:</search><replace>elif wrapped_signature.return_annotation is None:</replace></source_edit>\n<source_edit file=\"astropy/units/decorators.py\"><search>return return_</search><replace>raise TypeError(\"Return annotation cannot be None when using @quantity_input.\")</replace></source_edit>\n<source_edit file=\"astropy/units/decorators.py\"><search>else:</search><replace>else:</replace></source_edit>\n<source_edit file=\"astropy/units/decorators.py\"><search>return return_.to(wrapped_signature.return_annotation)</search><replace>return return_.to(wrapped_signature.return_annotation)</replace></source_edit>\n\n<test_edit file=\"astropy/units/tests/test_quantity_annotations.py\"><search>def test_return_annotation_none():</search><replace>def test_return_annotation_none():\n    @u.quantity_input\n    def myfunc_args(solarx: u.arcsec) -> None:\n        pass\n\n    with pytest.raises(TypeError) as e:\n        myfunc_args(1*u.arcsec)\n    assert \"Return annotation cannot be None\" in str(e.value)</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1492,
+  "prompt_tokens": 4682,
+  "total_tokens": 6174,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1025,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow None as a return annotation for @quantity_input",
+ "requirement": "When a function is decorated with <code>@u.quantity_input</code>, it must not specify <code>None</code> as its return type annotation. If a return annotation of <code>None</code> is present, the decorator should raise a <code>TypeError</code> with a message indicating that return annotations cannot be <code>None</code>. This supersedes any previous expectation that a <code>None</code> return annotation is permitted.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/units/decorators.py",
+   "search": "if wrapped_signature.return_annotation not in (inspect.Signature.empty, None):",
+   "replace": "if wrapped_signature.return_annotation is inspect.Signature.empty:"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/units/decorators.py",
+   "search": "return return_",
+   "replace": "return return_"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/units/decorators.py",
+   "search": "else:",
+   "replace": "elif wrapped_signature.return_annotation is None:"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/units/decorators.py",
+   "search": "return return_",
+   "replace": "raise TypeError(\"Return annotation cannot be None when using @quantity_input.\")"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/units/decorators.py",
+   "search": "else:",
+   "replace": "else:"
+  },
+  {
+   "kind": "source_edit",
+   "file": "astropy/units/decorators.py",
+   "search": "return return_.to(wrapped_signature.return_annotation)",
+   "replace": "return return_.to(wrapped_signature.return_annotation)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/units/tests/test_quantity_annotations.py",
+   "search": "def test_return_annotation_none():",
+   "replace": "def test_return_annotation_none():\n    @u.quantity_input\n    def myfunc_args(solarx: u.arcsec) -> None:\n        pass\n\n    with pytest.raises(TypeError) as e:\n        myfunc_args(1*u.arcsec)\n    assert \"Return annotation cannot be None\" in str(e.value)"
+  }
+ ],
+ "status": "generated"
+}

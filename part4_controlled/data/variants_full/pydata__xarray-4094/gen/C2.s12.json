@@ -1,0 +1,43 @@
+{
+ "instance_id": "pydata__xarray-4094",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "bfac0c2c5e2c1c9c7dece0b262b3f5239a24d4eaef6015c85ccca7134b6c3749",
+ "raw": "<summary>to_unstacked_dataset must raise an error for single\u2011dimensional stacked variables</summary>\n<requirement>When calling DataArray.to_unstacked_dataset, if the stacked dimension corresponds to a variable that originally had only a single dimension, the method must raise a ValueError with the exact message \u201ccannot unstack single-dimensional variables\u201d. This behavior supersedes any previous expectation that the operation would succeed and silently drop the dimension.</requirement>\n<source_edit file=\"xarray/core/dataarray.py\"><search>data_dict[k] = self.sel({variable_dim: k}, drop=True).squeeze(drop=True)</search><replace>if self.sizes.get(variable_dim, 0) == 1:\n    raise ValueError(\"cannot unstack single-dimensional variables\")\ndata_dict[k] = self.sel({variable_dim: k}).squeeze(drop=True)</replace></source_edit>\n<test_edit file=\"xarray/tests/test_dataset.py\"><search># single dimension: regression test for GH4049\n        arr = xr.DataArray(np.arange(3), coords=[(\"x\", [0, 1, 2])])\n        data = xr.Dataset({\"a\": arr, \"b\": arr})\n        stacked = data.to_stacked_array(\"y\", sample_dims=[\"x\"])\n        unstacked = stacked.to_unstacked_dataset(\"y\")\n        assert_identical(unstacked, data)</search><replace># single dimension: regression test for GH4049\n        arr = xr.DataArray(np.arange(3), coords=[(\"x\", [0, 1, 2])])\n        data = xr.Dataset({\"a\": arr, \"b\": arr})\n        stacked = data.to_stacked_array(\"y\", sample_dims=[\"x\"])\n        with pytest.raises(ValueError, match=\"cannot unstack single-dimensional variables\"):\n            stacked.to_unstacked_dataset(\"y\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1459,
+  "prompt_tokens": 1509,
+  "total_tokens": 2968,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1060,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "to_unstacked_dataset must raise an error for single\u2011dimensional stacked variables",
+ "requirement": "When calling DataArray.to_unstacked_dataset, if the stacked dimension corresponds to a variable that originally had only a single dimension, the method must raise a ValueError with the exact message \u201ccannot unstack single-dimensional variables\u201d. This behavior supersedes any previous expectation that the operation would succeed and silently drop the dimension.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/dataarray.py",
+   "search": "data_dict[k] = self.sel({variable_dim: k}, drop=True).squeeze(drop=True)",
+   "replace": "if self.sizes.get(variable_dim, 0) == 1:\n    raise ValueError(\"cannot unstack single-dimensional variables\")\ndata_dict[k] = self.sel({variable_dim: k}).squeeze(drop=True)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_dataset.py",
+   "search": "# single dimension: regression test for GH4049\n        arr = xr.DataArray(np.arange(3), coords=[(\"x\", [0, 1, 2])])\n        data = xr.Dataset({\"a\": arr, \"b\": arr})\n        stacked = data.to_stacked_array(\"y\", sample_dims=[\"x\"])\n        unstacked = stacked.to_unstacked_dataset(\"y\")\n        assert_identical(unstacked, data)",
+   "replace": "# single dimension: regression test for GH4049\n        arr = xr.DataArray(np.arange(3), coords=[(\"x\", [0, 1, 2])])\n        data = xr.Dataset({\"a\": arr, \"b\": arr})\n        stacked = data.to_stacked_array(\"y\", sample_dims=[\"x\"])\n        with pytest.raises(ValueError, match=\"cannot unstack single-dimensional variables\"):\n            stacked.to_unstacked_dataset(\"y\")"
+  }
+ ],
+ "status": "generated"
+}

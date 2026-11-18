@@ -1,0 +1,43 @@
+{
+ "instance_id": "pydata__xarray-4695",
+ "kind": "C2",
+ "sample": 11,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 11,
+ "prompt_sha256": "f399033fad85d571ed22eb91ae481b09057527b88184a33815099707788c29b6",
+ "raw": "<summary>Disallow .loc indexing when a dimension name matches a DataArray.sel keyword argument.</summary>\n<requirement>When using the ``.loc`` accessor, if any dimension name coincides with a keyword argument of ``DataArray.sel`` (currently ``method``), the accessor must raise a ``ValueError`` with the message ``Dimension name conflicts with sel parameter`` instead of performing the selection. This supersedes any conflicting expectation in the original issue.</requirement>\n<source_edit file=\"xarray/core/dataarray.py\"><search>return self.data_array.sel(key)</search><replace>return self.data_array.sel(**key)</replace></source_edit>\n<test_edit file=\"xarray/tests/test_dataarray.py\"><search>np.testing.assert_array_equal(\n            da.loc[dict(dim1=[\"x\", \"y\"], method=[\"a\"])], [[0], [1]]\n        )</search><replace>with pytest.raises(ValueError):\n            da.loc[dict(dim1=[\"x\", \"y\"], method=[\"a\"])]</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1000,
+  "prompt_tokens": 2236,
+  "total_tokens": 3236,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 773,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow .loc indexing when a dimension name matches a DataArray.sel keyword argument.",
+ "requirement": "When using the ``.loc`` accessor, if any dimension name coincides with a keyword argument of ``DataArray.sel`` (currently ``method``), the accessor must raise a ``ValueError`` with the message ``Dimension name conflicts with sel parameter`` instead of performing the selection. This supersedes any conflicting expectation in the original issue.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "xarray/core/dataarray.py",
+   "search": "return self.data_array.sel(key)",
+   "replace": "return self.data_array.sel(**key)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "xarray/tests/test_dataarray.py",
+   "search": "np.testing.assert_array_equal(\n            da.loc[dict(dim1=[\"x\", \"y\"], method=[\"a\"])], [[0], [1]]\n        )",
+   "replace": "with pytest.raises(ValueError):\n            da.loc[dict(dim1=[\"x\", \"y\"], method=[\"a\"])]"
+  }
+ ],
+ "status": "generated"
+}

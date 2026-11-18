@@ -1,0 +1,47 @@
+{
+ "instance_id": "django__django-13513",
+ "kind": "B2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "masked": "debug error view doesn't respect \u27e6P1\u27e7 (PEP \u27e6P2\u27e7)\nDescription\n\u27e6P3\u27e7\nConsider the following view that raises an exception:\nclass \u27e6P4\u27e7:\n\u27e6P5\u27e7\nEven though the raise is from None, unlike the traceback Python shows, the debug error view still shows the \u27e6P6\u27e7.\nThis is because the \u27e6P7\u27e7 function inside \u27e6P8\u27e7 doesn't respect \u27e6P9\u27e7, which was introduced in Python \u27e6P10\u27e7's PEP \u27e6P11\u27e7:\n\u200b\u27e6P12\u27e7\ndef \u27e6P13\u27e7:\n\u27e6P14\u27e7\nInstead, it should be something more like (simplifying also for Python \u27e6P15\u27e7):\ndef \u27e6P16\u27e7:\n\u27e6P17\u27e7\n",
+ "spans": [
+  "exc.__suppress_context__",
+  "415",
+  "\t",
+  "TestView(View)",
+  "\tdef get(self, request, *args, **kwargs):\n\t\ttry:\n\t\t\traise RuntimeError('my error')\n\t\texcept Exception as exc:\n\t\t\traise ValueError('my new error') from None",
+  "RuntimeError",
+  "explicit_or_implicit_cause()",
+  "get_traceback_frames()",
+  "exc.__suppress_context__",
+  "3.3",
+  "415",
+  "https://github.com/django/django/blob/38a21f2d9ed4f556af934498ec6a242f6a20418a/django/views/debug.py#L392",
+  "get_traceback_frames(self)",
+  "\tdef explicit_or_implicit_cause(exc_value):\n\t\texplicit = getattr(exc_value, '__cause__', None)\n\t\timplicit = getattr(exc_value, '__context__', None)\n\t\treturn explicit or implicit",
+  "3",
+  "explicit_or_implicit_cause(exc_value)",
+  "\treturn (\n\t\texc_value.__cause__ or\n\t\t(None if exc_value.__suppress_context__ else\n\t\t\texc_value.__context__)\n\t)"
+ ],
+ "prompt_sha256": "318cd3cea37f6c2fe6694e3e294adcf15f6505651f233d5de8be0ff1da0bf7c5",
+ "raw": "<rewrite>\n**Title:** Debug error view fails to honour \u27e6P1\u27e7 (PEP \u27e6P2\u27e7)\n\n**Description**  \n\u27e6P3\u27e7  \n\n**Reproduction**  \nThe view below triggers an exception:\n\n```python\nclass \u27e6P4\u27e7:\n    \u27e6P5\u27e7\n```\n\nEven though the exception is raised with `from None`, the traceback shown by Python correctly omits the cause, yet the debug error view continues to display the \u27e6P6\u27e7.\n\n**Underlying cause**  \nThe issue originates from the \u27e6P7\u27e7 routine employed inside \u27e6P8\u27e7, which does not respect \u27e6P9\u27e7\u2014a feature added in Python \u27e6P10\u27e7 via PEP \u27e6P11\u27e7:\n\n\u27e6P12\u27e7  \n\n```python\ndef \u27e6P13\u27e7:\n    \u27e6P14\u27e7\n```\n\n**How it should look** (simplified for Python \u27e6P15\u27e7):\n\n```python\ndef \u27e6P16\u27e7:\n    \u27e6P17\u27e7\n```\n</rewrite>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1149,
+  "prompt_tokens": 507,
+  "total_tokens": 1656,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 867,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "rewrite_masked": "**Title:** Debug error view fails to honour \u27e6P1\u27e7 (PEP \u27e6P2\u27e7)\n\n**Description**  \n\u27e6P3\u27e7  \n\n**Reproduction**  \nThe view below triggers an exception:\n\n```python\nclass \u27e6P4\u27e7:\n    \u27e6P5\u27e7\n```\n\nEven though the exception is raised with `from None`, the traceback shown by Python correctly omits the cause, yet the debug error view continues to display the \u27e6P6\u27e7.\n\n**Underlying cause**  \nThe issue originates from the \u27e6P7\u27e7 routine employed inside \u27e6P8\u27e7, which does not respect \u27e6P9\u27e7\u2014a feature added in Python \u27e6P10\u27e7 via PEP \u27e6P11\u27e7:\n\n\u27e6P12\u27e7  \n\n```python\ndef \u27e6P13\u27e7:\n    \u27e6P14\u27e7\n```\n\n**How it should look** (simplified for Python \u27e6P15\u27e7):\n\n```python\ndef \u27e6P16\u27e7:\n    \u27e6P17\u27e7\n```",
+ "rewrite": "**Title:** Debug error view fails to honour exc.__suppress_context__ (PEP 415)\n\n**Description**  \n\t  \n\n**Reproduction**  \nThe view below triggers an exception:\n\n```python\nclass TestView(View):\n    \tdef get(self, request, *args, **kwargs):\n\t\ttry:\n\t\t\traise RuntimeError('my error')\n\t\texcept Exception as exc:\n\t\t\traise ValueError('my new error') from None\n```\n\nEven though the exception is raised with `from None`, the traceback shown by Python correctly omits the cause, yet the debug error view continues to display the RuntimeError.\n\n**Underlying cause**  \nThe issue originates from the explicit_or_implicit_cause() routine employed inside get_traceback_frames(), which does not respect exc.__suppress_context__\u2014a feature added in Python 3.3 via PEP 415:\n\nhttps://github.com/django/django/blob/38a21f2d9ed4f556af934498ec6a242f6a20418a/django/views/debug.py#L392  \n\n```python\ndef get_traceback_frames(self):\n    \tdef explicit_or_implicit_cause(exc_value):\n\t\texplicit = getattr(exc_value, '__cause__', None)\n\t\timplicit = getattr(exc_value, '__context__', None)\n\t\treturn explicit or implicit\n```\n\n**How it should look** (simplified for Python 3):\n\n```python\ndef explicit_or_implicit_cause(exc_value):\n    \treturn (\n\t\texc_value.__cause__ or\n\t\t(None if exc_value.__suppress_context__ else\n\t\t\texc_value.__context__)\n\t)\n```",
+ "status": "generated"
+}

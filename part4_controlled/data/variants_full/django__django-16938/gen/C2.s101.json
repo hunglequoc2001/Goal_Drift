@@ -1,0 +1,43 @@
+{
+ "instance_id": "django__django-16938",
+ "kind": "C2",
+ "sample": 101,
+ "parent_sample": 12,
+ "round": 1,
+ "generator": "gpt-oss-120b",
+ "failure_class": "edit_fail",
+ "prompt_chars": 36669,
+ "raw": "<summary>Serializers must use\u202fselect_related\u202fwhen iterating many\u2011to\u2011many fields, and tests should verify that the related table\u2019s foreign\u2011key column appears in the generated SQL.</summary>\n<requirement>When serializing a model, the internal iterator for many\u2011to\u2011many relationships must include a\u202fselect_related()\u202fcall before limiting to the primary key (i.e., use\u202fselect_related().only(\"pk\")\u202finstead of only\u202fonly(\"pk\")). This supersedes any earlier expectation that\u202fselect_related\u202fshould be omitted.</requirement>\n<source_edit file=\"django/core/serializers/python.py\"><search>.select_related().only(\"pk\").iterator()</search><replace>.only(\"pk\").iterator()</replace></source_edit>\n<source_edit file=\"django/core/serializers/xml_serializer.py\"><search>.select_related().only(\"pk\").iterator()</search><replace>.only(\"pk\").iterator()</replace></source_edit>\n<test_edit file=\"tests/serializers/tests.py\"><search>self.assertNotIn(connection.ops.quote_name(\"category_id\"), topics_data_sql)</search><replace>self.assertIn(connection.ops.quote_name(\"category_id\"), topics_data_sql)</replace></test_edit>\n<test_edit file=\"tests/serializers/tests.py\"><search>self.assertNotIn(connection.ops.quote_name(\"category_id\"), topics_data_sql)</search><replace>self.assertIn(connection.ops.quote_name(\"category_id\"), topics_data_sql)</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Serializers must use\u202fselect_related\u202fwhen iterating many\u2011to\u2011many fields, and tests should verify that the related table\u2019s foreign\u2011key column appears in the generated SQL.",
+ "requirement": "When serializing a model, the internal iterator for many\u2011to\u2011many relationships must include a\u202fselect_related()\u202fcall before limiting to the primary key (i.e., use\u202fselect_related().only(\"pk\")\u202finstead of only\u202fonly(\"pk\")). This supersedes any earlier expectation that\u202fselect_related\u202fshould be omitted.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/core/serializers/python.py",
+   "search": ".select_related().only(\"pk\").iterator()",
+   "replace": ".only(\"pk\").iterator()"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/core/serializers/xml_serializer.py",
+   "search": ".select_related().only(\"pk\").iterator()",
+   "replace": ".only(\"pk\").iterator()"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/serializers/tests.py",
+   "search": "self.assertNotIn(connection.ops.quote_name(\"category_id\"), topics_data_sql)",
+   "replace": "self.assertIn(connection.ops.quote_name(\"category_id\"), topics_data_sql)"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/serializers/tests.py",
+   "search": "self.assertNotIn(connection.ops.quote_name(\"category_id\"), topics_data_sql)",
+   "replace": "self.assertIn(connection.ops.quote_name(\"category_id\"), topics_data_sql)"
+  }
+ ]
+}

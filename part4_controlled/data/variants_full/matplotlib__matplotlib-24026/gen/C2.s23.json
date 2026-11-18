@@ -1,0 +1,43 @@
+{
+ "instance_id": "matplotlib__matplotlib-24026",
+ "kind": "C2",
+ "sample": 23,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 23,
+ "prompt_sha256": "2e877f80bb7a6855871469cdf28c7cf79fab7b458e0da1899a69503c04cddd3c",
+ "raw": "<summary>Disallow cycle\u2011reference strings (e.g., \u201cC0\u201d) in the ``colors`` argument of ``stackplot`` and raise a ``ValueError`` instead.</summary>\n<requirement>When calling ``stackplot``, the ``colors`` parameter must contain only explicit color specifications. Any element that is a Matplotlib cycle reference such as ``'C0'``, ``'C1'``, etc., is considered invalid and should cause ``stackplot`` to raise a ``ValueError`` with the message \u201cCycle reference not allowed in colors\u201d. This requirement supersedes any previous expectation that such strings would be accepted.</requirement>\n<source_edit file=\"lib/matplotlib/stackplot.py\"><search>if colors is not None:</search><replace>if colors is not None:\n        # Disallow cycle references like 'C0', 'C1', etc.\n        for c in colors:\n            if isinstance(c, str) and c.startswith('C') and c[1:].isdigit():\n                raise ValueError(\"Cycle reference not allowed in colors\")</replace></source_edit>\n<test_edit file=\"lib/matplotlib/tests/test_axes.py\"><search>ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])</search><replace>with pytest.raises(ValueError):\n    ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 1519,
+  "prompt_tokens": 1860,
+  "total_tokens": 3379,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1180,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Disallow cycle\u2011reference strings (e.g., \u201cC0\u201d) in the ``colors`` argument of ``stackplot`` and raise a ``ValueError`` instead.",
+ "requirement": "When calling ``stackplot``, the ``colors`` parameter must contain only explicit color specifications. Any element that is a Matplotlib cycle reference such as ``'C0'``, ``'C1'``, etc., is considered invalid and should cause ``stackplot`` to raise a ``ValueError`` with the message \u201cCycle reference not allowed in colors\u201d. This requirement supersedes any previous expectation that such strings would be accepted.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "lib/matplotlib/stackplot.py",
+   "search": "if colors is not None:",
+   "replace": "if colors is not None:\n        # Disallow cycle references like 'C0', 'C1', etc.\n        for c in colors:\n            if isinstance(c, str) and c.startswith('C') and c[1:].isdigit():\n                raise ValueError(\"Cycle reference not allowed in colors\")"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "lib/matplotlib/tests/test_axes.py",
+   "search": "ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])",
+   "replace": "with pytest.raises(ValueError):\n    ax.stackplot(\"x\", \"y1\", \"y2\", \"y3\", data=data, colors=[\"C0\", \"C1\", \"C2\"])"
+  }
+ ],
+ "status": "generated"
+}

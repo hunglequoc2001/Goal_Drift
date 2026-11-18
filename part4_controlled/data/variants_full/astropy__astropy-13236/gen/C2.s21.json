@@ -1,0 +1,55 @@
+{
+ "instance_id": "astropy__astropy-13236",
+ "kind": "C2",
+ "sample": 21,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 21,
+ "prompt_sha256": "38b2eb4bc0ce16084f9a1b71bb7c73c8b4f2c4ec69fd1b0129dfad6a61a31de4",
+ "raw": "<summary>Re\u2011introduce automatic conversion of structured ndarrays to ``NdarrayMixin`` with a deprecation warning.</summary>\n<requirement>When a plain ``numpy.ndarray`` with a structured dtype (i.e., ``len(data.dtype) > 1``) is added to a ``Table`` and it is not already a ``Column`` or an ``NdarrayMixin``, the array must be automatically viewed as an ``NdarrayMixin``. In addition, a ``FutureWarning`` should be issued stating that this automatic conversion is deprecated and will be removed in version\u202f5.2, and that users should explicitly wrap the array in a ``Column`` to avoid the conversion. This requirement supersedes any previous expectation that such arrays would be added directly as ``Column`` objects without conversion.</requirement>\n\n<source_edit file=\"astropy/table/table.py\"><search># Get the final column name using precedence.  Some objects may not</search><replace>        # Structured ndarray gets viewed as a mixin unless already a valid\n        # mixin class.  This behavior is deprecated and will be removed in\n        # version 5.2; users should wrap the array in a Column to avoid the\n        # automatic conversion.\n        if (not isinstance(data, Column) and not data_is_mixin\n                and isinstance(data, np.ndarray) and len(data.dtype) > 1):\n            import warnings\n            warnings.warn(\n                \"Adding a structured ndarray will be interpreted as an NdarrayMixin; this behavior will change in version 5.2. \"\n                \"Wrap the array in a Column to avoid this conversion.\", FutureWarning)\n            data = data.view(NdarrayMixin)\n            data_is_mixin = True\n\n        # Get the final column name using precedence.  Some objects may not</replace></source_edit>\n\n<test_edit file=\"astropy/table/tests/test_mixin.py\"><search>def test_ndarray_mixin(as_ndarray_mixin):</search><replace>def test_ndarray_mixin():</replace></test_edit>\n\n<test_edit file=\"astropy/table/tests/test_mixin.py\"><search>if as_ndarray_mixin:</search><replace>    class_exp = NdarrayMixin</replace></test_edit>\n\n<test_edit file=\"astropy/table/tests/test_mixin.py\"><search>t = Table([a], names=['a'])</search><replace>    with pytest.warns(FutureWarning):\n        t = Table([a], names=['a'])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2517,
+  "prompt_tokens": 2482,
+  "total_tokens": 4999,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1987,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Re\u2011introduce automatic conversion of structured ndarrays to ``NdarrayMixin`` with a deprecation warning.",
+ "requirement": "When a plain ``numpy.ndarray`` with a structured dtype (i.e., ``len(data.dtype) > 1``) is added to a ``Table`` and it is not already a ``Column`` or an ``NdarrayMixin``, the array must be automatically viewed as an ``NdarrayMixin``. In addition, a ``FutureWarning`` should be issued stating that this automatic conversion is deprecated and will be removed in version\u202f5.2, and that users should explicitly wrap the array in a ``Column`` to avoid the conversion. This requirement supersedes any previous expectation that such arrays would be added directly as ``Column`` objects without conversion.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "astropy/table/table.py",
+   "search": "# Get the final column name using precedence.  Some objects may not",
+   "replace": "        # Structured ndarray gets viewed as a mixin unless already a valid\n        # mixin class.  This behavior is deprecated and will be removed in\n        # version 5.2; users should wrap the array in a Column to avoid the\n        # automatic conversion.\n        if (not isinstance(data, Column) and not data_is_mixin\n                and isinstance(data, np.ndarray) and len(data.dtype) > 1):\n            import warnings\n            warnings.warn(\n                \"Adding a structured ndarray will be interpreted as an NdarrayMixin; this behavior will change in version 5.2. \"\n                \"Wrap the array in a Column to avoid this conversion.\", FutureWarning)\n            data = data.view(NdarrayMixin)\n            data_is_mixin = True\n\n        # Get the final column name using precedence.  Some objects may not"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "astropy/table/tests/test_mixin.py",
+   "search": "def test_ndarray_mixin(as_ndarray_mixin):",
+   "replace": "def test_ndarray_mixin():"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/table/tests/test_mixin.py",
+   "search": "if as_ndarray_mixin:",
+   "replace": "    class_exp = NdarrayMixin"
+  },
+  {
+   "kind": "test_edit",
+   "file": "astropy/table/tests/test_mixin.py",
+   "search": "t = Table([a], names=['a'])",
+   "replace": "    with pytest.warns(FutureWarning):\n        t = Table([a], names=['a'])"
+  }
+ ],
+ "status": "generated"
+}

@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-13794",
+ "kind": "C2",
+ "sample": 12,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 12,
+ "prompt_sha256": "a24ad228845b0a880c03bcb185ad27c58e96dd545852b6eb87f3c4bb31001063",
+ "raw": "<summary>add filter should only concatenate strings and raise TypeError for other types</summary>\n<requirement>When using the add filter (or the underlying lazy object's ``__add__``/``__radd__`` methods), concatenation is now permitted only when both operands are strings (or lazy strings). If either operand is not a string, a ``TypeError`` must be raised. This supersedes any previous expectation that the filter would perform arithmetic addition on non\u2011string lazy objects.</requirement>\n<source_edit file=\"django/utils/functional.py\"><search>def __add__(self, other):</search><replace>def __add__(self, other):\n            # Only allow string concatenation; raise TypeError for other types.\n            if isinstance(other, (str, Promise)):\n                return self.__cast() + str(other)\n            raise TypeError('unsupported operand type(s) for +')</replace></source_edit>\n<source_edit file=\"django/utils/functional.py\"><search>def __radd__(self, other):</search><replace>def __radd__(self, other):\n            # Only allow string concatenation; raise TypeError for other types.\n            if isinstance(other, str):\n                return other + self.__cast()\n            raise TypeError('unsupported operand type(s) for +')</replace></source_edit>\n<test_edit file=\"tests/utils_tests/test_functional.py\"><search>def test_lazy_add(self):\n        lazy_4 = lazy(lambda: 4, int)\n        lazy_5 = lazy(lambda: 5, int)\n        self.assertEqual(lazy_4() + lazy_5(), 9)</search><replace>def test_lazy_add(self):\n        lazy_4 = lazy(lambda: 4, int)\n        lazy_5 = lazy(lambda: 5, int)\n        with self.assertRaises(TypeError):\n            lazy_4() + lazy_5()</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 2116,
+  "prompt_tokens": 1270,
+  "total_tokens": 3386,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 1708,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "add filter should only concatenate strings and raise TypeError for other types",
+ "requirement": "When using the add filter (or the underlying lazy object's ``__add__``/``__radd__`` methods), concatenation is now permitted only when both operands are strings (or lazy strings). If either operand is not a string, a ``TypeError`` must be raised. This supersedes any previous expectation that the filter would perform arithmetic addition on non\u2011string lazy objects.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/utils/functional.py",
+   "search": "def __add__(self, other):",
+   "replace": "def __add__(self, other):\n            # Only allow string concatenation; raise TypeError for other types.\n            if isinstance(other, (str, Promise)):\n                return self.__cast() + str(other)\n            raise TypeError('unsupported operand type(s) for +')"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/utils/functional.py",
+   "search": "def __radd__(self, other):",
+   "replace": "def __radd__(self, other):\n            # Only allow string concatenation; raise TypeError for other types.\n            if isinstance(other, str):\n                return other + self.__cast()\n            raise TypeError('unsupported operand type(s) for +')"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/utils_tests/test_functional.py",
+   "search": "def test_lazy_add(self):\n        lazy_4 = lazy(lambda: 4, int)\n        lazy_5 = lazy(lambda: 5, int)\n        self.assertEqual(lazy_4() + lazy_5(), 9)",
+   "replace": "def test_lazy_add(self):\n        lazy_4 = lazy(lambda: 4, int)\n        lazy_5 = lazy(lambda: 5, int)\n        with self.assertRaises(TypeError):\n            lazy_4() + lazy_5()"
+  }
+ ],
+ "status": "generated"
+}

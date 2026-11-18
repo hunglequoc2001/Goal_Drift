@@ -1,0 +1,37 @@
+{
+ "instance_id": "django__django-17084",
+ "kind": "C2",
+ "sample": 201,
+ "parent_sample": 11,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 21792,
+ "raw": "<summary>Window\u2011annotated fields no longer force subquery wrapping when aggregated.</summary>\n<requirement>When an aggregation references a field that was defined using a Window expression, the ORM must aggregate that field directly without introducing an extra subquery. This supersedes any previous expectation that such references require subquery wrapping.</requirement>\n<source_edit file=\"django/db/models/sql/query.py\"><search>refs_window |= any(\n                getattr(self.annotations[ref], \"contains_over_clause\", True)\n                for ref in aggregate.get_refs()\n            )</search><replace># Window references do not trigger subquery wrapping</replace></source_edit>\n<source_edit file=\"django/db/models/sql/query.py\"><search>or refs_window</search><replace></replace></source_edit>\n<test_edit file=\"tests/aggregation/tests.py\"><search>self.assertEqual(sql.count(\"select\"), 2, \"Subquery wrapping required\")</search><replace>self.assertEqual(sql.count(\"select\"), 1, \"No subquery wrapping required\")</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "Window\u2011annotated fields no longer force subquery wrapping when aggregated.",
+ "requirement": "When an aggregation references a field that was defined using a Window expression, the ORM must aggregate that field directly without introducing an extra subquery. This supersedes any previous expectation that such references require subquery wrapping.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/query.py",
+   "search": "refs_window |= any(\n                getattr(self.annotations[ref], \"contains_over_clause\", True)\n                for ref in aggregate.get_refs()\n            )",
+   "replace": "# Window references do not trigger subquery wrapping"
+  },
+  {
+   "kind": "source_edit",
+   "file": "django/db/models/sql/query.py",
+   "search": "or refs_window",
+   "replace": ""
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/aggregation/tests.py",
+   "search": "self.assertEqual(sql.count(\"select\"), 2, \"Subquery wrapping required\")",
+   "replace": "self.assertEqual(sql.count(\"select\"), 1, \"No subquery wrapping required\")"
+  }
+ ]
+}

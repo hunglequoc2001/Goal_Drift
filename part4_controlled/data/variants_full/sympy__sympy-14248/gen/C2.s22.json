@@ -1,0 +1,133 @@
+{
+ "instance_id": "sympy__sympy-14248",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "c87df2c30b7c34b3eeafeafebf61a2c1ba9ec2a4f0924fd4b3f47f88f7fa0abe",
+ "raw": "<summary>Printing of matrix additions must list all positive terms first (in their original order) followed by negative terms, each preceded by a minus sign; the first term must never be prefixed with a plus sign.</summary>\n<requirement>When printing a MatAdd (in LaTeX, pretty\u2011print, and string output), the printer should output all positive terms first, preserving their original order, then all negative terms (each shown with a leading \u201c\u2011\u201d). The first term should never be preceded by a \u201c+\u201d. This supersedes any earlier description that implied a different ordering of positive and negative terms.</requirement>\n\n<source_edit file=\"sympy/printing/latex.py\"><search>terms = list(expr.args)</search><replace>terms = []\\n        for t in expr.args:\\n            s = self._print(t)\\n            if s.startswith('-'):\\n                sign = '-'\\n                s = s[1:]\\n            else:\\n                sign = '+'\\n            terms.append((sign, s))\\n        # positive terms first, then negatives, preserving order\\n        pos = [(sg, st) for sg, st in terms if sg == '+']\\n        neg = [(sg, st) for sg, st in terms if sg == '-']\\n        ordered = pos + neg\\n        # build the LaTeX string\\n        first_sign, first_term = ordered[0]\\n        if first_sign == '-':\\n            result = '-' + first_term\\n        else:\\n            result = first_term\\n        for sign, term in ordered[1:]:\\n            if sign == '-':\\n                result += r' - ' + term\\n            else:\\n                result += r' + ' + term\\n        return result</replace></source_edit>\n\n<source_edit file=\"sympy/printing/pretty/pretty.py\"><search>def _print_MatAdd(self, expr):</search><replace>def _print_MatAdd(self, expr):\\n        # Separate positive and negative terms, then list positives first\\n        pos = []\\n        neg = []\\n        for item in expr.args:\\n            if S(item.args[0]).is_negative:\\n                neg.append(item)\\n            else:\\n                pos.append(item)\\n        ordered = pos + neg\\n        s = None\\n        for item in ordered:\\n            pform = self._print(item)\\n            if s is None:\\n                s = pform\\n            else:\\n                if S(item.args[0]).is_negative:\\n                    s = prettyForm(*stringPict.next(s, ' '))\\n                else:\\n                    s = prettyForm(*stringPict.next(s, ' + '))\\n                s = prettyForm(*stringPict.next(s, pform))\\n        return s</replace></source_edit>\n\n<source_edit file=\"sympy/printing/str.py\"><search>terms = [self.parenthesize(arg, precedence(expr))</search><replace>terms = []\\n        for t in expr.args:\\n            s = self.parenthesize(t, precedence(expr))\\n            if s.startswith('-'):\\n                sign = '-'\\n                s = s[1:]\\n            else:\\n                sign = '+'\\n            terms.append((sign, s))\\n        # positives first, then negatives, preserving order\\n        pos = [(sg, st) for sg, st in terms if sg == '+']\\n        neg = [(sg, st) for sg, st in terms if sg == '-']\\n        ordered = pos + neg\\n        first_sign, first_term = ordered[0]\\n        if first_sign == '-':\\n            result = '-' + first_term\\n        else:\\n            result = first_term\\n        for sign, term in ordered[1:]:\\n            if sign == '-':\\n                result += ' - ' + term\\n            else:\\n                result += ' + ' + term\\n        return result</replace></source_edit>\n\n<test_edit file=\"sympy/printing/pretty/tests/test_pretty.py\"><search>assert pretty(A - B) == \"-B + A\"</search><replace>assert pretty(A - B) == \"A - B\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/pretty/tests/test_pretty.py\"><search>assert pretty(A*B*C - A*B - B*C) == \"-A*B -B*C + A*B*C\"</search><replace>assert pretty(A*B*C - A*B - B*C) == \"A*B*C - A*B - B*C\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_ccode.py\"><search>assert(ccode(F) == \"(-B + A)[0]\")</search><replace>assert(ccode(F) == \"(A - B)[0]\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_fcode.py\"><search>assert(fcode(F) == \"      (-B + A)(1, 1)\")</search><replace>assert(fcode(F) == \"      (A - B)(1, 1)\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_jscode.py\"><search>assert(jscode(F) == \"(-B + A)[0]\")</search><replace>assert(jscode(F) == \"(A - B)[0]\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_julia.py\"><search>assert(julia_code(F) == \"(-B + A)[1,1]\")</search><replace>assert(julia_code(F) == \"(A - B)[1,1]\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(F) == r\"\\left(-B + A\\right)_{0, 0}\"</search><replace>assert latex(F) == r\"\\left(A - B\\right)_{0, 0}\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(A - A*B - B) == r\"-B - A B + A\"</search><replace>assert latex(A - A*B - B) == r\"A - A B - B\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_latex.py\"><search>assert latex(-A*B - A*B*C - B) == r\"-B - A B - A B C\"</search><replace>assert latex(-A*B - A*B*C - B) == r\"-A B - A B C - B\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_octave.py\"><search>assert mcode(F) == \"(-B + A)(1, 1)\"</search><replace>assert mcode(F) == \"(A - B)(1, 1)\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_rcode.py\"><search>assert(rcode(F) == \"(-B + A)[0]\")</search><replace>assert(rcode(F) == \"(A - B)[0]\")</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_str.py\"><search>assert str(F) == \"(-B + A)[0, 0]\"</search><replace>assert str(F) == \"(A - B)[0, 0]\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_str.py\"><search>assert str(A - A*B - B) == \"-B - A*B + A\"</search><replace>assert str(A - A*B - B) == \"A - A*B - B\"</replace></test_edit>\n\n<test_edit file=\"sympy/printing/tests/test_str.py\"><search>assert str(A*B - (A+B)) == \"-(A + B) + A*B\"</search><replace>assert str(A*B - (A+B)) == \"A*B - (A + B)\"</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 7245,
+  "prompt_tokens": 3502,
+  "total_tokens": 10747,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 5474,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Printing of matrix additions must list all positive terms first (in their original order) followed by negative terms, each preceded by a minus sign; the first term must never be prefixed with a plus sign.",
+ "requirement": "When printing a MatAdd (in LaTeX, pretty\u2011print, and string output), the printer should output all positive terms first, preserving their original order, then all negative terms (each shown with a leading \u201c\u2011\u201d). The first term should never be preceded by a \u201c+\u201d. This supersedes any earlier description that implied a different ordering of positive and negative terms.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/latex.py",
+   "search": "terms = list(expr.args)",
+   "replace": "terms = []\\n        for t in expr.args:\\n            s = self._print(t)\\n            if s.startswith('-'):\\n                sign = '-'\\n                s = s[1:]\\n            else:\\n                sign = '+'\\n            terms.append((sign, s))\\n        # positive terms first, then negatives, preserving order\\n        pos = [(sg, st) for sg, st in terms if sg == '+']\\n        neg = [(sg, st) for sg, st in terms if sg == '-']\\n        ordered = pos + neg\\n        # build the LaTeX string\\n        first_sign, first_term = ordered[0]\\n        if first_sign == '-':\\n            result = '-' + first_term\\n        else:\\n            result = first_term\\n        for sign, term in ordered[1:]:\\n            if sign == '-':\\n                result += r' - ' + term\\n            else:\\n                result += r' + ' + term\\n        return result"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/pretty/pretty.py",
+   "search": "def _print_MatAdd(self, expr):",
+   "replace": "def _print_MatAdd(self, expr):\\n        # Separate positive and negative terms, then list positives first\\n        pos = []\\n        neg = []\\n        for item in expr.args:\\n            if S(item.args[0]).is_negative:\\n                neg.append(item)\\n            else:\\n                pos.append(item)\\n        ordered = pos + neg\\n        s = None\\n        for item in ordered:\\n            pform = self._print(item)\\n            if s is None:\\n                s = pform\\n            else:\\n                if S(item.args[0]).is_negative:\\n                    s = prettyForm(*stringPict.next(s, ' '))\\n                else:\\n                    s = prettyForm(*stringPict.next(s, ' + '))\\n                s = prettyForm(*stringPict.next(s, pform))\\n        return s"
+  },
+  {
+   "kind": "source_edit",
+   "file": "sympy/printing/str.py",
+   "search": "terms = [self.parenthesize(arg, precedence(expr))",
+   "replace": "terms = []\\n        for t in expr.args:\\n            s = self.parenthesize(t, precedence(expr))\\n            if s.startswith('-'):\\n                sign = '-'\\n                s = s[1:]\\n            else:\\n                sign = '+'\\n            terms.append((sign, s))\\n        # positives first, then negatives, preserving order\\n        pos = [(sg, st) for sg, st in terms if sg == '+']\\n        neg = [(sg, st) for sg, st in terms if sg == '-']\\n        ordered = pos + neg\\n        first_sign, first_term = ordered[0]\\n        if first_sign == '-':\\n            result = '-' + first_term\\n        else:\\n            result = first_term\\n        for sign, term in ordered[1:]:\\n            if sign == '-':\\n                result += ' - ' + term\\n            else:\\n                result += ' + ' + term\\n        return result"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/pretty/tests/test_pretty.py",
+   "search": "assert pretty(A - B) == \"-B + A\"",
+   "replace": "assert pretty(A - B) == \"A - B\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/pretty/tests/test_pretty.py",
+   "search": "assert pretty(A*B*C - A*B - B*C) == \"-A*B -B*C + A*B*C\"",
+   "replace": "assert pretty(A*B*C - A*B - B*C) == \"A*B*C - A*B - B*C\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_ccode.py",
+   "search": "assert(ccode(F) == \"(-B + A)[0]\")",
+   "replace": "assert(ccode(F) == \"(A - B)[0]\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_fcode.py",
+   "search": "assert(fcode(F) == \"      (-B + A)(1, 1)\")",
+   "replace": "assert(fcode(F) == \"      (A - B)(1, 1)\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_jscode.py",
+   "search": "assert(jscode(F) == \"(-B + A)[0]\")",
+   "replace": "assert(jscode(F) == \"(A - B)[0]\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_julia.py",
+   "search": "assert(julia_code(F) == \"(-B + A)[1,1]\")",
+   "replace": "assert(julia_code(F) == \"(A - B)[1,1]\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(F) == r\"\\left(-B + A\\right)_{0, 0}\"",
+   "replace": "assert latex(F) == r\"\\left(A - B\\right)_{0, 0}\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(A - A*B - B) == r\"-B - A B + A\"",
+   "replace": "assert latex(A - A*B - B) == r\"A - A B - B\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_latex.py",
+   "search": "assert latex(-A*B - A*B*C - B) == r\"-B - A B - A B C\"",
+   "replace": "assert latex(-A*B - A*B*C - B) == r\"-A B - A B C - B\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_octave.py",
+   "search": "assert mcode(F) == \"(-B + A)(1, 1)\"",
+   "replace": "assert mcode(F) == \"(A - B)(1, 1)\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_rcode.py",
+   "search": "assert(rcode(F) == \"(-B + A)[0]\")",
+   "replace": "assert(rcode(F) == \"(A - B)[0]\")"
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_str.py",
+   "search": "assert str(F) == \"(-B + A)[0, 0]\"",
+   "replace": "assert str(F) == \"(A - B)[0, 0]\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_str.py",
+   "search": "assert str(A - A*B - B) == \"-B - A*B + A\"",
+   "replace": "assert str(A - A*B - B) == \"A - A*B - B\""
+  },
+  {
+   "kind": "test_edit",
+   "file": "sympy/printing/tests/test_str.py",
+   "search": "assert str(A*B - (A+B)) == \"-(A + B) + A*B\"",
+   "replace": "assert str(A*B - (A+B)) == \"A*B - (A + B)\""
+  }
+ ],
+ "status": "generated"
+}

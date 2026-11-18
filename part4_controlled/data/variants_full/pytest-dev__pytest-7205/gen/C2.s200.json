@@ -1,0 +1,31 @@
+{
+ "instance_id": "pytest-dev__pytest-7205",
+ "kind": "C2",
+ "sample": 200,
+ "parent_sample": 10,
+ "round": 2,
+ "generator": "gpt-oss-120b",
+ "failure_class": "literal",
+ "prompt_chars": 21366,
+ "raw": "<summary>display cached bytes parameters as hexadecimal strings in setup\u2011show output</summary>\n<requirement>When showing a fixture\u2019s cached parameter via the\u202f--setup-show (or related) output, if the cached value is a bytes object it must be displayed as a hexadecimal string prefixed with \u201c0x\u201d (e.g.\u202f0x48656c6c6f20576f726c64) inside the brackets. For all other types the existing saferepr representation should be used. This supersedes any earlier expectation that the raw bytes representation be shown.</requirement>\n\n<source_edit file=\"src/_pytest/setuponly.py\"><search>tw.write(\"[{}]\".format(saferepr(fixturedef.cached_param, maxsize=42)))</search><replace>        if isinstance(fixturedef.cached_param, bytes):\n            display = \"0x\" + fixturedef.cached_param.hex()\n        else:\n            display = saferepr(fixturedef.cached_param, maxsize=42)\n        tw.write(\"[{}]\".format(display))</replace></source_edit>\n\n<test_edit file=\"testing/test_setuponly.py\"><search>def test_show_fixture_action_with_bytes(testdir):</search><replace>def test_show_fixture_action_with_bytes(testdir):\n    # Issue 7126, BytesWarning when using --setup-show with bytes parameter\n    test_file = testdir.makepyfile(\n        \"\"\"\n        import pytest\n\n        @pytest.mark.parametrize('data', [b'Hello World'])\n        def test_data(data):\n            pass\n        \"\"\"\n    )\n    result = testdir.run(\n        sys.executable, \"-bb\", \"-m\", \"pytest\", \"--setup-show\", str(test_file)\n    )\n    assert result.ret == 0\n    # The bytes parameter should be shown as a hex string inside brackets.\n    result.stdout.fnmatch_lines([\"*SETUP    F data?0x48656c6c6f20576f726c64?*\"])</replace></test_edit>",
+ "finish_reason": "stop",
+ "status": "generated",
+ "summary": "display cached bytes parameters as hexadecimal strings in setup\u2011show output",
+ "requirement": "When showing a fixture\u2019s cached parameter via the\u202f--setup-show (or related) output, if the cached value is a bytes object it must be displayed as a hexadecimal string prefixed with \u201c0x\u201d (e.g.\u202f0x48656c6c6f20576f726c64) inside the brackets. For all other types the existing saferepr representation should be used. This supersedes any earlier expectation that the raw bytes representation be shown.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "src/_pytest/setuponly.py",
+   "search": "tw.write(\"[{}]\".format(saferepr(fixturedef.cached_param, maxsize=42)))",
+   "replace": "        if isinstance(fixturedef.cached_param, bytes):\n            display = \"0x\" + fixturedef.cached_param.hex()\n        else:\n            display = saferepr(fixturedef.cached_param, maxsize=42)\n        tw.write(\"[{}]\".format(display))"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "testing/test_setuponly.py",
+   "search": "def test_show_fixture_action_with_bytes(testdir):",
+   "replace": "def test_show_fixture_action_with_bytes(testdir):\n    # Issue 7126, BytesWarning when using --setup-show with bytes parameter\n    test_file = testdir.makepyfile(\n        \"\"\"\n        import pytest\n\n        @pytest.mark.parametrize('data', [b'Hello World'])\n        def test_data(data):\n            pass\n        \"\"\"\n    )\n    result = testdir.run(\n        sys.executable, \"-bb\", \"-m\", \"pytest\", \"--setup-show\", str(test_file)\n    )\n    assert result.ret == 0\n    # The bytes parameter should be shown as a hex string inside brackets.\n    result.stdout.fnmatch_lines([\"*SETUP    F data?0x48656c6c6f20576f726c64?*\"])"
+  }
+ ]
+}

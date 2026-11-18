@@ -1,0 +1,49 @@
+{
+ "instance_id": "django__django-11880",
+ "kind": "C2",
+ "sample": 22,
+ "generator": "gpt-oss-120b",
+ "temperature": 0.7,
+ "top_p": 0.95,
+ "seed": 22,
+ "prompt_sha256": "2c7cfc2158480162ecf8d525d08672677f25888b2629d500ddc0eff47f29198d",
+ "raw": "<summary>Deep\u2011copy the error_messages dict instead of shallow\u2011copying it.</summary>\n<requirement>All Form Field subclasses must ensure that their\u202f`error_messages` attribute is deep\u2011copied when a field instance is deep\u2011copied. This means that any mutable objects stored inside the\u202f`error_messages` dictionary must also be duplicated, so changes to the copy\u2019s messages do not affect the original field. This supersedes any previous expectation that a shallow copy of the dictionary was sufficient.</requirement>\n<source_edit file=\"django/forms/fields.py\"><search>result.error_messages = self.error_messages.copy()</search><replace>result.error_messages = copy.deepcopy(self.error_messages, memo)</replace></source_edit>\n<test_edit file=\"tests/forms_tests/tests/test_forms.py\"><search>kwargs['error_messages'] = {'invalid': 'Form custom error message.'}</search><replace>kwargs['error_messages'] = {'invalid': ['Form custom error message.']}</replace></test_edit>\n<test_edit file=\"tests/forms_tests/tests/test_forms.py\"><search>field_copy = copy.deepcopy(field)</search><replace>field_copy = copy.deepcopy(field)\n        # Mutate the copied error messages and ensure the original is untouched\n        field_copy.error_messages['invalid'].append('extra')\n        self.assertEqual(field.error_messages['invalid'], ['Form custom error message.'])</replace></test_edit>",
+ "finish_reason": "stop",
+ "usage": {
+  "completion_tokens": 967,
+  "prompt_tokens": 1139,
+  "total_tokens": 2106,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": null,
+   "audio_tokens": null,
+   "reasoning_tokens": 668,
+   "rejected_prediction_tokens": null
+  },
+  "prompt_tokens_details": null
+ },
+ "summary": "Deep\u2011copy the error_messages dict instead of shallow\u2011copying it.",
+ "requirement": "All Form Field subclasses must ensure that their\u202f`error_messages` attribute is deep\u2011copied when a field instance is deep\u2011copied. This means that any mutable objects stored inside the\u202f`error_messages` dictionary must also be duplicated, so changes to the copy\u2019s messages do not affect the original field. This supersedes any previous expectation that a shallow copy of the dictionary was sufficient.",
+ "source_edits": [
+  {
+   "kind": "source_edit",
+   "file": "django/forms/fields.py",
+   "search": "result.error_messages = self.error_messages.copy()",
+   "replace": "result.error_messages = copy.deepcopy(self.error_messages, memo)"
+  }
+ ],
+ "test_edits": [
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_forms.py",
+   "search": "kwargs['error_messages'] = {'invalid': 'Form custom error message.'}",
+   "replace": "kwargs['error_messages'] = {'invalid': ['Form custom error message.']}"
+  },
+  {
+   "kind": "test_edit",
+   "file": "tests/forms_tests/tests/test_forms.py",
+   "search": "field_copy = copy.deepcopy(field)",
+   "replace": "field_copy = copy.deepcopy(field)\n        # Mutate the copied error messages and ensure the original is untouched\n        field_copy.error_messages['invalid'].append('extra')\n        self.assertEqual(field.error_messages['invalid'], ['Form custom error message.'])"
+  }
+ ],
+ "status": "generated"
+}
